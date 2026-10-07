@@ -1,0 +1,141 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Virtual environment
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+
+# Platform runtime files
+# Anchored to repo root: the .tar.zst archive output dir (IW_CORE_ARCHIVE_DIR).
+# Unanchored "archive/" wrongly also ignored orch/archive/ and ai-dev/archive/.
+/archive/
+logs/
+.daemon.pid
+.dashboard.pid
+.mcp.pid
+
+# Tool caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.pytest*/
+.hypothesis/
+htmlcov/
+tests/output/
+.coverage
+.coverage.*
+coverage.xml
+
+# Allure test reporting
+allure-results/
+allure-results-*/
+allure-report-*/
+allure-report/
+tests/output/allure-results/
+tests/output/allure-report/
+
+
+# Git worktrees (parallel AI agent isolation)
+.worktrees/
+.claude/worktrees/
+.tmp/
+tmp/
+
+# Test sandbox dirs created by test_db_start_guard.py (now cleaned up by the test itself)
+db-start-guard-*/
+
+# Post-mortem evidence artifacts (not committed)
+.evidence/
+
+# iw-fix-gates session logs (per-run developer artefact — not committed)
+ai-dev/work/fix-gates-*.md
+
+# Private development workspace — work items, archives, operational configs
+# Keep: ai-dev/templates/ and ai-dev/workflow.md (generic, useful for OSS users)
+ai-dev/active/
+ai-dev/work/
+ai-dev/archive/
+ai-dev/archives/
+ai-dev/iw-config/
+ai-dev/logs/
+ai-dev/
+
+# Generated work item reports
+reports/
+
+# Multi-project registry — contains local paths and project names
+# Commit projects.toml.example instead; each operator maintains their own projects.toml
+projects.toml
+
+# Internal documentation (marketing materials)
+documentation/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker
+data/
+output/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Others
+.playwright-cli/
+
+# IW platform runtime state (auto-updated by iw sync-skills, causes merge conflicts)
+.iw-skills-lock.json
+
+# Legacy per-worktree execution brief (no longer generated; prevent reintroduction)
+execution_brief.json
+
+# Claude Code harness lock (per-session, causes merge conflicts)
+.claude/scheduled_tasks.lock
+# User-local Claude Code overrides (personal settings, not project config)
+.claude/settings.local.json
+
+.iw/
+# Per-worktree seed completion sentinel (host writes, app container polls)
+.iw-seed-done
+
+# iw-sync collision artifacts (intermediate copies left by skill/agent sync conflicts)
+*.iw-collision
+
+# SQLite garbage from tests that pass ":memory:" as a positional filename
+:memory:*
+
+# iw-oss-publish: secret hygiene
+*.pem
+*.key
+*.pfx
+*.p12
+
+# iw-oss-publish: node ignores
+node_modules/
+npm-debug.log*
+.pnpm-store/
+
+# Playwright browser automation config (operator-local, not committed)
+.playwright/
+
+# IW orchestration config — contains local paths; commit .iw-orch.json.example instead
+.iw-orch.json
+
+# Step-done report artifact (per-run, not committed)
+.step_done_report.md
+
+# Research output — full content is the source of truth in PostgreSQL (project_docs);
+# these markdown files are write-once ingestion artifacts for `iw doc-update --content-file`.
+docs/research/

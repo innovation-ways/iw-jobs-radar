@@ -17,7 +17,7 @@ Local-first, single-user personal job-market intelligence system. It tracks perm
 
 ## Source of truth
 
-Read `ai-dev/docs/` in numeric order (`00` index → `12`) before changing code. Precedence: requirements (02, 04) define *what*; HLD/LLD (05, 06) define *how*; security/privacy (08) overrides convenience. `10 - Agent Handoff Guide` has the working rules and stop conditions; `12 - V1 Operational Release Scope` defines the release boundary; `11` holds locked ADRs (001–045; 046 proposed) and open decisions (ODR), which must not be assumed.
+Read `ai-dev/docs/` in numeric order (`00` index → `12`) before changing code. Precedence: requirements (02, 04) define *what*; HLD/LLD (05, 06) define *how*; security/privacy (08) overrides convenience. `10 - Agent Handoff Guide` has the working rules and stop conditions; `12 - V1 Operational Release Scope` defines the release boundary; `11` holds locked ADRs (001–046) and open decisions (ODR), which must not be assumed.
 
 ## Architecture (big picture)
 

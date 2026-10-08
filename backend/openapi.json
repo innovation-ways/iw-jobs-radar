@@ -874,6 +874,94 @@
         "title": "DimensionRead",
         "type": "object"
       },
+      "DocumentRead": {
+        "additionalProperties": false,
+        "description": "Safe metadata of an uploaded document; the original and its text are not returned.",
+        "properties": {
+          "byte_size": {
+            "title": "Byte Size",
+            "type": "integer"
+          },
+          "characters": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Characters"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "document_id": {
+            "title": "Document Id",
+            "type": "integer"
+          },
+          "extraction_status": {
+            "enum": [
+              "uploaded",
+              "extracted",
+              "needs_ocr",
+              "failed"
+            ],
+            "title": "Extraction Status",
+            "type": "string"
+          },
+          "extraction_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extraction Version"
+          },
+          "mime_type": {
+            "title": "Mime Type",
+            "type": "string"
+          },
+          "pages": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pages"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "text_available": {
+            "title": "Text Available",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "document_id",
+          "sha256",
+          "mime_type",
+          "byte_size",
+          "extraction_status",
+          "extraction_version",
+          "pages",
+          "characters",
+          "text_available",
+          "created_at"
+        ],
+        "title": "DocumentRead",
+        "type": "object"
+      },
       "Education": {
         "additionalProperties": false,
         "description": "A degree or similar.",
@@ -4441,6 +4529,71 @@
         "summary": "Daily Digest",
         "tags": [
           "digests"
+        ]
+      }
+    },
+    "/api/v1/documents": {
+      "post": {
+        "description": "Accept one file, extract its text in memory and discard the original.",
+        "operationId": "upload_document_api_v1_documents_post",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Upload Document",
+        "tags": [
+          "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}": {
+      "get": {
+        "description": "Return safe metadata: the status and whether the text is still held in memory.",
+        "operationId": "get_document_api_v1_documents__document_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Document",
+        "tags": [
+          "documents"
         ]
       }
     },

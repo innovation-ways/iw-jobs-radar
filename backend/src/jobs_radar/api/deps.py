@@ -12,6 +12,8 @@ from jobs_radar.domain.enums import SourceType
 from jobs_radar.services.ai_settings import AiSettingsService, build_credential_box
 from jobs_radar.services.collection import CollectionService
 from jobs_radar.services.dedup import DedupService
+from jobs_radar.services.document_store import DocumentTextStore
+from jobs_radar.services.documents import DocumentService
 from jobs_radar.services.evaluation import EvaluationService
 from jobs_radar.services.inbox import InboxService
 from jobs_radar.services.intents import IntentService
@@ -115,3 +117,11 @@ def get_ai_settings_service(
         provider_builder=getattr(state, "provider_builder", None),
         **kwargs,
     )
+
+
+def get_document_service(
+    request: Request, session: Annotated[AsyncSession, Depends(get_session)]
+) -> DocumentService:
+    """Build the document service on the request's session and the process-wide text store."""
+    store: DocumentTextStore = request.app.state.document_texts
+    return DocumentService(session, store)

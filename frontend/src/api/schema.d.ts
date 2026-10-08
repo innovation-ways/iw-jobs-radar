@@ -48,6 +48,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Document
+         * @description Accept one file, extract its text in memory and discard the original.
+         */
+        post: operations["upload_document_api_v1_documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{document_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Document
+         * @description Return safe metadata: the status and whether the text is still held in memory.
+         */
+        get: operations["get_document_api_v1_documents__document_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/evaluations/{match_evaluation_id}": {
         parameters: {
             query?: never;
@@ -1132,6 +1172,38 @@ export interface components {
             strength: number;
             /** Weight */
             weight: number;
+        };
+        /**
+         * DocumentRead
+         * @description Safe metadata of an uploaded document; the original and its text are not returned.
+         */
+        DocumentRead: {
+            /** Byte Size */
+            byte_size: number;
+            /** Characters */
+            characters: number | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Document Id */
+            document_id: number;
+            /**
+             * Extraction Status
+             * @enum {string}
+             */
+            extraction_status: "uploaded" | "extracted" | "needs_ocr" | "failed";
+            /** Extraction Version */
+            extraction_version: string | null;
+            /** Mime Type */
+            mime_type: string;
+            /** Pages */
+            pages: number | null;
+            /** Sha256 */
+            sha256: string;
+            /** Text Available */
+            text_available: boolean;
         };
         /**
          * Education
@@ -2691,6 +2763,57 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DigestRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_document_api_v1_documents_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentRead"];
+                };
+            };
+        };
+    };
+    get_document_api_v1_documents__document_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentRead"];
                 };
             };
             /** @description Validation Error */

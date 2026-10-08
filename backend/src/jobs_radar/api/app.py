@@ -19,6 +19,7 @@ from jobs_radar.core.logging import configure_logging, current_request_id
 from jobs_radar.core.settings import Settings, get_settings
 from jobs_radar.db.session import build_engine, build_session_factory
 from jobs_radar.schemas.errors import ErrorBody, ErrorEnvelope
+from jobs_radar.services.document_store import DocumentTextStore
 
 _HTTP_CODES = {404: "not_found", 405: "method_not_allowed"}
 
@@ -66,6 +67,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.engine = engine
         app.state.session_factory = build_session_factory(engine)
         app.state.adapters = build_source_adapters()
+        # Extracted CV text lives here only, briefly and in memory (ADR-010).
+        app.state.document_texts = DocumentTextStore()
         try:
             yield
         finally:

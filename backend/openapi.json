@@ -143,6 +143,34 @@
         "title": "ChangeRead",
         "type": "object"
       },
+      "ChangedItemRead": {
+        "additionalProperties": false,
+        "description": "A shortlisted job whose posting changed materially.",
+        "properties": {
+          "changed_at": {
+            "format": "date-time",
+            "title": "Changed At",
+            "type": "string"
+          },
+          "changed_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Changed Fields",
+            "type": "array"
+          },
+          "item": {
+            "$ref": "#/components/schemas/InboxItemSummary"
+          }
+        },
+        "required": [
+          "item",
+          "changed_fields",
+          "changed_at"
+        ],
+        "title": "ChangedItemRead",
+        "type": "object"
+      },
       "CollectionRunPage": {
         "additionalProperties": false,
         "description": "One page of run history, newest first; pass the cursor back to get older runs.",
@@ -319,6 +347,109 @@
           "target"
         ],
         "title": "ContractorRate",
+        "type": "object"
+      },
+      "DigestCounts": {
+        "additionalProperties": false,
+        "description": "Entries per section.",
+        "properties": {
+          "changed_shortlisted": {
+            "title": "Changed Shortlisted",
+            "type": "integer"
+          },
+          "new_high_fit": {
+            "title": "New High Fit",
+            "type": "integer"
+          },
+          "sources_needing_attention": {
+            "title": "Sources Needing Attention",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "new_high_fit",
+          "changed_shortlisted",
+          "sources_needing_attention"
+        ],
+        "title": "DigestCounts",
+        "type": "object"
+      },
+      "DigestRead": {
+        "additionalProperties": false,
+        "description": "The daily digest: what is worth looking at today.",
+        "properties": {
+          "alert_threshold": {
+            "title": "Alert Threshold",
+            "type": "integer"
+          },
+          "changed_shortlisted": {
+            "items": {
+              "$ref": "#/components/schemas/ChangedItemRead"
+            },
+            "title": "Changed Shortlisted",
+            "type": "array"
+          },
+          "counts": {
+            "$ref": "#/components/schemas/DigestCounts"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "last_run": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CollectionRunRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "new_high_fit": {
+            "items": {
+              "$ref": "#/components/schemas/InboxItemSummary"
+            },
+            "title": "New High Fit",
+            "type": "array"
+          },
+          "search_intent_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Intent Id"
+          },
+          "since": {
+            "format": "date-time",
+            "title": "Since",
+            "type": "string"
+          },
+          "source_health": {
+            "items": {
+              "$ref": "#/components/schemas/SourceHealthRead"
+            },
+            "title": "Source Health",
+            "type": "array"
+          }
+        },
+        "required": [
+          "generated_at",
+          "since",
+          "search_intent_id",
+          "alert_threshold",
+          "new_high_fit",
+          "changed_shortlisted",
+          "source_health",
+          "last_run",
+          "counts"
+        ],
+        "title": "DigestRead",
         "type": "object"
       },
       "DimensionRead": {
@@ -3072,6 +3203,73 @@
         "title": "SourceCreate",
         "type": "object"
       },
+      "SourceHealthRead": {
+        "additionalProperties": false,
+        "description": "An enabled source that needs attention.",
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "error_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Class"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "last_run_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run At"
+          },
+          "source_configuration_id": {
+            "title": "Source Configuration Id",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "failed",
+              "stale",
+              "never_run"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_configuration_id",
+          "display_name",
+          "status",
+          "error_class",
+          "error_message",
+          "last_run_at"
+        ],
+        "title": "SourceHealthRead",
+        "type": "object"
+      },
       "SourceList": {
         "additionalProperties": false,
         "description": "All configured sources.",
@@ -3807,6 +4005,57 @@
         "summary": "Run All Sources",
         "tags": [
           "sources"
+        ]
+      }
+    },
+    "/api/v1/digests/daily": {
+      "get": {
+        "description": "Return new high-fit opportunities, changed shortlisted jobs and sources needing attention.",
+        "operationId": "daily_digest_api_v1_digests_daily_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search_intent_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search Intent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DigestRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Daily Digest",
+        "tags": [
+          "digests"
         ]
       }
     },

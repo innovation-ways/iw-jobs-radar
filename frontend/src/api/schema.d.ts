@@ -28,6 +28,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/digests/daily": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Daily Digest
+         * @description Return new high-fit opportunities, changed shortlisted jobs and sources needing attention.
+         */
+        get: operations["daily_digest_api_v1_digests_daily_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/evaluations/{match_evaluation_id}": {
         parameters: {
             query?: never;
@@ -683,6 +703,20 @@ export interface components {
             created_at: string;
         };
         /**
+         * ChangedItemRead
+         * @description A shortlisted job whose posting changed materially.
+         */
+        ChangedItemRead: {
+            /**
+             * Changed At
+             * Format: date-time
+             */
+            changed_at: string;
+            /** Changed Fields */
+            changed_fields: string[];
+            item: components["schemas"]["InboxItemSummary"];
+        };
+        /**
          * CollectionRunPage
          * @description One page of run history, newest first; pass the cursor back to get older runs.
          */
@@ -741,6 +775,46 @@ export interface components {
             minimum: number;
             /** Target */
             target: number;
+        };
+        /**
+         * DigestCounts
+         * @description Entries per section.
+         */
+        DigestCounts: {
+            /** Changed Shortlisted */
+            changed_shortlisted: number;
+            /** New High Fit */
+            new_high_fit: number;
+            /** Sources Needing Attention */
+            sources_needing_attention: number;
+        };
+        /**
+         * DigestRead
+         * @description The daily digest: what is worth looking at today.
+         */
+        DigestRead: {
+            /** Alert Threshold */
+            alert_threshold: number;
+            /** Changed Shortlisted */
+            changed_shortlisted: components["schemas"]["ChangedItemRead"][];
+            counts: components["schemas"]["DigestCounts"];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            last_run: components["schemas"]["CollectionRunRead"] | null;
+            /** New High Fit */
+            new_high_fit: components["schemas"]["InboxItemSummary"][];
+            /** Search Intent Id */
+            search_intent_id: number | null;
+            /**
+             * Since
+             * Format: date-time
+             */
+            since: string;
+            /** Source Health */
+            source_health: components["schemas"]["SourceHealthRead"][];
         };
         /**
          * DimensionRead
@@ -1925,6 +1999,27 @@ export interface components {
             source_type: components["schemas"]["SourceType"];
         };
         /**
+         * SourceHealthRead
+         * @description An enabled source that needs attention.
+         */
+        SourceHealthRead: {
+            /** Display Name */
+            display_name: string;
+            /** Error Class */
+            error_class: string | null;
+            /** Error Message */
+            error_message: string | null;
+            /** Last Run At */
+            last_run_at: string | null;
+            /** Source Configuration Id */
+            source_configuration_id: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "failed" | "stale" | "never_run";
+        };
+        /**
          * SourceList
          * @description All configured sources.
          */
@@ -2268,6 +2363,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CollectionRunRead"];
+                };
+            };
+        };
+    };
+    daily_digest_api_v1_digests_daily_get: {
+        parameters: {
+            query?: {
+                search_intent_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DigestRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

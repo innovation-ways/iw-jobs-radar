@@ -55,7 +55,7 @@ async def test_invalid_json_gets_exactly_one_repair_with_the_error_and_the_answe
     assert SAMPLE_JOB_DESCRIPTION in repair  # the repair still carries the posting
 
 
-async def test_an_answer_that_breaks_the_contract_is_repaired_too() -> None:
+async def test_an_answer_with_a_bad_attribute_is_salvaged_without_a_repair() -> None:
     broken = sample_extraction_output()
     broken["work_mode"] = {
         "value": "remote",
@@ -63,14 +63,16 @@ async def test_an_answer_that_breaks_the_contract_is_repaired_too() -> None:
         "confidence": 0.9,
         "evidence": None,
     }
-    provider = FakeProvider([broken, sample_extraction_output()])
+    provider = FakeProvider([broken])
     result = await extractor(provider).extract(job())
-    assert result.output.work_mode.status == "known"
-    assert len(provider.requests) == 2
+    assert result.output.work_mode.status == "unknown"
+    assert result.output.remote_regions.status == "known"
+    assert result.unverified == ["work_mode"]
+    assert len(provider.requests) == 1  # no second model call: the rest of the answer is good
 
 
 async def test_two_unusable_answers_fail_and_count_as_an_attempt() -> None:
-    provider = FakeProvider(["nope", '{"still": "wrong"}'])
+    provider = FakeProvider(["nope", '{"still": "wrong"}'])  # neither looks like an extraction
     with pytest.raises(ExtractionError) as error:
         await extractor(provider).extract(job())
     assert error.value.error_class == "invalid_output"

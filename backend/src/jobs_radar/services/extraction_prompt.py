@@ -35,7 +35,15 @@ SYSTEM_PROMPT = "\n".join(
         "for the job.",
         '7. skills lists technologies and skills the posting asks for with importance "must" '
         '(required) or "nice" (preferred), named as written, at most 25.',
-        "8. Answer with the JSON object only.",
+        "8. role_families: list the one to three families that best fit the role, each with a "
+        "quote "
+        "from the posting describing the work. Leave it empty only if no role is described.",
+        "9. The evidence is always text from the posting, never the value or a key. For example, "
+        'for the posting text "Fully remote within the EU." the answer is {"value": "remote", '
+        '"status": "known", "confidence": 0.95, "evidence": "Fully remote within the EU"}; for an '
+        'attribute the posting never mentions it is {"value": null, "status": "unknown", '
+        '"confidence": 0, "evidence": null}.',
+        "10. Answer with the JSON object only.",
     ]
 )
 

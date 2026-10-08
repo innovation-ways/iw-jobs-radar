@@ -6,7 +6,6 @@ Failure policy (document 13, section 6.2): an answer that cannot be used after o
 unusable provider answers use an attempt. The raw answer is never stored unvalidated.
 """
 
-import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
@@ -18,8 +17,10 @@ from jobs_radar.domain.enums import ProviderErrorClass
 from jobs_radar.schemas.extraction import ExtractionOutput
 from jobs_radar.services.extraction_prompt import PreparedPrompt, build_prompt, build_repair
 from jobs_radar.services.extraction_rules import (
+    ParsedAnswer,
     find_contradictions,
     keep_known_keys,
+    parse_lenient,
     verify_evidence,
 )
 
@@ -112,17 +113,17 @@ class JobExtractor:
         )
         raw, latency = await self._call(prepared.request)
         try:
-            output = self._parse(raw)
-        except (ValueError, ValidationError) as first:
+            parsed = parse_lenient(raw)
+        except ValueError as first:
             repair = build_repair(prepared, previous=raw, problem=_problem(first))
             raw, repair_latency = await self._call(repair)
             latency += repair_latency
             try:
-                output = self._parse(raw)
-            except (ValueError, ValidationError) as second:
+                parsed = parse_lenient(raw)
+            except ValueError as second:
                 msg = "The AI answer could not be used after one repair."
                 raise ExtractionError("invalid_output", msg, counts_as_attempt=True) from second
-        return self._checked(output, job, prepared, latency)
+        return self._checked(parsed, job, prepared, latency)
 
     async def _call(self, request: Any) -> tuple[str, int]:
         try:
@@ -135,22 +136,18 @@ class JobExtractor:
             ) from error
         return answer.content, answer.latency_ms
 
-    @staticmethod
-    def _parse(raw: str) -> ExtractionOutput:
-        return ExtractionOutput.model_validate(json.loads(raw))
-
     def _checked(
         self,
-        output: ExtractionOutput,
+        parsed: ParsedAnswer,
         job: ExtractionInput,
         prepared: PreparedPrompt,
         latency_ms: int,
     ) -> ExtractionResult:
-        verified = verify_evidence(output, job.title, prepared.description_used)
+        verified = verify_evidence(parsed.output, job.title, prepared.description_used)
         filtered = keep_known_keys(verified.output, self._taxonomy)
         return ExtractionResult(
             output=filtered.output,
-            unverified=verified.unverified,
+            unverified=sorted({*parsed.notes, *verified.unverified}),
             dropped_keys=filtered.dropped,
             contradictions=find_contradictions(filtered.output, job.hints),
             truncated=prepared.truncated,

@@ -1,13 +1,16 @@
 """Evidence verification, taxonomy filtering and hint contradictions for AI extractions."""
 
+import json
 from typing import Any
 
+import pytest
 from tests.data import SAMPLE_JOB_DESCRIPTION, SAMPLE_JOB_TITLE, sample_extraction_output
 
 from jobs_radar.schemas.extraction import ExtractionOutput
 from jobs_radar.services.extraction_rules import (
     find_contradictions,
     keep_known_keys,
+    parse_lenient,
     verify_evidence,
 )
 
@@ -180,3 +183,85 @@ def test_no_hint_or_unknown_locations_cannot_contradict() -> None:
     assert find_contradictions(output(), {}) == []
     unknown = {"value": None, "status": "unknown", "confidence": 0.0, "evidence": None}
     assert find_contradictions(output(locations=unknown), {"locations": ["Berlin"]}) == []
+
+
+# --- lenient parsing -------------------------------------------------------------------------------
+
+
+def raw(**changes: Any) -> str:
+    return json.dumps({**sample_extraction_output(), **changes})
+
+
+def test_a_valid_answer_parses_without_notes() -> None:
+    parsed = parse_lenient(raw())
+    assert parsed.output == output()
+    assert parsed.notes == []
+
+
+def test_an_unknown_attribute_that_carries_a_value_is_cleaned() -> None:
+    parsed = parse_lenient(
+        raw(
+            education_required={
+                "value": "unknown",
+                "status": "unknown",
+                "confidence": 0.4,
+                "evidence": "x",
+            }
+        )
+    )
+    assert parsed.output.education_required.status == "unknown"
+    assert parsed.output.education_required.value is None
+    assert parsed.output.education_required.confidence == 0.0
+    assert parsed.notes == []  # cleaning an unknown is not worth a note
+
+
+def test_a_known_attribute_without_evidence_becomes_unknown_and_is_noted() -> None:
+    parsed = parse_lenient(
+        raw(work_mode={"value": "remote", "status": "known", "confidence": 0.9, "evidence": None})
+    )
+    assert parsed.output.work_mode.status == "unknown"
+    assert parsed.notes == ["work_mode"]
+
+
+def test_a_missing_attribute_is_unknown() -> None:
+    answer = sample_extraction_output()
+    del answer["visa_sponsorship"]
+    parsed = parse_lenient(json.dumps(answer))
+    assert parsed.output.visa_sponsorship.status == "unknown"
+    assert parsed.notes == []
+
+
+def test_an_attribute_with_a_value_outside_its_type_becomes_unknown_and_is_noted() -> None:
+    parsed = parse_lenient(
+        raw(
+            work_mode={
+                "value": "hybrid-ish",
+                "status": "known",
+                "confidence": 0.9,
+                "evidence": "Fully remote",
+            }
+        )
+    )
+    assert parsed.output.work_mode.status == "unknown"
+    assert parsed.notes == ["work_mode"]
+    assert parsed.output.remote_regions.status == "known"  # the rest is kept
+
+
+def test_list_items_that_break_the_contract_are_dropped_and_noted() -> None:
+    parsed = parse_lenient(
+        raw(
+            skills=[
+                {"name": "Python", "importance": "must", "evidence": "Experience with Python"},
+                {"name": "Rust", "importance": "essential", "evidence": "Rust"},
+                {"name": "Go", "importance": "must", "evidence": ""},
+            ]
+        )
+    )
+    assert [s.name for s in parsed.output.skills] == ["Python"]
+    assert parsed.notes == ["skills:2", "skills:3"]
+
+
+@pytest.mark.parametrize("text", ["", "not json", "[1, 2]", '"text"', "{}", '{"unrelated": 1}'])
+def test_an_answer_that_is_not_an_extraction_is_rejected(text: str) -> None:
+    with pytest.raises(ValueError, match="extraction"):
+        parse_lenient(text)

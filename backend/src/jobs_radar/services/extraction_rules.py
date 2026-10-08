@@ -10,12 +10,20 @@
 All functions return new objects; the model's raw answer is never mutated.
 """
 
+import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+from pydantic import ValidationError
+
 from jobs_radar.domain.text_match import normalise_for_match, quote_occurs
-from jobs_radar.schemas.extraction import Evidenced, ExtractionOutput
+from jobs_radar.schemas.extraction import (
+    Evidenced,
+    ExtractedRoleFamily,
+    ExtractedSkill,
+    ExtractionOutput,
+)
 
 # Attributes that are a single Evidenced value (scalars, lists or objects).
 _EVIDENCED_FIELDS = (
@@ -42,6 +50,88 @@ _KEY_LISTS = {
     "seniority_levels": "seniority_level",
     "benefits_mentioned": "benefit",
 }
+
+
+_UNKNOWN: dict[str, Any] = {"value": None, "status": "unknown", "confidence": 0.0, "evidence": None}
+_LIST_ITEMS: dict[str, type[ExtractedRoleFamily] | type[ExtractedSkill]] = {
+    "role_families": ExtractedRoleFamily,
+    "skills": ExtractedSkill,
+}
+_EXPECTED = {*_EVIDENCED_FIELDS, *_LIST_ITEMS, "schema_version"}
+
+
+@dataclass(frozen=True)
+class ParsedAnswer:
+    """A model answer turned into a valid output, plus what had to be set aside (``notes``)."""
+
+    output: ExtractionOutput
+    notes: list[str]
+
+
+def _clean_attribute(attribute: Any) -> tuple[dict[str, Any], bool]:
+    """Return the attribute in contract shape and whether a *known* claim had to be dropped."""
+    if not isinstance(attribute, dict) or attribute.get("status") not in ("known", "unknown"):
+        return dict(_UNKNOWN), attribute is not None
+    if attribute["status"] == "unknown":
+        return dict(_UNKNOWN), False  # a stray value on an unknown attribute is simply discarded
+    if attribute.get("value") in (None, "", []) or not attribute.get("evidence"):
+        return dict(_UNKNOWN), True  # a claim without a value or a quote cannot be checked
+    return attribute, False
+
+
+def parse_lenient(text: str) -> ParsedAnswer:
+    """Turn a model answer into a valid :class:`ExtractionOutput`, salvaging what is usable.
+
+    Small models often bend the contract (a value on an ``unknown`` attribute, a missing quote, an
+    option outside the list). Instead of rejecting the whole answer, such attributes become
+    ``unknown`` (noted, when a claim was lost) and bad list items are dropped (noted as
+    ``field:position``). Nothing is invented. An answer that is not an extraction at all is
+    rejected.
+
+    Raises:
+        ValueError: the text is not JSON, not an object, or has no extraction fields.
+    """
+    try:
+        data = json.loads(text)
+    except ValueError as exc:
+        msg = "The answer is not an extraction: it is not JSON."
+        raise ValueError(msg) from exc
+    if not isinstance(data, dict) or not set(data) & _EXPECTED - {"schema_version"}:
+        msg = "The answer is not an extraction: no extraction fields found."
+        raise ValueError(msg)
+
+    notes: list[str] = []
+    fixed: dict[str, Any] = {"schema_version": 1}
+    for field in _EVIDENCED_FIELDS:
+        fixed[field], lost = _clean_attribute(data.get(field))
+        if lost:
+            notes.append(field)
+    for field, model in _LIST_ITEMS.items():
+        items = data.get(field)
+        kept: list[dict[str, Any]] = []
+        for position, item in enumerate(items if isinstance(items, list) else [], start=1):
+            try:
+                model.model_validate(item)
+            except ValidationError:
+                notes.append(f"{field}:{position}")
+            else:
+                kept.append(item)
+        fixed[field] = kept
+
+    # Fields whose value is outside its type fail validation one by one; set those aside.
+    for _ in range(2):
+        try:
+            return ParsedAnswer(ExtractionOutput.model_validate(fixed), sorted(notes))
+        except ValidationError as exc:
+            failing = {str(error["loc"][0]) for error in exc.errors() if error["loc"]}
+            targets = failing & set(_EVIDENCED_FIELDS)
+            if not targets:
+                break
+            for field in targets:
+                fixed[field] = dict(_UNKNOWN)
+                notes.append(field)
+    msg = "The answer is not an extraction: it does not follow the contract."
+    raise ValueError(msg)
 
 
 @dataclass(frozen=True)

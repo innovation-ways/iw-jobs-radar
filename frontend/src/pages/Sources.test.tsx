@@ -1,0 +1,330 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { Sources } from './Sources'
+
+const get = vi.fn()
+const post = vi.fn()
+const put = vi.fn()
+vi.mock('@/api/client', () => ({
+  api: {
+    GET: (...args: unknown[]) => get(...args),
+    POST: (...args: unknown[]) => post(...args),
+    PUT: (...args: unknown[]) => put(...args),
+  },
+}))
+
+const result = {
+  collection_run_id: 7,
+  source_configuration_id: 1,
+  outcome: 'success',
+  started_at: '2026-10-08T07:30:00Z',
+  finished_at: '2026-10-08T07:30:05Z',
+  collected_count: 42,
+  new_count: 5,
+  updated_count: 2,
+  deduplicated_count: 35,
+  closed_count: 1,
+  http_status: 200,
+  error_class: null,
+  error_message: null,
+  duration_ms: 5000,
+}
+
+function source(overrides: Record<string, unknown> = {}) {
+  return {
+    source_configuration_id: 1,
+    source_type: 'greenhouse',
+    external_identifier: 'acme',
+    display_name: 'Acme Robotics',
+    company_id: 1,
+    company_name: 'Acme Robotics',
+    url: 'https://boards.example.test/v1/boards/acme/jobs',
+    enabled: true,
+    rate_limit_per_minute: 6,
+    version: 1,
+    open_postings: 41,
+    last_result: result,
+    ...overrides,
+  }
+}
+
+const failed = source({
+  source_configuration_id: 2,
+  display_name: 'Contoso',
+  company_name: 'Contoso',
+  external_identifier: 'contoso',
+  open_postings: 0,
+  last_result: {
+    ...result,
+    source_configuration_id: 2,
+    outcome: 'failed',
+    collected_count: 0,
+    new_count: 0,
+    updated_count: 0,
+    error_class: 'not_found',
+    error_message: 'The board was not found. Check the board token.',
+    http_status: 404,
+  },
+})
+const never = source({
+  source_configuration_id: 3,
+  display_name: 'Globex',
+  company_name: 'Globex',
+  external_identifier: 'globex',
+  open_postings: 0,
+  last_result: null,
+})
+const disabled = source({
+  source_configuration_id: 4,
+  display_name: 'Initech',
+  company_name: 'Initech',
+  external_identifier: 'initech',
+  enabled: false,
+  version: 3,
+  last_result: null,
+})
+
+let sources: unknown[]
+let runs: unknown[]
+
+function envelope(message: string, errorClass?: string) {
+  return {
+    error: {
+      error: { code: 'x', message, details: errorClass ? { error_class: errorClass } : {} },
+    },
+    response: { status: 422 },
+  }
+}
+
+function renderSources() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <QueryClientProvider client={client}>
+      <Sources />
+    </QueryClientProvider>,
+  )
+}
+
+function row(name: string) {
+  return screen.getByRole('row', { name: new RegExp(name) })
+}
+
+describe('Sources screen', () => {
+  beforeEach(() => {
+    get.mockReset()
+    post.mockReset()
+    put.mockReset()
+    sources = [source(), failed, never, disabled]
+    runs = []
+    get.mockImplementation((path: string) => {
+      if (path === '/api/v1/sources') return Promise.resolve({ data: { items: sources } })
+      if (path === '/api/v1/collection-runs')
+        return Promise.resolve({ data: { items: runs, next_before_collection_run_id: null } })
+      return Promise.reject(new Error(`unexpected GET ${path}`))
+    })
+  })
+
+  it('lists each board with company, postings, counts and a status in words', async () => {
+    renderSources()
+    const acme = await screen.findByRole('row', { name: /Acme Robotics/ })
+    expect(within(acme).getByText('Succeeded')).toBeInTheDocument()
+    expect(within(acme).getByText('41')).toBeInTheDocument() // postings
+    expect(within(acme).getByText('5')).toBeInTheDocument() // new
+    expect(within(acme).getByText('2')).toBeInTheDocument() // changed
+    expect(acme.querySelector('time')).toHaveAttribute('datetime', '2026-10-08T07:30:05Z')
+  })
+
+  it('shows the classified reason when a source failed', async () => {
+    renderSources()
+    await screen.findByText('Contoso')
+    const contoso = row('Contoso')
+    expect(within(contoso).getByText('Failed')).toBeInTheDocument()
+    expect(within(contoso).getByText(/board was not found/i)).toBeInTheDocument()
+    expect(within(contoso).getByText(/not_found/)).toBeInTheDocument()
+  })
+
+  it('says so when a board never ran or is disabled', async () => {
+    renderSources()
+    await screen.findByText('Globex')
+    expect(within(row('Globex')).getByText('Never run')).toBeInTheDocument()
+    expect(within(row('Initech')).getByText('Disabled')).toBeInTheDocument()
+  })
+
+  it('shows the schedule as read-only until the worker exists', async () => {
+    renderSources()
+    const card = (await screen.findByRole('heading', { name: 'Daily schedule' })).closest(
+      'section',
+    )!
+    expect(within(card).getByText(/not available yet/i)).toBeInTheDocument()
+    expect(within(card).queryByRole('textbox')).not.toBeInTheDocument()
+    expect(within(card).queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('guides the owner when no board is configured', async () => {
+    sources = []
+    renderSources()
+    expect(await screen.findByText(/no boards yet/i)).toBeInTheDocument()
+  })
+
+  it('reports a failed load and lets the owner retry', async () => {
+    const load = get.getMockImplementation()!
+    let failedOnce = false
+    get.mockImplementation((path: string) => {
+      if (path === '/api/v1/sources' && !failedOnce) {
+        failedOnce = true
+        return Promise.reject(new Error('network'))
+      }
+      return load(path)
+    })
+    renderSources()
+    expect(await screen.findByRole('alert')).toHaveTextContent(/could not load/i)
+    await userEvent.click(screen.getByRole('button', { name: /try again/i }))
+    expect(await screen.findByText('Acme Robotics')).toBeInTheDocument()
+  })
+
+  describe('adding a board', () => {
+    it('cannot be submitted empty', async () => {
+      renderSources()
+      await screen.findByText('Acme Robotics')
+      expect(screen.getByRole('button', { name: /validate & add/i })).toBeDisabled()
+    })
+
+    it('validates and adds, then refreshes the list', async () => {
+      post.mockResolvedValue({
+        data: source({ display_name: 'New Co' }),
+        response: { status: 201 },
+      })
+      renderSources()
+      await screen.findByText('Acme Robotics')
+      await userEvent.type(screen.getByLabelText(/board token/i), '  newco ')
+      await userEvent.click(screen.getByRole('button', { name: /validate & add/i }))
+
+      expect(post).toHaveBeenCalledWith('/api/v1/sources', {
+        body: { source_type: 'greenhouse', external_identifier: 'newco', enabled: true },
+      })
+      expect(await screen.findByRole('status')).toHaveTextContent(/added new co/i)
+      expect(screen.getByLabelText(/board token/i)).toHaveValue('')
+      expect(get.mock.calls.filter(([p]) => p === '/api/v1/sources').length).toBeGreaterThan(1)
+    })
+
+    it('shows why a board was refused and keeps what was typed', async () => {
+      post.mockResolvedValue(
+        envelope('The board was not found. Check the board token.', 'not_found'),
+      )
+      renderSources()
+      await screen.findByText('Acme Robotics')
+      await userEvent.type(screen.getByLabelText(/board token/i), 'nope')
+      await userEvent.click(screen.getByRole('button', { name: /validate & add/i }))
+      const alert = await screen.findByRole('alert')
+      expect(alert).toHaveTextContent(/board was not found/i)
+      expect(screen.getByLabelText(/board token/i)).toHaveValue('nope')
+    })
+
+    it('explains an unreachable server', async () => {
+      post.mockRejectedValue(new Error('network'))
+      renderSources()
+      await screen.findByText('Acme Robotics')
+      await userEvent.type(screen.getByLabelText(/board token/i), 'x')
+      await userEvent.click(screen.getByRole('button', { name: /validate & add/i }))
+      expect(await screen.findByRole('alert')).toHaveTextContent(/could not reach/i)
+    })
+  })
+
+  describe('running', () => {
+    it('queues a run of one board', async () => {
+      post.mockResolvedValue({
+        data: { collection_run_id: 9, status: 'queued' },
+        response: { status: 202 },
+      })
+      renderSources()
+      await screen.findByText('Acme Robotics')
+      await userEvent.click(screen.getByRole('button', { name: 'Run Acme Robotics now' }))
+      expect(post).toHaveBeenCalledWith('/api/v1/sources/{source_configuration_id}/run', {
+        params: { path: { source_configuration_id: 1 } },
+      })
+    })
+
+    it('queues a run of every enabled board', async () => {
+      post.mockResolvedValue({
+        data: { collection_run_id: 9, status: 'queued' },
+        response: { status: 202 },
+      })
+      renderSources()
+      await screen.findByText('Acme Robotics')
+      await userEvent.click(screen.getByRole('button', { name: /run all now/i }))
+      expect(post).toHaveBeenCalledWith('/api/v1/collection-runs')
+    })
+
+    it('shows the API reason when a run cannot start', async () => {
+      post.mockResolvedValue(
+        envelope('There is no enabled source to collect. Enable or add a source first.'),
+      )
+      renderSources()
+      await screen.findByText('Acme Robotics')
+      await userEvent.click(screen.getByRole('button', { name: /run all now/i }))
+      expect(await screen.findByRole('alert')).toHaveTextContent(/no enabled source/i)
+    })
+
+    it('marks boards as running and blocks new runs while one is in progress', async () => {
+      runs = [
+        {
+          collection_run_id: 9,
+          source_configuration_id: null,
+          trigger: 'manual',
+          status: 'running',
+          requested_at: '2026-10-08T08:00:00Z',
+          started_at: '2026-10-08T08:00:01Z',
+          finished_at: null,
+          error_class: null,
+          results: [],
+        },
+      ]
+      renderSources()
+      await screen.findByText('Acme Robotics')
+      expect(await within(row('Acme Robotics')).findByText('Running')).toBeInTheDocument()
+      expect(within(row('Initech')).queryByText('Running')).not.toBeInTheDocument() // disabled: not part of an all-run
+      expect(screen.getByRole('button', { name: /run all now/i })).toBeDisabled()
+      expect(screen.getByRole('button', { name: 'Run Acme Robotics now' })).toBeDisabled()
+    })
+  })
+
+  describe('enabling and disabling', () => {
+    it('enables a board using the version the owner saw', async () => {
+      put.mockResolvedValue({
+        data: source({ enabled: true, version: 4 }),
+        response: { status: 200 },
+      })
+      renderSources()
+      await screen.findByText('Initech')
+      await userEvent.click(screen.getByRole('button', { name: 'Enable Initech' }))
+      expect(put).toHaveBeenCalledWith('/api/v1/sources/{source_configuration_id}', {
+        params: { path: { source_configuration_id: 4 } },
+        body: { expected_version: 3, enabled: true },
+      })
+    })
+
+    it('disables an enabled board', async () => {
+      put.mockResolvedValue({
+        data: source({ enabled: false, version: 2 }),
+        response: { status: 200 },
+      })
+      renderSources()
+      await screen.findByText('Acme Robotics')
+      await userEvent.click(screen.getByRole('button', { name: 'Disable Acme Robotics' }))
+      expect(put).toHaveBeenCalledWith('/api/v1/sources/{source_configuration_id}', {
+        params: { path: { source_configuration_id: 1 } },
+        body: { expected_version: 1, enabled: false },
+      })
+    })
+
+    it('tells the owner to reload after a version conflict', async () => {
+      put.mockResolvedValue(envelope('The source changed since it was loaded.'))
+      renderSources()
+      await screen.findByText('Acme Robotics')
+      await userEvent.click(screen.getByRole('button', { name: 'Disable Acme Robotics' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent(/changed since it was loaded/i)
+    })
+  })
+})

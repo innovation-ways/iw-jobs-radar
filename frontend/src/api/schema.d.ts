@@ -148,6 +148,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/locations/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search Locations
+         * @description Find cities by name prefix, optionally within one country (ISO 3166-1 alpha-2).
+         */
+        get: operations["search_locations_api_v1_locations_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/profiles": {
         parameters: {
             query?: never;
@@ -967,6 +987,34 @@ export interface components {
             radius_km: number;
         };
         /**
+         * PlaceList
+         * @description Search results, most populous first.
+         */
+        PlaceList: {
+            /** Items */
+            items: components["schemas"]["PlaceRead"][];
+        };
+        /**
+         * PlaceRead
+         * @description A city the owner can pick as a base place.
+         */
+        PlaceRead: {
+            /** City */
+            city: string;
+            /** Country */
+            country: string;
+            /** Label */
+            label: string;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /** Population */
+            population: number;
+            /** Timezone */
+            timezone: string;
+        };
+        /**
          * ProfileCreate
          * @description Create a blank, named profile.
          */
@@ -1767,6 +1815,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IntentSaveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_locations_api_v1_locations_search_get: {
+        parameters: {
+            query: {
+                q: string;
+                country?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlaceList"];
                 };
             };
             /** @description Validation Error */

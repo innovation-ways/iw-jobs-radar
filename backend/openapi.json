@@ -1207,6 +1207,74 @@
         "title": "OnsiteHybridRule",
         "type": "object"
       },
+      "PlaceList": {
+        "additionalProperties": false,
+        "description": "Search results, most populous first.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/PlaceRead"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "PlaceList",
+        "type": "object"
+      },
+      "PlaceRead": {
+        "additionalProperties": false,
+        "description": "A city the owner can pick as a base place.",
+        "properties": {
+          "city": {
+            "title": "City",
+            "type": "string"
+          },
+          "country": {
+            "pattern": "^[A-Z]{2}$",
+            "title": "Country",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "latitude": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude",
+            "type": "number"
+          },
+          "longitude": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude",
+            "type": "number"
+          },
+          "population": {
+            "title": "Population",
+            "type": "integer"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "city",
+          "country",
+          "latitude",
+          "longitude",
+          "timezone",
+          "population"
+        ],
+        "title": "PlaceRead",
+        "type": "object"
+      },
       "ProfileCreate": {
         "additionalProperties": false,
         "description": "Create a blank, named profile.",
@@ -2867,6 +2935,80 @@
         "summary": "Restore Intent Revision",
         "tags": [
           "intents"
+        ]
+      }
+    },
+    "/api/v1/locations/search": {
+      "get": {
+        "description": "Find cities by name prefix, optionally within one country (ISO 3166-1 alpha-2).",
+        "operationId": "search_locations_api_v1_locations_search_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "title": "Q",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Z]{2}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Country"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlaceList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Search Locations",
+        "tags": [
+          "locations"
         ]
       }
     },

@@ -143,3 +143,7 @@ docs/research/
 # Jobs Radar launcher
 .frontend.pid
 .worker.pid
+frontend/coverage/
+frontend/test-results/
+frontend/playwright-report/
+frontend/dist/

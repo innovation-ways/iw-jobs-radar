@@ -1,0 +1,130 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* Dark mode follows data-theme on <html> (set by ThemeProvider), not a CSS class. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Design tokens from the agreed UI mock-up (docs/design/frontend-mock.html, research R-00170).
+   Neutral base, one accent, colour only for meaning; every status also has text or an icon. */
+:root {
+  --bg: #fbfbfc;
+  --surface: #ffffff;
+  --surface-2: #f3f4f6;
+  --surface-3: #eaecf0;
+  --border: #e4e6eb;
+  --border-strong: #cfd3da;
+  --text: #15171c;
+  --text-2: #565c69;
+  --text-3: #7a808d;
+  --good: #146c36;
+  --good-bg: #e6f4ec;
+  --caution: #8a4b0a;
+  --caution-bg: #fdf1dc;
+  --bad: #a61b1b;
+  --bad-bg: #fbe8e8;
+  --neutral-band: #4b5160;
+  --neutral-bg: #eceef2;
+  --shadow: 0 1px 2px rgb(16 18 24 / 6%), 0 4px 16px rgb(16 18 24 / 6%);
+  /* accent: indigo */
+  --accent: #4f46e5;
+  --accent-soft: #eceafd;
+  --accent-text: #3730a3;
+  --on-accent: #ffffff;
+}
+
+[data-theme='dark'] {
+  --bg: #0d0e11;
+  --surface: #14161a;
+  --surface-2: #1b1e23;
+  --surface-3: #242830;
+  --border: #272a31;
+  --border-strong: #363a44;
+  --text: #ecedf0;
+  --text-2: #a5aab5;
+  --text-3: #7d838f;
+  /* calmer semantic colours in dark mode: the light-mode greens were too bright (owner feedback) */
+  --good: #8cc9a4;
+  --good-bg: #172a20;
+  --caution: #d9b36a;
+  --caution-bg: #2a2212;
+  --bad: #e9a0a0;
+  --bad-bg: #2c1919;
+  --neutral-band: #a9aeb8;
+  --neutral-bg: #242830;
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 35%);
+  --accent: #8b87f5;
+  --accent-soft: #232146;
+  --accent-text: #c7c4ff;
+  --on-accent: #0d0e11;
+}
+
+@theme inline {
+  --font-sans:
+    'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --radius-lg: 8px;
+
+  /* semantic names used by the application */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--text);
+  --color-ink-2: var(--text-2);
+  --color-ink-3: var(--text-3);
+  --color-good: var(--good);
+  --color-good-bg: var(--good-bg);
+  --color-caution: var(--caution);
+  --color-caution-bg: var(--caution-bg);
+  --color-bad: var(--bad);
+  --color-bad-bg: var(--bad-bg);
+  --color-band: var(--neutral-band);
+  --color-band-bg: var(--neutral-bg);
+  --color-brand: var(--accent);
+  --color-brand-soft: var(--accent-soft);
+  --color-brand-text: var(--accent-text);
+  --color-on-brand: var(--on-accent);
+
+  /* shadcn/ui compatible aliases */
+  --color-background: var(--bg);
+  --color-foreground: var(--text);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--text);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--on-accent);
+  --color-secondary: var(--surface-2);
+  --color-secondary-foreground: var(--text);
+  --color-muted: var(--surface-2);
+  --color-muted-foreground: var(--text-2);
+  --color-accent: var(--surface-3);
+  --color-accent-foreground: var(--text);
+  --color-destructive: var(--bad);
+  --color-border: var(--border);
+  --color-input: var(--border-strong);
+  --color-ring: var(--accent);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    font-variant-numeric: tabular-nums; /* aligned digits for scores, counts and dates */
+  }
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}

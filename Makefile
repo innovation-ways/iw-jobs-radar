@@ -8,13 +8,15 @@ GITLEAKS_IMAGE := ghcr.io/gitleaks/gitleaks:v8.30.1
 .DEFAULT_GOAL := help
 .PHONY: help install test test-unit test-integration coverage lint format format-check typecheck \
         arch-check security security-sast license-check docs-check secret-scan quality \
-        openapi
+        openapi fe-install fe-lint fe-format-check fe-typecheck fe-license-check test-frontend \
+        fe-coverage test-e2e api-client quality-frontend check
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-18s %s\n", $$1, $$2}'
 
-install: ## Install backend dependencies (uv)
+install: ## Install backend and frontend dependencies
 	cd $(BACKEND) && uv sync
+	$(MAKE) fe-install
 
 test: ## Run all backend tests (unit + integration; needs Docker)
 	cd $(BACKEND) && uv run pytest tests/unit tests/integration -q
@@ -59,7 +61,43 @@ secret-scan: ## gitleaks over the working tree (needs Docker)
 	docker run --rm -v "$(CURDIR):/repo:ro" $(GITLEAKS_IMAGE) dir /repo --no-banner --redact --exit-code 1
 
 quality: lint format-check typecheck arch-check security license-check docs-check ## All fast quality gates (backend)
-	@echo "Quality gates passed."
+	@echo "Backend quality gates passed."
+
+# --- frontend (pnpm via corepack; see CLAUDE.md) ---
+PNPM := PATH="$$HOME/.local/bin:$$PATH" pnpm --dir $(FRONTEND)
+
+fe-install: ## Install frontend dependencies (pnpm)
+	$(PNPM) install --frozen-lockfile
+
+fe-lint: ## ESLint (zero warnings)
+	$(PNPM) lint
+
+fe-format-check: ## Prettier check
+	$(PNPM) format:check
+
+fe-typecheck: ## TypeScript (strict)
+	$(PNPM) typecheck
+
+fe-license-check: ## No AGPL/SSPL production dependency (frontend)
+	$(PNPM) license-check
+
+test-frontend: ## Vitest component and unit tests
+	$(PNPM) test
+
+fe-coverage: ## Vitest with coverage
+	$(PNPM) test:coverage
+
+test-e2e: ## Playwright smoke tests against the running stack (./jobs-radar.sh --quick-start first)
+	$(PNPM) e2e
+
+api-client: openapi ## Regenerate the typed frontend API client from the backend OpenAPI document
+	$(PNPM) api:generate
+
+quality-frontend: fe-lint fe-format-check fe-typecheck fe-license-check ## All fast quality gates (frontend)
+	@echo "Frontend quality gates passed."
+
+check: quality quality-frontend test test-frontend ## Everything except SAST, secret scan and E2E
+	@echo "All checks passed."
 
 openapi: ## Export the OpenAPI document used to generate the frontend client
 	cd $(BACKEND) && uv run python -m jobs_radar.tools.export_openapi

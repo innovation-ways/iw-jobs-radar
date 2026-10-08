@@ -192,10 +192,13 @@ frontend_start() {
   if [[ -n "$(frontend_pid)" ]]; then ok "frontend already running."; return 0; fi
   [[ -d "$FRONTEND_DIR/node_modules" ]] || (cd "$FRONTEND_DIR" && pnpm install --frozen-lockfile) || return 1
   mkdir -p "$(dirname "$FRONTEND_LOG_FILE")"
-  # setsid puts the dev server in its own process group so the whole tree can be stopped.
-  (cd "$FRONTEND_DIR" && JOBS_RADAR_API_PORT="$(api_port)" nohup setsid pnpm dev \
-      --host "$(bind_addr)" --port "$(frontend_port)" --strictPort >"$FRONTEND_LOG_FILE" 2>&1 &
-   echo $! >"$FRONTEND_PID_FILE")
+  # The whole group is redirected so this script never holds a caller's pipe open, and setsid
+  # makes the dev server a session leader so the entire process tree can be stopped (see
+  # frontend_stop). `exec` keeps the recorded PID equal to the server process.
+  (cd "$FRONTEND_DIR" && JOBS_RADAR_API_PORT="$(api_port)" exec setsid pnpm dev \
+      --host "$(bind_addr)" --port "$(frontend_port)" --strictPort) \
+      >"$FRONTEND_LOG_FILE" 2>&1 </dev/null &
+  echo $! >"$FRONTEND_PID_FILE"
   sleep 1
   local i
   for i in $(seq 1 30); do
@@ -208,7 +211,11 @@ frontend_start() {
 frontend_stop() {
   local pid; pid="$(frontend_pid)"
   if [[ -z "$pid" ]]; then info "frontend not running."; return 0; fi
+  # Signal the whole process group (pnpm, its shell and vite), then make sure it is gone.
   kill -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null
+  local i
+  for i in 1 2 3 4 5 6 7 8 9 10; do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done
+  kill -0 "$pid" 2>/dev/null && kill -9 -- "-$pid" 2>/dev/null
   rm -f "$FRONTEND_PID_FILE"; ok "frontend stopped."
 }
 

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Local-first, single-user personal job-market intelligence system. It tracks permitted public job sources, scores jobs against an explicit Career Profile + Search Intent, and keeps a personal inbox of triage decisions. Repository: `iw-jobs-radar`. Python package: `jobs_radar`.
 
-**Phase**: planning / pre-implementation. Build order and rules are in `ai-dev/docs/14 - Implementation Guide.md` (tasks T0–T8, tick boxes there). Only the design pack in `ai-dev/docs/` exists; there is no application code, build, or test tooling yet. Do not assume commands or paths that are not in the docs or in this file. **Do not start implementing until the user explicitly says so.**
+**Phase**: implementation, task T0 (foundation) done; next is T1. Build order and rules are in `ai-dev/docs/14 - Implementation Guide.md` (tasks T0–T8, tick boxes there). Implement only the task the user asked for, in guide order; ask when anything is unclear. Do not assume commands or paths that are not in the docs or in this file.
 
 ## Working rules (NON-NEGOTIABLE)
 
@@ -17,7 +17,7 @@ Local-first, single-user personal job-market intelligence system. It tracks perm
 
 ## Source of truth
 
-Read `ai-dev/docs/` in numeric order (`00` index → `12`) before changing code. Precedence: requirements (02, 04) define *what*; HLD/LLD (05, 06) define *how*; security/privacy (08) overrides convenience. `10 - Agent Handoff Guide` has the working rules and stop conditions; `12 - V1 Operational Release Scope` defines the release boundary; `11` holds locked ADRs (001–039) and open decisions (ODR), which must not be assumed.
+Read `ai-dev/docs/` in numeric order (`00` index → `12`) before changing code. Precedence: requirements (02, 04) define *what*; HLD/LLD (05, 06) define *how*; security/privacy (08) overrides convenience. `10 - Agent Handoff Guide` has the working rules and stop conditions; `12 - V1 Operational Release Scope` defines the release boundary; `11` holds locked ADRs (001–040) and open decisions (ODR), which must not be assumed.
 
 ## Architecture (big picture)
 
@@ -47,7 +47,36 @@ Core invariants that span many files:
 
 Direction from research R-00170 (`docs/research/R-00170-frontend-design-research.md`): calm, neutral, colour-only-for-meaning; at most two disclosure levels (inbox row → detail panel); keyboard-first list+detail inbox; density toggle; Inter ~14px with tabular numerals; every status/fit shown with text or icon, never colour alone (WCAG 1.4.1); fit score rendered as an accessible `meter`; sparklines for trends; shadcn/ui + Radix + Tailwind. The agreed visual reference is the static mock-up `docs/design/frontend-mock.html` (synthetic data; accent option still to be chosen).
 
-## Technical decisions (ADR-029 to ADR-038)
+## Commands
+
+Run from the repository root (`make help` lists everything). Prerequisites: Docker, `uv`, Node 22 with pnpm through corepack (`corepack enable --install-directory ~/.local/bin pnpm`; the version is pinned in `frontend/package.json`; pnpm 12 did not work through corepack here).
+
+```bash
+./jobs-radar.sh --init-env        # create .env (random DB password and credential key); never commit it
+./jobs-radar.sh --quick-start     # db + api + worker (Docker), wait healthy, start frontend (Vite, outside Docker)
+./jobs-radar.sh --health          # deep check; exit 0 only if everything running is healthy
+./jobs-radar.sh --logs api --lines 50 | --status | --restart worker | --rebuild api | --quick-stop | --help
+
+make quality                      # backend gates: ruff, format check, mypy strict, import-linter, bandit, licences, column docs
+make quality-frontend             # eslint (0 warnings), prettier, tsc, licence check
+make test                         # backend unit + integration (needs Docker; PostgreSQL testcontainer)
+make test-unit                    # backend unit only, no Docker
+make test-frontend                # Vitest
+make test-e2e                     # Playwright against the running stack (see below)
+make coverage                     # backend coverage, fails under 80%
+make security-sast                # semgrep (needs network for rule packs); make secret-scan  # gitleaks via Docker
+make openapi / make api-client    # export backend/openapi.json, regenerate the typed frontend client
+make check                        # quality + quality-frontend + test + test-frontend
+```
+
+Single tests: `cd backend && uv run pytest tests/unit/test_settings.py::test_defaults_match_adr_019_and_adr_032 -q`; `cd frontend && pnpm test src/theme/ThemeProvider.test.tsx`.
+
+- Changing the API: run `make api-client` and commit `backend/openapi.json` and `frontend/src/api/schema.d.ts` (a unit test fails if the snapshot is stale).
+- Playwright never downloads browsers. `frontend/playwright.config.ts` uses `JOBS_RADAR_CHROMIUM_PATH` or the executable in `.playwright/cli.config.json` (local, git-ignored; currently `chromium-1228`). Agents use `playwright-cli` for ad-hoc browsing; it blocks `file:` URLs, so serve static files over HTTP.
+- Pick up `.env` ports automatically: the launcher, Compose and Vite all read `JOBS_RADAR_*`.
+- The test suites block network sockets except loopback and the Docker socket; never remove that.
+
+## Technical decisions (ADR-029 to ADR-040)
 
 - Layout: `backend/` (`src/jobs_radar/{api,schemas,services,repositories,db,domain,adapters,worker,core}`), `frontend/`, root `Makefile`, `docker-compose.yml` (+ `docker-compose.dev.yml`), `.env.example`, launcher `jobs-radar.sh`. Import-linter: adapters never import repositories/db; `domain` and the matching engine import nothing outward.
 - PostgreSQL 18; SQLAlchemy 2 async + psycopg 3; Alembic; primary keys are `BIGINT GENERATED BY DEFAULT AS IDENTITY` named `{table}_id`; JSONB payloads validated by Pydantic with `schema_version`; DB triggers make revision/snapshot/extraction/evaluation/event tables append-only.
@@ -101,7 +130,6 @@ Secondary (periodic, non-blocking): vulture (`make dead-code`), deptry (`make de
 - **Tests must never make real network requests or use the development source seed** (the Greenhouse board-token seed is for local development only). Stub the HTTP layer with recorded synthetic responses and block outbound network in the test session so an accidental real call fails the test (ADR-015).
 - **Integration tests MUST NEVER connect to the development database.** Each session uses a temporary PostgreSQL container via `testcontainers[postgres]`, with Alembic migrations applied on it. Never hardcode DB URLs/credentials or add fallbacks pointing at a dev DB. DB, `app`, `client`, `db_session` fixtures live in `tests/integration/conftest.py`, not the root `tests/conftest.py`.
 - `app`/`client` fixtures are session-scoped (single event loop: `asyncio_default_fixture_loop_scope = "session"`); tests must not assign to `app.state` directly — use `monkeypatch.setattr(app.state, ...)`.
-- Expected command categories: `uv run pytest backend/tests -q`, `pnpm test --run`, `pnpm exec playwright test`, `docker compose config`, `docker compose up --build`.
 - Headless WSL/Linux: use **`playwright-cli`** for all browser interaction (run `playwright-cli kill-all` first). Never use `agent-browser`, `npx playwright install`, or `chromium.launch()` scripts.
 
 ### Database conventions

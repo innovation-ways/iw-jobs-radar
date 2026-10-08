@@ -1,0 +1,82 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
+import { describe, expect, it, vi } from 'vitest'
+import { AppRoutes } from '@/AppRoutes'
+import { ThemeProvider } from '@/theme/ThemeProvider'
+
+vi.mock('@/api/client', () => ({
+  api: {
+    GET: vi.fn().mockResolvedValue({
+      data: { status: 'ready', components: { database: 'up', worker: 'up' } },
+      response: { status: 200 },
+    }),
+  },
+}))
+
+function renderAt(path: string) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  return render(
+    <QueryClientProvider client={client}>
+      <ThemeProvider>
+        <MemoryRouter initialEntries={[path]}>
+          <AppRoutes />
+        </MemoryRouter>
+      </ThemeProvider>
+    </QueryClientProvider>,
+  )
+}
+
+const ITEMS = [
+  'Today',
+  'Inbox',
+  'Companies',
+  'Trends',
+  'Sources',
+  'Profile & intent',
+  'AI & privacy',
+]
+
+describe('AppShell', () => {
+  it('lists every navigation item', () => {
+    renderAt('/inbox')
+    const nav = screen.getByRole('navigation', { name: /main/i })
+    for (const label of ITEMS) {
+      expect(within(nav).getByRole('link', { name: new RegExp(label, 'i') })).toBeInTheDocument()
+    }
+  })
+
+  it('marks the current page for assistive technology', () => {
+    renderAt('/companies')
+    const nav = screen.getByRole('navigation', { name: /main/i })
+    expect(within(nav).getByRole('link', { name: /companies/i })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    expect(within(nav).getByRole('link', { name: /inbox/i })).not.toHaveAttribute('aria-current')
+  })
+
+  it('shows the page title in the top bar and navigates on click', async () => {
+    renderAt('/inbox')
+    expect(screen.getByRole('heading', { level: 1, name: 'Inbox' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('link', { name: /trends/i }))
+    expect(screen.getByRole('heading', { level: 1, name: 'Trends' })).toBeInTheDocument()
+  })
+
+  it('redirects the root path to the inbox', () => {
+    renderAt('/')
+    expect(screen.getByRole('heading', { level: 1, name: 'Inbox' })).toBeInTheDocument()
+  })
+
+  it('offers a theme switch that changes the document theme', async () => {
+    renderAt('/inbox')
+    await userEvent.click(screen.getByRole('button', { name: /dark/i }))
+    expect(document.documentElement.dataset.theme).toBe('dark')
+  })
+
+  it('shows a not-found page for unknown routes', () => {
+    renderAt('/nope')
+    expect(screen.getByRole('heading', { level: 1, name: /not found/i })).toBeInTheDocument()
+  })
+})

@@ -22,7 +22,7 @@ async def count(session: AsyncSession, model: type, **filters: object) -> int:
 
 async def test_upserting_a_new_posting_creates_it(db_session: AsyncSession) -> None:
     source = await make_source(db_session, await make_company(db_session))
-    posting, created = await JobRepository(db_session).upsert_posting(
+    posting_result = await JobRepository(db_session).upsert_posting(
         source,
         external_job_id="100",
         source_url="https://jobs.example.test/100",
@@ -30,6 +30,8 @@ async def test_upserting_a_new_posting_creates_it(db_session: AsyncSession) -> N
         content_hash="sha256:aaa",
         seen_at=NOW,
     )
+    posting = posting_result.posting
+    created = posting_result.created
     assert created is True
     assert posting.first_seen_at == NOW
     assert posting.last_seen_at == NOW
@@ -43,7 +45,7 @@ async def test_upserting_again_keeps_one_row_and_refreshes_last_seen(
 ) -> None:
     source = await make_source(db_session, await make_company(db_session))
     repository = JobRepository(db_session)
-    first, _ = await repository.upsert_posting(
+    first_result = await repository.upsert_posting(
         source,
         external_job_id="100",
         source_url="u1",
@@ -51,8 +53,9 @@ async def test_upserting_again_keeps_one_row_and_refreshes_last_seen(
         content_hash="sha256:aaa",
         seen_at=NOW,
     )
+    first = first_result.posting
     later = NOW + timedelta(days=1)
-    second, created = await repository.upsert_posting(
+    second_result = await repository.upsert_posting(
         source,
         external_job_id="100",
         source_url="u2",
@@ -60,6 +63,8 @@ async def test_upserting_again_keeps_one_row_and_refreshes_last_seen(
         content_hash="sha256:bbb",
         seen_at=later,
     )
+    second = second_result.posting
+    created = second_result.created
     assert created is False
     assert second.job_posting_id == first.job_posting_id
     assert second.first_seen_at == NOW  # never moves
@@ -75,12 +80,13 @@ async def test_upserting_again_keeps_one_row_and_refreshes_last_seen(
 async def test_a_closed_posting_that_reappears_is_reopened(db_session: AsyncSession) -> None:
     source = await make_source(db_session, await make_company(db_session))
     repository = JobRepository(db_session)
-    posting, _ = await repository.upsert_posting(
+    posting_result = await repository.upsert_posting(
         source, external_job_id="7", source_url="u", title="t", content_hash="sha256:a", seen_at=NOW
     )
+    posting = posting_result.posting
     posting.closed_at = NOW + timedelta(days=1)
     await db_session.flush()
-    again, _ = await repository.upsert_posting(
+    again_result = await repository.upsert_posting(
         source,
         external_job_id="7",
         source_url="u",
@@ -88,6 +94,7 @@ async def test_a_closed_posting_that_reappears_is_reopened(db_session: AsyncSess
         content_hash="sha256:a",
         seen_at=NOW + timedelta(days=2),
     )
+    again = again_result.posting
     assert again.closed_at is None
 
 
@@ -96,9 +103,10 @@ async def test_identical_content_does_not_create_a_second_snapshot(
 ) -> None:
     source = await make_source(db_session, await make_company(db_session))
     repository = JobRepository(db_session)
-    posting, _ = await repository.upsert_posting(
+    posting_result = await repository.upsert_posting(
         source, external_job_id="1", source_url="u", title="t", content_hash="sha256:a", seen_at=NOW
     )
+    posting = posting_result.posting
     first, created_first = await repository.add_snapshot_if_new(
         posting,
         content_hash="sha256:a",
@@ -123,9 +131,10 @@ async def test_changed_content_adds_a_snapshot_and_latest_returns_the_newest(
 ) -> None:
     source = await make_source(db_session, await make_company(db_session))
     repository = JobRepository(db_session)
-    posting, _ = await repository.upsert_posting(
+    posting_result = await repository.upsert_posting(
         source, external_job_id="1", source_url="u", title="t", content_hash="sha256:a", seen_at=NOW
     )
+    posting = posting_result.posting
     await repository.add_snapshot_if_new(
         posting, content_hash="sha256:a", fetched_at=NOW, raw_payload={}, normalised={}
     )
@@ -146,9 +155,10 @@ async def test_changed_content_adds_a_snapshot_and_latest_returns_the_newest(
 async def test_a_snapshot_keeps_the_payload_exactly(db_session: AsyncSession) -> None:
     source = await make_source(db_session, await make_company(db_session))
     repository = JobRepository(db_session)
-    posting, _ = await repository.upsert_posting(
+    posting_result = await repository.upsert_posting(
         source, external_job_id="1", source_url="u", title="t", content_hash="sha256:a", seen_at=NOW
     )
+    posting = posting_result.posting
     raw = {"id": 1, "nested": {"list": [1, 2, 3]}, "text": "naïve café"}
     snapshot, _ = await repository.add_snapshot_if_new(
         posting,

@@ -5,6 +5,7 @@ from fastapi import APIRouter
 from jobs_radar.api.routes import (
     ai_settings,
     companies,
+    company_dossier,
     digests,
     documents,
     evaluations,
@@ -31,3 +32,4 @@ v1_router.include_router(ai_settings.router)
 v1_router.include_router(documents.router)
 v1_router.include_router(proposals.router)
 v1_router.include_router(companies.router)
+v1_router.include_router(company_dossier.router)

@@ -1,15 +1,70 @@
 """Company list and dossiers (T7). The caller owns the transaction."""
 
 from collections.abc import Callable
-from datetime import UTC, datetime
+from dataclasses import dataclass
+from datetime import UTC, date, datetime, timedelta
+from typing import Any
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jobs_radar.repositories.company_list import CompanyListQueries, CompanyPage, Sort
+from jobs_radar.core.errors import NotFoundError
+from jobs_radar.db.models import (
+    Company,
+    CompanyEnrichmentCandidate,
+    CompanyFact,
+    SourceConfiguration,
+)
+from jobs_radar.repositories.company_list import (
+    CompanyDossierQueries,
+    CompanyListQueries,
+    CompanyPage,
+    OfferRow,
+    Sort,
+)
 
 Clock = Callable[[], datetime]
 # Default minimum fit for an offer to count as relevant (document 13, section 11.2).
 DEFAULT_RELEVANCE_MIN_SCORE = 45
+REFRESH_AFTER = timedelta(days=30)
+HIRING_WEEKS = 12
+OFFER_LIMIT = 50
+
+
+@dataclass(frozen=True)
+class FactView:
+    """A current fact with its provenance."""
+
+    fact_key: str
+    value: Any
+    origin: str
+    source_name: str
+    source_url: str | None
+    retrieved_at: datetime
+    licence: str | None
+    confidence: float | None
+
+
+@dataclass(frozen=True)
+class HiringWeek:
+    """New and open offers in one week (weeks start on Monday, UTC)."""
+
+    week_start: date
+    new_offers: int
+    open_offers: int
+
+
+@dataclass(frozen=True)
+class Dossier:
+    """Everything the company dossier shows."""
+
+    company: Company
+    facts: list[FactView]
+    candidates: list[CompanyEnrichmentCandidate]
+    offers: list[OfferRow]
+    hiring: list[HiringWeek]
+    boards: list[SourceConfiguration]
+    stale: bool
 
 
 def _utc_now() -> datetime:
@@ -20,7 +75,9 @@ class CompanyService:
     """Use cases around companies."""
 
     def __init__(self, session: AsyncSession, *, clock: Clock = _utc_now) -> None:
+        self._session = session
         self._queries = CompanyListQueries(session)
+        self._dossier = CompanyDossierQueries(session)
         self._clock = clock
 
     async def list_companies(
@@ -49,3 +106,84 @@ class CompanyService:
             limit=limit,
             offset=offset,
         )
+
+    async def dossier(
+        self, owner_id: int, company_id: int, *, search_intent_id: int | None
+    ) -> Dossier:
+        """Return the company with its current facts, candidates, offers and hiring series."""
+        del owner_id
+        company = await self._session.get(Company, company_id)
+        if company is None:
+            msg = f"Company {company_id} does not exist."
+            raise NotFoundError(msg)
+        now = self._clock()
+        facts = (
+            await self._session.execute(
+                select(CompanyFact)
+                .where(CompanyFact.company_id == company_id, CompanyFact.superseded_at.is_(None))
+                .order_by(CompanyFact.fact_key)
+            )
+        ).scalars()
+        candidates = (
+            await self._session.execute(
+                select(CompanyEnrichmentCandidate)
+                .where(
+                    CompanyEnrichmentCandidate.company_id == company_id,
+                    CompanyEnrichmentCandidate.status == "pending",
+                )
+                .order_by(CompanyEnrichmentCandidate.company_enrichment_candidate_id)
+            )
+        ).scalars()
+        boards = (
+            await self._session.execute(
+                select(SourceConfiguration)
+                .where(SourceConfiguration.company_id == company_id)
+                .order_by(SourceConfiguration.source_configuration_id)
+            )
+        ).scalars()
+        return Dossier(
+            company=company,
+            facts=[
+                FactView(
+                    f.fact_key,
+                    f.value_json,
+                    f.origin,
+                    f.source_name,
+                    f.source_url,
+                    f.retrieved_at,
+                    f.licence,
+                    float(f.confidence) if f.confidence is not None else None,
+                )
+                for f in facts
+            ],
+            candidates=list(candidates),
+            offers=await self._dossier.offers(company_id, search_intent_id, OFFER_LIMIT),
+            hiring=self._hiring(await self._dossier.lifespans(company_id), now),
+            boards=list(boards),
+            stale=company.enriched_at is None or now - company.enriched_at > REFRESH_AFTER,
+        )
+
+    @staticmethod
+    def _hiring(spans: list[tuple[datetime, datetime | None]], now: datetime) -> list[HiringWeek]:
+        """Weekly new and open offers for the last 12 weeks, oldest first."""
+        monday = (now - timedelta(days=now.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        weeks = []
+        for n in range(HIRING_WEEKS - 1, -1, -1):
+            start = monday - timedelta(weeks=n)
+            end = min(start + timedelta(days=7), now)
+            weeks.append(
+                HiringWeek(
+                    week_start=start.date(),
+                    new_offers=sum(
+                        1 for first, _ in spans if start <= first < start + timedelta(days=7)
+                    ),
+                    open_offers=sum(
+                        1
+                        for first, closed in spans
+                        if first <= end and (closed is None or closed > end)
+                    ),
+                )
+            )
+        return weeks

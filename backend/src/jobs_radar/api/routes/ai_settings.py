@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jobs_radar.api.deps import get_ai_settings_service, get_session
+from jobs_radar.api.deps import get_ai_settings_service, get_integration_service, get_session
 from jobs_radar.domain.enums import LOCAL_OWNER_ID
 from jobs_radar.schemas.ai_settings import (
     AiSettingsRead,
@@ -19,11 +19,13 @@ from jobs_radar.schemas.ai_settings import (
     PrivacyUpdate,
 )
 from jobs_radar.services.ai_settings import AiSettingsService, ConnectionView, connection_view
+from jobs_radar.services.integrations import IntegrationService
 
 router = APIRouter(tags=["ai-settings"])
 
 Service = Annotated[AiSettingsService, Depends(get_ai_settings_service)]
 Session = Annotated[AsyncSession, Depends(get_session)]
+Integrations = Annotated[IntegrationService, Depends(get_integration_service)]
 
 
 def connection_read(view: ConnectionView) -> ConnectionRead:
@@ -32,7 +34,9 @@ def connection_read(view: ConnectionView) -> ConnectionRead:
 
 
 @router.get("/settings/ai", response_model=AiSettingsRead)
-async def get_ai_settings(service: Service, session: Session) -> AiSettingsRead:
+async def get_ai_settings(
+    service: Service, session: Session, integrations: Integrations
+) -> AiSettingsRead:
     """Return the safe projection: connections with credential status, mode and privacy."""
     view = await service.get(LOCAL_OWNER_ID)
     await session.commit()  # first use creates the privacy row
@@ -42,6 +46,7 @@ async def get_ai_settings(service: Service, session: Session) -> AiSettingsRead:
         jobs_connection_id=view.jobs_connection_id,
         key_configured=view.key_configured,
         connections=[connection_read(c) for c in view.connections],
+        integrations=await integrations.status(LOCAL_OWNER_ID),
         privacy=PrivacyRead(
             redact_contact_details=view.privacy.redact_contact_details,
             version=view.privacy.version,
@@ -120,7 +125,7 @@ async def test_connection(provider_connection_id: int, service: Service) -> Conn
 
 @router.put("/settings/ai/import-connection", response_model=AiSettingsRead)
 async def select_import_connection(
-    body: ConnectionSelect, service: Service, session: Session
+    body: ConnectionSelect, service: Service, session: Session, integrations: Integrations
 ) -> AiSettingsRead:
     """Choose the connection used to import a CV, or switch it off (No AI)."""
     if body.provider_connection_id is None:
@@ -128,12 +133,12 @@ async def select_import_connection(
     else:
         await service.activate_for_import(LOCAL_OWNER_ID, body.provider_connection_id)
     await session.commit()
-    return await get_ai_settings(service, session)
+    return await get_ai_settings(service, session, integrations)
 
 
 @router.put("/settings/ai/jobs-connection", response_model=AiSettingsRead)
 async def select_jobs_connection(
-    body: ConnectionSelect, service: Service, session: Session
+    body: ConnectionSelect, service: Service, session: Session, integrations: Integrations
 ) -> AiSettingsRead:
     """Choose the local connection that analyses collected jobs, or switch it off."""
     if body.provider_connection_id is None:
@@ -141,7 +146,7 @@ async def select_jobs_connection(
     else:
         await service.activate_for_jobs(LOCAL_OWNER_ID, body.provider_connection_id)
     await session.commit()
-    return await get_ai_settings(service, session)
+    return await get_ai_settings(service, session, integrations)
 
 
 @router.put("/settings/privacy", response_model=PrivacyRead)
@@ -156,3 +161,23 @@ async def update_privacy(body: PrivacyUpdate, service: Service, session: Session
     return PrivacyRead(
         redact_contact_details=setting.redact_contact_details, version=setting.version
     )
+
+
+@router.put("/settings/integrations/{name}/credential", response_model=dict[str, str])
+async def write_integration_credential(
+    name: str, body: CredentialWrite, integrations: Integrations, session: Session
+) -> dict[str, str]:
+    """Store an optional integration token (for example GitHub); write-only."""
+    await integrations.set_token(LOCAL_OWNER_ID, name, body.secret)
+    await session.commit()
+    return await integrations.status(LOCAL_OWNER_ID)
+
+
+@router.delete("/settings/integrations/{name}/credential", response_model=dict[str, str])
+async def delete_integration_credential(
+    name: str, integrations: Integrations, session: Session
+) -> dict[str, str]:
+    """Delete an optional integration token."""
+    await integrations.clear_token(LOCAL_OWNER_ID, name)
+    await session.commit()
+    return await integrations.status(LOCAL_OWNER_ID)

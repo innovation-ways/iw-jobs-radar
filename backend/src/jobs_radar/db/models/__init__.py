@@ -27,7 +27,7 @@ from jobs_radar.db.models.profile import (
     ProfileRevision,
     ProposalItem,
 )
-from jobs_radar.db.models.provider import PrivacySetting, ProviderConnection
+from jobs_radar.db.models.provider import IntegrationCredential, PrivacySetting, ProviderConnection
 from jobs_radar.db.models.skills import Skill, SkillAlias, SkillCandidate, SkillRelation
 from jobs_radar.db.models.source import (
     CollectionRun,
@@ -50,6 +50,7 @@ __all__ = [
     "Document",
     "Evidence",
     "InboxEvent",
+    "IntegrationCredential",
     "IntentRevision",
     "JobChangeEvent",
     "JobExtraction",

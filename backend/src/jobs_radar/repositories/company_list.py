@@ -196,3 +196,88 @@ class CompanyListQueries:
             rows=[CompanyRow(**dict(row._mapping)) for row in rows],
             total=total,
         )
+
+
+@dataclass(frozen=True)
+class OfferRow:
+    """One opportunity of a company with its latest fit under the intent."""
+
+    job_opportunity_id: int
+    title: str
+    source_url: str
+    first_seen_at: datetime
+    closed_at: datetime | None
+    fit_score: int | None
+    recommendation: str | None
+
+    @property
+    def closed(self) -> bool:
+        """Whether the opportunity is no longer listed."""
+        return self.closed_at is not None
+
+
+class CompanyDossierQueries:
+    """Reads what the dossier shows besides the company row."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def offers(
+        self, company_id: int, search_intent_id: int | None, limit: int
+    ) -> list[OfferRow]:
+        """Return the company's opportunities, newest first, with the latest fit (if any)."""
+        from jobs_radar.db.models import JobPosting  # local: keeps the module header small
+
+        evaluation = aliased(MatchEvaluation)
+        newer_snapshot = aliased(JobSnapshot)
+        newer_evaluation = aliased(MatchEvaluation)
+        if search_intent_id is None:
+            on_evaluation: Any = literal(False)
+        else:
+            latest_snapshot = (
+                select(func.max(newer_snapshot.job_snapshot_id))
+                .where(newer_snapshot.job_posting_id == JobOpportunity.primary_job_posting_id)
+                .correlate(JobOpportunity)
+                .scalar_subquery()
+            )
+            latest_evaluation = (
+                select(func.max(newer_evaluation.match_evaluation_id))
+                .join(
+                    IntentRevision,
+                    IntentRevision.intent_revision_id == newer_evaluation.intent_revision_id,
+                )
+                .where(
+                    newer_evaluation.job_snapshot_id == latest_snapshot,
+                    IntentRevision.search_intent_id == search_intent_id,
+                )
+                .correlate(JobOpportunity)
+                .scalar_subquery()
+            )
+            on_evaluation = evaluation.match_evaluation_id == latest_evaluation
+        rows = await self._session.execute(
+            select(
+                JobOpportunity.job_opportunity_id,
+                JobPosting.title,
+                JobPosting.source_url,
+                JobOpportunity.first_seen_at,
+                JobOpportunity.closed_at,
+                evaluation.fit_score,
+                evaluation.recommendation,
+            )
+            .select_from(JobOpportunity)
+            .join(JobPosting, JobPosting.job_posting_id == JobOpportunity.primary_job_posting_id)
+            .outerjoin(evaluation, on_evaluation)
+            .where(JobOpportunity.company_id == company_id)
+            .order_by(JobOpportunity.first_seen_at.desc(), JobOpportunity.job_opportunity_id.desc())
+            .limit(limit)
+        )
+        return [OfferRow(*row) for row in rows.all()]
+
+    async def lifespans(self, company_id: int) -> list[tuple[datetime, datetime | None]]:
+        """Return ``(first_seen_at, closed_at)`` of every opportunity of the company."""
+        rows = await self._session.execute(
+            select(JobOpportunity.first_seen_at, JobOpportunity.closed_at).where(
+                JobOpportunity.company_id == company_id
+            )
+        )
+        return [(first, closed) for first, closed in rows.all()]

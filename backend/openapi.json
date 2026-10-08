@@ -23,6 +23,17 @@
             ],
             "title": "Import Connection Id"
           },
+          "integrations": {
+            "additionalProperties": {
+              "enum": [
+                "saved",
+                "none"
+              ],
+              "type": "string"
+            },
+            "title": "Integrations",
+            "type": "object"
+          },
           "jobs_connection_id": {
             "anyOf": [
               {
@@ -57,7 +68,8 @@
           "jobs_connection_id",
           "key_configured",
           "connections",
-          "privacy"
+          "privacy",
+          "integrations"
         ],
         "title": "AiSettingsRead",
         "type": "object"
@@ -114,6 +126,90 @@
           "timezone"
         ],
         "title": "BaseLocation",
+        "type": "object"
+      },
+      "BoardRead": {
+        "additionalProperties": false,
+        "description": "A job board of the company.",
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "source_configuration_id": {
+            "title": "Source Configuration Id",
+            "type": "integer"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source_configuration_id",
+          "display_name",
+          "enabled",
+          "url"
+        ],
+        "title": "BoardRead",
+        "type": "object"
+      },
+      "CandidateRead": {
+        "additionalProperties": false,
+        "description": "An entity that may be the company, waiting for the owner's decision.",
+        "properties": {
+          "company_enrichment_candidate_id": {
+            "title": "Company Enrichment Candidate Id",
+            "type": "integer"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "external_id": {
+            "title": "External Id",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "source_name": {
+            "title": "Source Name",
+            "type": "string"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
+          }
+        },
+        "required": [
+          "company_enrichment_candidate_id",
+          "source_name",
+          "external_id",
+          "label",
+          "description",
+          "website"
+        ],
+        "title": "CandidateRead",
         "type": "object"
       },
       "Certification": {
@@ -347,6 +443,128 @@
           "results"
         ],
         "title": "CollectionRunRead",
+        "type": "object"
+      },
+      "CompanyDossierRead": {
+        "additionalProperties": false,
+        "description": "The company dossier.",
+        "properties": {
+          "boards": {
+            "items": {
+              "$ref": "#/components/schemas/BoardRead"
+            },
+            "title": "Boards",
+            "type": "array"
+          },
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateRead"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "careers_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Careers Url"
+          },
+          "company_id": {
+            "title": "Company Id",
+            "type": "integer"
+          },
+          "employer_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employer Type"
+          },
+          "enriched_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enriched At"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/FactRead"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "hiring": {
+            "items": {
+              "$ref": "#/components/schemas/HiringWeekRead"
+            },
+            "title": "Hiring",
+            "type": "array"
+          },
+          "homepage_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Homepage Url"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "offers": {
+            "items": {
+              "$ref": "#/components/schemas/OfferRead"
+            },
+            "title": "Offers",
+            "type": "array"
+          },
+          "stale": {
+            "title": "Stale",
+            "type": "boolean"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "company_id",
+          "name",
+          "homepage_url",
+          "careers_url",
+          "employer_type",
+          "enriched_at",
+          "stale",
+          "facts",
+          "candidates",
+          "offers",
+          "hiring",
+          "boards",
+          "warnings"
+        ],
+        "title": "CompanyDossierRead",
         "type": "object"
       },
       "CompanyList": {
@@ -1666,6 +1884,93 @@
         "title": "ExportedProfile",
         "type": "object"
       },
+      "FactRead": {
+        "additionalProperties": false,
+        "description": "A current fact with its provenance; ``label`` tells how much to trust it.",
+        "properties": {
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "fact_key": {
+            "title": "Fact Key",
+            "type": "string"
+          },
+          "label": {
+            "enum": [
+              "Source",
+              "AI inference",
+              "You"
+            ],
+            "title": "Label",
+            "type": "string"
+          },
+          "licence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Licence"
+          },
+          "origin": {
+            "enum": [
+              "source",
+              "public_dataset",
+              "ai_inference",
+              "user"
+            ],
+            "title": "Origin",
+            "type": "string"
+          },
+          "retrieved_at": {
+            "format": "date-time",
+            "title": "Retrieved At",
+            "type": "string"
+          },
+          "source_name": {
+            "title": "Source Name",
+            "type": "string"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "required": [
+          "fact_key",
+          "value",
+          "origin",
+          "label",
+          "source_name",
+          "source_url",
+          "retrieved_at",
+          "licence",
+          "confidence"
+        ],
+        "title": "FactRead",
+        "type": "object"
+      },
       "Filters": {
         "additionalProperties": false,
         "description": "Optional filters that are not scored.",
@@ -1729,6 +2034,32 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HiringWeekRead": {
+        "additionalProperties": false,
+        "description": "New and open offers in one week.",
+        "properties": {
+          "new_offers": {
+            "title": "New Offers",
+            "type": "integer"
+          },
+          "open_offers": {
+            "title": "Open Offers",
+            "type": "integer"
+          },
+          "week_start": {
+            "format": "date",
+            "title": "Week Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "week_start",
+          "new_offers",
+          "open_offers"
+        ],
+        "title": "HiringWeekRead",
         "type": "object"
       },
       "HoursStances": {
@@ -2909,6 +3240,66 @@
           "status"
         ],
         "title": "LivenessResponse",
+        "type": "object"
+      },
+      "OfferRead": {
+        "additionalProperties": false,
+        "description": "One opportunity of the company.",
+        "properties": {
+          "closed": {
+            "title": "Closed",
+            "type": "boolean"
+          },
+          "first_seen_at": {
+            "format": "date-time",
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "fit_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fit Score"
+          },
+          "job_opportunity_id": {
+            "title": "Job Opportunity Id",
+            "type": "integer"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommendation"
+          },
+          "source_url": {
+            "title": "Source Url",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_opportunity_id",
+          "title",
+          "source_url",
+          "first_seen_at",
+          "closed",
+          "fit_score",
+          "recommendation"
+        ],
+        "title": "OfferRead",
         "type": "object"
       },
       "OnsiteHybridRule": {
@@ -5184,6 +5575,213 @@
         ]
       }
     },
+    "/api/v1/companies/{company_id}": {
+      "get": {
+        "description": "Return the dossier: sourced facts, pending candidates, offers and the hiring series.",
+        "operationId": "get_company_api_v1_companies__company_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "title": "Company Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search_intent_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search Intent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDossierRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Company",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
+    "/api/v1/companies/{company_id}/candidates/{company_enrichment_candidate_id}/confirm": {
+      "post": {
+        "description": "Say that a candidate entity is this company; its facts are stored.",
+        "operationId": "confirm_candidate_api_v1_companies__company_id__candidates__company_enrichment_candidate_id__confirm_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "title": "Company Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "company_enrichment_candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Company Enrichment Candidate Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDossierRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm Candidate",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
+    "/api/v1/companies/{company_id}/candidates/{company_enrichment_candidate_id}/reject": {
+      "post": {
+        "description": "Say that a candidate entity is not this company; it is not proposed again.",
+        "operationId": "reject_candidate_api_v1_companies__company_id__candidates__company_enrichment_candidate_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "title": "Company Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "company_enrichment_candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Company Enrichment Candidate Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDossierRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reject Candidate",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
+    "/api/v1/companies/{company_id}/enrich": {
+      "post": {
+        "description": "Look the company up in the public datasets (Wikidata first) and refresh its facts.",
+        "operationId": "enrich_company_api_v1_companies__company_id__enrich_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "title": "Company Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDossierRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Enrich Company",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
     "/api/v1/digests/daily": {
       "get": {
         "description": "Return new high-fit opportunities, changed shortlisted jobs and sources needing attention.",
@@ -7321,6 +7919,108 @@
           }
         },
         "summary": "Select Jobs Connection",
+        "tags": [
+          "ai-settings"
+        ]
+      }
+    },
+    "/api/v1/settings/integrations/{name}/credential": {
+      "delete": {
+        "description": "Delete an optional integration token.",
+        "operationId": "delete_integration_credential_api_v1_settings_integrations__name__credential_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Delete Integration Credential Api V1 Settings Integrations  Name  Credential Delete",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Integration Credential",
+        "tags": [
+          "ai-settings"
+        ]
+      },
+      "put": {
+        "description": "Store an optional integration token (for example GitHub); write-only.",
+        "operationId": "write_integration_credential_api_v1_settings_integrations__name__credential_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Write Integration Credential Api V1 Settings Integrations  Name  Credential Put",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Write Integration Credential",
         "tags": [
           "ai-settings"
         ]

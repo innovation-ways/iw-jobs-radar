@@ -6,6 +6,7 @@ from typing import Annotated
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from jobs_radar.adapters.enrichment.registry import build_enrichment_adapters
 from jobs_radar.adapters.sources.base import JobSourceAdapter
 from jobs_radar.core.settings import Settings
 from jobs_radar.domain.enums import LOCAL_OWNER_ID, SourceType
@@ -16,8 +17,10 @@ from jobs_radar.services.companies import CompanyService
 from jobs_radar.services.dedup import DedupService
 from jobs_radar.services.document_store import DocumentTextStore
 from jobs_radar.services.documents import DocumentService
+from jobs_radar.services.enrichment import EnrichmentAdapters, EnrichmentService
 from jobs_radar.services.evaluation import EvaluationService
 from jobs_radar.services.inbox import InboxService
+from jobs_radar.services.integrations import IntegrationService
 from jobs_radar.services.intents import IntentService
 from jobs_radar.services.profile_data import ProfileDataService
 from jobs_radar.services.profiles import ProfileService
@@ -164,3 +167,24 @@ async def get_inbox_default_intent(
 ) -> int | None:
     """Return the owner's first enabled intent, used when a request names none."""
     return await InboxQueries(session).default_intent_id(LOCAL_OWNER_ID)
+
+
+def get_integration_service(
+    request: Request, session: Annotated[AsyncSession, Depends(get_session)]
+) -> IntegrationService:
+    """Build the integration-credential service (write-only tokens)."""
+    return IntegrationService(session, box=build_credential_box(request.app.state.settings))
+
+
+async def get_enrichment_service(
+    request: Request,
+    session: Annotated[AsyncSession, Depends(get_session)],
+    integrations: Annotated[IntegrationService, Depends(get_integration_service)],
+) -> EnrichmentService:
+    """Build the enrichment service; tests may replace the adapters on the application state."""
+    adapters = getattr(request.app.state, "enrichment_adapters", None)
+    if adapters is None:
+        token = await integrations.token(LOCAL_OWNER_ID, "github")
+        wikidata, wikipedia, gleif, github = build_enrichment_adapters(token)
+        adapters = EnrichmentAdapters(wikidata, wikipedia, gleif, github)
+    return EnrichmentService(session, adapters)

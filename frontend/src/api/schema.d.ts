@@ -48,6 +48,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{company_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Company
+         * @description Return the dossier: sourced facts, pending candidates, offers and the hiring series.
+         */
+        get: operations["get_company_api_v1_companies__company_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/candidates/{company_enrichment_candidate_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm Candidate
+         * @description Say that a candidate entity is this company; its facts are stored.
+         */
+        post: operations["confirm_candidate_api_v1_companies__company_id__candidates__company_enrichment_candidate_id__confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/candidates/{company_enrichment_candidate_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject Candidate
+         * @description Say that a candidate entity is not this company; it is not proposed again.
+         */
+        post: operations["reject_candidate_api_v1_companies__company_id__candidates__company_enrichment_candidate_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/enrich": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enrich Company
+         * @description Look the company up in the public datasets (Wikidata first) and refresh its facts.
+         */
+        post: operations["enrich_company_api_v1_companies__company_id__enrich_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/digests/daily": {
         parameters: {
             query?: never;
@@ -774,6 +854,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/settings/integrations/{name}/credential": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Write Integration Credential
+         * @description Store an optional integration token (for example GitHub); write-only.
+         */
+        put: operations["write_integration_credential_api_v1_settings_integrations__name__credential_put"];
+        post?: never;
+        /**
+         * Delete Integration Credential
+         * @description Delete an optional integration token.
+         */
+        delete: operations["delete_integration_credential_api_v1_settings_integrations__name__credential_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/settings/privacy": {
         parameters: {
             query?: never;
@@ -955,6 +1059,10 @@ export interface components {
             connections: components["schemas"]["ConnectionRead"][];
             /** Import Connection Id */
             import_connection_id: number | null;
+            /** Integrations */
+            integrations: {
+                [key: string]: "saved" | "none";
+            };
             /** Jobs Connection Id */
             jobs_connection_id: number | null;
             /** Key Configured */
@@ -981,6 +1089,38 @@ export interface components {
             place: string;
             /** Timezone */
             timezone: string;
+        };
+        /**
+         * BoardRead
+         * @description A job board of the company.
+         */
+        BoardRead: {
+            /** Display Name */
+            display_name: string;
+            /** Enabled */
+            enabled: boolean;
+            /** Source Configuration Id */
+            source_configuration_id: number;
+            /** Url */
+            url: string;
+        };
+        /**
+         * CandidateRead
+         * @description An entity that may be the company, waiting for the owner's decision.
+         */
+        CandidateRead: {
+            /** Company Enrichment Candidate Id */
+            company_enrichment_candidate_id: number;
+            /** Description */
+            description: string | null;
+            /** External Id */
+            external_id: string;
+            /** Label */
+            label: string;
+            /** Source Name */
+            source_name: string;
+            /** Website */
+            website: string | null;
         };
         /**
          * Certification
@@ -1064,6 +1204,38 @@ export interface components {
             started_at: string | null;
             status: components["schemas"]["RunStatus"];
             trigger: components["schemas"]["RunTrigger"];
+        };
+        /**
+         * CompanyDossierRead
+         * @description The company dossier.
+         */
+        CompanyDossierRead: {
+            /** Boards */
+            boards: components["schemas"]["BoardRead"][];
+            /** Candidates */
+            candidates: components["schemas"]["CandidateRead"][];
+            /** Careers Url */
+            careers_url: string | null;
+            /** Company Id */
+            company_id: number;
+            /** Employer Type */
+            employer_type: string | null;
+            /** Enriched At */
+            enriched_at: string | null;
+            /** Facts */
+            facts: components["schemas"]["FactRead"][];
+            /** Hiring */
+            hiring: components["schemas"]["HiringWeekRead"][];
+            /** Homepage Url */
+            homepage_url: string | null;
+            /** Name */
+            name: string;
+            /** Offers */
+            offers: components["schemas"]["OfferRead"][];
+            /** Stale */
+            stale: boolean;
+            /** Warnings */
+            warnings: string[];
         };
         /**
          * CompanyList
@@ -1580,6 +1752,39 @@ export interface components {
             title: string;
         };
         /**
+         * FactRead
+         * @description A current fact with its provenance; ``label`` tells how much to trust it.
+         */
+        FactRead: {
+            /** Confidence */
+            confidence: number | null;
+            /** Fact Key */
+            fact_key: string;
+            /**
+             * Label
+             * @enum {string}
+             */
+            label: "Source" | "AI inference" | "You";
+            /** Licence */
+            licence: string | null;
+            /**
+             * Origin
+             * @enum {string}
+             */
+            origin: "source" | "public_dataset" | "ai_inference" | "user";
+            /**
+             * Retrieved At
+             * Format: date-time
+             */
+            retrieved_at: string;
+            /** Source Name */
+            source_name: string;
+            /** Source Url */
+            source_url: string | null;
+            /** Value */
+            value: unknown;
+        };
+        /**
          * Filters
          * @description Optional filters that are not scored.
          */
@@ -1610,6 +1815,21 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * HiringWeekRead
+         * @description New and open offers in one week.
+         */
+        HiringWeekRead: {
+            /** New Offers */
+            new_offers: number;
+            /** Open Offers */
+            open_offers: number;
+            /**
+             * Week Start
+             * Format: date
+             */
+            week_start: string;
         };
         /**
          * HoursStances
@@ -2121,6 +2341,29 @@ export interface components {
         LivenessResponse: {
             /** Status */
             status: string;
+        };
+        /**
+         * OfferRead
+         * @description One opportunity of the company.
+         */
+        OfferRead: {
+            /** Closed */
+            closed: boolean;
+            /**
+             * First Seen At
+             * Format: date-time
+             */
+            first_seen_at: string;
+            /** Fit Score */
+            fit_score: number | null;
+            /** Job Opportunity Id */
+            job_opportunity_id: number;
+            /** Recommendation */
+            recommendation: string | null;
+            /** Source Url */
+            source_url: string;
+            /** Title */
+            title: string;
         };
         /**
          * OnsiteHybridRule
@@ -3048,6 +3291,134 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompanyList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_company_api_v1_companies__company_id__get: {
+        parameters: {
+            query?: {
+                search_intent_id?: number | null;
+            };
+            header?: never;
+            path: {
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyDossierRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_candidate_api_v1_companies__company_id__candidates__company_enrichment_candidate_id__confirm_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: number;
+                company_enrichment_candidate_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyDossierRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_candidate_api_v1_companies__company_id__candidates__company_enrichment_candidate_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: number;
+                company_enrichment_candidate_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyDossierRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enrich_company_api_v1_companies__company_id__enrich_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyDossierRead"];
                 };
             };
             /** @description Validation Error */
@@ -4373,6 +4744,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AiSettingsRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    write_integration_credential_api_v1_settings_integrations__name__credential_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_integration_credential_api_v1_settings_integrations__name__credential_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
                 };
             };
             /** @description Validation Error */

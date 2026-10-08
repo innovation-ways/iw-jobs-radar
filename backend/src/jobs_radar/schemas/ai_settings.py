@@ -66,6 +66,7 @@ class AiSettingsRead(StrictModel):
     key_configured: bool
     connections: list[ConnectionRead]
     privacy: PrivacyRead
+    integrations: dict[str, Literal["saved", "none"]]
 
 
 class ConnectionSelect(StrictModel):

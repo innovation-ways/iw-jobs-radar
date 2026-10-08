@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import Index, text
+from sqlalchemy import Index, UniqueConstraint, text
 from sqlalchemy.orm import Mapped
 
 from jobs_radar.db.base import Base, TimestampMixin
@@ -80,3 +80,23 @@ class PrivacySetting(TimestampMixin, Base):
         default=True,
     )
     version: Mapped[int] = version_column()
+
+
+class IntegrationCredential(TimestampMixin, Base):
+    """An encrypted, write-only credential for an optional integration such as GitHub."""
+
+    __tablename__ = "integration_credential"
+    __table_args__ = (
+        UniqueConstraint("owner_id", "name", name="uq_integration_credential_owner_name"),
+        {"comment": "Encrypted credentials of optional integrations (write-only)."},
+    )
+
+    integration_credential_id: Mapped[int] = pk_column("Surrogate primary key of the credential.")
+    owner_id: Mapped[int] = fk_column("owner.owner_id", "Owner of the credential.", index=False)
+    name: Mapped[str] = text_column(
+        "Integration the credential belongs to, for example github.", length=40
+    )
+    credential_ciphertext: Mapped[bytes | None] = bytes_column("Encrypted credential (write-only).")
+    credential_updated_at: Mapped[datetime | None] = timestamp_column(
+        "UTC time at which the credential was last written.", nullable=True
+    )

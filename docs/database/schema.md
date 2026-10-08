@@ -199,6 +199,23 @@ Append-only audit stream of inbox actions.
 - check `ck_inbox_event_actor_valid`: `actor IN ('user', 'system')`
 - foreign key `job_inbox_item_id` → `job_inbox_item.job_inbox_item_id`
 
+## integration_credential
+
+Encrypted credentials of optional integrations (write-only).
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `integration_credential_id` | BIGINT | no | Surrogate primary key of the credential. |
+| `owner_id` | BIGINT | no | Owner of the credential. |
+| `name` | VARCHAR(40) | no | Integration the credential belongs to, for example github. |
+| `credential_ciphertext` | BLOB | yes | Encrypted credential (write-only). |
+| `credential_updated_at` | DATETIME | yes | UTC time at which the credential was last written. |
+| `updated_at` | DATETIME | no | UTC timestamp of the last modification of the row. |
+| `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
+
+- foreign key `owner_id` → `owner.owner_id`
+- unique `uq_integration_credential_owner_name` (owner_id, name)
+
 ## intent_revision
 
 Immutable search-intent revisions (append-only).

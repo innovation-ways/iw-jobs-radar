@@ -7,9 +7,10 @@ search intent with an explainable deterministic rule set, and keeps a personal i
 ## Quick start
 
 ```bash
-./jobs-radar.sh --quick-start     # needs Docker, uv, Node 22 + pnpm (corepack)
-./jobs-radar.sh --health
-# open http://127.0.0.1:5180
+./jobs-radar.sh                   # interactive menu (start, stop, health, logs, tests, addresses)
+./jobs-radar.sh --quick-start     # or in one go; needs Docker, uv, Node 22 + pnpm (corepack)
+./jobs-radar.sh --urls            # where to open the app
+make help                         # every command: tests, quality gates, ...
 ```
 
 Design and decisions live in `ai-dev/docs/` (start with `00 - Implementation Pack Index.md`);

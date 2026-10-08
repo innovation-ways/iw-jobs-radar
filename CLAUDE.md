@@ -52,24 +52,36 @@ Direction from research R-00170 (`docs/research/R-00170-frontend-design-research
 Run from the repository root (`make help` lists everything). Prerequisites: Docker, `uv`, Node 22 with pnpm through corepack (`corepack enable --install-directory ~/.local/bin pnpm`; the version is pinned in `frontend/package.json`; pnpm 12 did not work through corepack here).
 
 ```bash
+make                              # = make help: every command, grouped and coloured (the list is test-enforced to be complete)
+
+./jobs-radar.sh                   # interactive menu: start/stop, health, frontend, database, logs, tests, addresses
 ./jobs-radar.sh --init-env        # create .env (random DB password and credential key); never commit it
 ./jobs-radar.sh --quick-start     # db + api + worker (Docker), wait healthy, start frontend (Vite, outside Docker)
-./jobs-radar.sh --health          # deep check; exit 0 only if everything running is healthy
-./jobs-radar.sh --logs api --lines 50 | --status | --restart worker | --rebuild api | --quick-stop | --help
+./jobs-radar.sh --status | --health | --urls | --psql | --db-migrate
+./jobs-radar.sh --logs api --lines 50 | --restart worker | --rebuild api | --quick-stop | --help
+./jobs-radar.sh --tests [unit|integration|backend|frontend|e2e|quality|all]   # wrappers around make
+# Colours only appear on a terminal (FORCE_COLOR=1 forces, NO_COLOR=1 disables). --health exits 0 only if healthy.
+# JOBS_RADAR_ENV_FILE points the launcher at another env file (used by its tests).
 
+make up / down / restart / status / health / urls / logs SVC=api   # the same launcher actions from make
 make quality                      # backend gates: ruff, format check, mypy strict, import-linter, bandit, licences, column docs
 make quality-frontend             # eslint (0 warnings), prettier, tsc, licence check
 make test                         # backend unit + integration (needs Docker; PostgreSQL testcontainer)
 make test-unit                    # backend unit only, no Docker
-make test-frontend                # Vitest
+make test-file FILE=tests/unit/test_settings.py | make test-k K=inbox | make test-failed
+make test-frontend / test-frontend-watch / fe-coverage   # Vitest
 make test-e2e                     # Playwright against the running stack (see below)
-make coverage                     # backend coverage, fails under 80%
+make coverage / coverage-html     # backend coverage, fails under 80%; HTML report in backend/htmlcov
 make security-sast                # semgrep (needs network for rule packs)
 make secret-scan                  # gitleaks over git history + staged changes (the local .env is not scanned)
 make openapi / make api-client    # export backend/openapi.json, regenerate the typed frontend client
 make docs-schema                  # regenerate docs/database/schema.md (data dictionary; a test fails if stale)
 make check                        # quality + quality-frontend + test + test-frontend
+make check-all                    # check + security-sast + secret-scan
+make clean                        # delete caches and generated reports
 ```
+
+When you add a make target, give it a `## description` and list it in `.PHONY` (and in a `##@` section): a unit test fails otherwise.
 
 Single tests: `cd backend && uv run pytest tests/unit/test_settings.py::test_defaults_match_adr_019_and_adr_032 -q`; `cd frontend && pnpm test src/theme/ThemeProvider.test.tsx`.
 

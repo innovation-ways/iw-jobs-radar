@@ -2936,10 +2936,34 @@
         "additionalProperties": false,
         "description": "Portable export of a profile and its intents; contains no secrets (document 07).",
         "properties": {
+          "documents": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Documents",
+            "type": "array"
+          },
           "exported_at": {
             "format": "date-time",
             "title": "Exported At",
             "type": "string"
+          },
+          "inbox": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Inbox",
+            "type": "array"
+          },
+          "intent_revisions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Intent Revisions",
+            "type": "array"
           },
           "intents": {
             "items": {
@@ -2950,6 +2974,22 @@
           },
           "profile": {
             "$ref": "#/components/schemas/ExportedProfile"
+          },
+          "proposals": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Proposals",
+            "type": "array"
+          },
+          "revisions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Revisions",
+            "type": "array"
           },
           "schema_version": {
             "default": 1,
@@ -6088,6 +6128,63 @@
       }
     },
     "/api/v1/profiles/{career_profile_id}": {
+      "delete": {
+        "description": "Delete a profile and its data after the exact title is typed back (audited, UC-08).",
+        "operationId": "delete_profile_api_v1_profiles__career_profile_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "career_profile_id",
+            "required": true,
+            "schema": {
+              "title": "Career Profile Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "confirm",
+            "required": true,
+            "schema": {
+              "title": "Confirm",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "additionalProperties": {
+                      "type": "integer"
+                    },
+                    "type": "object"
+                  },
+                  "title": "Response Delete Profile Api V1 Profiles  Career Profile Id  Delete",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Profile",
+        "tags": [
+          "profiles"
+        ]
+      },
       "get": {
         "description": "Return the current projection and current revision of a profile.",
         "operationId": "get_profile_api_v1_profiles__career_profile_id__get",
@@ -6183,7 +6280,7 @@
     },
     "/api/v1/profiles/{career_profile_id}/export": {
       "get": {
-        "description": "Portable export of the profile and its intents. It contains no credentials or secrets.",
+        "description": "Portable export: profile, intents, history, document metadata, proposals and inbox state.\n\nIt contains no credentials, provider setup, original CV or CV text.",
         "operationId": "export_profile_api_v1_profiles__career_profile_id__export_get",
         "parameters": [
           {

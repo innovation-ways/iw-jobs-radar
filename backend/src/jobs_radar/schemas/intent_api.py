@@ -1,7 +1,7 @@
 """API contracts for search intents and the taxonomy (document 07, section 4)."""
 
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Any
 
 from pydantic import Field, StringConstraints
 
@@ -113,3 +113,9 @@ class ProfileExport(StrictModel):
     exported_at: datetime
     profile: ExportedProfile
     intents: list[ExportedIntent]
+    # History and imports (UC-08): every revision, document metadata, proposals, inbox decisions.
+    revisions: list[dict[str, Any]] = Field(default_factory=list)
+    intent_revisions: list[dict[str, Any]] = Field(default_factory=list)
+    documents: list[dict[str, Any]] = Field(default_factory=list)
+    proposals: list[dict[str, Any]] = Field(default_factory=list)
+    inbox: list[dict[str, Any]] = Field(default_factory=list)

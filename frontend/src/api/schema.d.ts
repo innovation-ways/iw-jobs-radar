@@ -450,7 +450,11 @@ export interface paths {
          */
         put: operations["save_profile_api_v1_profiles__career_profile_id__put"];
         post?: never;
-        delete?: never;
+        /**
+         * Delete Profile
+         * @description Delete a profile and its data after the exact title is typed back (audited, UC-08).
+         */
+        delete: operations["delete_profile_api_v1_profiles__career_profile_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -465,7 +469,9 @@ export interface paths {
         };
         /**
          * Export Profile
-         * @description Portable export of the profile and its intents. It contains no credentials or secrets.
+         * @description Portable export: profile, intents, history, document metadata, proposals and inbox state.
+         *
+         *     It contains no credentials, provider setup, original CV or CV text.
          */
         get: operations["export_profile_api_v1_profiles__career_profile_id__export_get"];
         put?: never;
@@ -2122,14 +2128,34 @@ export interface components {
          * @description Portable export of a profile and its intents; contains no secrets (document 07).
          */
         ProfileExport: {
+            /** Documents */
+            documents?: {
+                [key: string]: unknown;
+            }[];
             /**
              * Exported At
              * Format: date-time
              */
             exported_at: string;
+            /** Inbox */
+            inbox?: {
+                [key: string]: unknown;
+            }[];
+            /** Intent Revisions */
+            intent_revisions?: {
+                [key: string]: unknown;
+            }[];
             /** Intents */
             intents: components["schemas"]["ExportedIntent"][];
             profile: components["schemas"]["ExportedProfile"];
+            /** Proposals */
+            proposals?: {
+                [key: string]: unknown;
+            }[];
+            /** Revisions */
+            revisions?: {
+                [key: string]: unknown;
+            }[];
             /**
              * Schema Version
              * @default 1
@@ -3659,6 +3685,43 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProfileSaveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_profile_api_v1_profiles__career_profile_id__delete: {
+        parameters: {
+            query: {
+                confirm: string;
+            };
+            header?: never;
+            path: {
+                career_profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: {
+                            [key: string]: number;
+                        };
+                    };
                 };
             };
             /** @description Validation Error */

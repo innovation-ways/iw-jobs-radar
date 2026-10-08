@@ -206,7 +206,8 @@ async def test_an_unusable_answer_creates_no_proposal(
     with pytest.raises(DependencyUnavailableError) as caught:
         await setup.proposals.generate(LOCAL_OWNER_ID, document, profile, consent=None)
     assert caught.value.details["error_class"] == "invalid_response"
-    assert (await db_session.execute(select(ProfileProposal))).scalars().all() == []
+    mine = select(ProfileProposal).where(ProfileProposal.career_profile_id == profile)
+    assert (await db_session.execute(mine)).scalars().all() == []
     assert setup.store.get(document) is not None  # the owner can retry without uploading again
 
 

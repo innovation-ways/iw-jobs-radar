@@ -9,17 +9,20 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from sqlalchemy import Select, func, select, text, update
+from sqlalchemy import Select, delete, func, select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.core.errors import NotFoundError
 from jobs_radar.db.models import (
     AuditEvent,
     CareerProfile,
+    Document,
+    Evidence,
     IntentRevision,
     MatchEvaluation,
     ProfileProposal,
     ProfileRevision,
+    ProposalItem,
     SearchIntent,
     TrendWeekly,
 )
@@ -42,9 +45,9 @@ async def delete_career_profile(
     """Delete a profile and everything hanging off it, record an audit event, return the counts.
 
     Removes the profile's revisions, its intents and their revisions, the evaluations that used
-    those revisions, its proposals and its trend aggregates. Uploaded-document metadata, evidence
-    and inbox state are handled by the full export/delete feature (task T6). The caller owns the
-    transaction.
+    those revisions, its proposals, the evidence of their items, the metadata of documents that no
+    other profile's proposal uses, and its trend aggregates. Inbox decisions belong to job
+    opportunities, not to the profile, and stay. The caller owns the transaction.
 
     Raises:
         NotFoundError: if the profile does not exist or belongs to another owner.
@@ -95,6 +98,45 @@ async def delete_career_profile(
         ),
     }
 
+    # Evidence of this profile's proposals, and the documents only these proposals used.
+    evidence_ids = [
+        int(i)
+        for i in (
+            await session.execute(
+                select(ProposalItem.evidence_id)
+                .join(
+                    ProfileProposal,
+                    ProfileProposal.profile_proposal_id == ProposalItem.profile_proposal_id,
+                )
+                .where(
+                    ProfileProposal.career_profile_id == career_profile_id,
+                    ProposalItem.evidence_id.is_not(None),
+                )
+            )
+        ).scalars()
+        if i is not None
+    ]
+    mine = select(ProfileProposal.document_id).where(
+        ProfileProposal.career_profile_id == career_profile_id,
+        ProfileProposal.document_id.is_not(None),
+    )
+    elsewhere = select(ProfileProposal.document_id).where(
+        ProfileProposal.career_profile_id != career_profile_id,
+        ProfileProposal.document_id.is_not(None),
+    )
+    document_ids = [
+        int(i)
+        for i in (
+            await session.execute(
+                select(Document.document_id).where(
+                    Document.document_id.in_(mine), Document.document_id.not_in(elsewhere)
+                )
+            )
+        ).scalars()
+    ]
+    counts["evidence"] = len(evidence_ids)
+    counts["document"] = len(document_ids)
+
     async with allow_mutation(session):
         # Break the circular "current revision" pointers first, then let the cascades do the rest.
         await session.execute(
@@ -111,6 +153,11 @@ async def delete_career_profile(
             text("DELETE FROM career_profile WHERE career_profile_id = :id"),
             {"id": career_profile_id},
         )
+        if evidence_ids:
+            await session.execute(delete(Evidence).where(Evidence.evidence_id.in_(evidence_ids)))
+        if document_ids:
+            await session.execute(delete(Evidence).where(Evidence.document_id.in_(document_ids)))
+            await session.execute(delete(Document).where(Document.document_id.in_(document_ids)))
 
     counts["career_profile"] = 1
     session.add(

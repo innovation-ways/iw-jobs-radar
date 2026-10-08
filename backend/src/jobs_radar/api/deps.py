@@ -17,6 +17,7 @@ from jobs_radar.services.documents import DocumentService
 from jobs_radar.services.evaluation import EvaluationService
 from jobs_radar.services.inbox import InboxService
 from jobs_radar.services.intents import IntentService
+from jobs_radar.services.profile_data import ProfileDataService
 from jobs_radar.services.profiles import ProfileService
 from jobs_radar.services.proposal_review import ReviewService
 from jobs_radar.services.proposals import ProposalService
@@ -142,3 +143,10 @@ def get_proposal_service(
 def get_review_service(session: Annotated[AsyncSession, Depends(get_session)]) -> ReviewService:
     """Build the review service on the request's session."""
     return ReviewService(session)
+
+
+def get_profile_data_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ProfileDataService:
+    """Build the export and deletion service on the request's session."""
+    return ProfileDataService(session)

@@ -3,10 +3,15 @@
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jobs_radar.api.deps import get_intent_service, get_profile_service, get_session
+from jobs_radar.api.deps import (
+    get_intent_service,
+    get_profile_data_service,
+    get_profile_service,
+    get_session,
+)
 from jobs_radar.api.routes.intents import intent_read
 from jobs_radar.domain.enums import LOCAL_OWNER_ID, Visibility
 from jobs_radar.schemas.intent_api import ExportedIntent, ExportedProfile, ProfileExport
@@ -25,6 +30,7 @@ from jobs_radar.schemas.profile_api import (
     RestoreRequest,
 )
 from jobs_radar.services.intents import IntentService
+from jobs_radar.services.profile_data import ProfileDataService
 from jobs_radar.services.profiles import ProfileService, ProfileView, RevisionView
 
 router = APIRouter(tags=["profiles"])
@@ -168,8 +174,14 @@ async def export_profile(
     career_profile_id: int,
     service: Service,
     intents: Annotated[IntentService, Depends(get_intent_service)],
+    data: Annotated[ProfileDataService, Depends(get_profile_data_service)],
+    session: Session,
+    response: Response,
 ) -> ProfileExport:
-    """Portable export of the profile and its intents. It contains no credentials or secrets."""
+    """Portable export: profile, intents, history, document metadata, proposals and inbox state.
+
+    It contains no credentials, provider setup, original CV or CV text.
+    """
     view = await service.get(LOCAL_OWNER_ID, career_profile_id)
     current = view.current
     exported = []
@@ -183,7 +195,13 @@ async def export_profile(
                     definition=read.current_revision.definition,
                 )
             )
+    history = await data.history(LOCAL_OWNER_ID, career_profile_id)
+    await session.commit()  # the audit event of the export
+    response.headers["Content-Disposition"] = (
+        f'attachment; filename="jobs-radar-profile-{career_profile_id}.json"'
+    )
     return ProfileExport(
+        **history,
         exported_at=datetime.now(UTC),
         profile=ExportedProfile(
             title=view.profile.title,
@@ -194,3 +212,16 @@ async def export_profile(
         ),
         intents=exported,
     )
+
+
+@router.delete("/profiles/{career_profile_id}")
+async def delete_profile(
+    career_profile_id: int,
+    confirm: str,
+    data: Annotated[ProfileDataService, Depends(get_profile_data_service)],
+    session: Session,
+) -> dict[str, dict[str, int]]:
+    """Delete a profile and its data after the exact title is typed back (audited, UC-08)."""
+    counts = await data.delete(LOCAL_OWNER_ID, career_profile_id, confirm=confirm)
+    await session.commit()
+    return {"deleted": counts}

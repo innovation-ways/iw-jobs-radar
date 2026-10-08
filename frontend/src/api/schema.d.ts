@@ -500,6 +500,174 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/settings/ai": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ai Settings
+         * @description Return the safe projection: connections with credential status, mode and privacy.
+         */
+        get: operations["get_ai_settings_api_v1_settings_ai_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/ai/connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Connection
+         * @description Create a connection (no credential, not in use).
+         */
+        post: operations["create_connection_api_v1_settings_ai_connections_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/ai/connections/{provider_connection_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Connection
+         * @description Change the non-secret metadata of a connection.
+         */
+        put: operations["update_connection_api_v1_settings_ai_connections__provider_connection_id__put"];
+        post?: never;
+        /**
+         * Delete Connection
+         * @description Delete a connection and its encrypted credential.
+         */
+        delete: operations["delete_connection_api_v1_settings_ai_connections__provider_connection_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/ai/connections/{provider_connection_id}/credential": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Write Credential
+         * @description Store the credential (write-only: only its status is ever returned).
+         */
+        put: operations["write_credential_api_v1_settings_ai_connections__provider_connection_id__credential_put"];
+        post?: never;
+        /**
+         * Delete Credential
+         * @description Delete the stored credential.
+         */
+        delete: operations["delete_credential_api_v1_settings_ai_connections__provider_connection_id__credential_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/ai/connections/{provider_connection_id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test Connection
+         * @description Check the connection and list models; sends only a model-list request.
+         */
+        post: operations["test_connection_api_v1_settings_ai_connections__provider_connection_id__test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/ai/import-connection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Select Import Connection
+         * @description Choose the connection used to import a CV, or switch it off (No AI).
+         */
+        put: operations["select_import_connection_api_v1_settings_ai_import_connection_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/ai/jobs-connection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Select Jobs Connection
+         * @description Choose the local connection that analyses collected jobs, or switch it off.
+         */
+        put: operations["select_jobs_connection_api_v1_settings_ai_jobs_connection_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/privacy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Privacy
+         * @description Change the privacy policy for remote calls.
+         */
+        put: operations["update_privacy_api_v1_settings_privacy_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/settings/schedule": {
         parameters: {
             query?: never;
@@ -653,6 +821,26 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * AiSettingsRead
+         * @description The whole AI & privacy configuration.
+         */
+        AiSettingsRead: {
+            /** Connections */
+            connections: components["schemas"]["ConnectionRead"][];
+            /** Import Connection Id */
+            import_connection_id: number | null;
+            /** Jobs Connection Id */
+            jobs_connection_id: number | null;
+            /** Key Configured */
+            key_configured: boolean;
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "no_ai" | "local" | "remote";
+            privacy: components["schemas"]["PrivacyRead"];
+        };
+        /**
          * BaseLocation
          * @description Anchor for hybrid and on-site distance rules.
          */
@@ -765,6 +953,96 @@ export interface components {
             reject_below_minimum: boolean;
         };
         /**
+         * ConnectionCreate
+         * @description Create a connection; the credential is written separately.
+         */
+        ConnectionCreate: {
+            /** Display Name */
+            display_name: string;
+            /** Endpoint Url */
+            endpoint_url?: string | null;
+            /** Model Id */
+            model_id?: string | null;
+            /**
+             * Provider Type
+             * @enum {string}
+             */
+            provider_type: "ollama" | "openai" | "minimax" | "compatible";
+        };
+        /**
+         * ConnectionRead
+         * @description A connection: metadata and credential *status* only.
+         */
+        ConnectionRead: {
+            /**
+             * Credential Status
+             * @enum {string}
+             */
+            credential_status: "saved" | "none";
+            /** Credential Updated At */
+            credential_updated_at: string | null;
+            /** Display Name */
+            display_name: string;
+            /** Endpoint Url */
+            endpoint_url: string | null;
+            /** Is Active */
+            is_active: boolean;
+            /** Model Id */
+            model_id: string | null;
+            /**
+             * Processing Location
+             * @enum {string}
+             */
+            processing_location: "local" | "remote";
+            /** Provider Connection Id */
+            provider_connection_id: number;
+            /**
+             * Provider Type
+             * @enum {string}
+             */
+            provider_type: "ollama" | "openai" | "minimax" | "compatible";
+            /** Use For Jobs */
+            use_for_jobs: boolean;
+            /** Version */
+            version: number;
+        };
+        /**
+         * ConnectionSelect
+         * @description Choose the connection for CV import or job analysis; ``null`` switches it off.
+         */
+        ConnectionSelect: {
+            /** Provider Connection Id */
+            provider_connection_id?: number | null;
+        };
+        /**
+         * ConnectionTestRead
+         * @description Outcome of a connection test (no document or job content is sent).
+         */
+        ConnectionTestRead: {
+            /** Error Class */
+            error_class: string | null;
+            /** Message */
+            message: string;
+            /** Models */
+            models: string[];
+            /** Ok */
+            ok: boolean;
+        };
+        /**
+         * ConnectionUpdate
+         * @description Change non-secret metadata with the version the client saw.
+         */
+        ConnectionUpdate: {
+            /** Display Name */
+            display_name?: string | null;
+            /** Endpoint Url */
+            endpoint_url?: string | null;
+            /** Expected Version */
+            expected_version: number;
+            /** Model Id */
+            model_id?: string | null;
+        };
+        /**
          * ContractorRate
          * @description Contractor and freelance pay expectation: a day rate only.
          */
@@ -775,6 +1053,14 @@ export interface components {
             minimum: number;
             /** Target */
             target: number;
+        };
+        /**
+         * CredentialWrite
+         * @description The write-only credential. It is never echoed back.
+         */
+        CredentialWrite: {
+            /** Secret */
+            secret: string;
         };
         /**
          * DigestCounts
@@ -1643,6 +1929,26 @@ export interface components {
             population: number;
             /** Timezone */
             timezone: string;
+        };
+        /**
+         * PrivacyRead
+         * @description The privacy policy for remote calls.
+         */
+        PrivacyRead: {
+            /** Redact Contact Details */
+            redact_contact_details: boolean;
+            /** Version */
+            version: number;
+        };
+        /**
+         * PrivacyUpdate
+         * @description Change the privacy policy.
+         */
+        PrivacyUpdate: {
+            /** Expected Version */
+            expected_version: number;
+            /** Redact Contact Details */
+            redact_contact_details: boolean;
         };
         /**
          * ProfileCreate
@@ -3210,6 +3516,319 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProfileSaveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ai_settings_api_v1_settings_ai_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettingsRead"];
+                };
+            };
+        };
+    };
+    create_connection_api_v1_settings_ai_connections_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectionCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_connection_api_v1_settings_ai_connections__provider_connection_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_connection_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectionUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_connection_api_v1_settings_ai_connections__provider_connection_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_connection_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    write_credential_api_v1_settings_ai_connections__provider_connection_id__credential_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_connection_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_credential_api_v1_settings_ai_connections__provider_connection_id__credential_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_connection_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    test_connection_api_v1_settings_ai_connections__provider_connection_id__test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provider_connection_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectionTestRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    select_import_connection_api_v1_settings_ai_import_connection_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectionSelect"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettingsRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    select_jobs_connection_api_v1_settings_ai_jobs_connection_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConnectionSelect"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AiSettingsRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_privacy_api_v1_settings_privacy_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PrivacyUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrivacyRead"];
                 };
             };
             /** @description Validation Error */

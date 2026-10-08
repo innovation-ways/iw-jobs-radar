@@ -15,6 +15,7 @@ import pytest
 import pytest_asyncio
 from alembic import command
 from alembic.config import Config
+from cryptography.fernet import Fernet
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from testcontainers.community.postgres import PostgresContainer
@@ -50,6 +51,7 @@ def _test_environment(postgres_container: PostgresContainer) -> Iterator[None]:
         "JOBS_RADAR_DB_NAME": "jobs_radar_test",
         "JOBS_RADAR_DB_USER": "jobs_radar_test",
         "JOBS_RADAR_DB_PASSWORD": postgres_container.password,
+        "JOBS_RADAR_CREDENTIAL_KEY": Fernet.generate_key().decode(),
     }
     previous = {key: os.environ.get(key) for key in overrides}
     os.environ.update(overrides)

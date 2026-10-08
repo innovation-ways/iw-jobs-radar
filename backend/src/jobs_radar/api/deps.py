@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from jobs_radar.adapters.sources.base import JobSourceAdapter
 from jobs_radar.core.settings import Settings
 from jobs_radar.domain.enums import SourceType
+from jobs_radar.services.ai_settings import AiSettingsService, build_credential_box
 from jobs_radar.services.collection import CollectionService
 from jobs_radar.services.dedup import DedupService
 from jobs_radar.services.evaluation import EvaluationService
@@ -97,3 +98,20 @@ def get_dedup_service(session: Annotated[AsyncSession, Depends(get_session)]) ->
 def get_schedule_service(session: Annotated[AsyncSession, Depends(get_session)]) -> ScheduleService:
     """Build the schedule service on the request's session."""
     return ScheduleService(session)
+
+
+def get_ai_settings_service(
+    request: Request, session: Annotated[AsyncSession, Depends(get_session)]
+) -> AiSettingsService:
+    """Build the AI settings service; tests may replace the provider builder and resolver."""
+    state = request.app.state
+    kwargs = {}
+    if (resolver := getattr(state, "url_resolver", None)) is not None:
+        kwargs["resolver"] = resolver
+    return AiSettingsService(
+        session,
+        state.settings,
+        box=build_credential_box(state.settings),
+        provider_builder=getattr(state, "provider_builder", None),
+        **kwargs,
+    )

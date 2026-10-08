@@ -168,6 +168,8 @@ class ProviderErrorClass(StrEnum):
     INVALID_RESPONSE = "invalid_response"
     BLOCKED_URL = "blocked_url"
     HTTP_ERROR = "http_error"
+    UNAUTHORIZED = "unauthorized"
+    RATE_LIMITED = "rate_limited"
 
 
 class JobExtractionStatus(StrEnum):

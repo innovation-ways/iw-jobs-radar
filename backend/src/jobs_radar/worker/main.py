@@ -14,7 +14,6 @@ from datetime import timedelta
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from jobs_radar.adapters.providers.ollama import build_ollama_embedder, build_ollama_provider
 from jobs_radar.adapters.sources.registry import build_source_adapters
 from jobs_radar.core.logging import configure_logging
 from jobs_radar.core.settings import Settings, get_settings
@@ -26,6 +25,7 @@ from jobs_radar.services.evaluation import EvaluationRunner
 from jobs_radar.services.extraction_queue import ExtractionQueue
 from jobs_radar.services.heartbeat import HeartbeatService
 from jobs_radar.services.inbox import InboxRunner
+from jobs_radar.services.jobs_ai import JobsAiLoader
 from jobs_radar.services.schedule import ScheduleRunner
 from jobs_radar.worker.lock import WorkerLock
 
@@ -50,6 +50,7 @@ class Worker:
         collection: CollectionService | None = None,
         schedule: ScheduleRunner | None = None,
         lock: WorkerLock | None = None,
+        jobs_ai: JobsAiLoader | None = None,
     ) -> None:
         self._settings = settings
         self._heartbeat = HeartbeatService(session_factory, name)
@@ -60,6 +61,7 @@ class Worker:
         self._collection = collection
         self._schedule = schedule
         self._lock = lock
+        self._jobs_ai = jobs_ai
         self._recovered = lock is None
         self.beats = 0
 
@@ -87,22 +89,29 @@ class Worker:
             ran = await self._collection.run_queued(on_progress=self._beat)
             if ran:
                 logger.info("collection_runs_executed", count=ran)
-        if self._dedup is not None:
+        extraction, evaluation, dedup = self._extraction, self._evaluation, self._dedup
+        if self._jobs_ai is not None:
+            # The database decides (AI & privacy screen); None means No AI for jobs.
+            setup = await self._jobs_ai.load()
+            extraction = setup.extraction if setup else None
+            evaluation = setup.evaluation if setup else None
+            dedup = setup.dedup if setup else self._dedup
+        if dedup is not None:
             # Grouping listings needs no AI, so it runs whether or not extraction is enabled.
-            linked = await self._dedup.run()
+            linked = await dedup.run()
             if linked:
                 logger.info("opportunities_linked", linked=linked)
         if self._inbox is not None:
             surfaced = await self._inbox.run()
             if surfaced:
                 logger.info("inbox_items_created", created=surfaced)
-        if self._extraction is not None:
-            queued = await self._extraction.enqueue_missing()
-            summary = await self._extraction.run_batch(
+        if extraction is not None:
+            queued = await extraction.enqueue_missing()
+            summary = await extraction.run_batch(
                 budget_seconds=float(self._settings.worker_heartbeat_max_age_seconds) / 2,
                 heartbeat=self._beat,
             )
-            scored = await self._evaluation.run() if self._evaluation is not None else 0
+            scored = await evaluation.run() if evaluation is not None else 0
             if queued or scored or summary.succeeded or summary.failed or summary.stopped:
                 logger.info(
                     "extraction_batch",
@@ -138,25 +147,14 @@ async def main() -> None:
     for signum in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(signum, stop.set)
     session_factory = build_session_factory(engine)
-    extraction: ExtractionQueue | None = None
-    evaluation: EvaluationRunner | None = None
-    dedup = DedupRunner(session_factory)
-    if settings.extraction_enabled:
-        # AI extraction is opt-in (default is No AI); the model runs locally (ADR-035).
-        provider = build_ollama_provider(settings, model=settings.extraction_model)
-        extraction = ExtractionQueue(
-            session_factory, provider, max_chars=settings.extraction_max_chars
-        )
-        evaluation = EvaluationRunner(session_factory, provider)
-        dedup = DedupRunner(session_factory, build_ollama_embedder(settings))
+    dedup = DedupRunner(session_factory)  # grouping works without a model
     lock = WorkerLock(engine)
     try:
         await Worker(
             settings,
             session_factory,
-            extraction=extraction,
-            evaluation=evaluation,
             dedup=dedup,
+            jobs_ai=JobsAiLoader(settings, session_factory),
             inbox=InboxRunner(session_factory, LOCAL_OWNER_ID),
             collection=CollectionService(session_factory, build_source_adapters()),
             schedule=ScheduleRunner(session_factory),

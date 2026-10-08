@@ -32,8 +32,14 @@ class ProviderConnection(TimestampMixin, Base):
             unique=True,
             postgresql_where=text("is_active"),
         ),
+        Index(
+            "uq_provider_connection_jobs_per_owner",
+            "owner_id",
+            unique=True,
+            postgresql_where=text("use_for_jobs"),
+        ),
         enum_check("provider_type", ProviderType),
-        {"comment": "AI provider connections; at most one active per owner."},
+        {"comment": "AI provider connections; at most one in use for CV import and one for jobs."},
     )
 
     provider_connection_id: Mapped[int] = pk_column("Surrogate primary key of the connection.")
@@ -52,7 +58,11 @@ class ProviderConnection(TimestampMixin, Base):
         "UTC time at which the credential was last written.", nullable=True
     )
     is_active: Mapped[bool] = bool_column(
-        "Whether this connection is the one in use.", default=False
+        "Whether this connection is the one used to import a CV.", default=False
+    )
+    use_for_jobs: Mapped[bool] = bool_column(
+        "Whether this local connection analyses collected jobs (remote ones never do).",
+        default=False,
     )
     version: Mapped[int] = version_column()
 

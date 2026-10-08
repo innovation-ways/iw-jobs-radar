@@ -469,7 +469,7 @@ Individual proposed profile items with their review state.
 
 ## provider_connection
 
-AI provider connections; at most one active per owner.
+AI provider connections; at most one in use for CV import and one for jobs.
 
 | Column | Type | Nullable | Description |
 |---|---|---|---|
@@ -482,7 +482,8 @@ AI provider connections; at most one active per owner.
 | `config_json` | JSONB | no | Non-secret provider settings. |
 | `credential_ciphertext` | BLOB | yes | Encrypted credential (write-only). |
 | `credential_updated_at` | DATETIME | yes | UTC time at which the credential was last written. |
-| `is_active` | BOOLEAN | no | Whether this connection is the one in use. |
+| `is_active` | BOOLEAN | no | Whether this connection is the one used to import a CV. |
+| `use_for_jobs` | BOOLEAN | no | Whether this local connection analyses collected jobs (remote ones never do). |
 | `version` | INTEGER | no | Optimistic-concurrency counter, incremented on every change of the row. |
 | `updated_at` | DATETIME | no | UTC timestamp of the last modification of the row. |
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |

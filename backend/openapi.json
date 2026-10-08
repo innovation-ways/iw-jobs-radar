@@ -1,6 +1,67 @@
 {
   "components": {
     "schemas": {
+      "AiSettingsRead": {
+        "additionalProperties": false,
+        "description": "The whole AI & privacy configuration.",
+        "properties": {
+          "connections": {
+            "items": {
+              "$ref": "#/components/schemas/ConnectionRead"
+            },
+            "title": "Connections",
+            "type": "array"
+          },
+          "import_connection_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Import Connection Id"
+          },
+          "jobs_connection_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Jobs Connection Id"
+          },
+          "key_configured": {
+            "title": "Key Configured",
+            "type": "boolean"
+          },
+          "mode": {
+            "enum": [
+              "no_ai",
+              "local",
+              "remote"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "privacy": {
+            "$ref": "#/components/schemas/PrivacyRead"
+          }
+        },
+        "required": [
+          "mode",
+          "import_connection_id",
+          "jobs_connection_id",
+          "key_configured",
+          "connections",
+          "privacy"
+        ],
+        "title": "AiSettingsRead",
+        "type": "object"
+      },
       "BaseLocation": {
         "additionalProperties": false,
         "description": "Anchor for hybrid and on-site distance rules.",
@@ -321,6 +382,272 @@
         "title": "Compensation",
         "type": "object"
       },
+      "ConnectionCreate": {
+        "additionalProperties": false,
+        "description": "Create a connection; the credential is written separately.",
+        "properties": {
+          "display_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "endpoint_url": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endpoint Url"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "provider_type": {
+            "enum": [
+              "ollama",
+              "openai",
+              "minimax",
+              "compatible"
+            ],
+            "title": "Provider Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_type",
+          "display_name"
+        ],
+        "title": "ConnectionCreate",
+        "type": "object"
+      },
+      "ConnectionRead": {
+        "additionalProperties": false,
+        "description": "A connection: metadata and credential *status* only.",
+        "properties": {
+          "credential_status": {
+            "enum": [
+              "saved",
+              "none"
+            ],
+            "title": "Credential Status",
+            "type": "string"
+          },
+          "credential_updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credential Updated At"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "endpoint_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endpoint Url"
+          },
+          "is_active": {
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "processing_location": {
+            "enum": [
+              "local",
+              "remote"
+            ],
+            "title": "Processing Location",
+            "type": "string"
+          },
+          "provider_connection_id": {
+            "title": "Provider Connection Id",
+            "type": "integer"
+          },
+          "provider_type": {
+            "enum": [
+              "ollama",
+              "openai",
+              "minimax",
+              "compatible"
+            ],
+            "title": "Provider Type",
+            "type": "string"
+          },
+          "use_for_jobs": {
+            "title": "Use For Jobs",
+            "type": "boolean"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "provider_connection_id",
+          "provider_type",
+          "display_name",
+          "endpoint_url",
+          "model_id",
+          "credential_status",
+          "credential_updated_at",
+          "processing_location",
+          "is_active",
+          "use_for_jobs",
+          "version"
+        ],
+        "title": "ConnectionRead",
+        "type": "object"
+      },
+      "ConnectionSelect": {
+        "additionalProperties": false,
+        "description": "Choose the connection for CV import or job analysis; ``null`` switches it off.",
+        "properties": {
+          "provider_connection_id": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Connection Id"
+          }
+        },
+        "title": "ConnectionSelect",
+        "type": "object"
+      },
+      "ConnectionTestRead": {
+        "additionalProperties": false,
+        "description": "Outcome of a connection test (no document or job content is sent).",
+        "properties": {
+          "error_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Class"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "models": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "error_class",
+          "message",
+          "models"
+        ],
+        "title": "ConnectionTestRead",
+        "type": "object"
+      },
+      "ConnectionUpdate": {
+        "additionalProperties": false,
+        "description": "Change non-secret metadata with the version the client saw.",
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
+          "endpoint_url": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endpoint Url"
+          },
+          "expected_version": {
+            "minimum": 1.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          }
+        },
+        "required": [
+          "expected_version"
+        ],
+        "title": "ConnectionUpdate",
+        "type": "object"
+      },
       "ContractorRate": {
         "additionalProperties": false,
         "description": "Contractor and freelance pay expectation: a day rate only.",
@@ -347,6 +674,23 @@
           "target"
         ],
         "title": "ContractorRate",
+        "type": "object"
+      },
+      "CredentialWrite": {
+        "additionalProperties": false,
+        "description": "The write-only credential. It is never echoed back.",
+        "properties": {
+          "secret": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Secret",
+            "type": "string"
+          }
+        },
+        "required": [
+          "secret"
+        ],
+        "title": "CredentialWrite",
         "type": "object"
       },
       "DigestCounts": {
@@ -2377,6 +2721,47 @@
           "population"
         ],
         "title": "PlaceRead",
+        "type": "object"
+      },
+      "PrivacyRead": {
+        "additionalProperties": false,
+        "description": "The privacy policy for remote calls.",
+        "properties": {
+          "redact_contact_details": {
+            "title": "Redact Contact Details",
+            "type": "boolean"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "redact_contact_details",
+          "version"
+        ],
+        "title": "PrivacyRead",
+        "type": "object"
+      },
+      "PrivacyUpdate": {
+        "additionalProperties": false,
+        "description": "Change the privacy policy.",
+        "properties": {
+          "expected_version": {
+            "minimum": 1.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "redact_contact_details": {
+            "title": "Redact Contact Details",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "redact_contact_details",
+          "expected_version"
+        ],
+        "title": "PrivacyUpdate",
         "type": "object"
       },
       "ProfileCreate": {
@@ -5504,6 +5889,420 @@
         "summary": "Restore Profile Revision",
         "tags": [
           "profiles"
+        ]
+      }
+    },
+    "/api/v1/settings/ai": {
+      "get": {
+        "description": "Return the safe projection: connections with credential status, mode and privacy.",
+        "operationId": "get_ai_settings_api_v1_settings_ai_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettingsRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Ai Settings",
+        "tags": [
+          "ai-settings"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/connections": {
+      "post": {
+        "description": "Create a connection (no credential, not in use).",
+        "operationId": "create_connection_api_v1_settings_ai_connections_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Connection",
+        "tags": [
+          "ai-settings"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/connections/{provider_connection_id}": {
+      "delete": {
+        "description": "Delete a connection and its encrypted credential.",
+        "operationId": "delete_connection_api_v1_settings_ai_connections__provider_connection_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_connection_id",
+            "required": true,
+            "schema": {
+              "title": "Provider Connection Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Connection",
+        "tags": [
+          "ai-settings"
+        ]
+      },
+      "put": {
+        "description": "Change the non-secret metadata of a connection.",
+        "operationId": "update_connection_api_v1_settings_ai_connections__provider_connection_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_connection_id",
+            "required": true,
+            "schema": {
+              "title": "Provider Connection Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Connection",
+        "tags": [
+          "ai-settings"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/connections/{provider_connection_id}/credential": {
+      "delete": {
+        "description": "Delete the stored credential.",
+        "operationId": "delete_credential_api_v1_settings_ai_connections__provider_connection_id__credential_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_connection_id",
+            "required": true,
+            "schema": {
+              "title": "Provider Connection Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Credential",
+        "tags": [
+          "ai-settings"
+        ]
+      },
+      "put": {
+        "description": "Store the credential (write-only: only its status is ever returned).",
+        "operationId": "write_credential_api_v1_settings_ai_connections__provider_connection_id__credential_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_connection_id",
+            "required": true,
+            "schema": {
+              "title": "Provider Connection Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Write Credential",
+        "tags": [
+          "ai-settings"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/connections/{provider_connection_id}/test": {
+      "post": {
+        "description": "Check the connection and list models; sends only a model-list request.",
+        "operationId": "test_connection_api_v1_settings_ai_connections__provider_connection_id__test_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider_connection_id",
+            "required": true,
+            "schema": {
+              "title": "Provider Connection Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConnectionTestRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Test Connection",
+        "tags": [
+          "ai-settings"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/import-connection": {
+      "put": {
+        "description": "Choose the connection used to import a CV, or switch it off (No AI).",
+        "operationId": "select_import_connection_api_v1_settings_ai_import_connection_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionSelect"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettingsRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Select Import Connection",
+        "tags": [
+          "ai-settings"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/jobs-connection": {
+      "put": {
+        "description": "Choose the local connection that analyses collected jobs, or switch it off.",
+        "operationId": "select_jobs_connection_api_v1_settings_ai_jobs_connection_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConnectionSelect"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiSettingsRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Select Jobs Connection",
+        "tags": [
+          "ai-settings"
+        ]
+      }
+    },
+    "/api/v1/settings/privacy": {
+      "put": {
+        "description": "Change the privacy policy for remote calls.",
+        "operationId": "update_privacy_api_v1_settings_privacy_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivacyUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrivacyRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Privacy",
+        "tags": [
+          "ai-settings"
         ]
       }
     },

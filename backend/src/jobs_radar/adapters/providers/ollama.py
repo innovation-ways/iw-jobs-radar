@@ -205,11 +205,11 @@ def _guarded_client(settings: Settings) -> GuardedHttpClient:
     )
 
 
-def build_ollama_embedder(settings: Settings) -> OllamaEmbedder:
+def build_ollama_embedder(settings: Settings, *, model: str | None = None) -> OllamaEmbedder:
     """Create the embedding provider with the URL policy of the deployment (ADR-035)."""
     return OllamaEmbedder(
         _guarded_client(settings),
         base_url=settings.ollama_url,
-        model=settings.embedding_model,
+        model=model or settings.embedding_model,
         timeout_seconds=float(settings.ollama_timeout_seconds),
     )

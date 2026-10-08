@@ -11,10 +11,11 @@ import signal
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from jobs_radar.adapters.providers.ollama import build_ollama_provider
+from jobs_radar.adapters.providers.ollama import build_ollama_embedder, build_ollama_provider
 from jobs_radar.core.logging import configure_logging
 from jobs_radar.core.settings import Settings, get_settings
 from jobs_radar.db.session import build_engine, build_session_factory
+from jobs_radar.services.dedup import DedupRunner
 from jobs_radar.services.evaluation import EvaluationRunner
 from jobs_radar.services.extraction_queue import ExtractionQueue
 from jobs_radar.services.heartbeat import HeartbeatService
@@ -32,11 +33,13 @@ class Worker:
         name: str = "worker",
         extraction: ExtractionQueue | None = None,
         evaluation: EvaluationRunner | None = None,
+        dedup: DedupRunner | None = None,
     ) -> None:
         self._settings = settings
         self._heartbeat = HeartbeatService(session_factory, name)
         self._extraction = extraction
         self._evaluation = evaluation
+        self._dedup = dedup
         self.beats = 0
 
     async def _beat(self) -> None:
@@ -46,6 +49,11 @@ class Worker:
     async def run_once(self) -> None:
         """Perform one iteration of the loop."""
         await self._beat()
+        if self._dedup is not None:
+            # Grouping listings needs no AI, so it runs whether or not extraction is enabled.
+            linked = await self._dedup.run()
+            if linked:
+                logger.info("opportunities_linked", linked=linked)
         if self._extraction is not None:
             queued = await self._extraction.enqueue_missing()
             summary = await self._extraction.run_batch(
@@ -90,6 +98,7 @@ async def main() -> None:
     session_factory = build_session_factory(engine)
     extraction: ExtractionQueue | None = None
     evaluation: EvaluationRunner | None = None
+    dedup = DedupRunner(session_factory)
     if settings.extraction_enabled:
         # AI extraction is opt-in (default is No AI); the model runs locally (ADR-035).
         provider = build_ollama_provider(settings, model=settings.extraction_model)
@@ -97,9 +106,10 @@ async def main() -> None:
             session_factory, provider, max_chars=settings.extraction_max_chars
         )
         evaluation = EvaluationRunner(session_factory, provider)
+        dedup = DedupRunner(session_factory, build_ollama_embedder(settings))
     try:
-        await Worker(settings, session_factory, extraction=extraction, evaluation=evaluation).run(
-            stop
-        )
+        await Worker(
+            settings, session_factory, extraction=extraction, evaluation=evaluation, dedup=dedup
+        ).run(stop)
     finally:
         await engine.dispose()

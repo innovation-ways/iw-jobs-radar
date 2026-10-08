@@ -136,3 +136,57 @@ def test_the_factory_allows_only_the_configured_ollama_host_when_local_providers
     )
     built = build_ollama_provider(settings, model="qwen3:8b")
     assert (built.provider, built.model) == ("ollama", "qwen3:8b")
+
+
+# --- embeddings --------------------------------------------------------------------------------------
+
+
+def embedder():  # type: ignore[no-untyped-def]
+    from jobs_radar.adapters.providers.ollama import OllamaEmbedder
+
+    async def resolve(host: str) -> list[str]:
+        return ["172.17.0.1"]
+
+    guard = UrlGuard(
+        resolver=resolve,
+        allow_private=True,
+        allowed_private_hosts=frozenset({"host.docker.internal"}),
+    )
+    client = GuardedHttpClient(guard=guard, user_agent="JobsRadar/test")
+    return OllamaEmbedder(client, base_url=BASE, model="qwen3-embedding:8b")
+
+
+@respx.mock
+async def test_embed_posts_the_texts_and_returns_one_vector_each() -> None:
+    route = respx.post(f"{BASE}/api/embed").respond(
+        200, json={"embeddings": [[0.1, 0.2], [0.3, 0.4]]}
+    )
+    vectors = await embedder().embed(["one", "two"])
+    assert vectors == [[0.1, 0.2], [0.3, 0.4]]
+    body = json.loads(route.calls.last.request.read())
+    assert body == {"model": "qwen3-embedding:8b", "input": ["one", "two"], "truncate": True}
+
+
+@respx.mock
+@pytest.mark.parametrize(
+    ("answer", "expected"),
+    [
+        (
+            httpx.Response(404, json={"error": "model not found"}),
+            ProviderErrorClass.MODEL_NOT_FOUND,
+        ),
+        (
+            httpx.Response(200, json={"embeddings": [[1.0]]}),
+            ProviderErrorClass.INVALID_RESPONSE,
+        ),  # wrong count
+        (httpx.Response(200, json={"nope": 1}), ProviderErrorClass.INVALID_RESPONSE),
+        (httpx.Response(500), ProviderErrorClass.HTTP_ERROR),
+    ],
+)
+async def test_embedding_failures_are_classified(
+    answer: httpx.Response, expected: ProviderErrorClass
+) -> None:
+    respx.post(f"{BASE}/api/embed").mock(return_value=answer)
+    with pytest.raises(ProviderError) as error:
+        await embedder().embed(["a", "b"])
+    assert error.value.error_class is expected

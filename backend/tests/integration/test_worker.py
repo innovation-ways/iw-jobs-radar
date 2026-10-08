@@ -142,3 +142,33 @@ async def test_the_worker_scores_extracted_jobs_for_enabled_intents(
     )
     assert len(scored) == 1
     assert scored[0].intent_revision_id == w.intent_revision_id
+
+
+async def test_the_worker_groups_postings_into_opportunities_even_without_ai(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from sqlalchemy import select, update
+    from tests.factories import make_company, make_posting, make_source, session_factory_for
+
+    from jobs_radar.db.models import JobOpportunityLink, JobPosting
+    from jobs_radar.services.dedup import DedupRunner
+
+    await db_session.execute(
+        update(JobPosting).where(JobPosting.closed_at.is_(None)).values(closed_at=datetime.now(UTC))
+    )
+    source = await make_source(db_session, await make_company(db_session))
+    posting, _snapshot = await make_posting(db_session, source)
+    runner = DedupRunner(session_factory_for(db_session, monkeypatch))
+    await Worker(settings, session_factory, name="w-test", dedup=runner).run_once()
+
+    link = (
+        await db_session.execute(
+            select(JobOpportunityLink).where(
+                JobOpportunityLink.job_posting_id == posting.job_posting_id
+            )
+        )
+    ).scalar_one()
+    assert link.state == "auto"

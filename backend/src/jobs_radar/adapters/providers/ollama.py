@@ -140,3 +140,68 @@ def build_ollama_provider(settings: Settings, *, model: str) -> OllamaProvider:
         model=model,
         timeout_seconds=float(settings.ollama_timeout_seconds),
     )
+
+
+class OllamaEmbedder:
+    """Text embeddings through a local Ollama server (``/api/embed``)."""
+
+    provider = "ollama"
+
+    def __init__(
+        self,
+        client: GuardedHttpClient,
+        *,
+        base_url: str,
+        model: str,
+        timeout_seconds: float = 60.0,
+    ) -> None:
+        self._client = client
+        self._base_url = base_url.rstrip("/")
+        self.model = model
+        self._timeout = timeout_seconds
+
+    async def embed(self, texts: list[str]) -> list[list[float]]:
+        """Embed ``texts`` and return one vector each.
+
+        Raises:
+            ProviderError: unreachable, timeout, model missing, error status or unusable answer.
+        """
+        response = await OllamaProvider._call(
+            self._client.post_json(
+                f"{self._base_url}/api/embed",
+                {"model": self.model, "input": texts, "truncate": True},
+                timeout=self._timeout,
+            )
+        )
+        OllamaProvider._check_status(response)
+        try:
+            vectors = json.loads(response.body)["embeddings"]
+            result = [[float(x) for x in vector] for vector in vectors]
+        except (ValueError, KeyError, TypeError) as exc:
+            raise _error(ProviderErrorClass.INVALID_RESPONSE) from exc
+        if len(result) != len(texts):
+            raise _error(ProviderErrorClass.INVALID_RESPONSE)
+        return result
+
+
+def _guarded_client(settings: Settings) -> GuardedHttpClient:
+    host = urlsplit(settings.ollama_url).hostname or ""
+    guard = UrlGuard(
+        allow_private=settings.allow_local_providers,
+        allowed_private_hosts=frozenset({host}) if host else frozenset(),
+    )
+    return GuardedHttpClient(
+        guard=guard,
+        user_agent=f"JobsRadar/{__version__} (personal job-market radar)",
+        total_timeout=float(settings.ollama_timeout_seconds),
+    )
+
+
+def build_ollama_embedder(settings: Settings) -> OllamaEmbedder:
+    """Create the embedding provider with the URL policy of the deployment (ADR-035)."""
+    return OllamaEmbedder(
+        _guarded_client(settings),
+        base_url=settings.ollama_url,
+        model=settings.embedding_model,
+        timeout_seconds=float(settings.ollama_timeout_seconds),
+    )

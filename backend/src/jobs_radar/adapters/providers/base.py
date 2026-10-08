@@ -48,3 +48,14 @@ class ExtractionProvider(Protocol):
     async def extract(self, request: ExtractionRequest) -> ProviderOutput:
         """Run the request. Raises :class:`ProviderError`."""
         ...
+
+
+class EmbeddingProvider(Protocol):
+    """A model that turns texts into vectors (used to compare job descriptions)."""
+
+    provider: str
+    model: str
+
+    async def embed(self, texts: list[str]) -> list[list[float]]:
+        """Return one vector per text. Raises :class:`ProviderError`."""
+        ...

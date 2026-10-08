@@ -71,14 +71,17 @@ async def make_company(session: AsyncSession, name: str | None = None) -> Compan
 
 
 async def make_source(
-    session: AsyncSession, company: Company, identifier: str | None = None
+    session: AsyncSession,
+    company: Company,
+    identifier: str | None = None,
+    source_type: SourceType = SourceType.GREENHOUSE,
 ) -> SourceConfiguration:
-    """A synthetic Greenhouse board configuration."""
+    """A synthetic board configuration (Greenhouse unless ``source_type`` says otherwise)."""
     identifier = identifier or unique("board")
     source = SourceConfiguration(
         owner_id=LOCAL_OWNER_ID,
         company_id=company.company_id,
-        source_type=SourceType.GREENHOUSE.value,
+        source_type=source_type.value,
         external_identifier=identifier,
         display_name=company.canonical_name,
         url=f"https://boards.example.test/v1/boards/{identifier}/jobs",
@@ -137,24 +140,28 @@ async def make_posting(
     *,
     title: str | None = None,
     description: str | None = None,
+    locations: list[str] | None = None,
+    first_seen_at: datetime | None = None,
 ) -> tuple[JobPosting, JobSnapshot]:
-    """A posting with one snapshot; ``title`` and ``description`` override the sample job's."""
+    """A posting with one snapshot; ``title``, ``description`` and ``locations`` override the sample job's."""
     job = NormalisedJob.model_validate(sample_normalised_job()).model_dump(mode="json")
     if title is not None:
         job["title"] = title
     if description is not None:
         job["description_text"] = description
+    if locations is not None:
+        job["work_arrangement"]["locations"] = [{"raw": raw} for raw in locations]
     content_hash = f"sha256:{secrets.token_hex(32)}"
     posting = JobPosting(
         source_configuration_id=source.source_configuration_id,
         company_id=source.company_id,
         external_job_id=external_id or unique("job"),
-        source_type=SourceType.GREENHOUSE.value,
+        source_type=source.source_type,
         source_url="https://jobs.example.test/1",
         title=job["title"],
         current_content_hash=content_hash,
-        first_seen_at=NOW,
-        last_seen_at=NOW,
+        first_seen_at=first_seen_at or NOW,
+        last_seen_at=first_seen_at or NOW,
     )
     session.add(posting)
     await session.flush()

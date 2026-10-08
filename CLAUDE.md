@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Local-first, single-user personal job-market intelligence system. It tracks permitted public job sources, scores jobs against an explicit Career Profile + Search Intent, and keeps a personal inbox of triage decisions. Repository: `iw-jobs-radar`. Python package: `jobs_radar`.
 
-**Phase**: implementation, task T0 (foundation) done; next is T1. Build order and rules are in `ai-dev/docs/14 - Implementation Guide.md` (tasks T0–T8, tick boxes there). Implement only the task the user asked for, in guide order; ask when anything is unclear. Do not assume commands or paths that are not in the docs or in this file.
+**Phase**: implementation; T0 (foundation) and T1 (data contracts) done; next is T2. Build order and rules are in `ai-dev/docs/14 - Implementation Guide.md` (tasks T0–T8, tick boxes there). Implement only the task the user asked for, in guide order; ask when anything is unclear. Do not assume commands or paths that are not in the docs or in this file.
 
 ## Working rules (NON-NEGOTIABLE)
 
@@ -64,8 +64,10 @@ make test-unit                    # backend unit only, no Docker
 make test-frontend                # Vitest
 make test-e2e                     # Playwright against the running stack (see below)
 make coverage                     # backend coverage, fails under 80%
-make security-sast                # semgrep (needs network for rule packs); make secret-scan  # gitleaks via Docker
+make security-sast                # semgrep (needs network for rule packs)
+make secret-scan                  # gitleaks over git history + staged changes (the local .env is not scanned)
 make openapi / make api-client    # export backend/openapi.json, regenerate the typed frontend client
+make docs-schema                  # regenerate docs/database/schema.md (data dictionary; a test fails if stale)
 make check                        # quality + quality-frontend + test + test-frontend
 ```
 
@@ -135,7 +137,12 @@ Secondary (periodic, non-blocking): vulture (`make dead-code`), deptry (`make de
 ### Database conventions
 
 - **Primary keys are BIGSERIAL named `{table_name}_id` — NEVER a bare `id`** (e.g. table `job_posting` → `job_posting_id`). Foreign keys are BIGINT and reuse the referenced primary key's exact name (e.g. `job_inbox_item.job_posting_id`). The same rule applies to API path parameters, query parameters and JSON fields, and to Python attribute names.
-- snake_case tables/columns; timestamps TIMESTAMPTZ in UTC.
+- Role-named foreign keys are the only allowed exception to that rule (self-references and double references): `current_profile_revision_id`, `primary_job_posting_id`, `from_/to_job_snapshot_id`, `skill_id_a/b`, `replaced_by_taxonomy_term_id`, `introduced_in_taxonomy_version_id` (ADR-041).
+- snake_case tables/columns; timestamps TIMESTAMPTZ in UTC. Enumerations are text + a named CHECK constraint (use `enum_check`); constraint names must fit PostgreSQL's 63 characters.
+- Build columns with the helpers in `db/columns.py` (`pk_column`, `fk_column`, `text_column`, ...): they guarantee a `comment`.
+- Immutable tables are protected by triggers; the only bypass is `repositories/deletion.py` (audited). `job_extraction` is mutable only while `pending`.
+- Migrations import `db/triggers.py` and `domain/taxonomy_seed.py`: never edit those constants, add a new migration. Autogenerate against the dev DB with `cd backend && uv run alembic revision --autogenerate -m ...`, then review: circular FKs and triggers need manual edits.
+- Tests use the factories in `backend/tests/factories.py` and sample data in `backend/tests/data.py` (synthetic only); DB tests flush but never commit.
 - Audit columns: `created_at` (and `updated_at` on mutable tables) only. No soft deletes (`deleted_at`) and no `created_by` — deletion is real (UC-08) and revision/snapshot/evaluation/event tables are append-only.
 - Every `mapped_column()` MUST have a `comment=` (one sentence); every model class MUST have a docstring. Enforced by `make docs-check`.
 - Alembic migration for every schema change, reversible where practical.

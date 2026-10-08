@@ -1,5 +1,6 @@
 import { AddConnectionForm } from '@/features/ai/AddConnectionForm'
 import { ConnectionCard } from '@/features/ai/ConnectionCard'
+import { IntegrationsCard } from '@/features/ai/IntegrationsCard'
 import { useAiActions, useAiSettings, type AiSettings } from '@/features/ai/queries'
 import { Button } from '@/components/ui/button'
 
@@ -108,6 +109,8 @@ export function AiPrivacy() {
         </h2>
         <AddConnectionForm />
       </section>
+
+      <IntegrationsCard integrations={data.integrations} />
 
       <section className="rounded-lg border border-line bg-surface p-4" aria-labelledby="privacy">
         <h2 id="privacy" className="text-sm font-semibold">

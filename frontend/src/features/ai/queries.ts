@@ -90,7 +90,28 @@ export function useAiActions() {
       ),
     onSettled: refresh,
   })
+  const writeIntegration = useMutation({
+    mutationFn: (input: { name: string; secret: string }) =>
+      unwrap(
+        api.PUT('/api/v1/settings/integrations/{name}/credential', {
+          params: { path: { name: input.name } },
+          body: { secret: input.secret },
+        }),
+      ),
+    onSettled: refresh,
+  })
+  const removeIntegration = useMutation({
+    mutationFn: (name: string) =>
+      unwrap(
+        api.DELETE('/api/v1/settings/integrations/{name}/credential', {
+          params: { path: { name } },
+        }),
+      ),
+    onSettled: refresh,
+  })
   return {
+    writeIntegration,
+    removeIntegration,
     createConnection,
     updateConnection,
     deleteConnection,

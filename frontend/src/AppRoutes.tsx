@@ -1,11 +1,13 @@
 import { Navigate, Route, Routes } from 'react-router'
 import { AppShell } from '@/components/AppShell'
 import { AiPrivacy } from '@/pages/AiPrivacy'
+import { Companies } from '@/pages/Companies'
 import { Inbox } from '@/pages/Inbox'
 import { NotFound } from '@/pages/NotFound'
 import { Placeholder } from '@/pages/Placeholder'
 import { ProfileIntent } from '@/pages/ProfileIntent'
 import { Sources } from '@/pages/Sources'
+import { Trends } from '@/pages/Trends'
 import { Today } from '@/pages/Today'
 import { ALL_NAV } from '@/navigation'
 
@@ -20,8 +22,19 @@ export function AppRoutes() {
         <Route path="/sources" element={<Sources />} />
         <Route path="/profile" element={<ProfileIntent />} />
         <Route path="/settings" element={<AiPrivacy />} />
+        <Route path="/companies" element={<Companies />} />
+        <Route path="/trends" element={<Trends />} />
         {ALL_NAV.filter(
-          (item) => !['/today', '/inbox', '/sources', '/profile', '/settings'].includes(item.path),
+          (item) =>
+            ![
+              '/today',
+              '/inbox',
+              '/sources',
+              '/profile',
+              '/settings',
+              '/companies',
+              '/trends',
+            ].includes(item.path),
         ).map((item) => (
           <Route key={item.path} path={item.path} element={<Placeholder path={item.path} />} />
         ))}

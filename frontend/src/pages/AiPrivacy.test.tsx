@@ -64,6 +64,7 @@ describe('AI & privacy screen', () => {
       key_configured: true,
       connections: [],
       privacy: { redact_contact_details: true, version: 1 },
+      integrations: { github: 'none' },
     }
     get.mockImplementation(() => Promise.resolve({ data: settings }))
   })
@@ -209,5 +210,22 @@ describe('AI & privacy screen', () => {
     expect(put).toHaveBeenCalledWith('/api/v1/settings/privacy', {
       body: { redact_contact_details: false, expected_version: 1 },
     })
+  })
+
+  it('stores the optional GitHub token write-only', async () => {
+    const user = userEvent.setup()
+    put.mockResolvedValue({ data: { github: 'saved' } })
+    renderPage()
+    const input = await screen.findByLabelText('GitHub token')
+    expect(input).toHaveAttribute('type', 'password')
+    expect(screen.getByText('GitHub token: not set')).toBeInTheDocument()
+    await user.type(input, 'ghp_secret_value')
+    await user.click(screen.getByRole('button', { name: 'Save token' }))
+    expect(put).toHaveBeenCalledWith('/api/v1/settings/integrations/{name}/credential', {
+      params: { path: { name: 'github' } },
+      body: { secret: 'ghp_secret_value' },
+    })
+    expect(input).toHaveValue('')
+    expect(document.body).not.toHaveTextContent('ghp_secret_value')
   })
 })

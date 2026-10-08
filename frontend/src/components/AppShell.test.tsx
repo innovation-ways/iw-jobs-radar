@@ -29,6 +29,38 @@ vi.mock('@/api/client', () => ({
           },
         })
       }
+      if (path === '/api/v1/trends') {
+        return Promise.resolve({
+          data: {
+            kind: 'skill',
+            search_intent_id: 1,
+            relevance_min_score: 45,
+            available_weeks: 0,
+            first_week: null,
+            periods: [
+              { key: '4w', weeks: 4, available: false },
+              { key: '12w', weeks: 12, available: false },
+              { key: '6m', weeks: 26, available: false },
+            ],
+            weeks: [],
+            rows: [],
+            intent_revision_changes: [],
+            source_set_changes: [],
+          },
+        })
+      }
+      if (path === '/api/v1/companies') {
+        return Promise.resolve({
+          data: {
+            items: [],
+            total: 0,
+            window: 15,
+            sort: 'new',
+            search_intent_id: null,
+            relevance_min_score: 45,
+          },
+        })
+      }
       if (path === '/api/v1/inbox') {
         return Promise.resolve({
           data: { items: [], next_cursor: null, counts: { total: 0 }, search_intent_id: null },

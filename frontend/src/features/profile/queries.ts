@@ -130,6 +130,18 @@ export function useProfileActions() {
     // Refresh on failure too: a conflict means what is on screen is out of date.
     onSettled: (_data, _error, input) => profileChanged(input.profileId),
   })
+  const deleteProfile = useMutation({
+    mutationFn: (input: { profileId: number; confirm: string }) =>
+      unwrap(
+        api.DELETE('/api/v1/profiles/{career_profile_id}', {
+          params: {
+            path: { career_profile_id: input.profileId },
+            query: { confirm: input.confirm },
+          },
+        }),
+      ),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PROFILES }),
+  })
   const restoreProfile = useMutation({
     mutationFn: (input: { profileId: number; revisionId: number; expected: number }) =>
       unwrap(
@@ -213,6 +225,7 @@ export function useProfileActions() {
   return {
     createProfile,
     saveProfile,
+    deleteProfile,
     restoreProfile,
     createIntent,
     saveIntent,

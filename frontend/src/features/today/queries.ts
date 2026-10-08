@@ -26,8 +26,9 @@ export function useNavBadges() {
     refetchInterval: REFRESH_MS,
   })
   return {
-    today: (digest.data?.counts.new_high_fit ?? 0) + (digest.data?.counts.changed_shortlisted ?? 0),
-    inbox: (inbox.data?.counts.unread ?? 0) + (inbox.data?.counts.updated_unread ?? 0),
-    sources: digest.data?.counts.sources_needing_attention ?? 0,
+    today:
+      (digest.data?.counts?.new_high_fit ?? 0) + (digest.data?.counts?.changed_shortlisted ?? 0),
+    inbox: (inbox.data?.counts?.unread ?? 0) + (inbox.data?.counts?.updated_unread ?? 0),
+    sources: digest.data?.counts?.sources_needing_attention ?? 0,
   }
 }

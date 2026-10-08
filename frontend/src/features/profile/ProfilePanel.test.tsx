@@ -7,11 +7,13 @@ import { ProfilePanel } from './ProfilePanel'
 
 const put = vi.fn()
 const get = vi.fn()
+const del = vi.fn()
 const download = vi.fn()
 vi.mock('@/api/client', () => ({
   api: {
     PUT: (...args: unknown[]) => put(...args),
     GET: (...args: unknown[]) => get(...args),
+    DELETE: (...args: unknown[]) => del(...args),
   },
 }))
 vi.mock('@/lib/download', () => ({ downloadJson: (...args: unknown[]) => download(...args) }))
@@ -48,6 +50,7 @@ describe('ProfilePanel', () => {
   beforeEach(() => {
     put.mockReset()
     get.mockReset()
+    del.mockReset()
     download.mockReset()
   })
 
@@ -201,5 +204,31 @@ describe('ProfilePanel', () => {
     })
     await vi.waitFor(() => expect(download).toHaveBeenCalled())
     expect(download.mock.calls[0][0]).toMatch(/\.json$/)
+  })
+
+  it('deletes the profile data only after the exact title is typed', async () => {
+    const user = userEvent.setup()
+    del.mockResolvedValue({ data: { deleted: { career_profile: 1 } }, response: { status: 200 } })
+    renderPanel(makeProfile({ title: 'AI Solutions' }))
+    await user.click(screen.getByRole('button', { name: 'Delete profile data…' }))
+    const confirm = screen.getByRole('button', { name: 'Delete permanently' })
+    expect(confirm).toBeDisabled()
+    await user.type(screen.getByLabelText(/type the profile title/i), 'ai solutions')
+    expect(confirm).toBeDisabled() // case matters
+    await user.clear(screen.getByLabelText(/type the profile title/i))
+    await user.type(screen.getByLabelText(/type the profile title/i), 'AI Solutions')
+    await user.click(confirm)
+    expect(del).toHaveBeenCalledWith('/api/v1/profiles/{career_profile_id}', {
+      params: { path: { career_profile_id: 1 }, query: { confirm: 'AI Solutions' } },
+    })
+  })
+
+  it('can cancel the deletion', async () => {
+    const user = userEvent.setup()
+    renderPanel()
+    await user.click(screen.getByRole('button', { name: 'Delete profile data…' }))
+    await user.click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(screen.queryByRole('button', { name: 'Delete permanently' })).not.toBeInTheDocument()
+    expect(del).not.toHaveBeenCalled()
   })
 })

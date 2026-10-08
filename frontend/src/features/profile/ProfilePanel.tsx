@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Card } from '@/components/Card'
 import { DirtyBar } from '@/components/DirtyBar'
 import { LocationPicker } from '@/components/LocationPicker'
@@ -32,7 +32,9 @@ const numberOf = (text: string) => Number(text.replace(/[^\d.]/g, '')) || 0
  */
 export function ProfilePanel({ profile, onDirtyChange }: Props) {
   const revision = profile.current_revision
-  const { saveProfile } = useProfileActions()
+  const { saveProfile, deleteProfile } = useProfileActions()
+  const [deleting, setDeleting] = useState(false)
+  const [confirmTitle, setConfirmTitle] = useState('')
   const { draft, setDraft, dirty, discard } = useDraft(
     formFromProfile(profile),
     revision?.profile_revision_id ?? `blank-${profile.career_profile_id}`,
@@ -412,6 +414,50 @@ export function ProfilePanel({ profile, onDirtyChange }: Props) {
           <Button variant="outline" onClick={() => void exportProfile()}>
             Export profile (JSON)
           </Button>
+          <Button variant="outline" className="text-bad" onClick={() => setDeleting(true)}>
+            Delete profile data…
+          </Button>
+          {deleting && (
+            <form
+              className="flex basis-full flex-wrap items-end gap-2.5 border-t border-line pt-3"
+              onSubmit={(event) => {
+                event.preventDefault()
+                deleteProfile.mutate({
+                  profileId: profile.career_profile_id,
+                  confirm: confirmTitle,
+                })
+              }}
+            >
+              <p className="basis-full text-sm text-ink-2">
+                This permanently deletes the profile, every revision, its intents and scores, and
+                the imported-document records. An audit entry keeps only counts. Export first if you
+                want a copy.
+              </p>
+              <label className="flex flex-col gap-1 text-xs text-ink-2">
+                Type the profile title to confirm
+                <input
+                  className={field}
+                  value={confirmTitle}
+                  onChange={(event) => setConfirmTitle(event.target.value)}
+                />
+              </label>
+              <Button
+                type="submit"
+                className="bg-bad text-on-brand"
+                disabled={confirmTitle !== profile.title || deleteProfile.isPending}
+              >
+                Delete permanently
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => setDeleting(false)}>
+                Cancel
+              </Button>
+              {deleteProfile.isError && (
+                <p role="alert" className="basis-full text-sm text-bad">
+                  {deleteProfile.error.message}
+                </p>
+              )}
+            </form>
+          )}
         </div>
       </div>
       <DirtyBar

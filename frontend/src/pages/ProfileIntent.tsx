@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { defaultIntentDefinition } from '@/features/intent/defaults'
 import { IntentPanel } from '@/features/intent/IntentPanel'
 import { HistoryPanel } from '@/features/history/HistoryPanel'
+import { ImportCvPanel } from '@/features/import/ImportCvPanel'
 import { ProfilePanel } from '@/features/profile/ProfilePanel'
 import {
   useIntents,
@@ -13,10 +14,11 @@ import {
 } from '@/features/profile/queries'
 import { cn } from '@/lib/utils'
 
-type Tab = 'profile' | 'intent' | 'weights' | 'history'
+type Tab = 'profile' | 'import' | 'intent' | 'weights' | 'history'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'profile', label: 'Profile' },
+  { id: 'import', label: 'Import CV' },
   { id: 'intent', label: 'Search intent' },
   { id: 'weights', label: 'Scoring weights' },
   { id: 'history', label: 'History' },
@@ -256,6 +258,9 @@ export function ProfileIntent() {
             profile={profile}
             onDirtyChange={setProfileDirty}
           />
+        </div>
+        <div role="tabpanel" id="panel-import" hidden={tab !== 'import'}>
+          <ImportCvPanel key={profile.career_profile_id} profile={profile} />
         </div>
         <div role="tabpanel" id="panel-intent" hidden={!intentSections}>
           {intent?.current_revision && taxonomy.data ? (

@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { TAXONOMY, makeIntent, makeProfile } from '@/test/builders'
 import { ProfileIntent } from './ProfileIntent'
@@ -23,7 +24,9 @@ function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
-      <ProfileIntent />
+      <MemoryRouter>
+        <ProfileIntent />
+      </MemoryRouter>
     </QueryClientProvider>,
   )
 }
@@ -49,6 +52,17 @@ describe('Profile & intent screen', () => {
           case '/api/v1/profiles/{career_profile_id}/revisions':
           case '/api/v1/intents/{search_intent_id}/revisions':
             return Promise.resolve({ data: { items: [] } })
+          case '/api/v1/settings/ai':
+            return Promise.resolve({
+              data: {
+                mode: 'no_ai',
+                import_connection_id: null,
+                jobs_connection_id: null,
+                key_configured: true,
+                connections: [],
+                privacy: { redact_contact_details: true, version: 1 },
+              },
+            })
           default:
             return Promise.reject(new Error(`unexpected GET ${path}`))
         }
@@ -71,7 +85,7 @@ describe('Profile & intent screen', () => {
     })
   })
 
-  it('shows the selected profile and intent with their revisions and four tabs', async () => {
+  it('shows the selected profile and intent with their revisions and five tabs', async () => {
     renderPage()
     expect(await screen.findByLabelText('Career profile')).toHaveDisplayValue(
       'AI Solutions · revision 1',
@@ -84,7 +98,7 @@ describe('Profile & intent screen', () => {
       within(tabs)
         .getAllByRole('tab')
         .map((t) => t.textContent),
-    ).toEqual(['Profile', 'Search intent', 'Scoring weights', 'History'])
+    ).toEqual(['Profile', 'Import CV', 'Search intent', 'Scoring weights', 'History'])
     expect(within(tabs).getByRole('tab', { name: 'Profile' })).toHaveAttribute(
       'aria-selected',
       'true',

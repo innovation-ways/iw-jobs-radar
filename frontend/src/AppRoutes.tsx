@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router'
 import { AppShell } from '@/components/AppShell'
+import { AiPrivacy } from '@/pages/AiPrivacy'
 import { Inbox } from '@/pages/Inbox'
 import { NotFound } from '@/pages/NotFound'
 import { Placeholder } from '@/pages/Placeholder'
@@ -18,8 +19,9 @@ export function AppRoutes() {
         <Route path="/inbox" element={<Inbox />} />
         <Route path="/sources" element={<Sources />} />
         <Route path="/profile" element={<ProfileIntent />} />
+        <Route path="/settings" element={<AiPrivacy />} />
         {ALL_NAV.filter(
-          (item) => !['/today', '/inbox', '/sources', '/profile'].includes(item.path),
+          (item) => !['/today', '/inbox', '/sources', '/profile', '/settings'].includes(item.path),
         ).map((item) => (
           <Route key={item.path} path={item.path} element={<Placeholder path={item.path} />} />
         ))}

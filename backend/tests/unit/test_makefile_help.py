@@ -20,7 +20,7 @@ EXPECTED = {
     "lint", "format", "format-check", "typecheck", "arch-check", "security", "license-check",
     "docs-check", "quality", "fe-lint", "fe-format", "fe-format-check", "fe-typecheck",
     "fe-license-check", "quality-frontend", "security-sast", "secret-scan",
-    "docs-schema", "openapi", "api-client", "check", "check-all", "clean",
+    "docs-schema", "openapi", "api-client", "seed-dev-sources", "check", "check-all", "clean",
 }  # fmt: skip
 
 

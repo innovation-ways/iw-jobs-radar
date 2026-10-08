@@ -14,7 +14,7 @@ PNPM := PATH="$$HOME/.local/bin:$$PATH" pnpm --dir $(FRONTEND)
         test-frontend test-frontend-watch fe-coverage test-e2e \
         lint format format-check typecheck arch-check security license-check docs-check quality \
         fe-lint fe-format fe-format-check fe-typecheck fe-license-check quality-frontend check check-all \
-        security-sast secret-scan docs-schema openapi api-client fe-install clean
+        security-sast secret-scan docs-schema openapi api-client seed-dev-sources fe-install clean
 
 ##@ Run the app
 
@@ -179,6 +179,9 @@ openapi: ## Export the API description to backend/openapi.json
 
 api-client: openapi ## Regenerate the typed frontend API client after an API change
 	$(PNPM) api:generate
+
+seed-dev-sources: ## Add the 14 research boards as DISABLED sources to the dev database (no network)
+	cd $(BACKEND) && uv run python -m jobs_radar.tools.seed_dev_sources
 
 ##@ Housekeeping
 

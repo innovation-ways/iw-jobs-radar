@@ -201,3 +201,27 @@ def sample_normalised_job() -> dict[str, Any]:
             },
         }
     )
+
+
+def sample_profile_input() -> dict[str, Any]:
+    """Profile as the owner edits it: skills by name, no provenance (the service adds it)."""
+    facts = sample_profile_facts()
+    return {
+        "headline": facts["headline"],
+        "base_location": facts["base_location"],
+        "years_experience": facts["years_experience"],
+        "languages": facts["languages"],
+        "skills": [
+            {"name": "Python", "kind": "technology", "level": "expert", "years": 10},
+            {"name": "Kubernetes", "kind": "technology", "level": "advanced", "years": 4},
+        ],
+        "experience": [
+            {k: v for k, v in item.items() if k != "provenance"} for item in facts["experience"]
+        ],
+        "education": [
+            {k: v for k, v in item.items() if k != "provenance"} for item in facts["education"]
+        ],
+        "certifications": [
+            {k: v for k, v in item.items() if k != "provenance"} for item in facts["certifications"]
+        ],
+    }

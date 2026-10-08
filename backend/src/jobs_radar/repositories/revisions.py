@@ -70,6 +70,32 @@ class ProfileRepository:
             return None
         return await self._session.get(ProfileRevision, profile.current_profile_revision_id)
 
+    async def list_revisions(self, profile: CareerProfile) -> list[ProfileRevision]:
+        """Return all revisions of the profile, newest first."""
+        rows = await self._session.execute(
+            select(ProfileRevision)
+            .where(ProfileRevision.career_profile_id == profile.career_profile_id)
+            .order_by(ProfileRevision.revision_number.desc())
+        )
+        return list(rows.scalars())
+
+    async def get_revision(
+        self, profile: CareerProfile, profile_revision_id: int
+    ) -> ProfileRevision:
+        """Return one revision of the profile; ``NotFoundError`` if it is another profile's."""
+        revision = (
+            await self._session.execute(
+                select(ProfileRevision).where(
+                    ProfileRevision.profile_revision_id == profile_revision_id,
+                    ProfileRevision.career_profile_id == profile.career_profile_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if revision is None:
+            msg = "Profile revision not found."
+            raise NotFoundError(msg)
+        return revision
+
     async def add_revision(
         self,
         profile: CareerProfile,
@@ -145,6 +171,43 @@ class IntentRepository:
         if intent.current_intent_revision_id is None:
             return None
         return await self._session.get(IntentRevision, intent.current_intent_revision_id)
+
+    async def list_for_profile(self, owner_id: int, career_profile_id: int) -> list[SearchIntent]:
+        """Return the intents of one of the owner's profiles, oldest first."""
+        await ProfileRepository(self._session).get(owner_id, career_profile_id)  # ownership check
+        rows = await self._session.execute(
+            select(SearchIntent)
+            .where(
+                SearchIntent.owner_id == owner_id,
+                SearchIntent.career_profile_id == career_profile_id,
+            )
+            .order_by(SearchIntent.search_intent_id)
+        )
+        return list(rows.scalars())
+
+    async def list_revisions(self, intent: SearchIntent) -> list[IntentRevision]:
+        """Return all revisions of the intent, newest first."""
+        rows = await self._session.execute(
+            select(IntentRevision)
+            .where(IntentRevision.search_intent_id == intent.search_intent_id)
+            .order_by(IntentRevision.revision_number.desc())
+        )
+        return list(rows.scalars())
+
+    async def get_revision(self, intent: SearchIntent, intent_revision_id: int) -> IntentRevision:
+        """Return one revision of the intent; ``NotFoundError`` if it belongs to another intent."""
+        revision = (
+            await self._session.execute(
+                select(IntentRevision).where(
+                    IntentRevision.intent_revision_id == intent_revision_id,
+                    IntentRevision.search_intent_id == intent.search_intent_id,
+                )
+            )
+        ).scalar_one_or_none()
+        if revision is None:
+            msg = "Intent revision not found."
+            raise NotFoundError(msg)
+        return revision
 
     async def add_revision(
         self,

@@ -164,6 +164,11 @@ class ProfileProposal(TimestampMixin, Base):
     redaction_policy: Mapped[str | None] = text_column(
         "Redaction policy applied before processing.", length=50, nullable=True
     )
+    consent_json: Mapped[Any | None] = json_column(
+        "What the owner agreed to before a remote call: provider, model, location, content "
+        "category, redaction and time; null for local processing.",
+        nullable=True,
+    )
     status: Mapped[str] = text_column(
         "pending until the review is applied, then completed.", length=20, default="pending"
     )

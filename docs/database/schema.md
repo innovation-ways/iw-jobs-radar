@@ -383,6 +383,22 @@ Owner of personal data; V1 has one fixed local owner.
 | `updated_at` | DATETIME | no | UTC timestamp of the last modification of the row. |
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
 
+## privacy_setting
+
+Privacy policy for remote AI calls; one row per owner.
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `privacy_setting_id` | BIGINT | no | Surrogate primary key of the setting. |
+| `owner_id` | BIGINT | no | Owner the policy belongs to. |
+| `redact_contact_details` | BOOLEAN | no | Whether e-mail addresses, phone numbers and links are removed before a remote call. |
+| `version` | INTEGER | no | Optimistic-concurrency counter, incremented on every change of the row. |
+| `updated_at` | DATETIME | no | UTC timestamp of the last modification of the row. |
+| `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
+
+- foreign key `owner_id` → `owner.owner_id`
+- unique `uq_privacy_setting_owner_id` (owner_id)
+
 ## profile_proposal
 
 Reviewable proposals produced from an imported document.
@@ -397,6 +413,7 @@ Reviewable proposals produced from an imported document.
 | `provider_model` | VARCHAR(100) | yes | Model that produced it, if any. |
 | `prompt_version` | VARCHAR(50) | yes | Prompt template version used. |
 | `redaction_policy` | VARCHAR(50) | yes | Redaction policy applied before processing. |
+| `consent_json` | JSONB | yes | What the owner agreed to before a remote call: provider, model, location, content category, redaction and time; null for local processing. |
 | `status` | VARCHAR(20) | no | pending until the review is applied, then completed. |
 | `completed_at` | DATETIME | yes | UTC time at which the review was applied. |
 | `version` | INTEGER | no | Optimistic-concurrency counter, incremented on every change of the row. |

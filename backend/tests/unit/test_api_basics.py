@@ -64,6 +64,16 @@ def client() -> Iterator[TestClient]:
         yield test_client
 
 
+def test_root_describes_the_service_instead_of_a_bare_404(client: TestClient) -> None:
+    response = client.get("/")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["name"] == "Jobs Radar API"
+    assert body["docs"] == "/docs"
+    assert body["health"] == "/healthz"
+    assert "secret" not in response.text.lower()
+
+
 def test_healthz_needs_no_database(client: TestClient) -> None:
     response = client.get("/healthz")
     assert response.status_code == 200

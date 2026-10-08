@@ -12,6 +12,18 @@ from jobs_radar.services.readiness import ReadinessService
 router = APIRouter(tags=["health"])
 
 
+@router.get("/", include_in_schema=False)
+async def root() -> dict[str, str]:
+    """Describe the service so that opening the API address in a browser is not a bare 404."""
+    return {
+        "name": "Jobs Radar API",
+        "docs": "/docs",
+        "health": "/healthz",
+        "ready": "/readyz",
+        "note": "This is the API. The web interface runs on the frontend port.",
+    }
+
+
 class LivenessResponse(BaseModel):
     """Body of ``/healthz``."""
 

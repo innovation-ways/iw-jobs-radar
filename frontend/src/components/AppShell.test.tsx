@@ -79,4 +79,12 @@ describe('AppShell', () => {
     renderAt('/nope')
     expect(screen.getByRole('heading', { level: 1, name: /not found/i })).toBeInTheDocument()
   })
+
+  it('credits GeoNames, as its CC BY 4.0 licence requires', () => {
+    renderAt('/inbox')
+    const link = screen.getByRole('link', { name: 'GeoNames' })
+    expect(link).toHaveAttribute('href', 'https://www.geonames.org')
+    expect(link).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
+    expect(screen.getByText(/CC BY 4\.0/)).toBeInTheDocument()
+  })
 })

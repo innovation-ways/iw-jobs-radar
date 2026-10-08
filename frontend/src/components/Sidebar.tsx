@@ -46,6 +46,13 @@ export function Sidebar() {
       </nav>
       <div className="mt-auto border-t border-line px-2.5 pt-2.5">
         <ApiStatus />
+        <p className="mt-2 text-[11px] text-ink-3">
+          Place data from{' '}
+          <a href="https://www.geonames.org" target="_blank" rel="noreferrer" className="underline">
+            GeoNames
+          </a>{' '}
+          (CC BY 4.0)
+        </p>
       </div>
     </aside>
   )

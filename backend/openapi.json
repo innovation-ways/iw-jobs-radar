@@ -648,6 +648,29 @@
         "title": "ConnectionUpdate",
         "type": "object"
       },
+      "ConsentGiven": {
+        "additionalProperties": false,
+        "description": "The owner's confirmation that this CV may go to this connection and model.",
+        "properties": {
+          "model_id": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Model Id",
+            "type": "string"
+          },
+          "provider_connection_id": {
+            "minimum": 1.0,
+            "title": "Provider Connection Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "provider_connection_id",
+          "model_id"
+        ],
+        "title": "ConsentGiven",
+        "type": "object"
+      },
       "ContractorRate": {
         "additionalProperties": false,
         "description": "Contractor and freelance pay expectation: a day rate only.",
@@ -691,6 +714,42 @@
           "secret"
         ],
         "title": "CredentialWrite",
+        "type": "object"
+      },
+      "DecisionRequest": {
+        "additionalProperties": false,
+        "description": "The decision on one item; ``value`` replaces the proposal for ``edit``.",
+        "properties": {
+          "decision": {
+            "enum": [
+              "accept",
+              "edit",
+              "reject",
+              "defer"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "proposal_item_id": {
+            "minimum": 1.0,
+            "title": "Proposal Item Id",
+            "type": "integer"
+          },
+          "value": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "proposal_item_id",
+          "decision"
+        ],
+        "title": "DecisionRequest",
         "type": "object"
       },
       "DigestCounts": {
@@ -3273,6 +3332,245 @@
         "title": "ProfileSaveResponse",
         "type": "object"
       },
+      "ProposalItemRead": {
+        "additionalProperties": false,
+        "description": "One proposed fact with its supporting excerpt and review state.",
+        "properties": {
+          "confidence": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "edited_value": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Edited Value"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "proposal_item_id": {
+            "title": "Proposal Item Id",
+            "type": "integer"
+          },
+          "review_status": {
+            "enum": [
+              "pending",
+              "accepted",
+              "edited",
+              "rejected",
+              "deferred"
+            ],
+            "title": "Review Status",
+            "type": "string"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "source_excerpt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Excerpt"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "required": [
+          "proposal_item_id",
+          "path",
+          "value",
+          "source_excerpt",
+          "confidence",
+          "review_status",
+          "edited_value",
+          "reviewed_at"
+        ],
+        "title": "ProposalItemRead",
+        "type": "object"
+      },
+      "ProposalRead": {
+        "additionalProperties": false,
+        "description": "A proposal with the provider metadata (never a credential) and its items.",
+        "properties": {
+          "career_profile_id": {
+            "title": "Career Profile Id",
+            "type": "integer"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "consent": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Consent"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalItemRead"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "profile_proposal_id": {
+            "title": "Profile Proposal Id",
+            "type": "integer"
+          },
+          "prompt_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt Version"
+          },
+          "provider_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Model"
+          },
+          "provider_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Type"
+          },
+          "redaction_policy": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Redaction Policy"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "completed"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "profile_proposal_id",
+          "career_profile_id",
+          "document_id",
+          "provider_type",
+          "provider_model",
+          "prompt_version",
+          "redaction_policy",
+          "consent",
+          "status",
+          "completed_at",
+          "created_at",
+          "items"
+        ],
+        "title": "ProposalRead",
+        "type": "object"
+      },
+      "ProposalRequest": {
+        "additionalProperties": false,
+        "description": "Generate proposals for a profile; ``consent`` is required for a remote provider.",
+        "properties": {
+          "career_profile_id": {
+            "minimum": 1.0,
+            "title": "Career Profile Id",
+            "type": "integer"
+          },
+          "consent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConsentGiven"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "career_profile_id"
+        ],
+        "title": "ProposalRequest",
+        "type": "object"
+      },
       "Provenance": {
         "additionalProperties": false,
         "description": "Where a fact came from; only accepted facts exist in a revision.",
@@ -3403,6 +3701,85 @@
           "expected_current_revision"
         ],
         "title": "RestoreRequest",
+        "type": "object"
+      },
+      "ReviewRequest": {
+        "additionalProperties": false,
+        "description": "Apply a set of decisions atomically.",
+        "properties": {
+          "change_summary": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Summary"
+          },
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/DecisionRequest"
+            },
+            "maxItems": 500,
+            "title": "Decisions",
+            "type": "array"
+          },
+          "expected_current_revision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Current Revision"
+          },
+          "profile_proposal_id": {
+            "minimum": 1.0,
+            "title": "Profile Proposal Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "profile_proposal_id",
+          "decisions"
+        ],
+        "title": "ReviewRequest",
+        "type": "object"
+      },
+      "ReviewResponse": {
+        "additionalProperties": false,
+        "description": "The outcome: whether a revision was created, the profile and the proposal.",
+        "properties": {
+          "created": {
+            "title": "Created",
+            "type": "boolean"
+          },
+          "profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProfileRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/ProposalRead"
+          }
+        },
+        "required": [
+          "created",
+          "profile",
+          "proposal"
+        ],
+        "title": "ReviewResponse",
         "type": "object"
       },
       "RunStatus": {
@@ -4594,6 +4971,59 @@
         "summary": "Get Document",
         "tags": [
           "documents"
+        ]
+      }
+    },
+    "/api/v1/documents/{document_id}/proposals": {
+      "post": {
+        "description": "Ask the chosen model for profile proposals from the uploaded CV (needs consent if remote).",
+        "operationId": "create_proposal_api_v1_documents__document_id__proposals_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "document_id",
+            "required": true,
+            "schema": {
+              "title": "Document Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Proposal",
+        "tags": [
+          "proposals"
         ]
       }
     },
@@ -5888,6 +6318,59 @@
         ]
       }
     },
+    "/api/v1/profiles/{career_profile_id}/reviews": {
+      "post": {
+        "description": "Apply accept/edit/reject/defer decisions atomically (a revision if facts change).",
+        "operationId": "review_proposal_api_v1_profiles__career_profile_id__reviews_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "career_profile_id",
+            "required": true,
+            "schema": {
+              "title": "Career Profile Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Review Proposal",
+        "tags": [
+          "proposals"
+        ]
+      }
+    },
     "/api/v1/profiles/{career_profile_id}/revisions": {
       "get": {
         "description": "List the immutable revisions of a profile, newest first.",
@@ -6042,6 +6525,49 @@
         "summary": "Restore Profile Revision",
         "tags": [
           "profiles"
+        ]
+      }
+    },
+    "/api/v1/proposals/{profile_proposal_id}": {
+      "get": {
+        "description": "Return a proposal with its field-level items.",
+        "operationId": "get_proposal_api_v1_proposals__profile_proposal_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "profile_proposal_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Proposal Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Proposal",
+        "tags": [
+          "proposals"
         ]
       }
     },

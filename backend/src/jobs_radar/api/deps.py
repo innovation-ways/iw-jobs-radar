@@ -18,6 +18,8 @@ from jobs_radar.services.evaluation import EvaluationService
 from jobs_radar.services.inbox import InboxService
 from jobs_radar.services.intents import IntentService
 from jobs_radar.services.profiles import ProfileService
+from jobs_radar.services.proposal_review import ReviewService
+from jobs_radar.services.proposals import ProposalService
 from jobs_radar.services.readiness import ReadinessService
 from jobs_radar.services.schedule import ScheduleService
 from jobs_radar.services.sources import SourceService
@@ -125,3 +127,18 @@ def get_document_service(
     """Build the document service on the request's session and the process-wide text store."""
     store: DocumentTextStore = request.app.state.document_texts
     return DocumentService(session, store)
+
+
+def get_proposal_service(
+    request: Request,
+    session: Annotated[AsyncSession, Depends(get_session)],
+    ai: Annotated[AiSettingsService, Depends(get_ai_settings_service)],
+) -> ProposalService:
+    """Build the proposal service with the AI settings and the in-memory CV text store."""
+    state = request.app.state
+    return ProposalService(session, state.settings, state.document_texts, ai)
+
+
+def get_review_service(session: Annotated[AsyncSession, Depends(get_session)]) -> ReviewService:
+    """Build the review service on the request's session."""
+    return ReviewService(session)

@@ -88,6 +88,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/proposals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Proposal
+         * @description Ask the chosen model for profile proposals from the uploaded CV (needs consent if remote).
+         */
+        post: operations["create_proposal_api_v1_documents__document_id__proposals_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/evaluations/{match_evaluation_id}": {
         parameters: {
             query?: never;
@@ -480,6 +500,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/profiles/{career_profile_id}/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Review Proposal
+         * @description Apply accept/edit/reject/defer decisions atomically (a revision if facts change).
+         */
+        post: operations["review_proposal_api_v1_profiles__career_profile_id__reviews_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/profiles/{career_profile_id}/revisions": {
         parameters: {
             query?: never;
@@ -534,6 +574,26 @@ export interface paths {
          * @description Make an old revision's content the next revision.
          */
         post: operations["restore_profile_revision_api_v1_profiles__career_profile_id__revisions__profile_revision_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/proposals/{profile_proposal_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Proposal
+         * @description Return a proposal with its field-level items.
+         */
+        get: operations["get_proposal_api_v1_proposals__profile_proposal_id__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1083,6 +1143,16 @@ export interface components {
             model_id?: string | null;
         };
         /**
+         * ConsentGiven
+         * @description The owner's confirmation that this CV may go to this connection and model.
+         */
+        ConsentGiven: {
+            /** Model Id */
+            model_id: string;
+            /** Provider Connection Id */
+            provider_connection_id: number;
+        };
+        /**
          * ContractorRate
          * @description Contractor and freelance pay expectation: a day rate only.
          */
@@ -1101,6 +1171,21 @@ export interface components {
         CredentialWrite: {
             /** Secret */
             secret: string;
+        };
+        /**
+         * DecisionRequest
+         * @description The decision on one item; ``value`` replaces the proposal for ``edit``.
+         */
+        DecisionRequest: {
+            /**
+             * Decision
+             * @enum {string}
+             */
+            decision: "accept" | "edit" | "reject" | "defer";
+            /** Proposal Item Id */
+            proposal_item_id: number;
+            /** Value */
+            value?: unknown | null;
         };
         /**
          * DigestCounts
@@ -2205,6 +2290,78 @@ export interface components {
             profile: components["schemas"]["ProfileRead"];
         };
         /**
+         * ProposalItemRead
+         * @description One proposed fact with its supporting excerpt and review state.
+         */
+        ProposalItemRead: {
+            /** Confidence */
+            confidence: string | null;
+            /** Edited Value */
+            edited_value: unknown | null;
+            /** Path */
+            path: string;
+            /** Proposal Item Id */
+            proposal_item_id: number;
+            /**
+             * Review Status
+             * @enum {string}
+             */
+            review_status: "pending" | "accepted" | "edited" | "rejected" | "deferred";
+            /** Reviewed At */
+            reviewed_at: string | null;
+            /** Source Excerpt */
+            source_excerpt: string | null;
+            /** Value */
+            value: unknown;
+        };
+        /**
+         * ProposalRead
+         * @description A proposal with the provider metadata (never a credential) and its items.
+         */
+        ProposalRead: {
+            /** Career Profile Id */
+            career_profile_id: number;
+            /** Completed At */
+            completed_at: string | null;
+            /** Consent */
+            consent: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Document Id */
+            document_id: number | null;
+            /** Items */
+            items: components["schemas"]["ProposalItemRead"][];
+            /** Profile Proposal Id */
+            profile_proposal_id: number;
+            /** Prompt Version */
+            prompt_version: string | null;
+            /** Provider Model */
+            provider_model: string | null;
+            /** Provider Type */
+            provider_type: string | null;
+            /** Redaction Policy */
+            redaction_policy: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "completed";
+        };
+        /**
+         * ProposalRequest
+         * @description Generate proposals for a profile; ``consent`` is required for a remote provider.
+         */
+        ProposalRequest: {
+            /** Career Profile Id */
+            career_profile_id: number;
+            consent?: components["schemas"]["ConsentGiven"] | null;
+        };
+        /**
          * Provenance
          * @description Where a fact came from; only accepted facts exist in a revision.
          */
@@ -2256,6 +2413,30 @@ export interface components {
         RestoreRequest: {
             /** Expected Current Revision */
             expected_current_revision: number;
+        };
+        /**
+         * ReviewRequest
+         * @description Apply a set of decisions atomically.
+         */
+        ReviewRequest: {
+            /** Change Summary */
+            change_summary?: string | null;
+            /** Decisions */
+            decisions: components["schemas"]["DecisionRequest"][];
+            /** Expected Current Revision */
+            expected_current_revision?: number | null;
+            /** Profile Proposal Id */
+            profile_proposal_id: number;
+        };
+        /**
+         * ReviewResponse
+         * @description The outcome: whether a revision was created, the profile and the proposal.
+         */
+        ReviewResponse: {
+            /** Created */
+            created: boolean;
+            profile: components["schemas"]["ProfileRead"] | null;
+            proposal: components["schemas"]["ProposalRead"];
         };
         /**
          * RunStatus
@@ -2814,6 +2995,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DocumentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_proposal_api_v1_documents__document_id__proposals_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProposalRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalRead"];
                 };
             };
             /** @description Validation Error */
@@ -3553,6 +3769,41 @@ export interface operations {
             };
         };
     };
+    review_proposal_api_v1_profiles__career_profile_id__reviews_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                career_profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_profile_revisions_api_v1_profiles__career_profile_id__revisions_get: {
         parameters: {
             query?: never;
@@ -3639,6 +3890,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProfileSaveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_proposal_api_v1_proposals__profile_proposal_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_proposal_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProposalRead"];
                 };
             };
             /** @description Validation Error */

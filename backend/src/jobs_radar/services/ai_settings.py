@@ -16,7 +16,7 @@ from typing import Literal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.adapters.providers.base import ProviderError
-from jobs_radar.adapters.providers.factory import ModelLister, ProviderSpec, build_provider
+from jobs_radar.adapters.providers.factory import ChatProvider, ProviderSpec, build_provider
 from jobs_radar.core.crypto import CredentialBox, CredentialKeyError
 from jobs_radar.core.errors import (
     ConflictError,
@@ -29,7 +29,7 @@ from jobs_radar.core.url_guard import BlockedUrlError, Resolver, UrlGuard, syste
 from jobs_radar.db.models import PrivacySetting, ProviderConnection
 from jobs_radar.repositories.providers import ProviderRepository
 
-ProviderBuilder = Callable[[ProviderSpec], ModelLister]
+ProviderBuilder = Callable[[ProviderSpec], ChatProvider]
 
 # Default endpoint per provider type; the others must be given by the owner.
 _DEFAULT_ENDPOINTS = {"openai": "https://api.openai.com/v1"}
@@ -332,6 +332,20 @@ class AiSettingsService:
     async def deactivate_jobs(self, owner_id: int) -> None:
         """Stop analysing collected jobs (they stay collected and show as not evaluated)."""
         await self._repository.clear_flag(owner_id, "use_for_jobs")
+
+    # --- use ------------------------------------------------------------------------------------
+
+    async def import_target(self, owner_id: int) -> tuple[ProviderConnection, ChatProvider] | None:
+        """Return the connection chosen for CV import and its adapter, or ``None`` for No AI."""
+        connection = next((c for c in await self._repository.list(owner_id) if c.is_active), None)
+        if connection is None:
+            return None
+        return connection, self._build(self.spec_for(connection))
+
+    async def redaction_enabled(self, owner_id: int) -> bool:
+        """Whether contact details are removed before a remote call."""
+        setting, _ = await self._repository.privacy(owner_id)
+        return setting.redact_contact_details
 
     # --- testing -------------------------------------------------------------------------------
 

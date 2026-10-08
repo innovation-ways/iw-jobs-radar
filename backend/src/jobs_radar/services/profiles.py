@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from jobs_radar.core.errors import ConflictError
 from jobs_radar.db.models import CareerProfile, ProfileRevision
 from jobs_radar.domain.enums import EvidenceOrigin
+from jobs_radar.domain.skills import normalise_skill_name
 from jobs_radar.repositories.revisions import ProfileRepository
 from jobs_radar.repositories.skills import SkillRepository
 from jobs_radar.schemas.profile import ProfileFacts, ProfilePrivacy, Provenance
@@ -201,3 +202,61 @@ class ProfileService:
             ProfilePrivacy.model_validate(old.privacy_json),
             f"Restored revision {old.revision_number}",
         )
+
+    # --- reviewed imports ------------------------------------------------------------------
+
+    async def lock_current(
+        self, owner_id: int, career_profile_id: int, expected: int | None
+    ) -> tuple[CareerProfile, RevisionView | None]:
+        """Lock the profile, check the caller saw its current revision and return it."""
+        profile, current = await self._lock_current(owner_id, career_profile_id, expected)
+        return profile, (await self._view(current) if current else None)
+
+    async def save_reviewed(
+        self,
+        profile: CareerProfile,
+        current: RevisionView | None,
+        data: ProfileInput,
+        accepted: dict[str, dict[str, Provenance]],
+        change_summary: str | None,
+    ) -> SaveResult:
+        """Save ``data`` as the next revision, marking accepted items with their provenance.
+
+        ``accepted`` maps a list field (``skills``, ``experience``, ``education``,
+        ``certifications``) to ``{item key: provenance}``. An item whose content is unchanged
+        keeps the provenance it already had.
+        """
+        previous = current.revision.facts_json if current else None
+        facts = await self._build_facts(data, previous, _utc_now())
+        facts_json = facts.model_dump(mode="json")
+        names = await self._skills.names({s["skill_id"] for s in facts_json["skills"]})
+        before = {
+            field: [_without_provenance(i) for i in (previous or {}).get(field, [])]
+            for field in _PROVENANCE_LISTS
+        }
+        for field, by_key in accepted.items():
+            for item in facts_json[field]:
+                content = _without_provenance(item)
+                if content in before[field]:
+                    continue
+                provenance = by_key.get(item_key(field, item, names))
+                if provenance is not None:
+                    item["provenance"] = provenance.model_dump(mode="json")
+        return await self._store(
+            profile,
+            current.revision if current else None,
+            ProfileFacts.model_validate(facts_json),
+            data.privacy,
+            change_summary,
+        )
+
+
+def item_key(field: str, item: dict[str, Any], skill_names: dict[int, str]) -> str:
+    """Return a stable key identifying a list item inside its field (to merge reviewed items)."""
+    if field == "skills":
+        return normalise_skill_name(skill_names[item["skill_id"]])
+    if field == "experience":
+        return f"{item['title']}|{item['organisation']}|{item['start']}".casefold()
+    if field == "education":
+        return f"{item['level']}|{item['field']}".casefold()
+    return str(item["name"]).casefold()  # certifications

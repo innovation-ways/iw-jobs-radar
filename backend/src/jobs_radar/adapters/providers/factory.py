@@ -35,8 +35,8 @@ class ModelLister(Protocol):
         ...
 
 
-class ListingProvider(ExtractionProvider, ModelLister, Protocol):
-    """An extraction provider that can list its models."""
+class ChatProvider(ExtractionProvider, ModelLister, Protocol):
+    """An extraction provider that can also list its models."""
 
 
 def build_provider(

@@ -131,10 +131,19 @@ async def make_intent(
 
 
 async def make_posting(
-    session: AsyncSession, source: SourceConfiguration, external_id: str | None = None
+    session: AsyncSession,
+    source: SourceConfiguration,
+    external_id: str | None = None,
+    *,
+    title: str | None = None,
+    description: str | None = None,
 ) -> tuple[JobPosting, JobSnapshot]:
-    """A posting with one snapshot."""
+    """A posting with one snapshot; ``title`` and ``description`` override the sample job's."""
     job = NormalisedJob.model_validate(sample_normalised_job()).model_dump(mode="json")
+    if title is not None:
+        job["title"] = title
+    if description is not None:
+        job["description_text"] = description
     content_hash = f"sha256:{secrets.token_hex(32)}"
     posting = JobPosting(
         source_configuration_id=source.source_configuration_id,
@@ -329,3 +338,20 @@ async def build_full_graph(session: AsyncSession) -> dict[str, Any]:
         "result": result,
         "audit": audit,
     }
+
+
+def session_factory_for(session: AsyncSession, monkeypatch: Any) -> Any:
+    """A session factory that always yields ``session`` and never really commits.
+
+    Services that open their own short sessions can then run inside a test's transaction, which is
+    rolled back at the end, so nothing persists.
+    """
+    from contextlib import asynccontextmanager
+
+    monkeypatch.setattr(session, "commit", session.flush)
+
+    @asynccontextmanager
+    async def same_session() -> Any:
+        yield session
+
+    return same_session

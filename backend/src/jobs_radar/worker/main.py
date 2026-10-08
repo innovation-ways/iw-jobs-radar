@@ -1,7 +1,7 @@
 """The worker process: a single asyncio loop that polls the database (ADR-017, ADR-031).
 
-In this foundation task the loop only records a heartbeat. Collection, scheduling and
-extraction are added to ``run_once`` by later tasks.
+Each iteration records a heartbeat and, when AI extraction is enabled, queues and runs AI
+extractions for collected jobs for a bounded time. Collection and scheduling arrive in task T5.
 """
 
 import asyncio
@@ -11,9 +11,11 @@ import signal
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from jobs_radar.adapters.providers.ollama import build_ollama_provider
 from jobs_radar.core.logging import configure_logging
 from jobs_radar.core.settings import Settings, get_settings
 from jobs_radar.db.session import build_engine, build_session_factory
+from jobs_radar.services.extraction_queue import ExtractionQueue
 from jobs_radar.services.heartbeat import HeartbeatService
 
 logger = structlog.get_logger()
@@ -27,15 +29,34 @@ class Worker:
         settings: Settings,
         session_factory: async_sessionmaker[AsyncSession],
         name: str = "worker",
+        extraction: ExtractionQueue | None = None,
     ) -> None:
         self._settings = settings
         self._heartbeat = HeartbeatService(session_factory, name)
+        self._extraction = extraction
         self.beats = 0
+
+    async def _beat(self) -> None:
+        await self._heartbeat.beat()
+        self.beats += 1
 
     async def run_once(self) -> None:
         """Perform one iteration of the loop."""
-        await self._heartbeat.beat()
-        self.beats += 1
+        await self._beat()
+        if self._extraction is not None:
+            queued = await self._extraction.enqueue_missing()
+            summary = await self._extraction.run_batch(
+                budget_seconds=float(self._settings.worker_heartbeat_max_age_seconds) / 2,
+                heartbeat=self._beat,
+            )
+            if queued or summary.succeeded or summary.failed or summary.stopped:
+                logger.info(
+                    "extraction_batch",
+                    queued=queued,
+                    succeeded=summary.succeeded,
+                    failed=summary.failed,
+                    provider_unavailable=summary.stopped,
+                )
 
     async def run(self, stop: asyncio.Event) -> None:
         """Loop until ``stop`` is set; a stop request interrupts the wait between iterations."""
@@ -61,7 +82,16 @@ async def main() -> None:
     loop = asyncio.get_running_loop()
     for signum in (signal.SIGINT, signal.SIGTERM):
         loop.add_signal_handler(signum, stop.set)
+    session_factory = build_session_factory(engine)
+    extraction: ExtractionQueue | None = None
+    if settings.extraction_enabled:
+        # AI extraction is opt-in (default is No AI); the model runs locally (ADR-035).
+        extraction = ExtractionQueue(
+            session_factory,
+            build_ollama_provider(settings, model=settings.extraction_model),
+            max_chars=settings.extraction_max_chars,
+        )
     try:
-        await Worker(settings, build_session_factory(engine)).run(stop)
+        await Worker(settings, session_factory, extraction=extraction).run(stop)
     finally:
         await engine.dispose()

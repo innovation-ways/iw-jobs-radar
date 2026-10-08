@@ -46,3 +46,50 @@ async def test_loop_beats_repeatedly_and_stops_on_event(
     await asyncio.wait_for(task, timeout=5)  # must stop promptly, not wait a full poll interval
     assert worker.beats >= 2
     assert await _heartbeat_count(db_session) == 1
+
+
+async def test_without_an_extraction_queue_the_worker_creates_no_extractions(
+    settings: Settings, session_factory: async_sessionmaker[AsyncSession], db_session: AsyncSession
+) -> None:
+    """Default is No AI: collected jobs wait as "not evaluated" and nothing is queued."""
+    before = (await db_session.execute(text("SELECT count(*) FROM job_extraction"))).scalar_one()
+    await Worker(settings, session_factory, name="w-test").run_once()
+    after = (await db_session.execute(text("SELECT count(*) FROM job_extraction"))).scalar_one()
+    assert after == before
+
+
+async def test_with_an_extraction_queue_one_iteration_queues_and_runs_extractions(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from sqlalchemy import update
+    from tests.data import SAMPLE_JOB_DESCRIPTION, SAMPLE_JOB_TITLE, sample_extraction_output
+    from tests.factories import make_company, make_posting, make_source, session_factory_for
+    from tests.fake_provider import FakeProvider
+
+    from jobs_radar.db.models import JobPosting
+    from jobs_radar.services.extraction_queue import ExtractionQueue
+
+    await db_session.execute(
+        update(JobPosting).where(JobPosting.closed_at.is_(None)).values(closed_at=datetime.now(UTC))
+    )
+    source = await make_source(db_session, await make_company(db_session))
+    _posting, snapshot = await make_posting(
+        db_session, source, title=SAMPLE_JOB_TITLE, description=SAMPLE_JOB_DESCRIPTION
+    )
+    queue = ExtractionQueue(
+        session_factory_for(db_session, monkeypatch),
+        FakeProvider([sample_extraction_output()]),
+        max_chars=12000,
+    )
+    await Worker(settings, session_factory, name="w-test", extraction=queue).run_once()
+
+    row = (
+        await db_session.execute(
+            text("SELECT status FROM job_extraction WHERE job_snapshot_id = :id"),
+            {"id": snapshot.job_snapshot_id},
+        )
+    ).scalar_one()
+    assert row == "succeeded"

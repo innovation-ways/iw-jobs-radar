@@ -225,3 +225,53 @@ def sample_profile_input() -> dict[str, Any]:
             {k: v for k, v in item.items() if k != "provenance"} for item in facts["certifications"]
         ],
     }
+
+
+SAMPLE_JOB_TITLE = "Senior AI Solutions Engineer"
+SAMPLE_JOB_DESCRIPTION = (
+    "About the role\n"
+    "Design and evaluate LLM-powered features for enterprise customers. This is a 12-month contract.\n"
+    "Fully remote within EU time zones. Our customers are large enterprises in finance and telecom.\n"
+    "Requirements\n"
+    "- Experience with Python and API design.\n"
+    "- Fluent English.\n"
+    "We offer flexible hours. Join our team in Lisbon or work remotely."
+)
+
+
+def sample_extraction_output() -> dict[str, Any]:
+    """A valid model answer whose quotes all occur in ``SAMPLE_JOB_DESCRIPTION``."""
+    unknown = {"value": None, "status": "unknown", "confidence": 0.0, "evidence": None}
+
+    def known(value: Any, quote: str, confidence: float = 0.9) -> dict[str, Any]:
+        return {"value": value, "status": "known", "confidence": confidence, "evidence": quote}
+
+    return {
+        "schema_version": 1,
+        "title": known(SAMPLE_JOB_TITLE, SAMPLE_JOB_TITLE, 1.0),
+        "employment_types": known(["contractor_b2b"], "12-month contract"),
+        "hours": unknown,
+        "work_mode": known("remote", "Fully remote within EU time zones.", 0.95),
+        "remote_regions": known(["EU"], "within EU time zones"),
+        "locations": known(["Remote - EU"], "Fully remote within EU time zones"),
+        "compensation": unknown,
+        "seniority_levels": known(["senior"], SAMPLE_JOB_TITLE),
+        "years_required_min": unknown,
+        "role_families": [
+            {
+                "key": "ai_solutions_engineering",
+                "confidence": 0.93,
+                "evidence": "Design and evaluate LLM-powered features",
+            }
+        ],
+        "sectors": known({"primary": "enterprise_it", "secondary": []}, "large enterprises", 0.7),
+        "skills": [
+            {"name": "Python", "importance": "must", "evidence": "Experience with Python"},
+            {"name": "API design", "importance": "must", "evidence": "API design"},
+        ],
+        "languages_required": known([{"language": "en", "level": None}], "Fluent English", 0.8),
+        "employer_type": known("direct_employer", "Join our team", 0.8),
+        "education_required": unknown,
+        "benefits_mentioned": known(["flexible_hours"], "flexible hours", 0.8),
+        "visa_sponsorship": unknown,
+    }

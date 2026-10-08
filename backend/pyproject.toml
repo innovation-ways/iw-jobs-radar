@@ -73,6 +73,9 @@ ignore = ["D203", "D213", "D107", "D105"]
 # Tests use synthetic passwords and tokens on purpose (to prove they are redacted).
 "tests/**" = ["S101", "S104", "S105", "S106", "D", "E501"]
 "alembic/**" = ["D", "E501"]
+# Typographic characters are the whole point of the text-matching helpers and their tests.
+"src/jobs_radar/domain/text_match.py" = ["RUF001", "RUF003"]
+"tests/unit/test_text_match.py" = ["RUF001", "RUF003"]
 # SQLAlchemy declarative models use a plain dict for __table_args__ by convention.
 "src/jobs_radar/db/models/**" = ["RUF012"]
 

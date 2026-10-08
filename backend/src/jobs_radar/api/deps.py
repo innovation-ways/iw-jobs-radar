@@ -8,9 +8,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.adapters.sources.base import JobSourceAdapter
 from jobs_radar.core.settings import Settings
-from jobs_radar.domain.enums import SourceType
+from jobs_radar.domain.enums import LOCAL_OWNER_ID, SourceType
+from jobs_radar.repositories.inbox import InboxQueries
 from jobs_radar.services.ai_settings import AiSettingsService, build_credential_box
 from jobs_radar.services.collection import CollectionService
+from jobs_radar.services.companies import CompanyService
 from jobs_radar.services.dedup import DedupService
 from jobs_radar.services.document_store import DocumentTextStore
 from jobs_radar.services.documents import DocumentService
@@ -150,3 +152,15 @@ def get_profile_data_service(
 ) -> ProfileDataService:
     """Build the export and deletion service on the request's session."""
     return ProfileDataService(session)
+
+
+def get_company_service(session: Annotated[AsyncSession, Depends(get_session)]) -> CompanyService:
+    """Build the company service on the request's session."""
+    return CompanyService(session)
+
+
+async def get_inbox_default_intent(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> int | None:
+    """Return the owner's first enabled intent, used when a request names none."""
+    return await InboxQueries(session).default_intent_id(LOCAL_OWNER_ID)

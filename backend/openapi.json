@@ -349,6 +349,153 @@
         "title": "CollectionRunRead",
         "type": "object"
       },
+      "CompanyList": {
+        "additionalProperties": false,
+        "description": "A page of the company list.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CompanySummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "relevance_min_score": {
+            "title": "Relevance Min Score",
+            "type": "integer"
+          },
+          "search_intent_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Intent Id"
+          },
+          "sort": {
+            "enum": [
+              "new",
+              "relevant",
+              "open",
+              "name"
+            ],
+            "title": "Sort",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "window": {
+            "title": "Window",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "window",
+          "sort",
+          "search_intent_id",
+          "relevance_min_score"
+        ],
+        "title": "CompanyList",
+        "type": "object"
+      },
+      "CompanySummary": {
+        "additionalProperties": false,
+        "description": "A company with its offer counts.",
+        "properties": {
+          "careers_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Careers Url"
+          },
+          "company_id": {
+            "title": "Company Id",
+            "type": "integer"
+          },
+          "employer_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employer Type"
+          },
+          "homepage_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Homepage Url"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "new_offers_15d": {
+            "title": "New Offers 15D",
+            "type": "integer"
+          },
+          "new_offers_30d": {
+            "title": "New Offers 30D",
+            "type": "integer"
+          },
+          "new_offers_7d": {
+            "title": "New Offers 7D",
+            "type": "integer"
+          },
+          "open_offers": {
+            "title": "Open Offers",
+            "type": "integer"
+          },
+          "relevant_new_offers_15d": {
+            "title": "Relevant New Offers 15D",
+            "type": "integer"
+          },
+          "relevant_new_offers_30d": {
+            "title": "Relevant New Offers 30D",
+            "type": "integer"
+          },
+          "relevant_new_offers_7d": {
+            "title": "Relevant New Offers 7D",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "company_id",
+          "name",
+          "homepage_url",
+          "careers_url",
+          "employer_type",
+          "open_offers",
+          "new_offers_7d",
+          "new_offers_15d",
+          "new_offers_30d",
+          "relevant_new_offers_7d",
+          "relevant_new_offers_15d",
+          "relevant_new_offers_30d"
+        ],
+        "title": "CompanySummary",
+        "type": "object"
+      },
       "Compensation": {
         "additionalProperties": false,
         "description": "Pay expectations per engagement form.",
@@ -4895,6 +5042,145 @@
         "summary": "Run All Sources",
         "tags": [
           "sources"
+        ]
+      }
+    },
+    "/api/v1/companies": {
+      "get": {
+        "description": "List companies with new offers in the last 7, 15 or 30 days and the relevant subset.",
+        "operationId": "list_companies_api_v1_companies_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "in": "query",
+            "name": "window",
+            "required": false,
+            "schema": {
+              "default": 15,
+              "title": "Window",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "new",
+              "enum": [
+                "new",
+                "relevant",
+                "open",
+                "name"
+              ],
+              "title": "Sort",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search_intent_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search Intent Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "relevance_min_score",
+            "required": false,
+            "schema": {
+              "default": 45,
+              "maximum": 100,
+              "minimum": 0,
+              "title": "Relevance Min Score",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "relevant_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Relevant Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Companies",
+        "tags": [
+          "companies"
         ]
       }
     },

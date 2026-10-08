@@ -28,6 +28,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Companies
+         * @description List companies with new offers in the last 7, 15 or 30 days and the relevant subset.
+         */
+        get: operations["list_companies_api_v1_companies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/digests/daily": {
         parameters: {
             query?: never;
@@ -1044,6 +1064,57 @@ export interface components {
             started_at: string | null;
             status: components["schemas"]["RunStatus"];
             trigger: components["schemas"]["RunTrigger"];
+        };
+        /**
+         * CompanyList
+         * @description A page of the company list.
+         */
+        CompanyList: {
+            /** Items */
+            items: components["schemas"]["CompanySummary"][];
+            /** Relevance Min Score */
+            relevance_min_score: number;
+            /** Search Intent Id */
+            search_intent_id: number | null;
+            /**
+             * Sort
+             * @enum {string}
+             */
+            sort: "new" | "relevant" | "open" | "name";
+            /** Total */
+            total: number;
+            /** Window */
+            window: number;
+        };
+        /**
+         * CompanySummary
+         * @description A company with its offer counts.
+         */
+        CompanySummary: {
+            /** Careers Url */
+            careers_url: string | null;
+            /** Company Id */
+            company_id: number;
+            /** Employer Type */
+            employer_type: string | null;
+            /** Homepage Url */
+            homepage_url: string | null;
+            /** Name */
+            name: string;
+            /** New Offers 15D */
+            new_offers_15d: number;
+            /** New Offers 30D */
+            new_offers_30d: number;
+            /** New Offers 7D */
+            new_offers_7d: number;
+            /** Open Offers */
+            open_offers: number;
+            /** Relevant New Offers 15D */
+            relevant_new_offers_15d: number;
+            /** Relevant New Offers 30D */
+            relevant_new_offers_30d: number;
+            /** Relevant New Offers 7D */
+            relevant_new_offers_7d: number;
         };
         /**
          * Compensation
@@ -2948,6 +3019,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CollectionRunRead"];
+                };
+            };
+        };
+    };
+    list_companies_api_v1_companies_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                window?: number;
+                sort?: "new" | "relevant" | "open" | "name";
+                search_intent_id?: number | null;
+                relevance_min_score?: number;
+                relevant_only?: boolean;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

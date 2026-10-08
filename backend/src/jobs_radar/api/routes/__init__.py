@@ -16,6 +16,7 @@ from jobs_radar.api.routes import (
     proposals,
     schedule,
     sources,
+    trends,
 )
 
 v1_router = APIRouter(prefix="/api/v1")
@@ -33,3 +34,4 @@ v1_router.include_router(documents.router)
 v1_router.include_router(proposals.router)
 v1_router.include_router(companies.router)
 v1_router.include_router(company_dossier.router)
+v1_router.include_router(trends.router)

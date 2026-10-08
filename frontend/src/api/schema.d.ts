@@ -128,6 +128,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{company_id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Write Summary
+         * @description Write the AI summary (labelled AI inference) with the local job-analysis model.
+         */
+        post: operations["write_summary_api_v1_companies__company_id__summary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/digests/daily": {
         parameters: {
             query?: never;
@@ -1000,6 +1020,46 @@ export interface paths {
         get: operations["get_taxonomy_api_v1_taxonomy_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/trends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Trends
+         * @description Ranked terms of relevant jobs with weekly series, shares, markers and locked periods.
+         */
+        get: operations["get_trends_api_v1_trends_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/trends/recompute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Recompute Trends
+         * @description Compute the weekly aggregates now (the worker also does it daily).
+         */
+        post: operations["recompute_trends_api_v1_trends_recompute_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2380,6 +2440,18 @@ export interface components {
             radius_km: number;
         };
         /**
+         * PeriodRead
+         * @description A selectable period; locked until the history covers it.
+         */
+        PeriodRead: {
+            /** Available */
+            available: boolean;
+            /** Key */
+            key: string;
+            /** Weeks */
+            weeks: number;
+        };
+        /**
          * PlaceList
          * @description Search results, most populous first.
          */
@@ -2826,6 +2898,21 @@ export interface components {
             timezone: string;
         };
         /**
+         * SeriesPointRead
+         * @description One week of one term.
+         */
+        SeriesPointRead: {
+            /** Open Count */
+            open_count: number;
+            /** Share */
+            share: number | null;
+            /**
+             * Week Start
+             * Format: date
+             */
+            week_start: string;
+        };
+        /**
          * SignalRead
          * @description A dimension's status, shown as a small signal on the card.
          */
@@ -3114,6 +3201,55 @@ export interface components {
             /** Term Key */
             term_key: string;
         };
+        /**
+         * TrendReportRead
+         * @description The Trends screen data for one term kind.
+         */
+        TrendReportRead: {
+            /** Available Weeks */
+            available_weeks: number;
+            /** First Week */
+            first_week: string | null;
+            /** Intent Revision Changes */
+            intent_revision_changes: string[];
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "skill" | "role_family" | "sector" | "work_arrangement" | "seniority_level" | "engagement_type";
+            /** Periods */
+            periods: components["schemas"]["PeriodRead"][];
+            /** Relevance Min Score */
+            relevance_min_score: number;
+            /** Rows */
+            rows: components["schemas"]["TrendRowRead"][];
+            /** Search Intent Id */
+            search_intent_id: number;
+            /** Source Set Changes */
+            source_set_changes: string[];
+            /** Weeks */
+            weeks: components["schemas"]["WeekRead"][];
+        };
+        /**
+         * TrendRowRead
+         * @description A ranked term.
+         */
+        TrendRowRead: {
+            /** Count Change */
+            count_change: number;
+            /** Label */
+            label: string;
+            /** Open Now */
+            open_now: number;
+            /** Series */
+            series: components["schemas"]["SeriesPointRead"][];
+            /** Share Change */
+            share_change: number | null;
+            /** Share Now */
+            share_now: number | null;
+            /** Term Key */
+            term_key: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -3141,6 +3277,21 @@ export interface components {
          * @enum {string}
          */
         Visibility: "private";
+        /**
+         * WeekRead
+         * @description Facts about one week.
+         */
+        WeekRead: {
+            /** Intent Revision Id */
+            intent_revision_id: number | null;
+            /** Relevant Total Open */
+            relevant_total_open: number;
+            /**
+             * Week Start
+             * Format: date
+             */
+            week_start: string;
+        };
         /**
          * Weights
          * @description One relative weight per dimension. The two optional dimensions default to 0 (excluded).
@@ -3402,6 +3553,37 @@ export interface operations {
         };
     };
     enrich_company_api_v1_companies__company_id__enrich_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyDossierRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    write_summary_api_v1_companies__company_id__summary_post: {
         parameters: {
             query?: never;
             header?: never;
@@ -5048,6 +5230,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TaxonomyRead"];
+                };
+            };
+        };
+    };
+    get_trends_api_v1_trends_get: {
+        parameters: {
+            query: {
+                kind: "skill" | "role_family" | "sector" | "work_arrangement" | "seniority_level" | "engagement_type";
+                weeks?: number;
+                limit?: number;
+                search_intent_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrendReportRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    recompute_trends_api_v1_trends_recompute_post: {
+        parameters: {
+            query?: {
+                search_intent_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: number;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

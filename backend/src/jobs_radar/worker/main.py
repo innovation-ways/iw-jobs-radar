@@ -27,6 +27,7 @@ from jobs_radar.services.heartbeat import HeartbeatService
 from jobs_radar.services.inbox import InboxRunner
 from jobs_radar.services.jobs_ai import JobsAiLoader
 from jobs_radar.services.schedule import ScheduleRunner
+from jobs_radar.services.trends import TrendRunner
 from jobs_radar.worker.lock import WorkerLock
 
 logger = structlog.get_logger()
@@ -51,6 +52,7 @@ class Worker:
         schedule: ScheduleRunner | None = None,
         lock: WorkerLock | None = None,
         jobs_ai: JobsAiLoader | None = None,
+        trends: TrendRunner | None = None,
     ) -> None:
         self._settings = settings
         self._heartbeat = HeartbeatService(session_factory, name)
@@ -62,6 +64,7 @@ class Worker:
         self._schedule = schedule
         self._lock = lock
         self._jobs_ai = jobs_ai
+        self._trends = trends
         self._recovered = lock is None
         self.beats = 0
 
@@ -89,6 +92,10 @@ class Worker:
             ran = await self._collection.run_queued(on_progress=self._beat)
             if ran:
                 logger.info("collection_runs_executed", count=ran)
+        if self._trends is not None:
+            written = await self._trends.run_due(LOCAL_OWNER_ID)
+            if written:
+                logger.info("trends_computed", rows=written)
         extraction, evaluation, dedup = self._extraction, self._evaluation, self._dedup
         if self._jobs_ai is not None:
             # The database decides (AI & privacy screen); None means No AI for jobs.
@@ -155,6 +162,7 @@ async def main() -> None:
             session_factory,
             dedup=dedup,
             jobs_ai=JobsAiLoader(settings, session_factory),
+            trends=TrendRunner(session_factory),
             inbox=InboxRunner(session_factory, LOCAL_OWNER_ID),
             collection=CollectionService(session_factory, build_source_adapters()),
             schedule=ScheduleRunner(session_factory),

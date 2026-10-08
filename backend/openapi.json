@@ -3340,6 +3340,31 @@
         "title": "OnsiteHybridRule",
         "type": "object"
       },
+      "PeriodRead": {
+        "additionalProperties": false,
+        "description": "A selectable period; locked until the history covers it.",
+        "properties": {
+          "available": {
+            "title": "Available",
+            "type": "boolean"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "weeks": {
+            "title": "Weeks",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "weeks",
+          "available"
+        ],
+        "title": "PeriodRead",
+        "type": "object"
+      },
       "PlaceList": {
         "additionalProperties": false,
         "description": "Search results, most populous first.",
@@ -4469,6 +4494,39 @@
         "title": "ScheduleUpdate",
         "type": "object"
       },
+      "SeriesPointRead": {
+        "additionalProperties": false,
+        "description": "One week of one term.",
+        "properties": {
+          "open_count": {
+            "title": "Open Count",
+            "type": "integer"
+          },
+          "share": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Share"
+          },
+          "week_start": {
+            "format": "date",
+            "title": "Week Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "week_start",
+          "open_count",
+          "share"
+        ],
+        "title": "SeriesPointRead",
+        "type": "object"
+      },
       "SignalRead": {
         "additionalProperties": false,
         "description": "A dimension's status, shown as a small signal on the card.",
@@ -5185,6 +5243,161 @@
         "title": "TaxonomyTermRead",
         "type": "object"
       },
+      "TrendReportRead": {
+        "additionalProperties": false,
+        "description": "The Trends screen data for one term kind.",
+        "properties": {
+          "available_weeks": {
+            "title": "Available Weeks",
+            "type": "integer"
+          },
+          "first_week": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Week"
+          },
+          "intent_revision_changes": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Intent Revision Changes",
+            "type": "array"
+          },
+          "kind": {
+            "enum": [
+              "skill",
+              "role_family",
+              "sector",
+              "work_arrangement",
+              "seniority_level",
+              "engagement_type"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "periods": {
+            "items": {
+              "$ref": "#/components/schemas/PeriodRead"
+            },
+            "title": "Periods",
+            "type": "array"
+          },
+          "relevance_min_score": {
+            "title": "Relevance Min Score",
+            "type": "integer"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/TrendRowRead"
+            },
+            "title": "Rows",
+            "type": "array"
+          },
+          "search_intent_id": {
+            "title": "Search Intent Id",
+            "type": "integer"
+          },
+          "source_set_changes": {
+            "items": {
+              "format": "date",
+              "type": "string"
+            },
+            "title": "Source Set Changes",
+            "type": "array"
+          },
+          "weeks": {
+            "items": {
+              "$ref": "#/components/schemas/WeekRead"
+            },
+            "title": "Weeks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "search_intent_id",
+          "relevance_min_score",
+          "available_weeks",
+          "first_week",
+          "periods",
+          "weeks",
+          "rows",
+          "intent_revision_changes",
+          "source_set_changes"
+        ],
+        "title": "TrendReportRead",
+        "type": "object"
+      },
+      "TrendRowRead": {
+        "additionalProperties": false,
+        "description": "A ranked term.",
+        "properties": {
+          "count_change": {
+            "title": "Count Change",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "open_now": {
+            "title": "Open Now",
+            "type": "integer"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/SeriesPointRead"
+            },
+            "title": "Series",
+            "type": "array"
+          },
+          "share_change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Share Change"
+          },
+          "share_now": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Share Now"
+          },
+          "term_key": {
+            "title": "Term Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "term_key",
+          "label",
+          "open_now",
+          "share_now",
+          "share_change",
+          "count_change",
+          "series"
+        ],
+        "title": "TrendRowRead",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -5248,6 +5461,39 @@
         ],
         "title": "Visibility",
         "type": "string"
+      },
+      "WeekRead": {
+        "additionalProperties": false,
+        "description": "Facts about one week.",
+        "properties": {
+          "intent_revision_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intent Revision Id"
+          },
+          "relevant_total_open": {
+            "title": "Relevant Total Open",
+            "type": "integer"
+          },
+          "week_start": {
+            "format": "date",
+            "title": "Week Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "week_start",
+          "relevant_total_open",
+          "intent_revision_id"
+        ],
+        "title": "WeekRead",
+        "type": "object"
       },
       "Weights": {
         "additionalProperties": false,
@@ -5777,6 +6023,49 @@
           }
         },
         "summary": "Enrich Company",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
+    "/api/v1/companies/{company_id}/summary": {
+      "post": {
+        "description": "Write the AI summary (labelled AI inference) with the local job-analysis model.",
+        "operationId": "write_summary_api_v1_companies__company_id__summary_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "title": "Company Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDossierRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Write Summary",
         "tags": [
           "companies"
         ]
@@ -8307,6 +8596,153 @@
         "summary": "Get Taxonomy",
         "tags": [
           "intents"
+        ]
+      }
+    },
+    "/api/v1/trends": {
+      "get": {
+        "description": "Ranked terms of relevant jobs with weekly series, shares, markers and locked periods.",
+        "operationId": "get_trends_api_v1_trends_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "skill",
+                "role_family",
+                "sector",
+                "work_arrangement",
+                "seniority_level",
+                "engagement_type"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "weeks",
+            "required": false,
+            "schema": {
+              "default": 12,
+              "maximum": 52,
+              "minimum": 1,
+              "title": "Weeks",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 15,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search_intent_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search Intent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrendReportRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Trends",
+        "tags": [
+          "trends"
+        ]
+      }
+    },
+    "/api/v1/trends/recompute": {
+      "post": {
+        "description": "Compute the weekly aggregates now (the worker also does it daily).",
+        "operationId": "recompute_trends_api_v1_trends_recompute_post",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search_intent_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search Intent Id"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "title": "Response Recompute Trends Api V1 Trends Recompute Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Recompute Trends",
+        "tags": [
+          "trends"
         ]
       }
     },

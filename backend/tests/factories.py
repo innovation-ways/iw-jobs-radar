@@ -182,8 +182,9 @@ async def make_extraction(
     snapshot: JobSnapshot,
     status: str = "succeeded",
     model: str | None = None,
+    attributes: dict[str, Any] | None = None,
 ) -> JobExtraction:
-    """An extraction of ``snapshot`` with the given status."""
+    """An extraction of ``snapshot`` with the given status (and stored attributes, if any)."""
     extraction = JobExtraction(
         job_snapshot_id=snapshot.job_snapshot_id,
         status=status,
@@ -191,7 +192,9 @@ async def make_extraction(
         model=model or unique("model"),
         prompt_version="extract-v1",
         taxonomy_version_id=1,
-        attributes_json={} if status == "succeeded" else None,
+        attributes_json=(attributes if attributes is not None else {})
+        if status == "succeeded"
+        else None,
         attempts=1,
     )
     session.add(extraction)

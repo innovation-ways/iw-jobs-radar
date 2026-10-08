@@ -31,6 +31,7 @@ from jobs_radar.services.readiness import ReadinessService
 from jobs_radar.services.schedule import ScheduleService
 from jobs_radar.services.sources import SourceService
 from jobs_radar.services.taxonomy import TaxonomyService
+from jobs_radar.services.trends import TrendService
 
 
 def get_settings_dep(request: Request) -> Settings:
@@ -197,3 +198,8 @@ def get_company_summary_service(
 ) -> CompanySummaryService:
     """Build the AI company-summary service (local model only)."""
     return CompanySummaryService(session, ai)
+
+
+def get_trend_service(session: Annotated[AsyncSession, Depends(get_session)]) -> TrendService:
+    """Build the trends service on the request's session."""
+    return TrendService(session)

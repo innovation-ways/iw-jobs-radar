@@ -342,6 +342,15 @@ class AiSettingsService:
             return None
         return connection, self._build(self.spec_for(connection))
 
+    async def jobs_target(self, owner_id: int) -> tuple[ProviderConnection, ChatProvider] | None:
+        """Return the local connection chosen for job analysis and its adapter, or ``None``."""
+        connection = next(
+            (c for c in await self._repository.list(owner_id) if c.use_for_jobs), None
+        )
+        if connection is None:
+            return None
+        return connection, self._build(self.spec_for(connection))
+
     async def redaction_enabled(self, owner_id: int) -> bool:
         """Whether contact details are removed before a remote call."""
         setting, _ = await self._repository.privacy(owner_id)

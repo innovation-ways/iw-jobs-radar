@@ -14,6 +14,7 @@ from jobs_radar.repositories.inbox import InboxQueries
 from jobs_radar.services.ai_settings import AiSettingsService, build_credential_box
 from jobs_radar.services.collection import CollectionService
 from jobs_radar.services.companies import CompanyService
+from jobs_radar.services.company_summary import CompanySummaryService
 from jobs_radar.services.dedup import DedupService
 from jobs_radar.services.document_store import DocumentTextStore
 from jobs_radar.services.documents import DocumentService
@@ -188,3 +189,11 @@ async def get_enrichment_service(
         wikidata, wikipedia, gleif, github = build_enrichment_adapters(token)
         adapters = EnrichmentAdapters(wikidata, wikipedia, gleif, github)
     return EnrichmentService(session, adapters)
+
+
+def get_company_summary_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+    ai: Annotated[AiSettingsService, Depends(get_ai_settings_service)],
+) -> CompanySummaryService:
+    """Build the AI company-summary service (local model only)."""
+    return CompanySummaryService(session, ai)

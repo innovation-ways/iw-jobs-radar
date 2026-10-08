@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.api.deps import (
     get_company_service,
+    get_company_summary_service,
     get_enrichment_service,
     get_inbox_default_intent,
     get_session,
@@ -21,6 +22,7 @@ from jobs_radar.schemas.company_dossier import (
     OfferRead,
 )
 from jobs_radar.services.companies import CompanyService, Dossier
+from jobs_radar.services.company_summary import CompanySummaryService
 from jobs_radar.services.enrichment import EnrichmentService
 
 router = APIRouter(tags=["companies"])
@@ -154,6 +156,22 @@ async def reject_candidate(
 ) -> CompanyDossierRead:
     """Say that a candidate entity is not this company; it is not proposed again."""
     await enrichment.reject(LOCAL_OWNER_ID, company_id, company_enrichment_candidate_id)
+    await session.commit()
+    return dossier_read(
+        await service.dossier(LOCAL_OWNER_ID, company_id, search_intent_id=default_intent)
+    )
+
+
+@router.post("/companies/{company_id}/summary", response_model=CompanyDossierRead)
+async def write_summary(
+    company_id: int,
+    summaries: Annotated[CompanySummaryService, Depends(get_company_summary_service)],
+    service: Companies,
+    default_intent: DefaultIntent,
+    session: Session,
+) -> CompanyDossierRead:
+    """Write the AI summary (labelled AI inference) with the local job-analysis model."""
+    await summaries.generate(LOCAL_OWNER_ID, company_id)
     await session.commit()
     return dossier_read(
         await service.dossier(LOCAL_OWNER_ID, company_id, search_intent_id=default_intent)

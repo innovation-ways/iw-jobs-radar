@@ -125,3 +125,12 @@ async def test_the_github_token_is_write_only(client: httpx.AsyncClient) -> None
     assert (
         await client.put(f"{BASE}/settings/integrations/twitter/credential", json={"secret": TOKEN})
     ).status_code == 422
+
+
+async def test_the_summary_needs_a_local_model(
+    client: httpx.AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    company_id = await new_company(session_factory)
+    response = await client.post(f"{BASE}/companies/{company_id}/summary")
+    assert response.status_code == 422 and "local model" in response.json()["error"]["message"]
+    assert (await client.post(f"{BASE}/companies/999999/summary")).status_code in {404, 422}

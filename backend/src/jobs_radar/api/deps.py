@@ -10,6 +10,7 @@ from jobs_radar.adapters.sources.base import JobSourceAdapter
 from jobs_radar.core.settings import Settings
 from jobs_radar.domain.enums import SourceType
 from jobs_radar.services.collection import CollectionService
+from jobs_radar.services.evaluation import EvaluationService
 from jobs_radar.services.intents import IntentService
 from jobs_radar.services.profiles import ProfileService
 from jobs_radar.services.readiness import ReadinessService
@@ -78,3 +79,10 @@ def get_taxonomy_service(
 ) -> TaxonomyService:
     """Build the taxonomy service on the request's session."""
     return TaxonomyService(session)
+
+
+def get_evaluation_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> EvaluationService:
+    """Build the evaluation service; the API never calls an AI provider (the worker does)."""
+    return EvaluationService(session, provider=None)

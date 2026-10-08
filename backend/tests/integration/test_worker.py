@@ -93,3 +93,52 @@ async def test_with_an_extraction_queue_one_iteration_queues_and_runs_extraction
         )
     ).scalar_one()
     assert row == "succeeded"
+
+
+async def test_the_worker_scores_extracted_jobs_for_enabled_intents(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Extraction, then evaluation, in one iteration: a collected job ends up scored."""
+    from sqlalchemy import select
+    from tests.data import sample_extraction_output
+    from tests.evaluation_world import world
+    from tests.factories import session_factory_for
+    from tests.fake_provider import FakeProvider
+
+    from jobs_radar.db.models import MatchEvaluation
+    from jobs_radar.services.evaluation import EvaluationRunner
+    from jobs_radar.services.extraction_queue import ExtractionQueue
+
+    w = await world(db_session)
+
+    def answer(request: object) -> object:
+        # the same model extracts the job and judges skill pairs: tell them apart by the prompt
+        if "Posting:" in request.user:  # type: ignore[attr-defined]
+            return sample_extraction_output()
+        return {"equivalent": [], "related": [], "unrelated": []}
+
+    provider = FakeProvider(responder=answer)
+    fake_factory = session_factory_for(db_session, monkeypatch)
+    queue = ExtractionQueue(fake_factory, provider, max_chars=12000)
+    runner = EvaluationRunner(fake_factory, provider)
+    await Worker(
+        settings, session_factory, name="w-test", extraction=queue, evaluation=runner
+    ).run_once()
+
+    scored = (
+        (
+            await db_session.execute(
+                select(MatchEvaluation).where(
+                    MatchEvaluation.job_snapshot_id == w.snapshot_id,
+                    MatchEvaluation.intent_revision_id == w.intent_revision_id,
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert len(scored) == 1
+    assert scored[0].intent_revision_id == w.intent_revision_id

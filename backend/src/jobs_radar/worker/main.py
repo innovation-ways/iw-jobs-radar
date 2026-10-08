@@ -15,6 +15,7 @@ from jobs_radar.adapters.providers.ollama import build_ollama_provider
 from jobs_radar.core.logging import configure_logging
 from jobs_radar.core.settings import Settings, get_settings
 from jobs_radar.db.session import build_engine, build_session_factory
+from jobs_radar.services.evaluation import EvaluationRunner
 from jobs_radar.services.extraction_queue import ExtractionQueue
 from jobs_radar.services.heartbeat import HeartbeatService
 
@@ -30,10 +31,12 @@ class Worker:
         session_factory: async_sessionmaker[AsyncSession],
         name: str = "worker",
         extraction: ExtractionQueue | None = None,
+        evaluation: EvaluationRunner | None = None,
     ) -> None:
         self._settings = settings
         self._heartbeat = HeartbeatService(session_factory, name)
         self._extraction = extraction
+        self._evaluation = evaluation
         self.beats = 0
 
     async def _beat(self) -> None:
@@ -49,12 +52,14 @@ class Worker:
                 budget_seconds=float(self._settings.worker_heartbeat_max_age_seconds) / 2,
                 heartbeat=self._beat,
             )
-            if queued or summary.succeeded or summary.failed or summary.stopped:
+            scored = await self._evaluation.run() if self._evaluation is not None else 0
+            if queued or scored or summary.succeeded or summary.failed or summary.stopped:
                 logger.info(
                     "extraction_batch",
                     queued=queued,
                     succeeded=summary.succeeded,
                     failed=summary.failed,
+                    scored=scored,
                     provider_unavailable=summary.stopped,
                 )
 
@@ -84,14 +89,17 @@ async def main() -> None:
         loop.add_signal_handler(signum, stop.set)
     session_factory = build_session_factory(engine)
     extraction: ExtractionQueue | None = None
+    evaluation: EvaluationRunner | None = None
     if settings.extraction_enabled:
         # AI extraction is opt-in (default is No AI); the model runs locally (ADR-035).
+        provider = build_ollama_provider(settings, model=settings.extraction_model)
         extraction = ExtractionQueue(
-            session_factory,
-            build_ollama_provider(settings, model=settings.extraction_model),
-            max_chars=settings.extraction_max_chars,
+            session_factory, provider, max_chars=settings.extraction_max_chars
         )
+        evaluation = EvaluationRunner(session_factory, provider)
     try:
-        await Worker(settings, session_factory, extraction=extraction).run(stop)
+        await Worker(settings, session_factory, extraction=extraction, evaluation=evaluation).run(
+            stop
+        )
     finally:
         await engine.dispose()

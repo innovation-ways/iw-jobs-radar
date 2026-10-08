@@ -297,6 +297,84 @@
         "title": "ContractorRate",
         "type": "object"
       },
+      "DimensionRead": {
+        "additionalProperties": false,
+        "description": "How one dimension scored, with its evidence.",
+        "properties": {
+          "contribution": {
+            "title": "Contribution",
+            "type": "number"
+          },
+          "dimension_key": {
+            "title": "Dimension Key",
+            "type": "string"
+          },
+          "effective_weight": {
+            "title": "Effective Weight",
+            "type": "number"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "title": "Evidence",
+            "type": "object"
+          },
+          "excluded": {
+            "title": "Excluded",
+            "type": "boolean"
+          },
+          "explanation": {
+            "title": "Explanation",
+            "type": "string"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strong",
+                  "partial",
+                  "weak"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality"
+          },
+          "status": {
+            "enum": [
+              "match",
+              "mismatch",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "strength": {
+            "title": "Strength",
+            "type": "number"
+          },
+          "weight": {
+            "title": "Weight",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "dimension_key",
+          "status",
+          "quality",
+          "weight",
+          "effective_weight",
+          "strength",
+          "contribution",
+          "excluded",
+          "evidence",
+          "explanation"
+        ],
+        "title": "DimensionRead",
+        "type": "object"
+      },
       "Education": {
         "additionalProperties": false,
         "description": "A degree or similar.",
@@ -384,6 +462,133 @@
           "annual_target"
         ],
         "title": "EmployeePay",
+        "type": "object"
+      },
+      "EvaluationRead": {
+        "additionalProperties": false,
+        "description": "An immutable evaluation: the score and everything it was computed from.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "dimensions": {
+            "items": {
+              "$ref": "#/components/schemas/DimensionRead"
+            },
+            "title": "Dimensions",
+            "type": "array"
+          },
+          "fit_band": {
+            "enum": [
+              "excellent",
+              "strong",
+              "average",
+              "low",
+              "not_recommended"
+            ],
+            "title": "Fit Band",
+            "type": "string"
+          },
+          "fit_score": {
+            "title": "Fit Score",
+            "type": "integer"
+          },
+          "gates": {
+            "items": {
+              "$ref": "#/components/schemas/GateRead"
+            },
+            "title": "Gates",
+            "type": "array"
+          },
+          "intent_revision_id": {
+            "title": "Intent Revision Id",
+            "type": "integer"
+          },
+          "job_extraction_id": {
+            "title": "Job Extraction Id",
+            "type": "integer"
+          },
+          "job_snapshot_id": {
+            "title": "Job Snapshot Id",
+            "type": "integer"
+          },
+          "job_source_hash": {
+            "title": "Job Source Hash",
+            "type": "string"
+          },
+          "match_evaluation_id": {
+            "title": "Match Evaluation Id",
+            "type": "integer"
+          },
+          "policy_version": {
+            "title": "Policy Version",
+            "type": "string"
+          },
+          "profile_revision_id": {
+            "title": "Profile Revision Id",
+            "type": "integer"
+          },
+          "recommendation": {
+            "enum": [
+              "recommended",
+              "not_recommended"
+            ],
+            "title": "Recommendation",
+            "type": "string"
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Weights",
+            "type": "object"
+          }
+        },
+        "required": [
+          "match_evaluation_id",
+          "job_snapshot_id",
+          "job_extraction_id",
+          "profile_revision_id",
+          "intent_revision_id",
+          "policy_version",
+          "job_source_hash",
+          "fit_score",
+          "fit_band",
+          "recommendation",
+          "gates",
+          "weights",
+          "dimensions",
+          "created_at"
+        ],
+        "title": "EvaluationRead",
+        "type": "object"
+      },
+      "EvaluationRequest": {
+        "additionalProperties": false,
+        "description": "Evaluate a job under exact profile and intent revisions.",
+        "properties": {
+          "intent_revision_id": {
+            "title": "Intent Revision Id",
+            "type": "integer"
+          },
+          "policy_version": {
+            "const": "matching-v1",
+            "default": "matching-v1",
+            "title": "Policy Version",
+            "type": "string"
+          },
+          "profile_revision_id": {
+            "title": "Profile Revision Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "profile_revision_id",
+          "intent_revision_id"
+        ],
+        "title": "EvaluationRequest",
         "type": "object"
       },
       "EvidenceOrigin": {
@@ -622,6 +827,32 @@
           }
         },
         "title": "Filters",
+        "type": "object"
+      },
+      "GateRead": {
+        "additionalProperties": false,
+        "description": "A hard constraint that fired.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "evidence": {
+            "additionalProperties": true,
+            "title": "Evidence",
+            "type": "object"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "reason",
+          "evidence"
+        ],
+        "title": "GateRead",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -1792,6 +2023,26 @@
         "title": "RemoteRule",
         "type": "object"
       },
+      "RescoreResponse": {
+        "additionalProperties": false,
+        "description": "How many existing jobs were scored again under the intent's current revision.",
+        "properties": {
+          "evaluated": {
+            "title": "Evaluated",
+            "type": "integer"
+          },
+          "skipped": {
+            "title": "Skipped",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "evaluated",
+          "skipped"
+        ],
+        "title": "RescoreResponse",
+        "type": "object"
+      },
       "RestoreRequest": {
         "additionalProperties": false,
         "description": "Restore an old revision as the next one.",
@@ -2622,6 +2873,49 @@
         ]
       }
     },
+    "/api/v1/evaluations/{match_evaluation_id}": {
+      "get": {
+        "description": "Return a stored evaluation: score, policy version, dimensions and evidence.",
+        "operationId": "get_evaluation_api_v1_evaluations__match_evaluation_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "match_evaluation_id",
+            "required": true,
+            "schema": {
+              "title": "Match Evaluation Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Evaluation",
+        "tags": [
+          "evaluations"
+        ]
+      }
+    },
     "/api/v1/intents/{search_intent_id}": {
       "put": {
         "description": "Save the intent as its next immutable revision (no revision when nothing changed).",
@@ -2781,6 +3075,49 @@
         ]
       }
     },
+    "/api/v1/intents/{search_intent_id}/rescore": {
+      "post": {
+        "description": "Score existing jobs again under the intent's current revision, using stored AI results.",
+        "operationId": "rescore_intent_api_v1_intents__search_intent_id__rescore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "search_intent_id",
+            "required": true,
+            "schema": {
+              "title": "Search Intent Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RescoreResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rescore Intent",
+        "tags": [
+          "evaluations"
+        ]
+      }
+    },
     "/api/v1/intents/{search_intent_id}/revisions": {
       "get": {
         "description": "List the intent's immutable revisions, newest first.",
@@ -2935,6 +3272,59 @@
         "summary": "Restore Intent Revision",
         "tags": [
           "intents"
+        ]
+      }
+    },
+    "/api/v1/jobs/{job_posting_id}/evaluations": {
+      "post": {
+        "description": "Score a job's latest extraction under exact revisions (no AI is called here).",
+        "operationId": "evaluate_job_api_v1_jobs__job_posting_id__evaluations_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_posting_id",
+            "required": true,
+            "schema": {
+              "title": "Job Posting Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvaluationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvaluationRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluate Job",
+        "tags": [
+          "evaluations"
         ]
       }
     },

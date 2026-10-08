@@ -438,7 +438,10 @@ def _decimal(value: Fraction, places: str) -> Decimal:
     return exact.quantize(Decimal(places), rounding=ROUND_HALF_UP)
 
 
-def _band(score: int) -> str:
+def band_of(score: int, *, gated: bool = False) -> str:
+    """Return the quality band of a score; a gated job is ``not_recommended`` whatever its score."""
+    if gated:
+        return "not_recommended"
     if score >= 80:
         return "excellent"
     if score >= 65:
@@ -525,7 +528,7 @@ def evaluate(
     return Evaluation(
         policy_version=POLICY_VERSION,
         fit_score=score,
-        band="not_recommended" if gated else _band(score),
+        band=band_of(score, gated=gated),
         recommendation="not_recommended" if gated else "recommended",
         gates=tuple(gates),
         dimensions=tuple(results),

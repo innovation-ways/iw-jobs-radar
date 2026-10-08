@@ -28,6 +28,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/evaluations/{match_evaluation_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Evaluation
+         * @description Return a stored evaluation: score, policy version, dimensions and evidence.
+         */
+        get: operations["get_evaluation_api_v1_evaluations__match_evaluation_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/intents/{search_intent_id}": {
         parameters: {
             query?: never;
@@ -88,6 +108,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/intents/{search_intent_id}/rescore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rescore Intent
+         * @description Score existing jobs again under the intent's current revision, using stored AI results.
+         */
+        post: operations["rescore_intent_api_v1_intents__search_intent_id__rescore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/intents/{search_intent_id}/revisions": {
         parameters: {
             query?: never;
@@ -142,6 +182,26 @@ export interface paths {
          * @description Make an old revision's content the next revision.
          */
         post: operations["restore_intent_revision_api_v1_intents__search_intent_id__revisions__intent_revision_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/{job_posting_id}/evaluations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Evaluate Job
+         * @description Score a job's latest extraction under exact revisions (no AI is called here).
+         */
+        post: operations["evaluate_job_api_v1_jobs__job_posting_id__evaluations_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -546,6 +606,37 @@ export interface components {
             target: number;
         };
         /**
+         * DimensionRead
+         * @description How one dimension scored, with its evidence.
+         */
+        DimensionRead: {
+            /** Contribution */
+            contribution: number;
+            /** Dimension Key */
+            dimension_key: string;
+            /** Effective Weight */
+            effective_weight: number;
+            /** Evidence */
+            evidence: {
+                [key: string]: unknown;
+            };
+            /** Excluded */
+            excluded: boolean;
+            /** Explanation */
+            explanation: string;
+            /** Quality */
+            quality: ("strong" | "partial" | "weak") | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "match" | "mismatch" | "unknown";
+            /** Strength */
+            strength: number;
+            /** Weight */
+            weight: number;
+        };
+        /**
          * Education
          * @description A degree or similar.
          */
@@ -582,6 +673,67 @@ export interface components {
              * @enum {integer}
              */
             payments_per_year: 12 | 14;
+        };
+        /**
+         * EvaluationRead
+         * @description An immutable evaluation: the score and everything it was computed from.
+         */
+        EvaluationRead: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Dimensions */
+            dimensions: components["schemas"]["DimensionRead"][];
+            /**
+             * Fit Band
+             * @enum {string}
+             */
+            fit_band: "excellent" | "strong" | "average" | "low" | "not_recommended";
+            /** Fit Score */
+            fit_score: number;
+            /** Gates */
+            gates: components["schemas"]["GateRead"][];
+            /** Intent Revision Id */
+            intent_revision_id: number;
+            /** Job Extraction Id */
+            job_extraction_id: number;
+            /** Job Snapshot Id */
+            job_snapshot_id: number;
+            /** Job Source Hash */
+            job_source_hash: string;
+            /** Match Evaluation Id */
+            match_evaluation_id: number;
+            /** Policy Version */
+            policy_version: string;
+            /** Profile Revision Id */
+            profile_revision_id: number;
+            /**
+             * Recommendation
+             * @enum {string}
+             */
+            recommendation: "recommended" | "not_recommended";
+            /** Weights */
+            weights: {
+                [key: string]: number;
+            };
+        };
+        /**
+         * EvaluationRequest
+         * @description Evaluate a job under exact profile and intent revisions.
+         */
+        EvaluationRequest: {
+            /** Intent Revision Id */
+            intent_revision_id: number;
+            /**
+             * Policy Version
+             * @default matching-v1
+             * @constant
+             */
+            policy_version: "matching-v1";
+            /** Profile Revision Id */
+            profile_revision_id: number;
         };
         /**
          * EvidenceOrigin
@@ -675,6 +827,20 @@ export interface components {
              * @default false
              */
             needs_visa_or_relocation: boolean;
+        };
+        /**
+         * GateRead
+         * @description A hard constraint that fired.
+         */
+        GateRead: {
+            /** Code */
+            code: string;
+            /** Evidence */
+            evidence: {
+                [key: string]: unknown;
+            };
+            /** Reason */
+            reason: string;
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1232,6 +1398,16 @@ export interface components {
             timezone_tolerance_hours?: number | null;
         };
         /**
+         * RescoreResponse
+         * @description How many existing jobs were scored again under the intent's current revision.
+         */
+        RescoreResponse: {
+            /** Evaluated */
+            evaluated: number;
+            /** Skipped */
+            skipped: number;
+        };
+        /**
          * RestoreRequest
          * @description Restore an old revision as the next one.
          */
@@ -1624,6 +1800,37 @@ export interface operations {
             };
         };
     };
+    get_evaluation_api_v1_evaluations__match_evaluation_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                match_evaluation_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvaluationRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     save_intent_api_v1_intents__search_intent_id__put: {
         parameters: {
             query?: never;
@@ -1729,6 +1936,37 @@ export interface operations {
             };
         };
     };
+    rescore_intent_api_v1_intents__search_intent_id__rescore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                search_intent_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RescoreResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_intent_revisions_api_v1_intents__search_intent_id__revisions_get: {
         parameters: {
             query?: never;
@@ -1815,6 +2053,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IntentSaveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    evaluate_job_api_v1_jobs__job_posting_id__evaluations_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_posting_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EvaluationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EvaluationRead"];
                 };
             };
             /** @description Validation Error */

@@ -90,3 +90,29 @@ export function useSourceActions() {
   })
   return { addBoard, runSource, runAll, setEnabled }
 }
+
+export type ScheduleRead = components['schemas']['ScheduleRead']
+const SCHEDULE = ['schedule'] as const
+
+/** The daily schedule (run time, time zone, on/off and the next run). */
+export function useSchedule() {
+  return useQuery({
+    queryKey: SCHEDULE,
+    queryFn: () => unwrap(api.GET('/api/v1/settings/schedule')),
+  })
+}
+
+/** Save the schedule with the version the owner saw; the worker picks it up on its next poll. */
+export function useSaveSchedule() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (change: {
+      run_time_local: string
+      timezone: string
+      enabled: boolean
+      expected_version: number
+    }) => unwrap(api.PUT('/api/v1/settings/schedule', { body: change })),
+    // Refresh even on failure: a version conflict means the form shows a stale schedule.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: SCHEDULE }),
+  })
+}

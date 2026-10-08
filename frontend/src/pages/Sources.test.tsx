@@ -86,6 +86,15 @@ const disabled = source({
   last_result: null,
 })
 
+const schedule = {
+  run_time_local: '07:30',
+  timezone: 'Europe/Lisbon',
+  enabled: false,
+  version: 1,
+  next_run_at: null,
+  next_run_local: null,
+}
+
 let sources: unknown[]
 let runs: unknown[]
 
@@ -122,6 +131,7 @@ describe('Sources screen', () => {
       if (path === '/api/v1/sources') return Promise.resolve({ data: { items: sources } })
       if (path === '/api/v1/collection-runs')
         return Promise.resolve({ data: { items: runs, next_before_collection_run_id: null } })
+      if (path === '/api/v1/settings/schedule') return Promise.resolve({ data: schedule })
       return Promise.reject(new Error(`unexpected GET ${path}`))
     })
   })
@@ -152,14 +162,87 @@ describe('Sources screen', () => {
     expect(within(row('Initech')).getByText('Disabled')).toBeInTheDocument()
   })
 
-  it('shows the schedule as read-only until the worker exists', async () => {
+  it('shows the schedule and saves a change with the version the owner saw', async () => {
+    const user = userEvent.setup()
     renderSources()
     const card = (await screen.findByRole('heading', { name: 'Daily schedule' })).closest(
       'section',
     )!
-    expect(within(card).getByText(/not available yet/i)).toBeInTheDocument()
-    expect(within(card).queryByRole('textbox')).not.toBeInTheDocument()
-    expect(within(card).queryByRole('button')).not.toBeInTheDocument()
+    expect(await within(card).findByLabelText('Run time')).toHaveValue('07:30')
+    expect(within(card).getByLabelText('Time zone')).toHaveValue('Europe/Lisbon')
+    expect(within(card).getByLabelText('Run every day')).not.toBeChecked()
+    expect(within(card).getByText(/off/i)).toBeInTheDocument()
+    expect(within(card).getByRole('button', { name: 'Save schedule' })).toBeDisabled()
+
+    await user.click(within(card).getByLabelText('Run every day'))
+    put.mockResolvedValue({
+      data: {
+        ...schedule,
+        enabled: true,
+        version: 2,
+        next_run_local: '2026-10-09 07:30',
+        next_run_at: '2026-10-09T06:30:00Z',
+      },
+    })
+    await user.click(within(card).getByRole('button', { name: 'Save schedule' }))
+    expect(put).toHaveBeenCalledWith('/api/v1/settings/schedule', {
+      body: {
+        run_time_local: '07:30',
+        timezone: 'Europe/Lisbon',
+        enabled: true,
+        expected_version: 1,
+      },
+    })
+    expect(await within(card).findByText(/2026-10-09 07:30/)).toBeInTheDocument()
+  })
+
+  it('reports a rejected schedule', async () => {
+    const user = userEvent.setup()
+    renderSources()
+    const card = (await screen.findByRole('heading', { name: 'Daily schedule' })).closest(
+      'section',
+    )!
+    await user.clear(await within(card).findByLabelText('Time zone'))
+    await user.type(within(card).getByLabelText('Time zone'), 'Mars/Phobos')
+    put.mockResolvedValue(envelope('Unknown time zone: Mars/Phobos.'))
+    await user.click(within(card).getByRole('button', { name: 'Save schedule' }))
+    expect(await within(card).findByRole('alert')).toHaveTextContent(/unknown time zone/i)
+  })
+
+  it('lists the recent runs with their trigger and outcome', async () => {
+    runs = [
+      {
+        collection_run_id: 9,
+        source_configuration_id: null,
+        trigger: 'scheduled',
+        status: 'partial',
+        requested_at: '2026-10-08T07:30:00Z',
+        started_at: '2026-10-08T07:30:01Z',
+        finished_at: '2026-10-08T07:31:00Z',
+        error_class: null,
+        results: [result, result],
+      },
+      {
+        collection_run_id: 8,
+        source_configuration_id: 1,
+        trigger: 'manual',
+        status: 'failed',
+        requested_at: '2026-10-07T07:30:00Z',
+        started_at: null,
+        finished_at: '2026-10-07T07:31:00Z',
+        error_class: 'interrupted',
+        results: [],
+      },
+    ]
+    renderSources()
+    const history = (await screen.findByRole('heading', { name: 'Recent runs' })).closest(
+      'section',
+    )!
+    const first = within(history).getByRole('row', { name: /Scheduled/ })
+    expect(within(first).getByText('Partly succeeded')).toBeInTheDocument()
+    const second = within(history).getByRole('row', { name: /Manual/ })
+    expect(within(second).getByText('Failed')).toBeInTheDocument()
+    expect(within(second).getByText(/interrupted/)).toBeInTheDocument()
   })
 
   it('guides the owner when no board is configured', async () => {

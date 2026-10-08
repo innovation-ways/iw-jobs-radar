@@ -1,16 +1,17 @@
 import { Play } from 'lucide-react'
 import { AddBoardCard } from '@/features/sources/AddBoardCard'
 import { useSourceActions, useSourcesData } from '@/features/sources/queries'
+import { RunHistory } from '@/features/sources/RunHistory'
 import { ScheduleCard } from '@/features/sources/ScheduleCard'
 import { SourcesTable } from '@/features/sources/SourcesTable'
 import { Button } from '@/components/ui/button'
 
 /**
  * Sources screen: configured Greenhouse boards with their last result, adding a board, running one
- * board or all enabled boards, and the (read-only) schedule.
+ * board or all enabled boards, and the daily schedule.
  */
 export function Sources() {
-  const { sources, activeRun } = useSourcesData()
+  const { sources, runs, activeRun } = useSourcesData()
   const { addBoard, runSource, runAll, setEnabled } = useSourceActions()
   const busy = Boolean(activeRun) || runSource.isPending || runAll.isPending
   const actionError = [runAll, runSource, setEnabled].find((mutation) => mutation.isError)?.error
@@ -71,6 +72,7 @@ export function Sources() {
           />
         )}
       </section>
+      {runs.data && <RunHistory runs={runs.data} />}
     </div>
   )
 }

@@ -16,6 +16,19 @@ vi.mock('@/api/client', () => ({
           response: { status: 200 },
         })
       }
+      if (path === '/api/v1/digests/daily') {
+        return Promise.resolve({
+          data: {
+            counts: { new_high_fit: 0, changed_shortlisted: 0, sources_needing_attention: 0 },
+            new_high_fit: [],
+            changed_shortlisted: [],
+            source_health: [],
+            since: '2026-10-07T09:00:00Z',
+            alert_threshold: 65,
+            last_run: null,
+          },
+        })
+      }
       if (path === '/api/v1/inbox') {
         return Promise.resolve({
           data: { items: [], next_cursor: null, counts: { total: 0 }, search_intent_id: null },

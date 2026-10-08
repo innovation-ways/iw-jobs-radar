@@ -10,8 +10,8 @@ services:
       POSTGRES_USER: ${JOBS_RADAR_DB_USER:-jobs_radar}
       POSTGRES_PASSWORD: ${JOBS_RADAR_DB_PASSWORD:?run ./jobs-radar.sh --init-env first}
     ports:
-      # The database is reachable from this machine only.
-      - "127.0.0.1:${JOBS_RADAR_DB_PORT:-5440}:5432"
+      # Loopback only unless JOBS_RADAR_DB_BIND says otherwise (see .env.example).
+      - "${JOBS_RADAR_DB_BIND:-127.0.0.1}:${JOBS_RADAR_DB_PORT:-5440}:5432"
     volumes:
       - pgdata:/var/lib/postgresql
     healthcheck:

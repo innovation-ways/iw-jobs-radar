@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     # PostgreSQL
     db_host: str = "127.0.0.1"
     db_port: int = Field(default=5440, ge=1, le=65535)
+    # Address the PostgreSQL port is published on (read by Docker Compose); loopback by default.
+    db_bind: str = "127.0.0.1"
     db_name: str = "jobs_radar"
     db_user: str = "jobs_radar"
     db_password: SecretStr

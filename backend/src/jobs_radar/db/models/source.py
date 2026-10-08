@@ -101,6 +101,12 @@ class CollectionRun(TimestampMixin, Base):
 
     collection_run_id: Mapped[int] = pk_column("Surrogate primary key of the run.")
     owner_id: Mapped[int] = fk_column("owner.owner_id", "Owner the run belongs to.")
+    source_configuration_id: Mapped[int | None] = fk_column(
+        "source_configuration.source_configuration_id",
+        "Source this run is limited to; null means all enabled sources.",
+        nullable=True,
+        ondelete="CASCADE",
+    )
     trigger: Mapped[str] = text_column("scheduled or manual.", length=20)
     status: Mapped[str] = text_column(
         "queued, running, succeeded, partial, failed or cancelled.", length=20, default="queued"

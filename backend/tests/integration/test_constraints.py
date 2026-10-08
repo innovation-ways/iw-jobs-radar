@@ -295,3 +295,19 @@ async def test_similarity_is_a_probability(db_session: AsyncSession) -> None:
         method="dedup-v1",
     )
     await expect_violation(db_session, bad, match="similarity_range")
+
+
+async def test_a_run_may_be_scoped_to_one_source_and_follows_it_on_delete(
+    db_session: AsyncSession,
+) -> None:
+    source = await make_source(db_session, await make_company(db_session))
+    scoped = CollectionRun(
+        owner_id=LOCAL_OWNER_ID,
+        trigger="manual",
+        source_configuration_id=source.source_configuration_id,
+    )
+    unscoped = CollectionRun(owner_id=LOCAL_OWNER_ID, trigger="manual")
+    db_session.add_all([scoped, unscoped])
+    await db_session.flush()
+    assert scoped.source_configuration_id == source.source_configuration_id
+    assert unscoped.source_configuration_id is None  # null means: all enabled sources

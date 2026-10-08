@@ -14,6 +14,9 @@ dependencies = [
     "httpx",
     "structlog",
     "tzdata",
+    "nh3>=0.3.7",
+    "beautifulsoup4>=4.15.0",
+    "lxml>=6.1.3",
 ]
 
 [dependency-groups]

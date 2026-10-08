@@ -43,6 +43,7 @@ Collection runs, scheduled or manual.
 |---|---|---|---|
 | `collection_run_id` | BIGINT | no | Surrogate primary key of the run. |
 | `owner_id` | BIGINT | no | Owner the run belongs to. |
+| `source_configuration_id` | BIGINT | yes | Source this run is limited to; null means all enabled sources. |
 | `trigger` | VARCHAR(20) | no | scheduled or manual. |
 | `status` | VARCHAR(20) | no | queued, running, succeeded, partial, failed or cancelled. |
 | `scheduled_for` | DATETIME | yes | Planned UTC time for scheduled runs; unique per owner so a run is created once. |
@@ -58,6 +59,7 @@ Collection runs, scheduled or manual.
 - check `ck_collection_run_status_valid`: `status IN ('queued', 'running', 'succeeded', 'partial', 'failed', 'cancelled')`
 - check `ck_collection_run_trigger_valid`: `trigger IN ('scheduled', 'manual')`
 - foreign key `owner_id` → `owner.owner_id`
+- foreign key `source_configuration_id` → `source_configuration.source_configuration_id`
 - unique `uq_collection_run_owner_id_scheduled_for` (owner_id, scheduled_for)
 
 ## company

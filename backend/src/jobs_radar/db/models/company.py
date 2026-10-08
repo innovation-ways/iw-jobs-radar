@@ -4,6 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped
 
 from jobs_radar.db.base import Base, CreatedAtMixin, TimestampMixin
@@ -16,7 +17,12 @@ from jobs_radar.db.columns import (
     text_column,
     timestamp_column,
 )
-from jobs_radar.domain.enums import EmployerType, EmployerTypeOrigin, FactOrigin
+from jobs_radar.domain.enums import (
+    EmployerType,
+    EmployerTypeOrigin,
+    EnrichmentCandidateStatus,
+    FactOrigin,
+)
 
 
 class Company(TimestampMixin, Base):
@@ -45,6 +51,9 @@ class Company(TimestampMixin, Base):
     )
     employer_type_origin: Mapped[str | None] = text_column(
         "Where the employer-type classification came from.", length=20, nullable=True
+    )
+    enriched_at: Mapped[datetime | None] = timestamp_column(
+        "UTC time of the last enrichment attempt; null if never enriched.", nullable=True
     )
 
 
@@ -92,4 +101,43 @@ class CompanyFact(CreatedAtMixin, Base):
     )
     superseded_at: Mapped[datetime | None] = timestamp_column(
         "UTC time at which a newer fact replaced this one; null while current.", nullable=True
+    )
+
+
+class CompanyEnrichmentCandidate(CreatedAtMixin, Base):
+    """An entity found in a public dataset that may be the company (document 13, section 9)."""
+
+    __tablename__ = "company_enrichment_candidate"
+    __table_args__ = (
+        enum_check("status", EnrichmentCandidateStatus),
+        UniqueConstraint("company_id", "source_name", "external_id", name="uq_company_candidate"),
+        {"comment": "Entities from public datasets proposed as the company; the owner decides."},
+    )
+
+    company_enrichment_candidate_id: Mapped[int] = pk_column(
+        "Surrogate primary key of the candidate."
+    )
+    company_id: Mapped[int] = fk_column(
+        "company.company_id", "Company the candidate may be.", ondelete="CASCADE"
+    )
+    source_name: Mapped[str] = text_column("Dataset the candidate came from.", length=60)
+    external_id: Mapped[str] = text_column(
+        "Identifier in that dataset, for example Q42.", length=120
+    )
+    label: Mapped[str] = text_column("Name of the entity in the dataset.", length=300)
+    description: Mapped[str | None] = text_column(
+        "Short description of the entity in the dataset.", nullable=True
+    )
+    website: Mapped[str | None] = text_column("Official website of the entity.", nullable=True)
+    payload_json: Mapped[Any] = json_column(
+        "Facts the candidate would add if accepted: key -> {value, source_url, licence}."
+    )
+    status: Mapped[str] = text_column(
+        "pending until the owner or the domain rule decides.", length=20, default="pending"
+    )
+    decided_by: Mapped[str | None] = text_column(
+        "domain_match or user, once decided.", length=20, nullable=True
+    )
+    decided_at: Mapped[datetime | None] = timestamp_column(
+        "UTC time of the decision.", nullable=True
     )

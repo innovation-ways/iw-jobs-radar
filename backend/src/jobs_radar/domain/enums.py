@@ -270,6 +270,14 @@ class EmployerTypeOrigin(StrEnum):
     USER = "user"
 
 
+class EnrichmentCandidateStatus(StrEnum):
+    """State of an enrichment candidate (an entity that may be the company)."""
+
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+
+
 class FactOrigin(StrEnum):
     """Origin of a company fact."""
 

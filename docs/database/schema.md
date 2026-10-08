@@ -75,6 +75,7 @@ Companies that publish jobs.
 | `careers_url` | TEXT | yes | Current accepted careers-site URL. |
 | `employer_type` | VARCHAR(30) | yes | Direct employer, agency or consultancy; null when not determined. |
 | `employer_type_origin` | VARCHAR(20) | yes | Where the employer-type classification came from. |
+| `enriched_at` | DATETIME | yes | UTC time of the last enrichment attempt; null if never enriched. |
 | `updated_at` | DATETIME | no | UTC timestamp of the last modification of the row. |
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
 
@@ -94,6 +95,29 @@ Alternative normalised names of companies.
 
 - foreign key `company_id` → `company.company_id`
 - unique `uq_company_alias_alias_normalised` (alias_normalised)
+
+## company_enrichment_candidate
+
+Entities from public datasets proposed as the company; the owner decides.
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `company_enrichment_candidate_id` | BIGINT | no | Surrogate primary key of the candidate. |
+| `company_id` | BIGINT | no | Company the candidate may be. |
+| `source_name` | VARCHAR(60) | no | Dataset the candidate came from. |
+| `external_id` | VARCHAR(120) | no | Identifier in that dataset, for example Q42. |
+| `label` | VARCHAR(300) | no | Name of the entity in the dataset. |
+| `description` | TEXT | yes | Short description of the entity in the dataset. |
+| `website` | TEXT | yes | Official website of the entity. |
+| `payload_json` | JSONB | no | Facts the candidate would add if accepted: key -> {value, source_url, licence}. |
+| `status` | VARCHAR(20) | no | pending until the owner or the domain rule decides. |
+| `decided_by` | VARCHAR(20) | yes | domain_match or user, once decided. |
+| `decided_at` | DATETIME | yes | UTC time of the decision. |
+| `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
+
+- check `ck_company_enrichment_candidate_status_valid`: `status IN ('pending', 'accepted', 'rejected')`
+- foreign key `company_id` → `company.company_id`
+- unique `uq_company_candidate` (company_id, source_name, external_id)
 
 ## company_fact
 

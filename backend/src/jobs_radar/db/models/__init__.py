@@ -1,7 +1,12 @@
 """ORM models. Importing this package registers every table on ``Base.metadata``."""
 
 from jobs_radar.db.models.audit import AuditEvent
-from jobs_radar.db.models.company import Company, CompanyAlias, CompanyFact
+from jobs_radar.db.models.company import (
+    Company,
+    CompanyAlias,
+    CompanyEnrichmentCandidate,
+    CompanyFact,
+)
 from jobs_radar.db.models.evaluation import MatchEvaluation, ScoreDimension
 from jobs_radar.db.models.inbox import InboxEvent, JobInboxItem
 from jobs_radar.db.models.intent import IntentRevision, SearchIntent
@@ -40,6 +45,7 @@ __all__ = [
     "CollectionRun",
     "Company",
     "CompanyAlias",
+    "CompanyEnrichmentCandidate",
     "CompanyFact",
     "Document",
     "Evidence",

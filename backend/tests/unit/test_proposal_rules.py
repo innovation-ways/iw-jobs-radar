@@ -156,3 +156,49 @@ def test_an_answer_that_is_not_json_has_no_items() -> None:
 def test_fenced_json_is_accepted() -> None:
     fenced = "```json\n" + answer(item("headline", "Senior Software Engineer")) + "\n```"
     assert len(parse_draft(fenced, CV).items) == 1
+
+
+def test_a_value_wrapped_in_its_own_path_is_unwrapped() -> None:
+    """Small models answer {"path": "headline", "value": {"headline": "..."}}."""
+    result = parse_draft(
+        answer(
+            item("headline", {"headline": "Senior Software Engineer"}, "Senior Software Engineer"),
+            item("years_experience", {"years_experience": 9}, "9 years of experience"),
+            item(
+                "base_location",
+                {"base_location": {"place": "Lisbon", "country": "PT"}},
+                "Lisbon, Portugal",
+            ),
+        ),
+        CV,
+    )
+    assert [(i.path, i.value) for i in result.items] == [
+        ("headline", "Senior Software Engineer"),
+        ("years_experience", 9),
+        ("base_location", {"place": "Lisbon", "country": "PT"}),
+    ]
+
+
+def test_a_list_under_one_item_becomes_one_item_per_element_sharing_the_quote() -> None:
+    skills = [
+        {"name": "Python", "kind": "technology", "level": "expert", "years": 8},
+        {"name": "Docker", "level": "advanced", "years": 4},
+    ]
+    for value in ({"skills": skills}, skills):
+        result = parse_draft(answer(item("skills", value, "Python (expert, 8 years)")), CV)
+        assert [i.value["name"] for i in result.items] == ["Python", "Docker"]  # type: ignore[index]
+        assert all(i.excerpt == "Python (expert, 8 years)" for i in result.items)
+
+
+def test_one_bad_element_of_a_list_does_not_discard_the_others() -> None:
+    skills = [
+        {"name": "Python", "level": "expert", "years": 8},
+        {"name": "Go", "level": "godlike", "years": 1},
+    ]
+    result = parse_draft(answer(item("skills", {"skills": skills}, "Python")), CV)
+    assert [i.value["name"] for i in result.items] == ["Python"] and result.dropped == 1  # type: ignore[index]
+
+
+def test_a_list_under_a_single_valued_path_is_not_accepted() -> None:
+    result = parse_draft(answer(item("headline", ["a", "b"])), CV)
+    assert result.items == [] and result.dropped == 1

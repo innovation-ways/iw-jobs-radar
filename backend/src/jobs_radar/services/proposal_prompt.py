@@ -33,8 +33,11 @@ SYSTEM_PROMPT = "\n".join(
         '"years": number}); "experience" ({"title", "organisation", "start": YYYY-MM, "end": '
         'YYYY-MM or null, "summary"}); "education" ({"level", "field"}); "certifications" '
         '({"name", "year": number or null}).',
-        "6. One item per skill, language, role, degree and certification.",
-        "7. Answer with the JSON object only.",
+        '6. Give "value" exactly as described, with no extra wrapper: for example {"path": '
+        '"headline", "value": "Senior Software Engineer"} and {"path": "skills", "value": '
+        '{"name": "Python", "kind": "technology", "level": "expert", "years": 8}}.',
+        "7. One item per skill, language, role, degree and certification.",
+        "8. Answer with the JSON object only.",
     ]
 )
 

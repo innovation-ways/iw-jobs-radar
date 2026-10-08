@@ -107,6 +107,13 @@ def _dedupe_key(item: DraftItem) -> str | None:
     return None
 
 
+def _unwrapped(path: str, value: Any) -> Any:
+    """Remove a wrapper a model puts around the value: ``{"skills": [...]}`` for path ``skills``."""
+    if isinstance(value, dict) and len(value) == 1 and path in value:
+        return value[path]
+    return value
+
+
 def parse_draft(answer: str, text: str) -> DraftResult:
     """Validate the model's ``answer`` against ``text``, the document the items must come from."""
     try:
@@ -122,17 +129,29 @@ def parse_draft(answer: str, text: str) -> DraftResult:
     for entry in entries:
         try:
             path = entry["path"]
-            value = validate_value(path, entry["value"])
+            raw = _unwrapped(path, entry["value"])
             confidence = min(1.0, max(0.0, float(entry.get("confidence", 0.5))))
             excerpt = entry.get("excerpt")
-        except (KeyError, TypeError, ValueError, ValidationError):
+        except (KeyError, TypeError, ValueError, AttributeError):
             dropped += 1
             continue
         if isinstance(excerpt, str) and excerpt.strip() and quote_occurs(excerpt, text):
             excerpt = " ".join(excerpt.split())[:EXCERPT_LIMIT]
         else:
             excerpt, confidence = None, min(confidence, UNVERIFIED_CONFIDENCE_CAP)
-        kept.append(DraftItem(path, value, excerpt, confidence))
+        # One entry may carry several elements (a model often groups a list); each is validated
+        # on its own, so one bad element never discards the others.
+        elements = raw if isinstance(raw, list) else [raw]
+        if isinstance(raw, list) and path in SINGLE_PATHS:
+            dropped += 1
+            continue
+        for element in elements:
+            try:
+                value = validate_value(path, element)
+            except (ValueError, TypeError, ValidationError):
+                dropped += 1
+                continue
+            kept.append(DraftItem(path, value, excerpt, confidence))
 
     # One value per single-valued path, and one item per skill, language, role... : keep the best.
     best: dict[tuple[str, str | None], DraftItem] = {}

@@ -1,0 +1,24 @@
+# Development override: bind-mounted sources and auto-reload (ADR-038).
+# Used by the launcher: docker compose -f docker-compose.yml -f docker-compose.dev.yml ...
+services:
+  api:
+    build:
+      context: ./backend
+      args:
+        INSTALL_DEV: "true"
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn jobs_radar.api.app:create_app --factory --host 0.0.0.0 --port 8000 --reload
+             --reload-dir /app/src"
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/alembic:/app/alembic
+
+  worker:
+    build:
+      context: ./backend
+      args:
+        INSTALL_DEV: "true"
+    command: ["watchfiles", "--filter", "python", "python -m jobs_radar.worker", "/app/src"]
+    volumes:
+      - ./backend/src:/app/src

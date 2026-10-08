@@ -17,9 +17,7 @@ class WorkerHeartbeat(TimestampMixin, Base):
 
     __tablename__ = "worker_heartbeat"
     # SQLAlchemy declarative convention: a plain dict is required here.
-    __table_args__ = {  # noqa: RUF012
-        "comment": "Liveness of worker processes, refreshed every loop iteration."
-    }
+    __table_args__ = {"comment": "Liveness of worker processes, refreshed every loop iteration."}
 
     worker_heartbeat_id: Mapped[int] = mapped_column(
         BigInteger,

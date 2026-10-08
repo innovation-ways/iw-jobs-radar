@@ -8,7 +8,7 @@ GITLEAKS_IMAGE := ghcr.io/gitleaks/gitleaks:v8.30.1
 .DEFAULT_GOAL := help
 .PHONY: help install test test-unit test-integration coverage lint format format-check typecheck \
         arch-check security security-sast license-check docs-check secret-scan quality \
-        openapi fe-install fe-lint fe-format-check fe-typecheck fe-license-check test-frontend \
+        docs-schema openapi fe-install fe-lint fe-format-check fe-typecheck fe-license-check test-frontend \
         fe-coverage test-e2e api-client quality-frontend check
 
 help: ## Show this help
@@ -57,8 +57,17 @@ license-check: ## No AGPL/SSPL/proprietary runtime dependency
 docs-check: ## Every table and column has a comment
 	cd $(BACKEND) && uv run python -m jobs_radar.tools.check_column_docs
 
-secret-scan: ## gitleaks over the working tree (needs Docker)
-	docker run --rm -v "$(CURDIR):/repo:ro" $(GITLEAKS_IMAGE) dir /repo --no-banner --redact --exit-code 1
+docs-schema: ## Regenerate docs/database/schema.md from the ORM models
+	cd $(BACKEND) && uv run python -m jobs_radar.tools.generate_schema_docs
+
+# Scans the git history and the staged changes, i.e. everything that could be committed. The local,
+# git-ignored .env (which legitimately holds secrets) is deliberately not scanned.
+GITLEAKS_RUN := docker run --rm -v "$(CURDIR):/repo:ro" \
+	-e GIT_CONFIG_COUNT=1 -e GIT_CONFIG_KEY_0=safe.directory -e GIT_CONFIG_VALUE_0=/repo $(GITLEAKS_IMAGE)
+
+secret-scan: ## gitleaks over git history and staged changes (needs Docker)
+	$(GITLEAKS_RUN) git /repo --no-banner --redact --exit-code 1
+	$(GITLEAKS_RUN) git /repo --staged --no-banner --redact --exit-code 1
 
 quality: lint format-check typecheck arch-check security license-check docs-check ## All fast quality gates (backend)
 	@echo "Backend quality gates passed."

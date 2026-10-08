@@ -9,7 +9,9 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import create_engine, text
 
+import jobs_radar.db.models  # noqa: F401  # registers every table on Base.metadata
 from jobs_radar.core.settings import Settings, get_settings
+from jobs_radar.db.base import Base
 
 pytestmark = pytest.mark.integration
 
@@ -52,11 +54,13 @@ def test_upgrade_downgrade_upgrade(scratch_database: str) -> None:
     config = Config(str(BACKEND_ROOT / "alembic.ini"))
     config.set_main_option("script_location", str(BACKEND_ROOT / "alembic"))
 
+    expected = set(Base.metadata.tables)
+
     command.upgrade(config, "head")
-    assert "worker_heartbeat" in _tables()
+    assert _tables() - {"alembic_version"} == expected
 
     command.downgrade(config, "base")
-    assert "worker_heartbeat" not in _tables()
+    assert _tables() - {"alembic_version"} == set()  # everything is removed, nothing left behind
 
     command.upgrade(config, "head")
-    assert "worker_heartbeat" in _tables()
+    assert _tables() - {"alembic_version"} == expected

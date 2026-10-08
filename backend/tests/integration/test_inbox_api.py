@@ -391,3 +391,17 @@ async def test_rejecting_a_possible_duplicate_separates_the_listing(
             .all()
         )
         assert rows[0].state == "rejected"
+
+
+async def test_the_text_search_parameter_narrows_the_list(
+    client: httpx.AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    async def build(s: Scene) -> list[Entry]:
+        return [
+            await s.entry(title=f"{s.tag} Kubernetes Engineer"),
+            await s.entry(title=f"{s.tag} Accountant"),
+        ]
+
+    s, (match, _other) = await committed(session_factory, build)
+    assert await ids(client, s, q="KUBERNETES") == [match.item.job_inbox_item_id]
+    assert (await client.get(f"{API}/inbox", params={"q": "x" * 201})).status_code == 422

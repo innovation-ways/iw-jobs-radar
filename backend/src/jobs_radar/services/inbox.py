@@ -50,6 +50,7 @@ class InboxFilters:
     shortlisted: bool | None = None
     company: str | None = None
     source: str | None = None
+    text: str | None = None
     fit_min: int | None = None
     fit_max: int | None = None
     first_seen_from: datetime | None = None
@@ -265,6 +266,7 @@ class InboxService:
             shortlisted=filters.shortlisted,
             company=filters.company,
             source=filters.source,
+            text=filters.text,
             fit_min=filters.fit_min,
             fit_max=filters.fit_max,
             first_seen_from=filters.first_seen_from,

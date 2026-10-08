@@ -171,6 +171,7 @@ class ListQuery:
     shortlisted: bool | None = None
     company: str | None = None
     source: str | None = None
+    text: str | None = None
     fit_min: int | None = None
     fit_max: int | None = None
     first_seen_from: datetime | None = None
@@ -206,7 +207,7 @@ class InboxQueries:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    def _select(self, query: ListQuery) -> Any:
+    def _select(self, query: ListQuery) -> tuple[Any, Any, Any]:
         snapshot = aliased(JobSnapshot)
         newer_snapshot = aliased(JobSnapshot)
         evaluation = aliased(MatchEvaluation)
@@ -251,10 +252,10 @@ class InboxQueries:
             .outerjoin(evaluation, on_evaluation)
             .where(JobInboxItem.owner_id == query.owner_id)
         )
-        return statement, evaluation
+        return statement, evaluation, snapshot
 
     def _filtered(self, query: ListQuery) -> tuple[Any, Any]:
-        statement, evaluation = self._select(query)
+        statement, evaluation, snapshot = self._select(query)
         if query.state is not None:
             statement = statement.where(JobInboxItem.state == query.state)
         if query.shortlisted is not None:
@@ -284,6 +285,17 @@ class InboxQueries:
                 .exists()
             )
             statement = statement.where(member)
+        if query.text:
+            pattern = (
+                "%" + query.text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+            )
+            statement = statement.where(
+                or_(
+                    Company.canonical_name.ilike(pattern, escape="\\"),
+                    snapshot.normalised_json["title"].astext.ilike(pattern, escape="\\"),
+                    snapshot.normalised_json["description_text"].astext.ilike(pattern, escape="\\"),
+                )
+            )
         if query.fit_min is not None:
             statement = statement.where(evaluation.fit_score >= query.fit_min)
         if query.fit_max is not None:
@@ -396,7 +408,7 @@ class InboxQueries:
 
     async def one(self, query: ListQuery, job_inbox_item_id: int) -> RawRow | None:
         """Return one row (same shape as the list) for an item, if it exists."""
-        statement, _evaluation = self._select(query)
+        statement, _evaluation, _snapshot = self._select(query)
         statement = statement.where(JobInboxItem.job_inbox_item_id == job_inbox_item_id)
         row = (await self._session.execute(statement)).first()
         if row is None:

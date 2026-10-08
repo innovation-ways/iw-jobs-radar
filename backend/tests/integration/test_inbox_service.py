@@ -522,3 +522,43 @@ async def test_a_change_to_a_posting_without_an_inbox_item_does_nothing(
 
 def test_imports_used_by_the_scene_exist() -> None:
     assert SearchIntent and IntentRevision and ProfileRevision and JobExtraction and update
+
+
+async def test_the_text_search_matches_title_company_and_description_ignoring_case(
+    db_session: AsyncSession,
+) -> None:
+    s = await scene(db_session)
+    by_title = await s.entry(title=f"{s.tag} Kubernetes Platform Engineer")
+    by_company = await s.entry(company=f"{s.tag} Quartz Robotics")
+    plain = await s.entry(title=f"{s.tag} Account Manager")
+    assert await titles(db_session, s, text="kubernetes") == [by_title.item.job_inbox_item_id]
+    assert await titles(db_session, s, text="QUARTZ") == [by_company.item.job_inbox_item_id]
+    assert await titles(db_session, s, text="no-such-text-anywhere") == []
+    assert set(await titles(db_session, s, text=s.tag)) == {
+        by_title.item.job_inbox_item_id,
+        by_company.item.job_inbox_item_id,
+        plain.item.job_inbox_item_id,
+    }
+
+
+async def test_the_text_search_looks_in_the_description_too(db_session: AsyncSession) -> None:
+    from tests.factories import make_company, make_inbox_item, make_opportunity, make_source
+    from tests.factories import make_posting as make
+
+    s = await scene(db_session)
+    source = await make_source(db_session, await make_company(db_session, f"{s.tag} Co"))
+    posting, _snapshot = await make(
+        db_session, source, title=f"{s.tag} role", description="We run Terraform and Ansible daily."
+    )
+    opportunity = await make_opportunity(db_session, posting)
+    item = await make_inbox_item(db_session, opportunity)
+    assert await titles(db_session, s, text="terraform") == [item.job_inbox_item_id]
+
+
+async def test_wildcard_characters_in_the_search_are_taken_literally(
+    db_session: AsyncSession,
+) -> None:
+    s = await scene(db_session)
+    await s.entry(title=f"{s.tag} Plain title")
+    assert await titles(db_session, s, text="%") == []
+    assert await titles(db_session, s, text="_") == []

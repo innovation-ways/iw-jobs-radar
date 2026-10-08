@@ -2252,6 +2252,7 @@ export interface operations {
                 search_intent_id?: number | null;
                 company?: string | null;
                 source?: string | null;
+                q?: string | null;
                 fit_min?: number | null;
                 fit_max?: number | null;
                 from?: string | null;

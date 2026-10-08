@@ -10,9 +10,12 @@ from jobs_radar.adapters.sources.base import JobSourceAdapter
 from jobs_radar.core.settings import Settings
 from jobs_radar.domain.enums import SourceType
 from jobs_radar.services.collection import CollectionService
+from jobs_radar.services.intents import IntentService
+from jobs_radar.services.profiles import ProfileService
 from jobs_radar.services.readiness import ReadinessService
 from jobs_radar.services.run_executor import RunExecutor
 from jobs_radar.services.sources import SourceService
+from jobs_radar.services.taxonomy import TaxonomyService
 
 
 def get_settings_dep(request: Request) -> Settings:
@@ -58,3 +61,20 @@ def get_run_executor(request: Request) -> RunExecutor:
     """Return the in-process runner (replaced by the worker in T5)."""
     executor: RunExecutor = request.app.state.run_executor
     return executor
+
+
+def get_profile_service(session: Annotated[AsyncSession, Depends(get_session)]) -> ProfileService:
+    """Build the profile service on the request's session."""
+    return ProfileService(session)
+
+
+def get_intent_service(session: Annotated[AsyncSession, Depends(get_session)]) -> IntentService:
+    """Build the intent service on the request's session."""
+    return IntentService(session)
+
+
+def get_taxonomy_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> TaxonomyService:
+    """Build the taxonomy service on the request's session."""
+    return TaxonomyService(session)

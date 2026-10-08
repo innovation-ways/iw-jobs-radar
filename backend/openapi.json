@@ -1,6 +1,124 @@
 {
   "components": {
     "schemas": {
+      "BaseLocation": {
+        "additionalProperties": false,
+        "description": "Anchor for hybrid and on-site distance rules.",
+        "properties": {
+          "country": {
+            "pattern": "^[A-Z]{2}$",
+            "title": "Country",
+            "type": "string"
+          },
+          "latitude": {
+            "anyOf": [
+              {
+                "maximum": 90.0,
+                "minimum": -90.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latitude"
+          },
+          "longitude": {
+            "anyOf": [
+              {
+                "maximum": 180.0,
+                "minimum": -180.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Longitude"
+          },
+          "place": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Place",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "place",
+          "country",
+          "timezone"
+        ],
+        "title": "BaseLocation",
+        "type": "object"
+      },
+      "Certification": {
+        "additionalProperties": false,
+        "description": "A certification.",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "maximum": 2100.0,
+                "minimum": 1950.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          }
+        },
+        "required": [
+          "name",
+          "provenance"
+        ],
+        "title": "Certification",
+        "type": "object"
+      },
+      "CertificationInput": {
+        "additionalProperties": false,
+        "description": "A certification.",
+        "properties": {
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "maximum": 2100.0,
+                "minimum": 1950.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CertificationInput",
+        "type": "object"
+      },
       "CollectionRunPage": {
         "additionalProperties": false,
         "description": "One page of run history, newest first; pass the cursor back to get older runs.",
@@ -118,6 +236,394 @@
         "title": "CollectionRunRead",
         "type": "object"
       },
+      "Compensation": {
+        "additionalProperties": false,
+        "description": "Pay expectations per engagement form.",
+        "properties": {
+          "contractor_day_rate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContractorRate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "employee_pay": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EmployeePay"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reject_below_minimum": {
+            "default": true,
+            "title": "Reject Below Minimum",
+            "type": "boolean"
+          }
+        },
+        "title": "Compensation",
+        "type": "object"
+      },
+      "ContractorRate": {
+        "additionalProperties": false,
+        "description": "Contractor and freelance pay expectation: a day rate only.",
+        "properties": {
+          "currency": {
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "minimum": {
+            "minimum": 0.0,
+            "title": "Minimum",
+            "type": "number"
+          },
+          "target": {
+            "minimum": 0.0,
+            "title": "Target",
+            "type": "number"
+          }
+        },
+        "required": [
+          "currency",
+          "minimum",
+          "target"
+        ],
+        "title": "ContractorRate",
+        "type": "object"
+      },
+      "Education": {
+        "additionalProperties": false,
+        "description": "A degree or similar.",
+        "properties": {
+          "field": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Field",
+            "type": "string"
+          },
+          "level": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Level",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          }
+        },
+        "required": [
+          "level",
+          "field",
+          "provenance"
+        ],
+        "title": "Education",
+        "type": "object"
+      },
+      "EducationInput": {
+        "additionalProperties": false,
+        "description": "A degree or similar.",
+        "properties": {
+          "field": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Field",
+            "type": "string"
+          },
+          "level": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Level",
+            "type": "string"
+          }
+        },
+        "required": [
+          "level",
+          "field"
+        ],
+        "title": "EducationInput",
+        "type": "object"
+      },
+      "EmployeePay": {
+        "additionalProperties": false,
+        "description": "Employee pay expectations. The annual amount is canonical; monthly is derived (D9).",
+        "properties": {
+          "annual_minimum": {
+            "minimum": 0.0,
+            "title": "Annual Minimum",
+            "type": "number"
+          },
+          "annual_target": {
+            "minimum": 0.0,
+            "title": "Annual Target",
+            "type": "number"
+          },
+          "currency": {
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "payments_per_year": {
+            "enum": [
+              12,
+              14
+            ],
+            "title": "Payments Per Year",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "currency",
+          "payments_per_year",
+          "annual_minimum",
+          "annual_target"
+        ],
+        "title": "EmployeePay",
+        "type": "object"
+      },
+      "EvidenceOrigin": {
+        "description": "Origin of a profile fact's evidence.",
+        "enum": [
+          "document",
+          "llm",
+          "manual",
+          "import"
+        ],
+        "title": "EvidenceOrigin",
+        "type": "string"
+      },
+      "Exclusions": {
+        "additionalProperties": false,
+        "description": "Companies and words that rule a job out.",
+        "properties": {
+          "companies": {
+            "items": {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Companies",
+            "type": "array"
+          },
+          "words": {
+            "items": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Words",
+            "type": "array"
+          }
+        },
+        "title": "Exclusions",
+        "type": "object"
+      },
+      "Experience": {
+        "additionalProperties": false,
+        "description": "A past role.",
+        "properties": {
+          "end": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "organisation": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Organisation",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "sectors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sectors",
+            "type": "array"
+          },
+          "start": {
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "title": "Start",
+            "type": "string"
+          },
+          "summary": {
+            "default": "",
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "organisation",
+          "start",
+          "provenance"
+        ],
+        "title": "Experience",
+        "type": "object"
+      },
+      "ExperienceInput": {
+        "additionalProperties": false,
+        "description": "A past role.",
+        "properties": {
+          "end": {
+            "anyOf": [
+              {
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End"
+          },
+          "organisation": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Organisation",
+            "type": "string"
+          },
+          "sectors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sectors",
+            "type": "array"
+          },
+          "start": {
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "title": "Start",
+            "type": "string"
+          },
+          "summary": {
+            "default": "",
+            "title": "Summary",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "organisation",
+          "start"
+        ],
+        "title": "ExperienceInput",
+        "type": "object"
+      },
+      "ExportedIntent": {
+        "additionalProperties": false,
+        "description": "An intent in the portable export.",
+        "properties": {
+          "definition": {
+            "$ref": "#/components/schemas/IntentDefinition"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "enabled",
+          "definition"
+        ],
+        "title": "ExportedIntent",
+        "type": "object"
+      },
+      "ExportedProfile": {
+        "additionalProperties": false,
+        "description": "The profile part of the portable export (``facts`` is null for a blank profile).",
+        "properties": {
+          "facts": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProfileFactsRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "privacy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProfilePrivacy"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "facts",
+          "privacy"
+        ],
+        "title": "ExportedProfile",
+        "type": "object"
+      },
+      "Filters": {
+        "additionalProperties": false,
+        "description": "Optional filters that are not scored.",
+        "properties": {
+          "max_posting_age_days": {
+            "anyOf": [
+              {
+                "maximum": 365.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Posting Age Days"
+          },
+          "needs_visa_or_relocation": {
+            "default": false,
+            "title": "Needs Visa Or Relocation",
+            "type": "boolean"
+          }
+        },
+        "title": "Filters",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -129,6 +635,524 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HoursStances": {
+        "additionalProperties": false,
+        "description": "Stance on working hours that are not full time.",
+        "properties": {
+          "part_time": {
+            "$ref": "#/components/schemas/Stance",
+            "default": "acceptable"
+          }
+        },
+        "title": "HoursStances",
+        "type": "object"
+      },
+      "IntentCreate": {
+        "additionalProperties": false,
+        "description": "Create an intent with revision 1.",
+        "properties": {
+          "alert_threshold": {
+            "default": 65,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Alert Threshold",
+            "type": "integer"
+          },
+          "benefits_wanted": {
+            "items": {
+              "maxLength": 80,
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "type": "string"
+            },
+            "title": "Benefits Wanted",
+            "type": "array"
+          },
+          "compensation": {
+            "$ref": "#/components/schemas/Compensation",
+            "default": {
+              "reject_below_minimum": true
+            }
+          },
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "exclusions": {
+            "$ref": "#/components/schemas/Exclusions",
+            "default": {
+              "companies": [],
+              "words": []
+            }
+          },
+          "filters": {
+            "$ref": "#/components/schemas/Filters",
+            "default": {
+              "needs_visa_or_relocation": false
+            }
+          },
+          "keywords": {
+            "items": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Keywords",
+            "type": "array"
+          },
+          "languages": {
+            "$ref": "#/components/schemas/LanguagePreferences"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "stances": {
+            "$ref": "#/components/schemas/Stances"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "weights": {
+            "$ref": "#/components/schemas/Weights",
+            "default": {
+              "benefits_flexibility": 0,
+              "company_profile": 7,
+              "compensation": 10,
+              "domain_sector": 10,
+              "engagement_terms": 10,
+              "qualifications": 0,
+              "role_responsibilities": 25,
+              "seniority_experience": 8,
+              "skills_technology": 15,
+              "work_arrangement_location": 15
+            }
+          },
+          "work_rules": {
+            "$ref": "#/components/schemas/WorkRules"
+          }
+        },
+        "required": [
+          "title",
+          "stances",
+          "work_rules",
+          "languages"
+        ],
+        "title": "IntentCreate",
+        "type": "object"
+      },
+      "IntentDefinition": {
+        "additionalProperties": false,
+        "description": "The content of one immutable intent revision.",
+        "properties": {
+          "alert_threshold": {
+            "default": 65,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Alert Threshold",
+            "type": "integer"
+          },
+          "benefits_wanted": {
+            "items": {
+              "maxLength": 80,
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "type": "string"
+            },
+            "title": "Benefits Wanted",
+            "type": "array"
+          },
+          "compensation": {
+            "$ref": "#/components/schemas/Compensation",
+            "default": {
+              "reject_below_minimum": true
+            }
+          },
+          "exclusions": {
+            "$ref": "#/components/schemas/Exclusions",
+            "default": {
+              "companies": [],
+              "words": []
+            }
+          },
+          "filters": {
+            "$ref": "#/components/schemas/Filters",
+            "default": {
+              "needs_visa_or_relocation": false
+            }
+          },
+          "keywords": {
+            "items": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Keywords",
+            "type": "array"
+          },
+          "languages": {
+            "$ref": "#/components/schemas/LanguagePreferences"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "stances": {
+            "$ref": "#/components/schemas/Stances"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "weights": {
+            "$ref": "#/components/schemas/Weights",
+            "default": {
+              "benefits_flexibility": 0,
+              "company_profile": 7,
+              "compensation": 10,
+              "domain_sector": 10,
+              "engagement_terms": 10,
+              "qualifications": 0,
+              "role_responsibilities": 25,
+              "seniority_experience": 8,
+              "skills_technology": 15,
+              "work_arrangement_location": 15
+            }
+          },
+          "work_rules": {
+            "$ref": "#/components/schemas/WorkRules"
+          }
+        },
+        "required": [
+          "title",
+          "stances",
+          "work_rules",
+          "languages"
+        ],
+        "title": "IntentDefinition",
+        "type": "object"
+      },
+      "IntentList": {
+        "additionalProperties": false,
+        "description": "A profile's intents.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IntentRead"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "IntentList",
+        "type": "object"
+      },
+      "IntentRead": {
+        "additionalProperties": false,
+        "description": "An intent with its current revision.",
+        "properties": {
+          "career_profile_id": {
+            "title": "Career Profile Id",
+            "type": "integer"
+          },
+          "current_revision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IntentRevisionRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "search_intent_id": {
+            "title": "Search Intent Id",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "search_intent_id",
+          "career_profile_id",
+          "title",
+          "enabled",
+          "version",
+          "current_revision"
+        ],
+        "title": "IntentRead",
+        "type": "object"
+      },
+      "IntentRevisionList": {
+        "additionalProperties": false,
+        "description": "An intent's history, newest first.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/IntentRevisionRead"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "IntentRevisionList",
+        "type": "object"
+      },
+      "IntentRevisionRead": {
+        "additionalProperties": false,
+        "description": "One immutable intent revision.",
+        "properties": {
+          "change_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Summary"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "definition": {
+            "$ref": "#/components/schemas/IntentDefinition"
+          },
+          "intent_revision_id": {
+            "title": "Intent Revision Id",
+            "type": "integer"
+          },
+          "revision_number": {
+            "title": "Revision Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "intent_revision_id",
+          "revision_number",
+          "created_at",
+          "change_summary",
+          "definition"
+        ],
+        "title": "IntentRevisionRead",
+        "type": "object"
+      },
+      "IntentSave": {
+        "additionalProperties": false,
+        "description": "Save the intent as its next revision.",
+        "properties": {
+          "alert_threshold": {
+            "default": 65,
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Alert Threshold",
+            "type": "integer"
+          },
+          "benefits_wanted": {
+            "items": {
+              "maxLength": 80,
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "type": "string"
+            },
+            "title": "Benefits Wanted",
+            "type": "array"
+          },
+          "change_summary": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Summary"
+          },
+          "compensation": {
+            "$ref": "#/components/schemas/Compensation",
+            "default": {
+              "reject_below_minimum": true
+            }
+          },
+          "exclusions": {
+            "$ref": "#/components/schemas/Exclusions",
+            "default": {
+              "companies": [],
+              "words": []
+            }
+          },
+          "expected_current_revision": {
+            "minimum": 1.0,
+            "title": "Expected Current Revision",
+            "type": "integer"
+          },
+          "filters": {
+            "$ref": "#/components/schemas/Filters",
+            "default": {
+              "needs_visa_or_relocation": false
+            }
+          },
+          "keywords": {
+            "items": {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Keywords",
+            "type": "array"
+          },
+          "languages": {
+            "$ref": "#/components/schemas/LanguagePreferences"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "stances": {
+            "$ref": "#/components/schemas/Stances"
+          },
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "weights": {
+            "$ref": "#/components/schemas/Weights",
+            "default": {
+              "benefits_flexibility": 0,
+              "company_profile": 7,
+              "compensation": 10,
+              "domain_sector": 10,
+              "engagement_terms": 10,
+              "qualifications": 0,
+              "role_responsibilities": 25,
+              "seniority_experience": 8,
+              "skills_technology": 15,
+              "work_arrangement_location": 15
+            }
+          },
+          "work_rules": {
+            "$ref": "#/components/schemas/WorkRules"
+          }
+        },
+        "required": [
+          "title",
+          "stances",
+          "work_rules",
+          "languages",
+          "expected_current_revision"
+        ],
+        "title": "IntentSave",
+        "type": "object"
+      },
+      "IntentSaveResponse": {
+        "additionalProperties": false,
+        "description": "Result of a save or restore; ``created`` is false when nothing changed.",
+        "properties": {
+          "created": {
+            "title": "Created",
+            "type": "boolean"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/IntentRead"
+          }
+        },
+        "required": [
+          "created",
+          "intent"
+        ],
+        "title": "IntentSaveResponse",
+        "type": "object"
+      },
+      "LanguagePreferences": {
+        "additionalProperties": false,
+        "description": "Languages the owner can work in.",
+        "properties": {
+          "can_work_in": {
+            "items": {
+              "pattern": "^[a-z]{2}$",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Can Work In",
+            "type": "array"
+          },
+          "reject_unspoken_required": {
+            "default": true,
+            "title": "Reject Unspoken Required",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "can_work_in"
+        ],
+        "title": "LanguagePreferences",
+        "type": "object"
+      },
+      "LanguageSkill": {
+        "additionalProperties": false,
+        "description": "A language the owner speaks and the level.",
+        "properties": {
+          "language": {
+            "pattern": "^[a-z]{2}$",
+            "title": "Language",
+            "type": "string"
+          },
+          "level": {
+            "enum": [
+              "A1",
+              "A2",
+              "B1",
+              "B2",
+              "C1",
+              "C2",
+              "native"
+            ],
+            "title": "Level",
+            "type": "string"
+          }
+        },
+        "required": [
+          "language",
+          "level"
+        ],
+        "title": "LanguageSkill",
         "type": "object"
       },
       "LivenessResponse": {
@@ -143,6 +1167,502 @@
           "status"
         ],
         "title": "LivenessResponse",
+        "type": "object"
+      },
+      "OnsiteHybridRule": {
+        "additionalProperties": false,
+        "description": "How far from a base place hybrid and on-site work may be.",
+        "properties": {
+          "base_place": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Base Place",
+            "type": "string"
+          },
+          "latitude": {
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Latitude",
+            "type": "number"
+          },
+          "longitude": {
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Longitude",
+            "type": "number"
+          },
+          "radius_km": {
+            "maximum": 500.0,
+            "minimum": 1.0,
+            "title": "Radius Km",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "base_place",
+          "latitude",
+          "longitude",
+          "radius_km"
+        ],
+        "title": "OnsiteHybridRule",
+        "type": "object"
+      },
+      "ProfileCreate": {
+        "additionalProperties": false,
+        "description": "Create a blank, named profile.",
+        "properties": {
+          "title": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility",
+            "default": "private"
+          }
+        },
+        "required": [
+          "title"
+        ],
+        "title": "ProfileCreate",
+        "type": "object"
+      },
+      "ProfileExport": {
+        "additionalProperties": false,
+        "description": "Portable export of a profile and its intents; contains no secrets (document 07).",
+        "properties": {
+          "exported_at": {
+            "format": "date-time",
+            "title": "Exported At",
+            "type": "string"
+          },
+          "intents": {
+            "items": {
+              "$ref": "#/components/schemas/ExportedIntent"
+            },
+            "title": "Intents",
+            "type": "array"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/ExportedProfile"
+          },
+          "schema_version": {
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "exported_at",
+          "profile",
+          "intents"
+        ],
+        "title": "ProfileExport",
+        "type": "object"
+      },
+      "ProfileFactsRead": {
+        "additionalProperties": false,
+        "description": "The facts of one revision as returned to clients.",
+        "properties": {
+          "base_location": {
+            "$ref": "#/components/schemas/BaseLocation"
+          },
+          "certifications": {
+            "items": {
+              "$ref": "#/components/schemas/Certification"
+            },
+            "title": "Certifications",
+            "type": "array"
+          },
+          "education": {
+            "items": {
+              "$ref": "#/components/schemas/Education"
+            },
+            "title": "Education",
+            "type": "array"
+          },
+          "experience": {
+            "items": {
+              "$ref": "#/components/schemas/Experience"
+            },
+            "title": "Experience",
+            "type": "array"
+          },
+          "headline": {
+            "title": "Headline",
+            "type": "string"
+          },
+          "languages": {
+            "items": {
+              "$ref": "#/components/schemas/LanguageSkill"
+            },
+            "title": "Languages",
+            "type": "array"
+          },
+          "schema_version": {
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "skills": {
+            "items": {
+              "$ref": "#/components/schemas/SkillRead"
+            },
+            "title": "Skills",
+            "type": "array"
+          },
+          "years_experience": {
+            "title": "Years Experience",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "schema_version",
+          "headline",
+          "base_location",
+          "years_experience",
+          "languages",
+          "skills",
+          "experience",
+          "education",
+          "certifications"
+        ],
+        "title": "ProfileFactsRead",
+        "type": "object"
+      },
+      "ProfileList": {
+        "additionalProperties": false,
+        "description": "All of the owner's profiles.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProfileRead"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ProfileList",
+        "type": "object"
+      },
+      "ProfilePrivacy": {
+        "additionalProperties": false,
+        "description": "Privacy choices that applied when a revision was created (conservative defaults).",
+        "properties": {
+          "allow_cloud_processing": {
+            "default": false,
+            "title": "Allow Cloud Processing",
+            "type": "boolean"
+          },
+          "redact_contact_details": {
+            "default": true,
+            "title": "Redact Contact Details",
+            "type": "boolean"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "title": "ProfilePrivacy",
+        "type": "object"
+      },
+      "ProfileRead": {
+        "additionalProperties": false,
+        "description": "A profile with its current revision (``null`` for a blank profile).",
+        "properties": {
+          "career_profile_id": {
+            "title": "Career Profile Id",
+            "type": "integer"
+          },
+          "current_revision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProfileRevisionRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          },
+          "visibility": {
+            "$ref": "#/components/schemas/Visibility"
+          }
+        },
+        "required": [
+          "career_profile_id",
+          "title",
+          "visibility",
+          "version",
+          "current_revision"
+        ],
+        "title": "ProfileRead",
+        "type": "object"
+      },
+      "ProfileRevisionList": {
+        "additionalProperties": false,
+        "description": "A profile's history, newest first.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProfileRevisionSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ProfileRevisionList",
+        "type": "object"
+      },
+      "ProfileRevisionRead": {
+        "additionalProperties": false,
+        "description": "A revision with its facts and privacy settings.",
+        "properties": {
+          "change_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Summary"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "facts": {
+            "$ref": "#/components/schemas/ProfileFactsRead"
+          },
+          "privacy": {
+            "$ref": "#/components/schemas/ProfilePrivacy"
+          },
+          "profile_revision_id": {
+            "title": "Profile Revision Id",
+            "type": "integer"
+          },
+          "revision_number": {
+            "title": "Revision Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "profile_revision_id",
+          "revision_number",
+          "created_at",
+          "change_summary",
+          "facts",
+          "privacy"
+        ],
+        "title": "ProfileRevisionRead",
+        "type": "object"
+      },
+      "ProfileRevisionSummary": {
+        "additionalProperties": false,
+        "description": "One line of the history.",
+        "properties": {
+          "change_summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Summary"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "profile_revision_id": {
+            "title": "Profile Revision Id",
+            "type": "integer"
+          },
+          "revision_number": {
+            "title": "Revision Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "profile_revision_id",
+          "revision_number",
+          "created_at",
+          "change_summary"
+        ],
+        "title": "ProfileRevisionSummary",
+        "type": "object"
+      },
+      "ProfileSave": {
+        "additionalProperties": false,
+        "description": "Save as the next revision; ``expected_current_revision`` is ``null`` for the first one.",
+        "properties": {
+          "base_location": {
+            "$ref": "#/components/schemas/BaseLocation"
+          },
+          "certifications": {
+            "items": {
+              "$ref": "#/components/schemas/CertificationInput"
+            },
+            "title": "Certifications",
+            "type": "array"
+          },
+          "change_summary": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Summary"
+          },
+          "education": {
+            "items": {
+              "$ref": "#/components/schemas/EducationInput"
+            },
+            "title": "Education",
+            "type": "array"
+          },
+          "expected_current_revision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Current Revision"
+          },
+          "experience": {
+            "items": {
+              "$ref": "#/components/schemas/ExperienceInput"
+            },
+            "title": "Experience",
+            "type": "array"
+          },
+          "headline": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Headline",
+            "type": "string"
+          },
+          "languages": {
+            "items": {
+              "$ref": "#/components/schemas/LanguageSkill"
+            },
+            "title": "Languages",
+            "type": "array"
+          },
+          "privacy": {
+            "$ref": "#/components/schemas/ProfilePrivacy",
+            "default": {
+              "allow_cloud_processing": false,
+              "redact_contact_details": true,
+              "schema_version": 1
+            }
+          },
+          "skills": {
+            "items": {
+              "$ref": "#/components/schemas/SkillInput"
+            },
+            "title": "Skills",
+            "type": "array"
+          },
+          "years_experience": {
+            "maximum": 70.0,
+            "minimum": 0.0,
+            "title": "Years Experience",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "headline",
+          "base_location",
+          "years_experience"
+        ],
+        "title": "ProfileSave",
+        "type": "object"
+      },
+      "ProfileSaveResponse": {
+        "additionalProperties": false,
+        "description": "Result of a save or restore; ``created`` is false when nothing changed.",
+        "properties": {
+          "created": {
+            "title": "Created",
+            "type": "boolean"
+          },
+          "profile": {
+            "$ref": "#/components/schemas/ProfileRead"
+          }
+        },
+        "required": [
+          "created",
+          "profile"
+        ],
+        "title": "ProfileSaveResponse",
+        "type": "object"
+      },
+      "Provenance": {
+        "additionalProperties": false,
+        "description": "Where a fact came from; only accepted facts exist in a revision.",
+        "properties": {
+          "accepted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accepted At"
+          },
+          "evidence_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Id"
+          },
+          "origin": {
+            "$ref": "#/components/schemas/EvidenceOrigin"
+          }
+        },
+        "required": [
+          "origin"
+        ],
+        "title": "Provenance",
         "type": "object"
       },
       "ReadinessResponse": {
@@ -167,6 +1687,59 @@
         "title": "ReadinessResponse",
         "type": "object"
       },
+      "RemoteRule": {
+        "additionalProperties": false,
+        "description": "Where remote work is acceptable from.",
+        "properties": {
+          "eligible_regions": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Eligible Regions",
+            "type": "array"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "timezone_tolerance_hours": {
+            "anyOf": [
+              {
+                "maximum": 12.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timezone Tolerance Hours"
+          }
+        },
+        "required": [
+          "eligible_regions",
+          "timezone"
+        ],
+        "title": "RemoteRule",
+        "type": "object"
+      },
+      "RestoreRequest": {
+        "additionalProperties": false,
+        "description": "Restore an old revision as the next one.",
+        "properties": {
+          "expected_current_revision": {
+            "minimum": 1.0,
+            "title": "Expected Current Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected_current_revision"
+        ],
+        "title": "RestoreRequest",
+        "type": "object"
+      },
       "RunStatus": {
         "description": "State of a collection run.",
         "enum": [
@@ -188,6 +1761,95 @@
         ],
         "title": "RunTrigger",
         "type": "string"
+      },
+      "SkillInput": {
+        "additionalProperties": false,
+        "description": "A skill as typed by the owner.",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/SkillKind",
+            "default": "technology"
+          },
+          "level": {
+            "enum": [
+              "beginner",
+              "intermediate",
+              "advanced",
+              "expert"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "years": {
+            "maximum": 70.0,
+            "minimum": 0.0,
+            "title": "Years",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "level",
+          "years"
+        ],
+        "title": "SkillInput",
+        "type": "object"
+      },
+      "SkillKind": {
+        "description": "Category of a skill.",
+        "enum": [
+          "technology",
+          "domain_knowledge",
+          "method"
+        ],
+        "title": "SkillKind",
+        "type": "string"
+      },
+      "SkillRead": {
+        "additionalProperties": false,
+        "description": "A skill of a revision, with its canonical name.",
+        "properties": {
+          "level": {
+            "enum": [
+              "beginner",
+              "intermediate",
+              "advanced",
+              "expert"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "skill_id": {
+            "title": "Skill Id",
+            "type": "integer"
+          },
+          "years": {
+            "title": "Years",
+            "type": "number"
+          }
+        },
+        "required": [
+          "skill_id",
+          "name",
+          "level",
+          "years",
+          "provenance"
+        ],
+        "title": "SkillRead",
+        "type": "object"
       },
       "SourceCreate": {
         "additionalProperties": false,
@@ -486,6 +2148,161 @@
         "title": "SourceUpdate",
         "type": "object"
       },
+      "Stance": {
+        "description": "The owner's attitude to an option (ADR-026).",
+        "enum": [
+          "preferred",
+          "acceptable",
+          "rejected"
+        ],
+        "title": "Stance",
+        "type": "string"
+      },
+      "StanceEntry": {
+        "additionalProperties": false,
+        "description": "The owner's stance on one taxonomy term.",
+        "properties": {
+          "key": {
+            "maxLength": 80,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Key",
+            "type": "string"
+          },
+          "stance": {
+            "$ref": "#/components/schemas/Stance"
+          }
+        },
+        "required": [
+          "key",
+          "stance"
+        ],
+        "title": "StanceEntry",
+        "type": "object"
+      },
+      "Stances": {
+        "additionalProperties": false,
+        "description": "Preferred, acceptable or rejected for every option group.",
+        "properties": {
+          "employer_types": {
+            "items": {
+              "$ref": "#/components/schemas/StanceEntry"
+            },
+            "title": "Employer Types",
+            "type": "array"
+          },
+          "engagement_types": {
+            "items": {
+              "$ref": "#/components/schemas/StanceEntry"
+            },
+            "title": "Engagement Types",
+            "type": "array"
+          },
+          "hours": {
+            "$ref": "#/components/schemas/HoursStances",
+            "default": {
+              "part_time": "acceptable"
+            }
+          },
+          "role_families": {
+            "items": {
+              "$ref": "#/components/schemas/StanceEntry"
+            },
+            "title": "Role Families",
+            "type": "array"
+          },
+          "sectors": {
+            "items": {
+              "$ref": "#/components/schemas/StanceEntry"
+            },
+            "title": "Sectors",
+            "type": "array"
+          },
+          "seniority_levels": {
+            "items": {
+              "$ref": "#/components/schemas/StanceEntry"
+            },
+            "title": "Seniority Levels",
+            "type": "array"
+          },
+          "work_arrangements": {
+            "items": {
+              "$ref": "#/components/schemas/StanceEntry"
+            },
+            "title": "Work Arrangements",
+            "type": "array"
+          }
+        },
+        "required": [
+          "role_families",
+          "work_arrangements",
+          "engagement_types",
+          "seniority_levels",
+          "employer_types"
+        ],
+        "title": "Stances",
+        "type": "object"
+      },
+      "TaxonomyGroup": {
+        "additionalProperties": false,
+        "description": "The current terms of one vocabulary.",
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "terms": {
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyTermRead"
+            },
+            "title": "Terms",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "terms"
+        ],
+        "title": "TaxonomyGroup",
+        "type": "object"
+      },
+      "TaxonomyRead": {
+        "additionalProperties": false,
+        "description": "All vocabularies.",
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyGroup"
+            },
+            "title": "Groups",
+            "type": "array"
+          }
+        },
+        "required": [
+          "groups"
+        ],
+        "title": "TaxonomyRead",
+        "type": "object"
+      },
+      "TaxonomyTermRead": {
+        "additionalProperties": false,
+        "description": "One term of a controlled vocabulary.",
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "term_key": {
+            "title": "Term Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "term_key",
+          "label"
+        ],
+        "title": "TaxonomyTermRead",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -524,6 +2341,126 @@
           "type"
         ],
         "title": "ValidationError",
+        "type": "object"
+      },
+      "VersionRequest": {
+        "additionalProperties": false,
+        "description": "Enable or disable using the row version the client saw.",
+        "properties": {
+          "expected_version": {
+            "minimum": 1.0,
+            "title": "Expected Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected_version"
+        ],
+        "title": "VersionRequest",
+        "type": "object"
+      },
+      "Visibility": {
+        "description": "Visibility of a career profile.",
+        "enum": [
+          "private"
+        ],
+        "title": "Visibility",
+        "type": "string"
+      },
+      "Weights": {
+        "additionalProperties": false,
+        "description": "One relative weight per dimension. The two optional dimensions default to 0 (excluded).",
+        "properties": {
+          "benefits_flexibility": {
+            "default": 0,
+            "maximum": 40.0,
+            "minimum": 0.0,
+            "title": "Benefits Flexibility",
+            "type": "integer"
+          },
+          "company_profile": {
+            "default": 7,
+            "maximum": 40.0,
+            "minimum": 0.0,
+            "title": "Company Profile",
+            "type": "integer"
+          },
+          "compensation": {
+            "default": 10,
+            "maximum": 40.0,
+            "minimum": 0.0,
+            "title": "Compensation",
+            "type": "integer"
+          },
+          "domain_sector": {
+            "default": 10,
+            "maximum": 40.0,
+            "minimum": 0.0,
+            "title": "Domain Sector",
+            "type": "integer"
+          },
+          "engagement_terms": {
+            "default": 10,
+            "maximum": 40.0,
+            "minimum": 0.0,
+            "title": "Engagement Terms",
+            "type": "integer"
+          },
+          "qualifications": {
+            "default": 0,
+            "maximum": 40.0,
+            "minimum": 0.0,
+            "title": "Qualifications",
+            "type": "integer"
+          },
+          "role_responsibilities": {
+            "default": 25,
+            "maximum": 40.0,
+            "minimum": 0.0,
+            "title": "Role Responsibilities",
+            "type": "integer"
+          },
+          "seniority_experience": {
+            "default": 8,
+            "maximum": 40.0,
+            "minimum": 0.0,
+            "title": "Seniority Experience",
+            "type": "integer"
+          },
+          "skills_technology": {
+            "default": 15,
+            "maximum": 40.0,
+            "minimum": 0.0,
+            "title": "Skills Technology",
+            "type": "integer"
+          },
+          "work_arrangement_location": {
+            "default": 15,
+            "maximum": 40.0,
+            "minimum": 0.0,
+            "title": "Work Arrangement Location",
+            "type": "integer"
+          }
+        },
+        "title": "Weights",
+        "type": "object"
+      },
+      "WorkRules": {
+        "additionalProperties": false,
+        "description": "Place rules per work arrangement.",
+        "properties": {
+          "onsite_hybrid": {
+            "$ref": "#/components/schemas/OnsiteHybridRule"
+          },
+          "remote": {
+            "$ref": "#/components/schemas/RemoteRule"
+          }
+        },
+        "required": [
+          "remote",
+          "onsite_hybrid"
+        ],
+        "title": "WorkRules",
         "type": "object"
       }
     }
@@ -614,6 +2551,772 @@
         "summary": "Run All Sources",
         "tags": [
           "sources"
+        ]
+      }
+    },
+    "/api/v1/intents/{search_intent_id}": {
+      "put": {
+        "description": "Save the intent as its next immutable revision (no revision when nothing changed).",
+        "operationId": "save_intent_api_v1_intents__search_intent_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "search_intent_id",
+            "required": true,
+            "schema": {
+              "title": "Search Intent Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntentSave"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentSaveResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Intent",
+        "tags": [
+          "intents"
+        ]
+      }
+    },
+    "/api/v1/intents/{search_intent_id}/disable": {
+      "post": {
+        "description": "Disable the intent.",
+        "operationId": "disable_intent_api_v1_intents__search_intent_id__disable_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "search_intent_id",
+            "required": true,
+            "schema": {
+              "title": "Search Intent Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Disable Intent",
+        "tags": [
+          "intents"
+        ]
+      }
+    },
+    "/api/v1/intents/{search_intent_id}/enable": {
+      "post": {
+        "description": "Enable the intent.",
+        "operationId": "enable_intent_api_v1_intents__search_intent_id__enable_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "search_intent_id",
+            "required": true,
+            "schema": {
+              "title": "Search Intent Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VersionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Enable Intent",
+        "tags": [
+          "intents"
+        ]
+      }
+    },
+    "/api/v1/intents/{search_intent_id}/revisions": {
+      "get": {
+        "description": "List the intent's immutable revisions, newest first.",
+        "operationId": "list_intent_revisions_api_v1_intents__search_intent_id__revisions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "search_intent_id",
+            "required": true,
+            "schema": {
+              "title": "Search Intent Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentRevisionList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Intent Revisions",
+        "tags": [
+          "intents"
+        ]
+      }
+    },
+    "/api/v1/intents/{search_intent_id}/revisions/{intent_revision_id}": {
+      "get": {
+        "description": "Return one intent revision.",
+        "operationId": "get_intent_revision_api_v1_intents__search_intent_id__revisions__intent_revision_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "search_intent_id",
+            "required": true,
+            "schema": {
+              "title": "Search Intent Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "intent_revision_id",
+            "required": true,
+            "schema": {
+              "title": "Intent Revision Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentRevisionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Intent Revision",
+        "tags": [
+          "intents"
+        ]
+      }
+    },
+    "/api/v1/intents/{search_intent_id}/revisions/{intent_revision_id}/restore": {
+      "post": {
+        "description": "Make an old revision's content the next revision.",
+        "operationId": "restore_intent_revision_api_v1_intents__search_intent_id__revisions__intent_revision_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "search_intent_id",
+            "required": true,
+            "schema": {
+              "title": "Search Intent Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "intent_revision_id",
+            "required": true,
+            "schema": {
+              "title": "Intent Revision Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentSaveResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore Intent Revision",
+        "tags": [
+          "intents"
+        ]
+      }
+    },
+    "/api/v1/profiles": {
+      "get": {
+        "description": "List the owner's profiles with their current revisions.",
+        "operationId": "list_profiles_api_v1_profiles_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Profiles",
+        "tags": [
+          "profiles"
+        ]
+      },
+      "post": {
+        "description": "Create a blank named profile.",
+        "operationId": "create_profile_api_v1_profiles_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Profile",
+        "tags": [
+          "profiles"
+        ]
+      }
+    },
+    "/api/v1/profiles/{career_profile_id}": {
+      "get": {
+        "description": "Return the current projection and current revision of a profile.",
+        "operationId": "get_profile_api_v1_profiles__career_profile_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "career_profile_id",
+            "required": true,
+            "schema": {
+              "title": "Career Profile Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Profile",
+        "tags": [
+          "profiles"
+        ]
+      },
+      "put": {
+        "description": "Save the profile as its next immutable revision (no revision when nothing changed).",
+        "operationId": "save_profile_api_v1_profiles__career_profile_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "career_profile_id",
+            "required": true,
+            "schema": {
+              "title": "Career Profile Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileSave"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileSaveResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Save Profile",
+        "tags": [
+          "profiles"
+        ]
+      }
+    },
+    "/api/v1/profiles/{career_profile_id}/export": {
+      "get": {
+        "description": "Portable export of the profile and its intents. It contains no credentials or secrets.",
+        "operationId": "export_profile_api_v1_profiles__career_profile_id__export_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "career_profile_id",
+            "required": true,
+            "schema": {
+              "title": "Career Profile Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileExport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Profile",
+        "tags": [
+          "profiles"
+        ]
+      }
+    },
+    "/api/v1/profiles/{career_profile_id}/intents": {
+      "get": {
+        "description": "List a profile's intents with their current revisions.",
+        "operationId": "list_intents_api_v1_profiles__career_profile_id__intents_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "career_profile_id",
+            "required": true,
+            "schema": {
+              "title": "Career Profile Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Intents",
+        "tags": [
+          "intents"
+        ]
+      },
+      "post": {
+        "description": "Create an intent and its revision 1.",
+        "operationId": "create_intent_api_v1_profiles__career_profile_id__intents_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "career_profile_id",
+            "required": true,
+            "schema": {
+              "title": "Career Profile Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IntentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Intent",
+        "tags": [
+          "intents"
+        ]
+      }
+    },
+    "/api/v1/profiles/{career_profile_id}/revisions": {
+      "get": {
+        "description": "List the immutable revisions of a profile, newest first.",
+        "operationId": "list_profile_revisions_api_v1_profiles__career_profile_id__revisions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "career_profile_id",
+            "required": true,
+            "schema": {
+              "title": "Career Profile Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileRevisionList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Profile Revisions",
+        "tags": [
+          "profiles"
+        ]
+      }
+    },
+    "/api/v1/profiles/{career_profile_id}/revisions/{profile_revision_id}": {
+      "get": {
+        "description": "Return one revision with its facts and provenance.",
+        "operationId": "get_profile_revision_api_v1_profiles__career_profile_id__revisions__profile_revision_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "career_profile_id",
+            "required": true,
+            "schema": {
+              "title": "Career Profile Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "profile_revision_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Revision Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileRevisionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Profile Revision",
+        "tags": [
+          "profiles"
+        ]
+      }
+    },
+    "/api/v1/profiles/{career_profile_id}/revisions/{profile_revision_id}/restore": {
+      "post": {
+        "description": "Make an old revision's content the next revision.",
+        "operationId": "restore_profile_revision_api_v1_profiles__career_profile_id__revisions__profile_revision_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "career_profile_id",
+            "required": true,
+            "schema": {
+              "title": "Career Profile Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "profile_revision_id",
+            "required": true,
+            "schema": {
+              "title": "Profile Revision Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileSaveResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore Profile Revision",
+        "tags": [
+          "profiles"
         ]
       }
     },
@@ -772,6 +3475,28 @@
         "summary": "Run Source",
         "tags": [
           "sources"
+        ]
+      }
+    },
+    "/api/v1/taxonomy": {
+      "get": {
+        "description": "List the controlled vocabularies the intent's stance controls are built from.",
+        "operationId": "get_taxonomy_api_v1_taxonomy_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxonomyRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Taxonomy",
+        "tags": [
+          "intents"
         ]
       }
     },

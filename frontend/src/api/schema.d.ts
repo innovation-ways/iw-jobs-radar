@@ -28,6 +28,278 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/intents/{search_intent_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save Intent
+         * @description Save the intent as its next immutable revision (no revision when nothing changed).
+         */
+        put: operations["save_intent_api_v1_intents__search_intent_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intents/{search_intent_id}/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Disable Intent
+         * @description Disable the intent.
+         */
+        post: operations["disable_intent_api_v1_intents__search_intent_id__disable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intents/{search_intent_id}/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enable Intent
+         * @description Enable the intent.
+         */
+        post: operations["enable_intent_api_v1_intents__search_intent_id__enable_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intents/{search_intent_id}/revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Intent Revisions
+         * @description List the intent's immutable revisions, newest first.
+         */
+        get: operations["list_intent_revisions_api_v1_intents__search_intent_id__revisions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intents/{search_intent_id}/revisions/{intent_revision_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Intent Revision
+         * @description Return one intent revision.
+         */
+        get: operations["get_intent_revision_api_v1_intents__search_intent_id__revisions__intent_revision_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intents/{search_intent_id}/revisions/{intent_revision_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore Intent Revision
+         * @description Make an old revision's content the next revision.
+         */
+        post: operations["restore_intent_revision_api_v1_intents__search_intent_id__revisions__intent_revision_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Profiles
+         * @description List the owner's profiles with their current revisions.
+         */
+        get: operations["list_profiles_api_v1_profiles_get"];
+        put?: never;
+        /**
+         * Create Profile
+         * @description Create a blank named profile.
+         */
+        post: operations["create_profile_api_v1_profiles_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiles/{career_profile_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Profile
+         * @description Return the current projection and current revision of a profile.
+         */
+        get: operations["get_profile_api_v1_profiles__career_profile_id__get"];
+        /**
+         * Save Profile
+         * @description Save the profile as its next immutable revision (no revision when nothing changed).
+         */
+        put: operations["save_profile_api_v1_profiles__career_profile_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiles/{career_profile_id}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export Profile
+         * @description Portable export of the profile and its intents. It contains no credentials or secrets.
+         */
+        get: operations["export_profile_api_v1_profiles__career_profile_id__export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiles/{career_profile_id}/intents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Intents
+         * @description List a profile's intents with their current revisions.
+         */
+        get: operations["list_intents_api_v1_profiles__career_profile_id__intents_get"];
+        put?: never;
+        /**
+         * Create Intent
+         * @description Create an intent and its revision 1.
+         */
+        post: operations["create_intent_api_v1_profiles__career_profile_id__intents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiles/{career_profile_id}/revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Profile Revisions
+         * @description List the immutable revisions of a profile, newest first.
+         */
+        get: operations["list_profile_revisions_api_v1_profiles__career_profile_id__revisions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiles/{career_profile_id}/revisions/{profile_revision_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Profile Revision
+         * @description Return one revision with its facts and provenance.
+         */
+        get: operations["get_profile_revision_api_v1_profiles__career_profile_id__revisions__profile_revision_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/profiles/{career_profile_id}/revisions/{profile_revision_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Restore Profile Revision
+         * @description Make an old revision's content the next revision.
+         */
+        post: operations["restore_profile_revision_api_v1_profiles__career_profile_id__revisions__profile_revision_id__restore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sources": {
         parameters: {
             query?: never;
@@ -92,6 +364,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/taxonomy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Taxonomy
+         * @description List the controlled vocabularies the intent's stance controls are built from.
+         */
+        get: operations["get_taxonomy_api_v1_taxonomy_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/healthz": {
         parameters: {
             query?: never;
@@ -137,6 +429,43 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * BaseLocation
+         * @description Anchor for hybrid and on-site distance rules.
+         */
+        BaseLocation: {
+            /** Country */
+            country: string;
+            /** Latitude */
+            latitude?: number | null;
+            /** Longitude */
+            longitude?: number | null;
+            /** Place */
+            place: string;
+            /** Timezone */
+            timezone: string;
+        };
+        /**
+         * Certification
+         * @description A certification.
+         */
+        Certification: {
+            /** Name */
+            name: string;
+            provenance: components["schemas"]["Provenance"];
+            /** Year */
+            year?: number | null;
+        };
+        /**
+         * CertificationInput
+         * @description A certification.
+         */
+        CertificationInput: {
+            /** Name */
+            name: string;
+            /** Year */
+            year?: number | null;
+        };
+        /**
          * CollectionRunPage
          * @description One page of run history, newest first; pass the cursor back to get older runs.
          */
@@ -171,10 +500,449 @@ export interface components {
             status: components["schemas"]["RunStatus"];
             trigger: components["schemas"]["RunTrigger"];
         };
+        /**
+         * Compensation
+         * @description Pay expectations per engagement form.
+         */
+        Compensation: {
+            contractor_day_rate?: components["schemas"]["ContractorRate"] | null;
+            employee_pay?: components["schemas"]["EmployeePay"] | null;
+            /**
+             * Reject Below Minimum
+             * @default true
+             */
+            reject_below_minimum: boolean;
+        };
+        /**
+         * ContractorRate
+         * @description Contractor and freelance pay expectation: a day rate only.
+         */
+        ContractorRate: {
+            /** Currency */
+            currency: string;
+            /** Minimum */
+            minimum: number;
+            /** Target */
+            target: number;
+        };
+        /**
+         * Education
+         * @description A degree or similar.
+         */
+        Education: {
+            /** Field */
+            field: string;
+            /** Level */
+            level: string;
+            provenance: components["schemas"]["Provenance"];
+        };
+        /**
+         * EducationInput
+         * @description A degree or similar.
+         */
+        EducationInput: {
+            /** Field */
+            field: string;
+            /** Level */
+            level: string;
+        };
+        /**
+         * EmployeePay
+         * @description Employee pay expectations. The annual amount is canonical; monthly is derived (D9).
+         */
+        EmployeePay: {
+            /** Annual Minimum */
+            annual_minimum: number;
+            /** Annual Target */
+            annual_target: number;
+            /** Currency */
+            currency: string;
+            /**
+             * Payments Per Year
+             * @enum {integer}
+             */
+            payments_per_year: 12 | 14;
+        };
+        /**
+         * EvidenceOrigin
+         * @description Origin of a profile fact's evidence.
+         * @enum {string}
+         */
+        EvidenceOrigin: "document" | "llm" | "manual" | "import";
+        /**
+         * Exclusions
+         * @description Companies and words that rule a job out.
+         */
+        Exclusions: {
+            /** Companies */
+            companies?: string[];
+            /** Words */
+            words?: string[];
+        };
+        /**
+         * Experience
+         * @description A past role.
+         */
+        Experience: {
+            /** End */
+            end?: string | null;
+            /** Organisation */
+            organisation: string;
+            provenance: components["schemas"]["Provenance"];
+            /** Sectors */
+            sectors?: string[];
+            /** Start */
+            start: string;
+            /**
+             * Summary
+             * @default
+             */
+            summary: string;
+            /** Title */
+            title: string;
+        };
+        /**
+         * ExperienceInput
+         * @description A past role.
+         */
+        ExperienceInput: {
+            /** End */
+            end?: string | null;
+            /** Organisation */
+            organisation: string;
+            /** Sectors */
+            sectors?: string[];
+            /** Start */
+            start: string;
+            /**
+             * Summary
+             * @default
+             */
+            summary: string;
+            /** Title */
+            title: string;
+        };
+        /**
+         * ExportedIntent
+         * @description An intent in the portable export.
+         */
+        ExportedIntent: {
+            definition: components["schemas"]["IntentDefinition"];
+            /** Enabled */
+            enabled: boolean;
+            /** Title */
+            title: string;
+        };
+        /**
+         * ExportedProfile
+         * @description The profile part of the portable export (``facts`` is null for a blank profile).
+         */
+        ExportedProfile: {
+            facts: components["schemas"]["ProfileFactsRead"] | null;
+            privacy: components["schemas"]["ProfilePrivacy"] | null;
+            /** Title */
+            title: string;
+        };
+        /**
+         * Filters
+         * @description Optional filters that are not scored.
+         */
+        Filters: {
+            /** Max Posting Age Days */
+            max_posting_age_days?: number | null;
+            /**
+             * Needs Visa Or Relocation
+             * @default false
+             */
+            needs_visa_or_relocation: boolean;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
+         * HoursStances
+         * @description Stance on working hours that are not full time.
+         */
+        HoursStances: {
+            /** @default acceptable */
+            part_time: components["schemas"]["Stance"];
+        };
+        /**
+         * IntentCreate
+         * @description Create an intent with revision 1.
+         */
+        IntentCreate: {
+            /**
+             * Alert Threshold
+             * @default 65
+             */
+            alert_threshold: number;
+            /** Benefits Wanted */
+            benefits_wanted?: string[];
+            /**
+             * @default {
+             *       "reject_below_minimum": true
+             *     }
+             */
+            compensation: components["schemas"]["Compensation"];
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /**
+             * @default {
+             *       "companies": [],
+             *       "words": []
+             *     }
+             */
+            exclusions: components["schemas"]["Exclusions"];
+            /**
+             * @default {
+             *       "needs_visa_or_relocation": false
+             *     }
+             */
+            filters: components["schemas"]["Filters"];
+            /** Keywords */
+            keywords?: string[];
+            languages: components["schemas"]["LanguagePreferences"];
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            stances: components["schemas"]["Stances"];
+            /** Title */
+            title: string;
+            /**
+             * @default {
+             *       "benefits_flexibility": 0,
+             *       "company_profile": 7,
+             *       "compensation": 10,
+             *       "domain_sector": 10,
+             *       "engagement_terms": 10,
+             *       "qualifications": 0,
+             *       "role_responsibilities": 25,
+             *       "seniority_experience": 8,
+             *       "skills_technology": 15,
+             *       "work_arrangement_location": 15
+             *     }
+             */
+            weights: components["schemas"]["Weights"];
+            work_rules: components["schemas"]["WorkRules"];
+        };
+        /**
+         * IntentDefinition
+         * @description The content of one immutable intent revision.
+         */
+        IntentDefinition: {
+            /**
+             * Alert Threshold
+             * @default 65
+             */
+            alert_threshold: number;
+            /** Benefits Wanted */
+            benefits_wanted?: string[];
+            /**
+             * @default {
+             *       "reject_below_minimum": true
+             *     }
+             */
+            compensation: components["schemas"]["Compensation"];
+            /**
+             * @default {
+             *       "companies": [],
+             *       "words": []
+             *     }
+             */
+            exclusions: components["schemas"]["Exclusions"];
+            /**
+             * @default {
+             *       "needs_visa_or_relocation": false
+             *     }
+             */
+            filters: components["schemas"]["Filters"];
+            /** Keywords */
+            keywords?: string[];
+            languages: components["schemas"]["LanguagePreferences"];
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            stances: components["schemas"]["Stances"];
+            /** Title */
+            title: string;
+            /**
+             * @default {
+             *       "benefits_flexibility": 0,
+             *       "company_profile": 7,
+             *       "compensation": 10,
+             *       "domain_sector": 10,
+             *       "engagement_terms": 10,
+             *       "qualifications": 0,
+             *       "role_responsibilities": 25,
+             *       "seniority_experience": 8,
+             *       "skills_technology": 15,
+             *       "work_arrangement_location": 15
+             *     }
+             */
+            weights: components["schemas"]["Weights"];
+            work_rules: components["schemas"]["WorkRules"];
+        };
+        /**
+         * IntentList
+         * @description A profile's intents.
+         */
+        IntentList: {
+            /** Items */
+            items: components["schemas"]["IntentRead"][];
+        };
+        /**
+         * IntentRead
+         * @description An intent with its current revision.
+         */
+        IntentRead: {
+            /** Career Profile Id */
+            career_profile_id: number;
+            current_revision: components["schemas"]["IntentRevisionRead"] | null;
+            /** Enabled */
+            enabled: boolean;
+            /** Search Intent Id */
+            search_intent_id: number;
+            /** Title */
+            title: string;
+            /** Version */
+            version: number;
+        };
+        /**
+         * IntentRevisionList
+         * @description An intent's history, newest first.
+         */
+        IntentRevisionList: {
+            /** Items */
+            items: components["schemas"]["IntentRevisionRead"][];
+        };
+        /**
+         * IntentRevisionRead
+         * @description One immutable intent revision.
+         */
+        IntentRevisionRead: {
+            /** Change Summary */
+            change_summary: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            definition: components["schemas"]["IntentDefinition"];
+            /** Intent Revision Id */
+            intent_revision_id: number;
+            /** Revision Number */
+            revision_number: number;
+        };
+        /**
+         * IntentSave
+         * @description Save the intent as its next revision.
+         */
+        IntentSave: {
+            /**
+             * Alert Threshold
+             * @default 65
+             */
+            alert_threshold: number;
+            /** Benefits Wanted */
+            benefits_wanted?: string[];
+            /** Change Summary */
+            change_summary?: string | null;
+            /**
+             * @default {
+             *       "reject_below_minimum": true
+             *     }
+             */
+            compensation: components["schemas"]["Compensation"];
+            /**
+             * @default {
+             *       "companies": [],
+             *       "words": []
+             *     }
+             */
+            exclusions: components["schemas"]["Exclusions"];
+            /** Expected Current Revision */
+            expected_current_revision: number;
+            /**
+             * @default {
+             *       "needs_visa_or_relocation": false
+             *     }
+             */
+            filters: components["schemas"]["Filters"];
+            /** Keywords */
+            keywords?: string[];
+            languages: components["schemas"]["LanguagePreferences"];
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            stances: components["schemas"]["Stances"];
+            /** Title */
+            title: string;
+            /**
+             * @default {
+             *       "benefits_flexibility": 0,
+             *       "company_profile": 7,
+             *       "compensation": 10,
+             *       "domain_sector": 10,
+             *       "engagement_terms": 10,
+             *       "qualifications": 0,
+             *       "role_responsibilities": 25,
+             *       "seniority_experience": 8,
+             *       "skills_technology": 15,
+             *       "work_arrangement_location": 15
+             *     }
+             */
+            weights: components["schemas"]["Weights"];
+            work_rules: components["schemas"]["WorkRules"];
+        };
+        /**
+         * IntentSaveResponse
+         * @description Result of a save or restore; ``created`` is false when nothing changed.
+         */
+        IntentSaveResponse: {
+            /** Created */
+            created: boolean;
+            intent: components["schemas"]["IntentRead"];
+        };
+        /**
+         * LanguagePreferences
+         * @description Languages the owner can work in.
+         */
+        LanguagePreferences: {
+            /** Can Work In */
+            can_work_in: string[];
+            /**
+             * Reject Unspoken Required
+             * @default true
+             */
+            reject_unspoken_required: boolean;
+        };
+        /**
+         * LanguageSkill
+         * @description A language the owner speaks and the level.
+         */
+        LanguageSkill: {
+            /** Language */
+            language: string;
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2" | "native";
         };
         /**
          * LivenessResponse
@@ -183,6 +951,213 @@ export interface components {
         LivenessResponse: {
             /** Status */
             status: string;
+        };
+        /**
+         * OnsiteHybridRule
+         * @description How far from a base place hybrid and on-site work may be.
+         */
+        OnsiteHybridRule: {
+            /** Base Place */
+            base_place: string;
+            /** Latitude */
+            latitude: number;
+            /** Longitude */
+            longitude: number;
+            /** Radius Km */
+            radius_km: number;
+        };
+        /**
+         * ProfileCreate
+         * @description Create a blank, named profile.
+         */
+        ProfileCreate: {
+            /** Title */
+            title: string;
+            /** @default private */
+            visibility: components["schemas"]["Visibility"];
+        };
+        /**
+         * ProfileExport
+         * @description Portable export of a profile and its intents; contains no secrets (document 07).
+         */
+        ProfileExport: {
+            /**
+             * Exported At
+             * Format: date-time
+             */
+            exported_at: string;
+            /** Intents */
+            intents: components["schemas"]["ExportedIntent"][];
+            profile: components["schemas"]["ExportedProfile"];
+            /**
+             * Schema Version
+             * @default 1
+             */
+            schema_version: number;
+        };
+        /**
+         * ProfileFactsRead
+         * @description The facts of one revision as returned to clients.
+         */
+        ProfileFactsRead: {
+            base_location: components["schemas"]["BaseLocation"];
+            /** Certifications */
+            certifications: components["schemas"]["Certification"][];
+            /** Education */
+            education: components["schemas"]["Education"][];
+            /** Experience */
+            experience: components["schemas"]["Experience"][];
+            /** Headline */
+            headline: string;
+            /** Languages */
+            languages: components["schemas"]["LanguageSkill"][];
+            /** Schema Version */
+            schema_version: number;
+            /** Skills */
+            skills: components["schemas"]["SkillRead"][];
+            /** Years Experience */
+            years_experience: number;
+        };
+        /**
+         * ProfileList
+         * @description All of the owner's profiles.
+         */
+        ProfileList: {
+            /** Items */
+            items: components["schemas"]["ProfileRead"][];
+        };
+        /**
+         * ProfilePrivacy
+         * @description Privacy choices that applied when a revision was created (conservative defaults).
+         */
+        ProfilePrivacy: {
+            /**
+             * Allow Cloud Processing
+             * @default false
+             */
+            allow_cloud_processing: boolean;
+            /**
+             * Redact Contact Details
+             * @default true
+             */
+            redact_contact_details: boolean;
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+        };
+        /**
+         * ProfileRead
+         * @description A profile with its current revision (``null`` for a blank profile).
+         */
+        ProfileRead: {
+            /** Career Profile Id */
+            career_profile_id: number;
+            current_revision: components["schemas"]["ProfileRevisionRead"] | null;
+            /** Title */
+            title: string;
+            /** Version */
+            version: number;
+            visibility: components["schemas"]["Visibility"];
+        };
+        /**
+         * ProfileRevisionList
+         * @description A profile's history, newest first.
+         */
+        ProfileRevisionList: {
+            /** Items */
+            items: components["schemas"]["ProfileRevisionSummary"][];
+        };
+        /**
+         * ProfileRevisionRead
+         * @description A revision with its facts and privacy settings.
+         */
+        ProfileRevisionRead: {
+            /** Change Summary */
+            change_summary: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            facts: components["schemas"]["ProfileFactsRead"];
+            privacy: components["schemas"]["ProfilePrivacy"];
+            /** Profile Revision Id */
+            profile_revision_id: number;
+            /** Revision Number */
+            revision_number: number;
+        };
+        /**
+         * ProfileRevisionSummary
+         * @description One line of the history.
+         */
+        ProfileRevisionSummary: {
+            /** Change Summary */
+            change_summary: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Profile Revision Id */
+            profile_revision_id: number;
+            /** Revision Number */
+            revision_number: number;
+        };
+        /**
+         * ProfileSave
+         * @description Save as the next revision; ``expected_current_revision`` is ``null`` for the first one.
+         */
+        ProfileSave: {
+            base_location: components["schemas"]["BaseLocation"];
+            /** Certifications */
+            certifications?: components["schemas"]["CertificationInput"][];
+            /** Change Summary */
+            change_summary?: string | null;
+            /** Education */
+            education?: components["schemas"]["EducationInput"][];
+            /** Expected Current Revision */
+            expected_current_revision?: number | null;
+            /** Experience */
+            experience?: components["schemas"]["ExperienceInput"][];
+            /** Headline */
+            headline: string;
+            /** Languages */
+            languages?: components["schemas"]["LanguageSkill"][];
+            /**
+             * @default {
+             *       "allow_cloud_processing": false,
+             *       "redact_contact_details": true,
+             *       "schema_version": 1
+             *     }
+             */
+            privacy: components["schemas"]["ProfilePrivacy"];
+            /** Skills */
+            skills?: components["schemas"]["SkillInput"][];
+            /** Years Experience */
+            years_experience: number;
+        };
+        /**
+         * ProfileSaveResponse
+         * @description Result of a save or restore; ``created`` is false when nothing changed.
+         */
+        ProfileSaveResponse: {
+            /** Created */
+            created: boolean;
+            profile: components["schemas"]["ProfileRead"];
+        };
+        /**
+         * Provenance
+         * @description Where a fact came from; only accepted facts exist in a revision.
+         */
+        Provenance: {
+            /** Accepted At */
+            accepted_at?: string | null;
+            /** Evidence Id */
+            evidence_id?: number | null;
+            origin: components["schemas"]["EvidenceOrigin"];
         };
         /**
          * ReadinessResponse
@@ -197,6 +1172,26 @@ export interface components {
             status: string;
         };
         /**
+         * RemoteRule
+         * @description Where remote work is acceptable from.
+         */
+        RemoteRule: {
+            /** Eligible Regions */
+            eligible_regions: string[];
+            /** Timezone */
+            timezone: string;
+            /** Timezone Tolerance Hours */
+            timezone_tolerance_hours?: number | null;
+        };
+        /**
+         * RestoreRequest
+         * @description Restore an old revision as the next one.
+         */
+        RestoreRequest: {
+            /** Expected Current Revision */
+            expected_current_revision: number;
+        };
+        /**
          * RunStatus
          * @description State of a collection run.
          * @enum {string}
@@ -208,6 +1203,47 @@ export interface components {
          * @enum {string}
          */
         RunTrigger: "scheduled" | "manual";
+        /**
+         * SkillInput
+         * @description A skill as typed by the owner.
+         */
+        SkillInput: {
+            /** @default technology */
+            kind: components["schemas"]["SkillKind"];
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "beginner" | "intermediate" | "advanced" | "expert";
+            /** Name */
+            name: string;
+            /** Years */
+            years: number;
+        };
+        /**
+         * SkillKind
+         * @description Category of a skill.
+         * @enum {string}
+         */
+        SkillKind: "technology" | "domain_knowledge" | "method";
+        /**
+         * SkillRead
+         * @description A skill of a revision, with its canonical name.
+         */
+        SkillRead: {
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "beginner" | "intermediate" | "advanced" | "expert";
+            /** Name */
+            name: string;
+            provenance: components["schemas"]["Provenance"];
+            /** Skill Id */
+            skill_id: number;
+            /** Years */
+            years: number;
+        };
         /**
          * SourceCreate
          * @description Request to add a board; it is validated against the real source before being saved.
@@ -321,6 +1357,73 @@ export interface components {
             /** Rate Limit Per Minute */
             rate_limit_per_minute?: number | null;
         };
+        /**
+         * Stance
+         * @description The owner's attitude to an option (ADR-026).
+         * @enum {string}
+         */
+        Stance: "preferred" | "acceptable" | "rejected";
+        /**
+         * StanceEntry
+         * @description The owner's stance on one taxonomy term.
+         */
+        StanceEntry: {
+            /** Key */
+            key: string;
+            stance: components["schemas"]["Stance"];
+        };
+        /**
+         * Stances
+         * @description Preferred, acceptable or rejected for every option group.
+         */
+        Stances: {
+            /** Employer Types */
+            employer_types: components["schemas"]["StanceEntry"][];
+            /** Engagement Types */
+            engagement_types: components["schemas"]["StanceEntry"][];
+            /**
+             * @default {
+             *       "part_time": "acceptable"
+             *     }
+             */
+            hours: components["schemas"]["HoursStances"];
+            /** Role Families */
+            role_families: components["schemas"]["StanceEntry"][];
+            /** Sectors */
+            sectors?: components["schemas"]["StanceEntry"][];
+            /** Seniority Levels */
+            seniority_levels: components["schemas"]["StanceEntry"][];
+            /** Work Arrangements */
+            work_arrangements: components["schemas"]["StanceEntry"][];
+        };
+        /**
+         * TaxonomyGroup
+         * @description The current terms of one vocabulary.
+         */
+        TaxonomyGroup: {
+            /** Kind */
+            kind: string;
+            /** Terms */
+            terms: components["schemas"]["TaxonomyTermRead"][];
+        };
+        /**
+         * TaxonomyRead
+         * @description All vocabularies.
+         */
+        TaxonomyRead: {
+            /** Groups */
+            groups: components["schemas"]["TaxonomyGroup"][];
+        };
+        /**
+         * TaxonomyTermRead
+         * @description One term of a controlled vocabulary.
+         */
+        TaxonomyTermRead: {
+            /** Label */
+            label: string;
+            /** Term Key */
+            term_key: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Context */
@@ -333,6 +1436,84 @@ export interface components {
             msg: string;
             /** Error Type */
             type: string;
+        };
+        /**
+         * VersionRequest
+         * @description Enable or disable using the row version the client saw.
+         */
+        VersionRequest: {
+            /** Expected Version */
+            expected_version: number;
+        };
+        /**
+         * Visibility
+         * @description Visibility of a career profile.
+         * @enum {string}
+         */
+        Visibility: "private";
+        /**
+         * Weights
+         * @description One relative weight per dimension. The two optional dimensions default to 0 (excluded).
+         */
+        Weights: {
+            /**
+             * Benefits Flexibility
+             * @default 0
+             */
+            benefits_flexibility: number;
+            /**
+             * Company Profile
+             * @default 7
+             */
+            company_profile: number;
+            /**
+             * Compensation
+             * @default 10
+             */
+            compensation: number;
+            /**
+             * Domain Sector
+             * @default 10
+             */
+            domain_sector: number;
+            /**
+             * Engagement Terms
+             * @default 10
+             */
+            engagement_terms: number;
+            /**
+             * Qualifications
+             * @default 0
+             */
+            qualifications: number;
+            /**
+             * Role Responsibilities
+             * @default 25
+             */
+            role_responsibilities: number;
+            /**
+             * Seniority Experience
+             * @default 8
+             */
+            seniority_experience: number;
+            /**
+             * Skills Technology
+             * @default 15
+             */
+            skills_technology: number;
+            /**
+             * Work Arrangement Location
+             * @default 15
+             */
+            work_arrangement_location: number;
+        };
+        /**
+         * WorkRules
+         * @description Place rules per work arrangement.
+         */
+        WorkRules: {
+            onsite_hybrid: components["schemas"]["OnsiteHybridRule"];
+            remote: components["schemas"]["RemoteRule"];
         };
     };
     responses: never;
@@ -391,6 +1572,525 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CollectionRunRead"];
+                };
+            };
+        };
+    };
+    save_intent_api_v1_intents__search_intent_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                search_intent_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntentSave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntentSaveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    disable_intent_api_v1_intents__search_intent_id__disable_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                search_intent_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    enable_intent_api_v1_intents__search_intent_id__enable_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                search_intent_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VersionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_intent_revisions_api_v1_intents__search_intent_id__revisions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                search_intent_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntentRevisionList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_intent_revision_api_v1_intents__search_intent_id__revisions__intent_revision_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                search_intent_id: number;
+                intent_revision_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntentRevisionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_intent_revision_api_v1_intents__search_intent_id__revisions__intent_revision_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                search_intent_id: number;
+                intent_revision_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestoreRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntentSaveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_profiles_api_v1_profiles_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileList"];
+                };
+            };
+        };
+    };
+    create_profile_api_v1_profiles_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_profile_api_v1_profiles__career_profile_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                career_profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_profile_api_v1_profiles__career_profile_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                career_profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileSave"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileSaveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_profile_api_v1_profiles__career_profile_id__export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                career_profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileExport"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_intents_api_v1_profiles__career_profile_id__intents_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                career_profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntentList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_intent_api_v1_profiles__career_profile_id__intents_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                career_profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_profile_revisions_api_v1_profiles__career_profile_id__revisions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                career_profile_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileRevisionList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_profile_revision_api_v1_profiles__career_profile_id__revisions__profile_revision_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                career_profile_id: number;
+                profile_revision_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileRevisionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_profile_revision_api_v1_profiles__career_profile_id__revisions__profile_revision_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                career_profile_id: number;
+                profile_revision_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestoreRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileSaveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -510,6 +2210,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_taxonomy_api_v1_taxonomy_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxonomyRead"];
                 };
             };
         };

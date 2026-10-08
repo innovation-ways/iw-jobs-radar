@@ -157,14 +157,48 @@ class RunRepository:
             grouped[result.collection_run_id].append(result)
         return grouped
 
-    async def fail_interrupted(self, finished_at: datetime) -> int:
-        """Mark runs left queued or running by a previous process as failed (``interrupted``)."""
-        result = await self._session.execute(
-            update(CollectionRun)
-            .where(CollectionRun.status.in_((RunStatus.QUEUED.value, RunStatus.RUNNING.value)))
-            .values(
-                status=RunStatus.FAILED.value, error_class="interrupted", finished_at=finished_at
-            )
-            .execution_options(synchronize_session="fetch")
+    async def queued_ids(self, limit: int) -> list[int]:
+        """Return the ids of the oldest queued runs."""
+        rows = await self._session.execute(
+            select(CollectionRun.collection_run_id)
+            .where(CollectionRun.status == RunStatus.QUEUED.value)
+            .order_by(CollectionRun.collection_run_id)
+            .limit(limit)
         )
-        return int(result.rowcount)  # type: ignore[attr-defined]
+        return [int(i) for i in rows.scalars()]
+
+    async def fail_running(
+        self, finished_at: datetime, error_class: str, *, started_before: datetime | None = None
+    ) -> list[CollectionRun]:
+        """Mark running runs as failed (all of them, or only those started before a time).
+
+        Used on worker start (``interrupted``) and for runs that take too long (``stuck``).
+        Queued runs are left alone: they still have to run.
+        """
+        statement = (
+            update(CollectionRun)
+            .where(CollectionRun.status == RunStatus.RUNNING.value)
+            .values(
+                status=RunStatus.FAILED.value,
+                error_class=error_class,
+                finished_at=finished_at,
+                version=CollectionRun.version + 1,
+            )
+            .returning(CollectionRun)
+            .execution_options(populate_existing=True)
+        )
+        if started_before is not None:
+            statement = statement.where(CollectionRun.started_at < started_before)
+        return list((await self._session.execute(statement)).scalars())
+
+    async def has_active_run(self, owner_id: int) -> bool:
+        """Whether the owner has a queued or running run."""
+        count = await self._session.scalar(
+            select(func.count())
+            .select_from(CollectionRun)
+            .where(
+                CollectionRun.owner_id == owner_id,
+                CollectionRun.status.in_((RunStatus.QUEUED.value, RunStatus.RUNNING.value)),
+            )
+        )
+        return bool(count)

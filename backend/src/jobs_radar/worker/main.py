@@ -1,28 +1,38 @@
 """The worker process: a single asyncio loop that polls the database (ADR-017, ADR-031).
 
-Each iteration records a heartbeat and, when AI extraction is enabled, queues and runs AI
-extractions for collected jobs for a bounded time. Collection and scheduling arrive in task T5.
+Only the worker holding the advisory lock does anything. Each iteration records a heartbeat,
+queues the scheduled run when its time has arrived, executes queued collection runs, groups new
+postings into opportunities and, when AI extraction is enabled, extracts and scores jobs for a
+bounded time (keeping the heartbeat fresh).
 """
 
 import asyncio
 import contextlib
 import signal
+from datetime import timedelta
 
 import structlog
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from jobs_radar.adapters.providers.ollama import build_ollama_embedder, build_ollama_provider
+from jobs_radar.adapters.sources.registry import build_source_adapters
 from jobs_radar.core.logging import configure_logging
 from jobs_radar.core.settings import Settings, get_settings
 from jobs_radar.db.session import build_engine, build_session_factory
 from jobs_radar.domain.enums import LOCAL_OWNER_ID
+from jobs_radar.services.collection import CollectionService
 from jobs_radar.services.dedup import DedupRunner
 from jobs_radar.services.evaluation import EvaluationRunner
 from jobs_radar.services.extraction_queue import ExtractionQueue
 from jobs_radar.services.heartbeat import HeartbeatService
 from jobs_radar.services.inbox import InboxRunner
+from jobs_radar.services.schedule import ScheduleRunner
+from jobs_radar.worker.lock import WorkerLock
 
 logger = structlog.get_logger()
+
+# A run still running after this long is considered stuck and is failed (then retried if scheduled).
+MAX_RUN_DURATION = timedelta(minutes=30)
 
 
 class Worker:
@@ -37,6 +47,9 @@ class Worker:
         evaluation: EvaluationRunner | None = None,
         dedup: DedupRunner | None = None,
         inbox: InboxRunner | None = None,
+        collection: CollectionService | None = None,
+        schedule: ScheduleRunner | None = None,
+        lock: WorkerLock | None = None,
     ) -> None:
         self._settings = settings
         self._heartbeat = HeartbeatService(session_factory, name)
@@ -44,6 +57,10 @@ class Worker:
         self._evaluation = evaluation
         self._dedup = dedup
         self._inbox = inbox
+        self._collection = collection
+        self._schedule = schedule
+        self._lock = lock
+        self._recovered = lock is None
         self.beats = 0
 
     async def _beat(self) -> None:
@@ -52,7 +69,24 @@ class Worker:
 
     async def run_once(self) -> None:
         """Perform one iteration of the loop."""
+        if self._lock is not None and not await self._lock.acquire():
+            return  # another worker is active: stay on standby
         await self._beat()
+        if self._collection is not None:
+            if not self._recovered:
+                # First iteration as the active worker: runs a dead worker left running fail now.
+                recovered = await self._collection.recover()
+                self._recovered = True
+                if recovered:
+                    logger.warning("runs_recovered", count=recovered)
+            await self._collection.fail_stuck_runs(MAX_RUN_DURATION)
+            if self._schedule is not None:
+                due = await self._schedule.run()
+                if due is not None:
+                    logger.info("scheduled_run_queued", collection_run_id=due.collection_run_id)
+            ran = await self._collection.run_queued(on_progress=self._beat)
+            if ran:
+                logger.info("collection_runs_executed", count=ran)
         if self._dedup is not None:
             # Grouping listings needs no AI, so it runs whether or not extraction is enabled.
             linked = await self._dedup.run()
@@ -115,6 +149,7 @@ async def main() -> None:
         )
         evaluation = EvaluationRunner(session_factory, provider)
         dedup = DedupRunner(session_factory, build_ollama_embedder(settings))
+    lock = WorkerLock(engine)
     try:
         await Worker(
             settings,
@@ -123,6 +158,10 @@ async def main() -> None:
             evaluation=evaluation,
             dedup=dedup,
             inbox=InboxRunner(session_factory, LOCAL_OWNER_ID),
+            collection=CollectionService(session_factory, build_source_adapters()),
+            schedule=ScheduleRunner(session_factory),
+            lock=lock,
         ).run(stop)
     finally:
+        await lock.release()
         await engine.dispose()

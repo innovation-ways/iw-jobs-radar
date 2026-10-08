@@ -2823,6 +2823,93 @@
         "title": "RunTrigger",
         "type": "string"
       },
+      "ScheduleRead": {
+        "additionalProperties": false,
+        "description": "The schedule and when it runs next (both ``null`` while disabled).",
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "next_run_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Run At"
+          },
+          "next_run_local": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Run Local"
+          },
+          "run_time_local": {
+            "title": "Run Time Local",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run_time_local",
+          "timezone",
+          "enabled",
+          "version",
+          "next_run_at",
+          "next_run_local"
+        ],
+        "title": "ScheduleRead",
+        "type": "object"
+      },
+      "ScheduleUpdate": {
+        "additionalProperties": false,
+        "description": "Change the schedule; ``expected_version`` is the version the client last saw.",
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "expected_version": {
+            "minimum": 1.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "run_time_local": {
+            "format": "time",
+            "title": "Run Time Local",
+            "type": "string"
+          },
+          "timezone": {
+            "title": "Timezone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_time_local",
+          "timezone",
+          "enabled",
+          "expected_version"
+        ],
+        "title": "ScheduleUpdate",
+        "type": "object"
+      },
       "SignalRead": {
         "additionalProperties": false,
         "description": "A dimension's status, shown as a small signal on the card.",
@@ -5168,6 +5255,68 @@
         "summary": "Restore Profile Revision",
         "tags": [
           "profiles"
+        ]
+      }
+    },
+    "/api/v1/settings/schedule": {
+      "get": {
+        "description": "Return the daily run time, time zone, enabled flag and the next scheduled run.",
+        "operationId": "get_schedule_api_v1_settings_schedule_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Schedule",
+        "tags": [
+          "schedule"
+        ]
+      },
+      "put": {
+        "description": "Change the schedule; the worker picks it up within one poll interval.",
+        "operationId": "update_schedule_api_v1_settings_schedule_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScheduleUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScheduleRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Schedule",
+        "tags": [
+          "schedule"
         ]
       }
     },

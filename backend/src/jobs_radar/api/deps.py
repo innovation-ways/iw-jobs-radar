@@ -16,7 +16,7 @@ from jobs_radar.services.inbox import InboxService
 from jobs_radar.services.intents import IntentService
 from jobs_radar.services.profiles import ProfileService
 from jobs_radar.services.readiness import ReadinessService
-from jobs_radar.services.run_executor import RunExecutor
+from jobs_radar.services.schedule import ScheduleService
 from jobs_radar.services.sources import SourceService
 from jobs_radar.services.taxonomy import TaxonomyService
 
@@ -60,12 +60,6 @@ def get_collection_service(request: Request) -> CollectionService:
     return CollectionService(request.app.state.session_factory, get_adapters(request))
 
 
-def get_run_executor(request: Request) -> RunExecutor:
-    """Return the in-process runner (replaced by the worker in T5)."""
-    executor: RunExecutor = request.app.state.run_executor
-    return executor
-
-
 def get_profile_service(session: Annotated[AsyncSession, Depends(get_session)]) -> ProfileService:
     """Build the profile service on the request's session."""
     return ProfileService(session)
@@ -98,3 +92,8 @@ def get_inbox_service(session: Annotated[AsyncSession, Depends(get_session)]) ->
 def get_dedup_service(session: Annotated[AsyncSession, Depends(get_session)]) -> DedupService:
     """Build the dedup service; the API never calls an embedding model (the worker does)."""
     return DedupService(session)
+
+
+def get_schedule_service(session: Annotated[AsyncSession, Depends(get_session)]) -> ScheduleService:
+    """Build the schedule service on the request's session."""
+    return ScheduleService(session)

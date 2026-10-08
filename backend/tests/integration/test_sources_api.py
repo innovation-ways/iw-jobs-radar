@@ -15,6 +15,7 @@ from tests.fake_adapter import FakeAdapter, listing, make_posting
 from jobs_radar.adapters.sources.base import BoardInfo, SourceError
 from jobs_radar.db.models import SourceConfiguration
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
+from jobs_radar.services.collection import CollectionService
 
 pytestmark = pytest.mark.integration
 
@@ -44,8 +45,8 @@ async def add_source(client: httpx.AsyncClient, **overrides: Any) -> dict[str, A
 
 
 async def settle(app: FastAPI) -> None:
-    """Wait for the in-process runner to finish every queued run."""
-    await app.state.run_executor.wait_idle()
+    """Run what is queued, as the worker does (the API only queues runs)."""
+    await CollectionService(app.state.session_factory, app.state.adapters).run_queued()
 
 
 # --- sources ------------------------------------------------------------------------------------

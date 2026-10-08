@@ -480,6 +480,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/settings/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Schedule
+         * @description Return the daily run time, time zone, enabled flag and the next scheduled run.
+         */
+        get: operations["get_schedule_api_v1_settings_schedule_get"];
+        /**
+         * Update Schedule
+         * @description Change the schedule; the worker picks it up within one poll interval.
+         */
+        put: operations["update_schedule_api_v1_settings_schedule_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sources": {
         parameters: {
             query?: never;
@@ -1794,6 +1818,41 @@ export interface components {
          */
         RunTrigger: "scheduled" | "manual";
         /**
+         * ScheduleRead
+         * @description The schedule and when it runs next (both ``null`` while disabled).
+         */
+        ScheduleRead: {
+            /** Enabled */
+            enabled: boolean;
+            /** Next Run At */
+            next_run_at: string | null;
+            /** Next Run Local */
+            next_run_local: string | null;
+            /** Run Time Local */
+            run_time_local: string;
+            /** Timezone */
+            timezone: string;
+            /** Version */
+            version: number;
+        };
+        /**
+         * ScheduleUpdate
+         * @description Change the schedule; ``expected_version`` is the version the client last saw.
+         */
+        ScheduleUpdate: {
+            /** Enabled */
+            enabled: boolean;
+            /** Expected Version */
+            expected_version: number;
+            /**
+             * Run Time Local
+             * Format: time
+             */
+            run_time_local: string;
+            /** Timezone */
+            timezone: string;
+        };
+        /**
          * SignalRead
          * @description A dimension's status, shown as a small signal on the card.
          */
@@ -3025,6 +3084,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ProfileSaveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_schedule_api_v1_settings_schedule_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleRead"];
+                };
+            };
+        };
+    };
+    update_schedule_api_v1_settings_schedule_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScheduleRead"];
                 };
             };
             /** @description Validation Error */

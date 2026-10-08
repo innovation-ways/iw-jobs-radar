@@ -6,10 +6,10 @@ failing never stops the others, and a failed run never closes anything (document
 """
 
 import logging
-from collections.abc import Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -40,6 +40,7 @@ logger = logging.getLogger(__name__)
 
 SessionFactory = Callable[[], AbstractAsyncContextManager[AsyncSession]]
 Clock = Callable[[], datetime]
+Progress = Callable[[], Awaitable[None]]
 
 _RUN_MISSING = "Collection run not found."
 _OK = {SourceOutcome.SUCCESS, SourceOutcome.NOT_MODIFIED}
@@ -128,14 +129,41 @@ class CollectionService:
             run = await repository.get(owner_id, collection_run_id)
             return run, (await repository.results_for([collection_run_id]))[collection_run_id]
 
-    async def fail_interrupted_runs(self) -> int:
-        """Mark runs left over from a previous process as failed; returns how many."""
-        async with self._session_factory() as session:
-            count = await RunRepository(session).fail_interrupted(self._clock())
-            await session.commit()
-            return count
+    async def run_queued(self, *, limit: int = 5, on_progress: Progress | None = None) -> int:
+        """Execute queued runs, oldest first; returns how many were executed.
 
-    async def execute_run(self, collection_run_id: int) -> None:
+        ``on_progress`` is awaited after each source so the worker can keep its heartbeat fresh.
+        """
+        async with self._session_factory() as session:
+            ids = await RunRepository(session).queued_ids(limit)
+        for run_id in ids:
+            await self.execute_run(run_id, on_progress=on_progress)
+        return len(ids)
+
+    async def recover(self) -> int:
+        """Fail runs a dead worker left running (retrying scheduled ones); returns how many."""
+        return await self._fail_running("interrupted", started_before=None)
+
+    async def fail_stuck_runs(self, max_age: timedelta) -> int:
+        """Fail runs that have been running longer than ``max_age``; returns how many."""
+        return await self._fail_running("stuck", started_before=self._clock() - max_age)
+
+    async def _fail_running(self, error_class: str, *, started_before: datetime | None) -> int:
+        async with self._session_factory() as session:
+            repository = RunRepository(session)
+            failed = await repository.fail_running(
+                self._clock(), error_class, started_before=started_before
+            )
+            retry_for = next((r for r in failed if r.trigger == RunTrigger.SCHEDULED.value), None)
+            if retry_for is not None and not await repository.has_active_run(retry_for.owner_id):
+                # An interrupted scheduled run is retried once as a fresh run.
+                await repository.create(retry_for.owner_id, RunTrigger.SCHEDULED)
+            await session.commit()
+            return len(failed)
+
+    async def execute_run(
+        self, collection_run_id: int, *, on_progress: Progress | None = None
+    ) -> None:
         """Execute a queued run; a run that is not queued (already taken or finished) is ignored."""
         async with self._session_factory() as session:
             run = await RunRepository(session).claim(collection_run_id, self._clock())
@@ -153,9 +181,11 @@ class CollectionService:
                     for s in await sources.list_for_owner(owner_id, only_enabled=True)
                 ]
 
-        outcomes = [
-            await self._process_source(collection_run_id, source_id) for source_id in source_ids
-        ]
+        outcomes = []
+        for source_id in source_ids:
+            outcomes.append(await self._process_source(collection_run_id, source_id))
+            if on_progress is not None:
+                await on_progress()
 
         if all(outcome in _OK for outcome in outcomes):
             status = RunStatus.SUCCEEDED

@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.api.deps import (
     get_collection_service,
-    get_run_executor,
     get_session,
     get_source_service,
 )
@@ -23,7 +22,6 @@ from jobs_radar.schemas.source import (
     SourceUpdate,
 )
 from jobs_radar.services.collection import CollectionService
-from jobs_radar.services.run_executor import RunExecutor
 from jobs_radar.services.sources import SourceService, SourceStatusRow
 
 router = APIRouter(tags=["sources"])
@@ -134,12 +132,12 @@ async def update_source(
 
 
 async def _queue(
-    collection: CollectionService, executor: RunExecutor, source_configuration_id: int | None
+    collection: CollectionService, source_configuration_id: int | None
 ) -> CollectionRunRead:
+    """Queue a run; the worker executes it (the API never runs collection)."""
     run = await collection.request_run(
         LOCAL_OWNER_ID, source_configuration_id=source_configuration_id
     )
-    executor.submit(collection.execute_run(run.collection_run_id))
     return _run(run, [])
 
 
@@ -149,19 +147,17 @@ async def _queue(
 async def run_source(
     source_configuration_id: int,
     collection: Annotated[CollectionService, Depends(get_collection_service)],
-    executor: Annotated[RunExecutor, Depends(get_run_executor)],
 ) -> CollectionRunRead:
     """Queue a manual run of one source (even if it is disabled)."""
-    return await _queue(collection, executor, source_configuration_id)
+    return await _queue(collection, source_configuration_id)
 
 
 @router.post("/collection-runs", response_model=CollectionRunRead, status_code=202)
 async def run_all_sources(
     collection: Annotated[CollectionService, Depends(get_collection_service)],
-    executor: Annotated[RunExecutor, Depends(get_run_executor)],
 ) -> CollectionRunRead:
     """Queue a run of every enabled source."""
-    return await _queue(collection, executor, None)
+    return await _queue(collection, None)
 
 
 @router.get("/collection-runs", response_model=CollectionRunPage)

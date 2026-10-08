@@ -639,7 +639,7 @@ async def test_a_run_is_executed_once_only(
     assert len(adapter.checkpoints) == 1
 
 
-async def test_runs_left_over_from_a_previous_process_are_marked_failed(
+async def test_runs_left_running_by_a_previous_process_fail_but_queued_runs_still_run(
     db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch, clock: Clock
 ) -> None:
     stale_queued = CollectionRun(owner_id=LOCAL_OWNER_ID, trigger="manual", status="queued")
@@ -648,13 +648,12 @@ async def test_runs_left_over_from_a_previous_process_are_marked_failed(
     db_session.add_all([stale_queued, stale_running, done])
     await db_session.flush()
     service = collection(db_session, monkeypatch, FakeAdapter(), clock)
-    changed = await service.fail_interrupted_runs()
-    assert changed >= 2
-    for run in (stale_queued, stale_running):
-        await db_session.refresh(run)
-        assert (run.status, run.error_class) == ("failed", "interrupted")
+    assert await service.recover() >= 1
+    await db_session.refresh(stale_running)
+    assert (stale_running.status, stale_running.error_class) == ("failed", "interrupted")
+    await db_session.refresh(stale_queued)
     await db_session.refresh(done)
-    assert done.status == "succeeded"
+    assert stale_queued.status == "queued" and done.status == "succeeded"
 
 
 # --- status listing ------------------------------------------------------------------------------------------------------

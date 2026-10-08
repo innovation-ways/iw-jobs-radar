@@ -1,0 +1,50 @@
+"""Unit tests for structured logging, secret redaction and request ids (ADR-036)."""
+
+import json
+
+import structlog
+
+from jobs_radar.core.logging import (
+    bind_request_id,
+    configure_logging,
+    redact_secrets,
+    reset_request_id,
+)
+
+
+def test_redacts_known_secret_keys_recursively() -> None:
+    event = {
+        "event": "x",
+        "password": "p",
+        "nested": {"api_key": "k", "Authorization": "Bearer abc", "safe": "ok"},
+        "items": [{"token": "t"}],
+    }
+    result = redact_secrets(None, "info", event)
+    assert result["password"] == "[REDACTED]"
+    assert result["nested"]["api_key"] == "[REDACTED]"
+    assert result["nested"]["Authorization"] == "[REDACTED]"
+    assert result["nested"]["safe"] == "ok"
+    assert result["items"][0]["token"] == "[REDACTED]"
+
+
+def test_never_logs_cv_text_descriptions_or_prompts() -> None:
+    event = {"event": "x", "cv_text": "secret cv", "description": "long text", "prompt": "p"}
+    result = redact_secrets(None, "info", event)
+    assert result["cv_text"] == "[REDACTED]"
+    assert result["description"] == "[REDACTED]"
+    assert result["prompt"] == "[REDACTED]"
+
+
+def test_request_id_is_added_to_log_lines(capsys: object) -> None:
+    configure_logging("INFO")
+    token = bind_request_id("req-123")
+    try:
+        structlog.get_logger().info("hello", password="nope")
+    finally:
+        reset_request_id(token)
+    out = capsys.readouterr().out.strip().splitlines()[-1]  # type: ignore[attr-defined]
+    line = json.loads(out)
+    assert line["request_id"] == "req-123"
+    assert line["event"] == "hello"
+    assert line["password"] == "[REDACTED]"
+    assert "timestamp" in line

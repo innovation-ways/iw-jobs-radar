@@ -139,3 +139,7 @@ npm-debug.log*
 # Research output — full content is the source of truth in PostgreSQL (project_docs);
 # these markdown files are write-once ingestion artifacts for `iw doc-update --content-file`.
 docs/research/
+
+# Jobs Radar launcher
+.frontend.pid
+.worker.pid

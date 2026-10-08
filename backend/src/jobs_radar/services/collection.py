@@ -20,7 +20,7 @@ from jobs_radar.adapters.sources.base import (
     SourceError,
 )
 from jobs_radar.core.errors import InputValidationError, NotFoundError
-from jobs_radar.db.models import CollectionRun, SourceConfiguration
+from jobs_radar.db.models import CollectionRun, SourceConfiguration, SourceRunResult
 from jobs_radar.domain.enums import (
     RunStatus,
     RunTrigger,
@@ -104,6 +104,28 @@ class CollectionService:
             )
             await session.commit()
             return run
+
+    async def list_runs(
+        self, owner_id: int, *, limit: int, before_id: int | None
+    ) -> tuple[list[tuple[CollectionRun, list[SourceRunResult]]], int | None]:
+        """Return a page of runs (newest first) with results, and the cursor for the next page."""
+        async with self._session_factory() as session:
+            repository = RunRepository(session)
+            runs = await repository.list_page(owner_id, limit=limit + 1, before_id=before_id)
+            more = len(runs) > limit
+            runs = runs[:limit]
+            results = await repository.results_for([run.collection_run_id for run in runs])
+            page = [(run, results[run.collection_run_id]) for run in runs]
+            return page, (runs[-1].collection_run_id if more and runs else None)
+
+    async def get_run(
+        self, owner_id: int, collection_run_id: int
+    ) -> tuple[CollectionRun, list[SourceRunResult]]:
+        """Return one run with its results."""
+        async with self._session_factory() as session:
+            repository = RunRepository(session)
+            run = await repository.get(owner_id, collection_run_id)
+            return run, (await repository.results_for([collection_run_id]))[collection_run_id]
 
     async def fail_interrupted_runs(self) -> int:
         """Mark runs left over from a previous process as failed; returns how many."""

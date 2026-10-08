@@ -1,5 +1,6 @@
 """Application factory: wires settings, logging, middleware, error handlers and routes."""
 
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any, cast
@@ -11,13 +12,20 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from jobs_radar import __version__
+from jobs_radar.adapters.sources.greenhouse import GreenhouseAdapter
 from jobs_radar.api.middleware import RequestIdMiddleware
 from jobs_radar.api.routes import health, v1_router
 from jobs_radar.core.errors import AppError
+from jobs_radar.core.http import build_http_client
 from jobs_radar.core.logging import configure_logging, current_request_id
 from jobs_radar.core.settings import Settings, get_settings
 from jobs_radar.db.session import build_engine, build_session_factory
+from jobs_radar.domain.enums import SourceType
 from jobs_radar.schemas.errors import ErrorBody, ErrorEnvelope
+from jobs_radar.services.collection import CollectionService
+from jobs_radar.services.run_executor import RunExecutor
+
+logger = logging.getLogger(__name__)
 
 _HTTP_CODES = {404: "not_found", 405: "method_not_allowed"}
 
@@ -64,9 +72,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         engine = build_engine(settings)
         app.state.engine = engine
         app.state.session_factory = build_session_factory(engine)
+        app.state.adapters = {SourceType.GREENHOUSE: GreenhouseAdapter(build_http_client())}
+        executor = RunExecutor()
+        app.state.run_executor = executor
+        # Runs left queued or running by a previous API process can never finish: mark them.
+        # (Moves to the worker in T5.)
+        try:
+            await CollectionService(
+                app.state.session_factory, app.state.adapters
+            ).fail_interrupted_runs()
+        # Intentionally broad: the API must start even if the database is down (/readyz reports it).
+        except Exception:
+            logger.warning("interrupted_run_cleanup_skipped", exc_info=True)
         try:
             yield
         finally:
+            await executor.shutdown()
             await engine.dispose()
 
     app = FastAPI(title="Jobs Radar API", version=__version__, lifespan=lifespan)

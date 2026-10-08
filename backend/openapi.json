@@ -1,6 +1,136 @@
 {
   "components": {
     "schemas": {
+      "CollectionRunPage": {
+        "additionalProperties": false,
+        "description": "One page of run history, newest first; pass the cursor back to get older runs.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionRunRead"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_before_collection_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Before Collection Run Id"
+          }
+        },
+        "required": [
+          "items",
+          "next_before_collection_run_id"
+        ],
+        "title": "CollectionRunPage",
+        "type": "object"
+      },
+      "CollectionRunRead": {
+        "additionalProperties": false,
+        "description": "A collection run and the per-source results recorded so far.",
+        "properties": {
+          "collection_run_id": {
+            "title": "Collection Run Id",
+            "type": "integer"
+          },
+          "error_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Class"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "requested_at": {
+            "format": "date-time",
+            "title": "Requested At",
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SourceResultRead"
+            },
+            "title": "Results",
+            "type": "array"
+          },
+          "source_configuration_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Configuration Id"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RunStatus"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/RunTrigger"
+          }
+        },
+        "required": [
+          "collection_run_id",
+          "source_configuration_id",
+          "trigger",
+          "status",
+          "requested_at",
+          "started_at",
+          "finished_at",
+          "error_class",
+          "results"
+        ],
+        "title": "CollectionRunRead",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
       "LivenessResponse": {
         "description": "Body of ``/healthz``.",
         "properties": {
@@ -36,6 +166,365 @@
         ],
         "title": "ReadinessResponse",
         "type": "object"
+      },
+      "RunStatus": {
+        "description": "State of a collection run.",
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "partial",
+          "failed",
+          "cancelled"
+        ],
+        "title": "RunStatus",
+        "type": "string"
+      },
+      "RunTrigger": {
+        "description": "What started a collection run.",
+        "enum": [
+          "scheduled",
+          "manual"
+        ],
+        "title": "RunTrigger",
+        "type": "string"
+      },
+      "SourceCreate": {
+        "additionalProperties": false,
+        "description": "Request to add a board; it is validated against the real source before being saved.",
+        "properties": {
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "external_identifier": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "External Identifier",
+            "type": "string"
+          },
+          "source_type": {
+            "$ref": "#/components/schemas/SourceType"
+          }
+        },
+        "required": [
+          "source_type",
+          "external_identifier"
+        ],
+        "title": "SourceCreate",
+        "type": "object"
+      },
+      "SourceList": {
+        "additionalProperties": false,
+        "description": "All configured sources.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SourceRead"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "SourceList",
+        "type": "object"
+      },
+      "SourceOutcome": {
+        "description": "Result of collecting one source within a run.",
+        "enum": [
+          "success",
+          "not_modified",
+          "partial",
+          "failed",
+          "skipped"
+        ],
+        "title": "SourceOutcome",
+        "type": "string"
+      },
+      "SourceRead": {
+        "additionalProperties": false,
+        "description": "A configured source with its latest status.",
+        "properties": {
+          "company_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Id"
+          },
+          "company_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "external_identifier": {
+            "title": "External Identifier",
+            "type": "string"
+          },
+          "last_result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceResultRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "open_postings": {
+            "title": "Open Postings",
+            "type": "integer"
+          },
+          "rate_limit_per_minute": {
+            "title": "Rate Limit Per Minute",
+            "type": "integer"
+          },
+          "source_configuration_id": {
+            "title": "Source Configuration Id",
+            "type": "integer"
+          },
+          "source_type": {
+            "$ref": "#/components/schemas/SourceType"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "source_configuration_id",
+          "source_type",
+          "external_identifier",
+          "display_name",
+          "company_id",
+          "company_name",
+          "url",
+          "enabled",
+          "rate_limit_per_minute",
+          "version",
+          "open_postings",
+          "last_result"
+        ],
+        "title": "SourceRead",
+        "type": "object"
+      },
+      "SourceResultRead": {
+        "additionalProperties": false,
+        "description": "What happened to one source in one run.",
+        "properties": {
+          "closed_count": {
+            "title": "Closed Count",
+            "type": "integer"
+          },
+          "collected_count": {
+            "title": "Collected Count",
+            "type": "integer"
+          },
+          "collection_run_id": {
+            "title": "Collection Run Id",
+            "type": "integer"
+          },
+          "deduplicated_count": {
+            "title": "Deduplicated Count",
+            "type": "integer"
+          },
+          "duration_ms": {
+            "title": "Duration Ms",
+            "type": "integer"
+          },
+          "error_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Class"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "finished_at": {
+            "format": "date-time",
+            "title": "Finished At",
+            "type": "string"
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Status"
+          },
+          "new_count": {
+            "title": "New Count",
+            "type": "integer"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/SourceOutcome"
+          },
+          "source_configuration_id": {
+            "title": "Source Configuration Id",
+            "type": "integer"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "updated_count": {
+            "title": "Updated Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "collection_run_id",
+          "source_configuration_id",
+          "outcome",
+          "started_at",
+          "finished_at",
+          "collected_count",
+          "new_count",
+          "updated_count",
+          "deduplicated_count",
+          "closed_count",
+          "http_status",
+          "error_class",
+          "error_message",
+          "duration_ms"
+        ],
+        "title": "SourceResultRead",
+        "type": "object"
+      },
+      "SourceType": {
+        "description": "Kind of job source adapter.",
+        "enum": [
+          "greenhouse",
+          "lever",
+          "ashby"
+        ],
+        "title": "SourceType",
+        "type": "string"
+      },
+      "SourceUpdate": {
+        "additionalProperties": false,
+        "description": "Change a source's settings; ``expected_version`` is the version the client last saw.",
+        "properties": {
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          },
+          "expected_version": {
+            "minimum": 1.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "rate_limit_per_minute": {
+            "anyOf": [
+              {
+                "maximum": 60.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rate Limit Per Minute"
+          }
+        },
+        "required": [
+          "expected_version"
+        ],
+        "title": "SourceUpdate",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
       }
     }
   },
@@ -45,6 +534,247 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/collection-runs": {
+      "get": {
+        "description": "List run history, newest first, with per-source outcomes.",
+        "operationId": "list_collection_runs_api_v1_collection_runs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "before_collection_run_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Before Collection Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionRunPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Collection Runs",
+        "tags": [
+          "sources"
+        ]
+      },
+      "post": {
+        "description": "Queue a run of every enabled source.",
+        "operationId": "run_all_sources_api_v1_collection_runs_post",
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionRunRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Run All Sources",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/sources": {
+      "get": {
+        "description": "List configured sources with their latest status.",
+        "operationId": "list_sources_api_v1_sources_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Sources",
+        "tags": [
+          "sources"
+        ]
+      },
+      "post": {
+        "description": "Validate a board against the real source and add it (and its company).",
+        "operationId": "create_source_api_v1_sources_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Source",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/sources/{source_configuration_id}": {
+      "put": {
+        "description": "Change the enabled flag or rate limit of a source.",
+        "operationId": "update_source_api_v1_sources__source_configuration_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_configuration_id",
+            "required": true,
+            "schema": {
+              "title": "Source Configuration Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourceUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Source",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/sources/{source_configuration_id}/run": {
+      "post": {
+        "description": "Queue a manual run of one source (even if it is disabled).",
+        "operationId": "run_source_api_v1_sources__source_configuration_id__run_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_configuration_id",
+            "required": true,
+            "schema": {
+              "title": "Source Configuration Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionRunRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Source",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
     "/healthz": {
       "get": {
         "description": "Process liveness: answers without touching the database.",

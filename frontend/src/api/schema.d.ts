@@ -4,6 +4,94 @@
  */
 
 export interface paths {
+    "/api/v1/collection-runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Collection Runs
+         * @description List run history, newest first, with per-source outcomes.
+         */
+        get: operations["list_collection_runs_api_v1_collection_runs_get"];
+        put?: never;
+        /**
+         * Run All Sources
+         * @description Queue a run of every enabled source.
+         */
+        post: operations["run_all_sources_api_v1_collection_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Sources
+         * @description List configured sources with their latest status.
+         */
+        get: operations["list_sources_api_v1_sources_get"];
+        put?: never;
+        /**
+         * Create Source
+         * @description Validate a board against the real source and add it (and its company).
+         */
+        post: operations["create_source_api_v1_sources_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sources/{source_configuration_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Update Source
+         * @description Change the enabled flag or rate limit of a source.
+         */
+        put: operations["update_source_api_v1_sources__source_configuration_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sources/{source_configuration_id}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Source
+         * @description Queue a manual run of one source (even if it is disabled).
+         */
+        post: operations["run_source_api_v1_sources__source_configuration_id__run_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/healthz": {
         parameters: {
             query?: never;
@@ -49,6 +137,46 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
+         * CollectionRunPage
+         * @description One page of run history, newest first; pass the cursor back to get older runs.
+         */
+        CollectionRunPage: {
+            /** Items */
+            items: components["schemas"]["CollectionRunRead"][];
+            /** Next Before Collection Run Id */
+            next_before_collection_run_id: number | null;
+        };
+        /**
+         * CollectionRunRead
+         * @description A collection run and the per-source results recorded so far.
+         */
+        CollectionRunRead: {
+            /** Collection Run Id */
+            collection_run_id: number;
+            /** Error Class */
+            error_class: string | null;
+            /** Finished At */
+            finished_at: string | null;
+            /**
+             * Requested At
+             * Format: date-time
+             */
+            requested_at: string;
+            /** Results */
+            results: components["schemas"]["SourceResultRead"][];
+            /** Source Configuration Id */
+            source_configuration_id: number | null;
+            /** Started At */
+            started_at: string | null;
+            status: components["schemas"]["RunStatus"];
+            trigger: components["schemas"]["RunTrigger"];
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        /**
          * LivenessResponse
          * @description Body of ``/healthz``.
          */
@@ -68,6 +196,144 @@ export interface components {
             /** Status */
             status: string;
         };
+        /**
+         * RunStatus
+         * @description State of a collection run.
+         * @enum {string}
+         */
+        RunStatus: "queued" | "running" | "succeeded" | "partial" | "failed" | "cancelled";
+        /**
+         * RunTrigger
+         * @description What started a collection run.
+         * @enum {string}
+         */
+        RunTrigger: "scheduled" | "manual";
+        /**
+         * SourceCreate
+         * @description Request to add a board; it is validated against the real source before being saved.
+         */
+        SourceCreate: {
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /** External Identifier */
+            external_identifier: string;
+            source_type: components["schemas"]["SourceType"];
+        };
+        /**
+         * SourceList
+         * @description All configured sources.
+         */
+        SourceList: {
+            /** Items */
+            items: components["schemas"]["SourceRead"][];
+        };
+        /**
+         * SourceOutcome
+         * @description Result of collecting one source within a run.
+         * @enum {string}
+         */
+        SourceOutcome: "success" | "not_modified" | "partial" | "failed" | "skipped";
+        /**
+         * SourceRead
+         * @description A configured source with its latest status.
+         */
+        SourceRead: {
+            /** Company Id */
+            company_id: number | null;
+            /** Company Name */
+            company_name: string | null;
+            /** Display Name */
+            display_name: string;
+            /** Enabled */
+            enabled: boolean;
+            /** External Identifier */
+            external_identifier: string;
+            last_result: components["schemas"]["SourceResultRead"] | null;
+            /** Open Postings */
+            open_postings: number;
+            /** Rate Limit Per Minute */
+            rate_limit_per_minute: number;
+            /** Source Configuration Id */
+            source_configuration_id: number;
+            source_type: components["schemas"]["SourceType"];
+            /** Url */
+            url: string;
+            /** Version */
+            version: number;
+        };
+        /**
+         * SourceResultRead
+         * @description What happened to one source in one run.
+         */
+        SourceResultRead: {
+            /** Closed Count */
+            closed_count: number;
+            /** Collected Count */
+            collected_count: number;
+            /** Collection Run Id */
+            collection_run_id: number;
+            /** Deduplicated Count */
+            deduplicated_count: number;
+            /** Duration Ms */
+            duration_ms: number;
+            /** Error Class */
+            error_class: string | null;
+            /** Error Message */
+            error_message: string | null;
+            /**
+             * Finished At
+             * Format: date-time
+             */
+            finished_at: string;
+            /** Http Status */
+            http_status: number | null;
+            /** New Count */
+            new_count: number;
+            outcome: components["schemas"]["SourceOutcome"];
+            /** Source Configuration Id */
+            source_configuration_id: number;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at: string;
+            /** Updated Count */
+            updated_count: number;
+        };
+        /**
+         * SourceType
+         * @description Kind of job source adapter.
+         * @enum {string}
+         */
+        SourceType: "greenhouse" | "lever" | "ashby";
+        /**
+         * SourceUpdate
+         * @description Change a source's settings; ``expected_version`` is the version the client last saw.
+         */
+        SourceUpdate: {
+            /** Enabled */
+            enabled?: boolean | null;
+            /** Expected Version */
+            expected_version: number;
+            /** Rate Limit Per Minute */
+            rate_limit_per_minute?: number | null;
+        };
+        /** ValidationError */
+        ValidationError: {
+            /** Context */
+            ctx?: Record<string, never>;
+            /** Input */
+            input?: unknown;
+            /** Location */
+            loc: (string | number)[];
+            /** Message */
+            msg: string;
+            /** Error Type */
+            type: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -77,6 +343,177 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    list_collection_runs_api_v1_collection_runs_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                before_collection_run_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionRunPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_all_sources_api_v1_collection_runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionRunRead"];
+                };
+            };
+        };
+    };
+    list_sources_api_v1_sources_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceList"];
+                };
+            };
+        };
+    };
+    create_source_api_v1_sources_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_source_api_v1_sources__source_configuration_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_configuration_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourceUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_source_api_v1_sources__source_configuration_id__run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_configuration_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionRunRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     healthz_healthz_get: {
         parameters: {
             query?: never;

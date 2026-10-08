@@ -1,0 +1,1068 @@
+<!doctype html>
+<html lang="en" data-theme="light" data-accent="indigo" data-density="comfortable">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jobs Radar — UI mock-up</title>
+<!--
+  Static design mock-up for Jobs Radar (not the real application).
+  All data below is synthetic. Purpose: agree on look, layout and information
+  hierarchy before implementation. Based on research R-00170.
+  Controls (top bar): accent option, theme, density. Keys in Inbox: j/k move,
+  s shortlist, x ignore, e archive, r restore, z undo, ? help.
+-->
+<style>
+:root {
+  --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radius: 8px;
+  --bg: #fbfbfc; --surface: #ffffff; --surface-2: #f3f4f6; --surface-3: #eaecf0;
+  --border: #e4e6eb; --border-strong: #cfd3da;
+  --text: #15171c; --text-2: #565c69; --text-3: #7a808d;
+  --good: #146c36; --good-bg: #e6f4ec;
+  --caution: #8a4b0a; --caution-bg: #fdf1dc;
+  --bad: #a61b1b; --bad-bg: #fbe8e8;
+  --neutral-band: #4b5160; --neutral-bg: #eceef2;
+  --shadow: 0 1px 2px rgba(16,18,24,.06), 0 4px 16px rgba(16,18,24,.06);
+}
+html[data-theme="dark"] {
+  --bg: #0d0e11; --surface: #14161a; --surface-2: #1b1e23; --surface-3: #242830;
+  --border: #272a31; --border-strong: #363a44;
+  --text: #ecedf0; --text-2: #a5aab5; --text-3: #7d838f;
+  --good: #8cc9a4; --good-bg: #172a20;
+  --caution: #d9b36a; --caution-bg: #2a2212;
+  --bad: #e9a0a0; --bad-bg: #2c1919;
+  --neutral-band: #a9aeb8; --neutral-bg: #242830;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+}
+/* Accent options: each defines solid, soft background and readable text colour per theme */
+html[data-accent="indigo"] { --accent: #4f46e5; --accent-soft: #eceafd; --accent-text: #3730a3; --on-accent: #fff; }
+html[data-accent="teal"]   { --accent: #0f766e; --accent-soft: #dff4f1; --accent-text: #0b5a54; --on-accent: #fff; }
+html[data-accent="ember"]  { --accent: #c2410c; --accent-soft: #fdeadf; --accent-text: #9a3412; --on-accent: #fff; }
+html[data-theme="dark"][data-accent="indigo"] { --accent: #8b87f5; --accent-soft: #232146; --accent-text: #c7c4ff; --on-accent: #0d0e11; }
+html[data-theme="dark"][data-accent="teal"]   { --accent: #3fc1b4; --accent-soft: #10302d; --accent-text: #8ee6dc; --on-accent: #0d0e11; }
+html[data-theme="dark"][data-accent="ember"]  { --accent: #f08a54; --accent-soft: #3a2012; --accent-text: #ffb792; --on-accent: #0d0e11; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 var(--font); font-feature-settings: "cv11","ss01"; -webkit-font-smoothing: antialiased; }
+.num, .tabular { font-variant-numeric: tabular-nums; }
+button { font: inherit; color: inherit; cursor: pointer; }
+a { color: var(--accent-text); text-decoration: none; }
+a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- Shell ---------- */
+.app { display: grid; grid-template-columns: 224px 1fr; height: 100vh; }
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 14px 10px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 6px 10px 14px; font-weight: 650; letter-spacing: -.01em; }
+.brand .logo { width: 24px; height: 24px; border-radius: 7px; background: var(--accent); display: grid; place-items: center; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 6px; border: 0; background: transparent; color: var(--text-2); width: 100%; text-align: left; }
+.nav-item:hover { background: var(--surface-2); color: var(--text); }
+.nav-item[aria-current="page"] { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+.nav-item .count { margin-left: auto; font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.nav-item[aria-current="page"] .count { color: var(--accent-text); }
+.nav-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); padding: 14px 10px 4px; }
+.side-foot { margin-top: auto; padding: 10px; font-size: 12px; color: var(--text-3); border-top: 1px solid var(--border); }
+.ico { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+.main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 10px 20px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.topbar h1 { font-size: 15px; font-weight: 650; margin: 0; letter-spacing: -.01em; }
+.topbar .sp { flex: 1; }
+.mock-controls { display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--text-2); }
+.seg { display: inline-flex; border: 1px solid var(--border-strong); border-radius: 7px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 4px 10px; font-size: 12px; color: var(--text-2); }
+.seg button + button { border-left: 1px solid var(--border-strong); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+.swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.view { display: none; flex: 1; min-height: 0; }
+.view.active { display: flex; }
+
+/* ---------- Generic ---------- */
+.btn { border: 1px solid var(--border-strong); background: var(--surface); padding: 5px 12px; border-radius: 7px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--text-2); }
+.btn.sm { padding: 3px 9px; font-size: 12px; }
+kbd { font: 11px/1 var(--font); border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: 4px; padding: 1px 5px; color: var(--text-2); background: var(--surface); }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--text-2); white-space: nowrap; }
+.chip.accent { background: var(--accent-soft); color: var(--accent-text); }
+.tag-source, .tag-ai { font-size: 11px; padding: 0 6px; border-radius: 4px; border: 1px solid var(--border-strong); color: var(--text-2); white-space: nowrap; }
+.tag-ai { border-style: dashed; color: var(--accent-text); border-color: var(--accent); }
+.muted { color: var(--text-2); } .faint { color: var(--text-3); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.card h3 { margin: 0; font-size: 13px; font-weight: 650; }
+.scroll { overflow-y: auto; min-height: 0; }
+.page { padding: 20px 24px 40px; overflow-y: auto; flex: 1; }
+.page-inner { max-width: 1080px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.page-title { font-size: 20px; font-weight: 650; letter-spacing: -.015em; margin: 0; }
+.page-sub { margin: 2px 0 0; color: var(--text-2); }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* ---------- Fit meter + band ---------- */
+.fit { display: inline-flex; align-items: center; gap: 8px; }
+.meter { width: 56px; height: 6px; border-radius: 99px; background: var(--surface-3); overflow: hidden; flex: none; }
+.meter > span { display: block; height: 100%; border-radius: 99px; }
+.band { font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 6px; white-space: nowrap; }
+.b-excellent, .b-strong { background: var(--good-bg); color: var(--good); }
+.b-excellent .m, .b-strong .m { background: var(--good); }
+.b-partial { background: var(--caution-bg); color: var(--caution); }
+.b-low { background: var(--neutral-bg); color: var(--neutral-band); }
+.b-notrec { background: var(--bad-bg); color: var(--bad); }
+.fit .score { font-weight: 650; min-width: 2.6ch; text-align: right; }
+.fill-good { background: var(--good); } .fill-caution { background: var(--caution); } .fill-neutral { background: var(--neutral-band); } .fill-bad { background: var(--bad); }
+
+/* ---------- Inbox ---------- */
+.inbox { display: grid; grid-template-columns: minmax(420px, 1fr) 460px; width: 100%; min-height: 0; }
+.list-col { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: 1px solid var(--border); }
+.tabs { display: flex; gap: 2px; padding: 8px 14px 0; border-bottom: 1px solid var(--border); background: var(--surface); overflow-x: auto; }
+.tab { border: 0; background: transparent; padding: 8px 10px; color: var(--text-2); border-bottom: 2px solid transparent; white-space: nowrap; display: flex; gap: 6px; align-items: center; }
+.tab:hover { color: var(--text); }
+.tab[aria-selected="true"] { color: var(--text); font-weight: 600; border-bottom-color: var(--accent); }
+.tab .n { font-size: 12px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.toolbar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: var(--surface); border-bottom: 1px solid var(--border); }
+.search { flex: 1; display: flex; align-items: center; gap: 8px; background: var(--surface-2); border-radius: 7px; padding: 5px 10px; color: var(--text-3); }
+.search input { border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; width: 100%; }
+.rows { flex: 1; overflow-y: auto; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; background: var(--bg); }
+/* Job cards: the fit score is the anchor on the left, not a sender/subject line as in a mail client */
+.row { display: grid; grid-template-columns: 60px minmax(0, 1fr) auto; gap: 14px; align-items: start; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; background: var(--surface); position: relative; }
+html[data-density="compact"] .row { padding: 7px 12px; align-items: center; }
+html[data-density="compact"] .rows { gap: 5px; }
+.row:hover { border-color: var(--border-strong); }
+.row[aria-selected="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: var(--surface); }
+.tile { width: 60px; border-radius: 9px; padding: 6px 0 5px; text-align: center; }
+.tile .n { font-size: 21px; font-weight: 700; line-height: 1.1; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.tile .l { font-size: 11px; font-weight: 600; line-height: 1.2; margin-top: 1px; }
+.tile.pending { background: transparent; color: var(--text-3); border: 1px dashed var(--border-strong); }
+.r-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; gap: 6px; align-items: center; }
+.r-title .t-text { overflow: hidden; text-overflow: ellipsis; }
+.r-meta { display: flex; gap: 8px; align-items: center; color: var(--text-2); font-size: 13px; white-space: nowrap; overflow: hidden; margin-top: 1px; }
+.r-meta .sep { color: var(--text-3); }
+.signals { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+html[data-density="compact"] .signals { display: none; }
+.sig { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 1px 8px; border-radius: 6px; border: 1px solid var(--border); color: var(--text-2); background: var(--surface); }
+.sig .i { font-weight: 700; font-size: 11px; }
+.sig .i.partial { color: var(--caution); }
+.sig .i.match { color: var(--good); } .sig .i.mismatch { color: var(--bad); } .sig .i.unknown { color: var(--text-3); }
+.sig.mismatch { border-color: var(--bad); }
+.r-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 12px; color: var(--text-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.row.ignored, .row.archived { opacity: .6; }
+.new { font-size: 11px; font-weight: 700; padding: 0 6px; border-radius: 4px; background: var(--accent); color: var(--on-accent); flex: none; }
+.star { color: var(--caution); }
+.empty-note { padding: 28px 16px; color: var(--text-3); font-size: 13px; text-align: center; }
+
+/* ---------- Detail ---------- */
+.detail { background: var(--surface); overflow-y: auto; min-height: 0; }
+.d-head { padding: 18px 22px 14px; border-bottom: 1px solid var(--border); }
+.d-head h2 { margin: 0 0 4px; font-size: 18px; letter-spacing: -.015em; font-weight: 650; line-height: 1.3; }
+.d-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.d-score { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+.d-score .big { font-size: 34px; font-weight: 700; letter-spacing: -.03em; line-height: 1; }
+.d-score .big small { font-size: 16px; font-weight: 600; color: var(--text-3); }
+.meter.lg { width: 100%; height: 8px; }
+.d-section { padding: 16px 22px; border-bottom: 1px solid var(--border); }
+.d-section h3 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.narr { margin: 0; }
+.dim { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; padding: 8px 6px; margin: 0 -6px; border-top: 1px solid var(--border); align-items: start; position: relative; border-radius: 6px; cursor: help; }
+.dim:first-of-type { border-top: 0; }
+.dim:hover, .dim:focus-visible { background: var(--surface-2); }
+.dim .st { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
+.st.match { background: var(--good-bg); color: var(--good); } .st.mismatch { background: var(--bad-bg); color: var(--bad); } .st.unknown { background: var(--neutral-bg); color: var(--neutral-band); border: 1px dashed var(--border-strong); }
+.dim .d-name { font-weight: 600; }
+.dim .d-name .stl { font-weight: 500; font-size: 12px; color: var(--text-2); margin-left: 6px; }
+.dim .d-pts { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
+.dim .d-pts small { display: block; color: var(--text-3); font-weight: 400; font-size: 11px; }
+/* Evidence popover: shown on hover and on keyboard focus */
+.pop { display: none; position: absolute; left: 30px; right: 0; top: calc(100% - 2px); z-index: 6; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 10px; box-shadow: var(--shadow); padding: 12px 14px; cursor: default; }
+.dim.up .pop { top: auto; bottom: calc(100% - 2px); }
+.dim:hover .pop, .dim:focus .pop, .dim:focus-within .pop { display: block; }
+.pop h4 { margin: 0 0 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); font-weight: 600; }
+.pop blockquote { margin: 0 0 10px; padding: 2px 10px; border-left: 3px solid var(--accent); color: var(--text); font-size: 13px; }
+.pop blockquote mark { background: var(--accent-soft); color: var(--accent-text); border-radius: 3px; padding: 0 2px; }
+.pop .why { font-size: 13px; color: var(--text-2); margin: 0 0 8px; }
+.pop .foot { font-size: 11px; color: var(--text-3); }
+details { border-top: 1px solid var(--border); }
+details summary { cursor: pointer; padding: 8px 0; color: var(--text-2); font-size: 13px; list-style: none; display: flex; gap: 6px; align-items: center; }
+details summary::-webkit-details-marker { display: none; }
+details summary::before { content: "▸"; font-size: 11px; color: var(--text-3); transition: transform .12s; }
+details[open] summary::before { transform: rotate(90deg); }
+blockquote { margin: 4px 0 8px; padding: 4px 12px; border-left: 3px solid var(--border-strong); color: var(--text-2); font-size: 13px; }
+.actions { position: sticky; bottom: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 10px 22px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; z-index: 4; }
+.seen-on { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.change { background: var(--caution-bg); color: var(--caution); border-radius: 7px; padding: 8px 12px; font-size: 13px; margin-top: 12px; }
+.state-note { background: var(--surface-2); border-radius: 7px; padding: 8px 12px; font-size: 13px; color: var(--text-2); margin-top: 12px; display: flex; gap: 10px; align-items: center; justify-content: space-between; }
+.toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 9px 14px; border-radius: 9px; box-shadow: var(--shadow); display: none; align-items: center; gap: 14px; font-size: 13px; z-index: 20; }
+.toast.show { display: flex; }
+.toast button { background: transparent; border: 0; color: var(--bg); font-weight: 700; text-decoration: underline; padding: 0; }
+
+/* ---------- Tables (sources, trends) ---------- */
+table.t { width: 100%; border-collapse: collapse; }
+.t th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); font-weight: 600; padding: 8px 14px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; }
+.t td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.t tr:last-child td { border-bottom: 0; }
+.t .r { text-align: right; font-variant-numeric: tabular-nums; }
+.t td.actions { white-space: nowrap; text-align: right; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: 13px; }
+.status.ok { color: var(--good); } .status.warn { color: var(--caution); } .status.fail { color: var(--bad); } .status.idle { color: var(--text-3); }
+.err { font-size: 12px; color: var(--bad); margin-top: 2px; }
+.form-row { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
+.field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-2); }
+.field input, .field select { font: inherit; padding: 6px 10px; border-radius: 7px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); min-width: 160px; }
+.hint { font-size: 12px; color: var(--text-3); }
+.pad { padding: 16px 18px; }
+.card-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid var(--border); gap: 12px; }
+.delta.up { color: var(--good); font-weight: 600; } .delta.down { color: var(--bad); font-weight: 600; } .delta.flat { color: var(--text-3); }
+svg.spark { display: block; }
+.big-num { font-size: 26px; font-weight: 700; letter-spacing: -.02em; line-height: 1.1; }
+.stat-label { font-size: 12px; color: var(--text-2); }
+.list-plain { list-style: none; margin: 0; padding: 0; }
+.list-plain li { padding: 9px 0; border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+.list-plain li:first-child { border-top: 0; }
+.banner { background: var(--accent-soft); color: var(--accent-text); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; }
+.facts { display: grid; grid-template-columns: 150px 1fr; gap: 8px 14px; font-size: 13px; }
+.facts dt { color: var(--text-2); } .facts dd { margin: 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* ---------- Companies ---------- */
+.cmp { display: grid; grid-template-columns: 360px 1fr; width: 100%; min-height: 0; }
+.cmp-list { border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; background: var(--surface); }
+.cmp-tools { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--border); }
+.ctl { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); cursor: pointer; padding: 2px 0; }
+.check input { accent-color: var(--accent); width: 15px; height: 15px; }
+.cmp-items { flex: 1; overflow-y: auto; }
+.cmp-item { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.cmp-item:hover { background: var(--surface-2); }
+.cmp-item[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.cmp-item .rk { color: var(--text-3); font-size: 12px; font-variant-numeric: tabular-nums; text-align: right; }
+.cmp-item .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmp-item .sub { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cmp-item .cnt { text-align: right; font-variant-numeric: tabular-nums; }
+.cmp-item .cnt b { font-size: 16px; display: block; line-height: 1.2; }
+.cmp-item .cnt span { font-size: 11px; color: var(--text-3); }
+.cmp-detail { overflow-y: auto; padding: 22px 28px 40px; display: flex; flex-direction: column; gap: 16px; }
+.cmp-detail > * { max-width: 860px; }
+.links { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+/* ---------- Profile & intent ---------- */
+.pi { display: flex; flex-direction: column; width: 100%; min-height: 0; position: relative; }
+.pi-head { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px 0; }
+.pi-select { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 10px; }
+.subtabs { display: flex; gap: 2px; overflow-x: auto; }
+.subtabs button { border: 0; background: transparent; padding: 8px 12px; color: var(--text-2); border-bottom: 2px solid transparent; white-space: nowrap; }
+.subtabs button:hover { color: var(--text); }
+.subtabs button[aria-selected="true"] { color: var(--text); font-weight: 600; border-bottom-color: var(--accent); }
+.pi-body { flex: 1; overflow-y: auto; padding: 20px 24px 90px; }
+.pi-panel { display: none; } .pi-panel.active { display: block; }
+.pi-inner { max-width: 880px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+.pi-inner.wide { max-width: 1100px; }
+.mini { font: inherit; padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); }
+.chips-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.inline-in { font: inherit; border: 1px dashed var(--border-strong); background: transparent; color: var(--text); padding: 2px 10px; border-radius: 999px; min-width: 150px; }
+.drop { border: 2px dashed var(--border-strong); border-radius: var(--radius); padding: 26px; text-align: center; background: var(--surface); }
+.dirty-bar { position: absolute; left: 24px; right: 24px; bottom: 16px; background: var(--text); color: var(--bg); border-radius: 10px; padding: 10px 14px; display: none; align-items: center; justify-content: space-between; gap: 12px; box-shadow: var(--shadow); font-size: 13px; z-index: 5; }
+.dirty-bar.show { display: flex; }
+.dirty-bar .btn { border-color: transparent; }
+.rv { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 12px 18px; border-top: 1px solid var(--border); align-items: center; }
+.rv:first-child { border-top: 0; }
+.rv .path { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); font-weight: 600; }
+.rv .val { font-weight: 600; margin: 1px 0 2px; }
+.rv .qt { color: var(--text-2); font-size: 12.5px; }
+.rv.accepted { background: var(--good-bg); } .rv.rejected { opacity: .55; } .rv.deferred { background: var(--surface-2); }
+.conf { font-size: 11px; color: var(--text-3); margin-left: 8px; }
+.weights-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr); gap: 14px; align-items: start; }
+.wrow { display: grid; grid-template-columns: 190px 1fr 78px; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--border); }
+.wrow:first-child { border-top: 0; }
+.wrow input[type=range] { width: 100%; accent-color: var(--accent); }
+.wlabel { position: relative; font-weight: 600; cursor: help; display: inline-flex; align-items: center; gap: 6px; }
+.wlabel .info { width: 15px; height: 15px; border-radius: 50%; border: 1px solid var(--border-strong); font-size: 10px; display: inline-grid; place-items: center; color: var(--text-3); font-weight: 700; }
+.wlabel .pop { left: 0; right: auto; width: 320px; top: calc(100% + 6px); font-weight: 400; }
+.wlabel:hover .pop, .wlabel:focus .pop { display: block; }
+.wval { text-align: right; font-variant-numeric: tabular-nums; }
+.wval b { display: block; font-size: 15px; } .wval span { font-size: 11px; color: var(--text-3); }
+.wdef { font-size: 11px; color: var(--text-3); }
+.wmod { color: var(--accent-text); font-weight: 600; }
+.pv { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 8px 0; border-top: 1px solid var(--border); align-items: center; font-size: 13px; }
+.pv:first-child { border-top: 0; }
+.pv .d { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+.pv .d.up { color: var(--good); } .pv .d.down { color: var(--bad); } .pv .d.same { color: var(--text-3); }
+@media (max-width: 1100px) { .cmp { grid-template-columns: 1fr; } .weights-grid { grid-template-columns: 1fr; } .wrow { grid-template-columns: 1fr; } }
+
+.strow { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 7px 0; border-top: 1px solid var(--border); }
+.strow:first-child { border-top: 0; }
+.seg.stance button.s-P[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+.seg.stance button.s-A[aria-pressed="true"] { background: var(--surface-3); color: var(--text); font-weight: 600; }
+.seg.stance button.s-R[aria-pressed="true"] { background: var(--bad-bg); color: var(--bad); font-weight: 600; }
+.wrow.off > div { opacity: .45; }
+.wrow.off .wlabel { color: var(--text-3); }
+.wrow.off input[type=range] { filter: grayscale(1); }
+.wgroup { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); font-weight: 600; padding: 14px 0 2px; border-top: 1px solid var(--border); }
+.wtag { font-size: 11px; color: var(--text-3); }
+.pay-grid { display: grid; grid-template-columns: 70px 1fr 1fr; gap: 6px 10px; align-items: center; }
+.pay-grid input { font: inherit; padding: 6px 10px; border-radius: 7px; border: 1px solid var(--border-strong); background: var(--surface); color: var(--text); width: 100%; font-variant-numeric: tabular-nums; }
+/* ---------- Help overlay ---------- */
+.overlay { position: fixed; inset: 0; background: rgba(10,12,16,.45); display: none; place-items: center; z-index: 10; }
+.overlay.open { display: grid; }
+.overlay .card { padding: 20px 24px; width: 380px; box-shadow: var(--shadow); }
+.overlay table td { padding: 4px 0; } .overlay table td:first-child { width: 70px; }
+@media (max-width: 1100px) { .inbox { grid-template-columns: 1fr; } .detail { display: none; } .grid3 { grid-template-columns: 1fr; } .grid2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13l3.5 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M3 21h18M6 21V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v16M14 9h3a1 1 0 0 1 1 1v11M9 8h2M9 12h2M9 16h2"/></symbol>
+  <symbol id="i-trend" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></symbol>
+  <symbol id="i-source" viewBox="0 0 24 24"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1.2"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-radar" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 12l6-6"/></symbol>
+</svg>
+
+<div class="app">
+  <aside class="sidebar" aria-label="Main navigation">
+    <div class="brand"><span class="logo"><svg class="ico" style="stroke:var(--on-accent)"><use href="#i-radar"/></svg></span>Jobs Radar</div>
+    <button class="nav-item" data-view="today"><svg class="ico"><use href="#i-sun"/></svg>Today</button>
+    <button class="nav-item" data-view="inbox" aria-current="page"><svg class="ico"><use href="#i-inbox"/></svg>Inbox<span class="count" id="nav-unread">0</span></button>
+    <button class="nav-item" data-view="companies"><svg class="ico"><use href="#i-building"/></svg>Companies</button>
+    <button class="nav-item" data-view="trends"><svg class="ico"><use href="#i-trend"/></svg>Trends</button>
+    <div class="nav-label">Setup</div>
+    <button class="nav-item" data-view="sources"><svg class="ico"><use href="#i-source"/></svg>Sources<span class="count">2 issues</span></button>
+    <button class="nav-item" data-view="profile"><svg class="ico"><use href="#i-user"/></svg>Profile &amp; intent</button>
+    <button class="nav-item" data-view="settings"><svg class="ico"><use href="#i-gear"/></svg>AI &amp; privacy</button>
+    <div class="side-foot">Last collection<br><strong class="num" style="color:var(--text-2)">07:30 · 2 h ago</strong><br>AI: local · qwen3:8b</div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <h1 id="page-title">Inbox</h1>
+      <span class="sp"></span>
+      <div class="mock-controls" aria-label="Mock-up controls (not part of the real app)">
+        <span>Mock controls:</span>
+        <span class="seg" role="group" aria-label="Accent colour option">
+          <button data-accent="indigo" aria-pressed="true"><span class="swatch" style="background:#4f46e5"></span>A · Indigo</button>
+          <button data-accent="teal" aria-pressed="false"><span class="swatch" style="background:#0f766e"></span>B · Teal</button>
+          <button data-accent="ember" aria-pressed="false"><span class="swatch" style="background:#c2410c"></span>C · Ember</button>
+        </span>
+        <span class="seg" role="group" aria-label="Theme">
+          <button data-theme="light" aria-pressed="true">Light</button>
+          <button data-theme="dark" aria-pressed="false">Dark</button>
+        </span>
+      </div>
+    </header>
+
+    <!-- ================= INBOX ================= -->
+    <section class="view active" id="view-inbox" aria-label="Inbox">
+      <div class="inbox">
+        <div class="list-col">
+          <div class="tabs" role="tablist" id="tabs"></div>
+          <div class="toolbar">
+            <label class="search"><svg class="ico"><use href="#i-search"/></svg><input type="search" placeholder="Search title, company, technology…" aria-label="Search jobs"></label>
+            <span class="seg" role="group" aria-label="Density">
+              <button data-density="comfortable" aria-pressed="true">Comfortable</button>
+              <button data-density="compact" aria-pressed="false">Compact</button>
+            </span>
+            <button class="btn ghost sm" id="help-btn" aria-label="Keyboard shortcuts"><kbd>?</kbd></button>
+          </div>
+          <div class="rows" id="rows" role="listbox" aria-label="Jobs"></div>
+        </div>
+        <article class="detail" id="detail" aria-live="polite"></article>
+      </div>
+    </section>
+
+    <!-- ================= TODAY ================= -->
+    <section class="view" id="view-today">
+      <div class="page"><div class="page-inner">
+        <div><h2 class="page-title">Good morning</h2><p class="page-sub">Daily digest for <strong>Tuesday 8 October</strong> · profile <em>AI Solutions</em> · intent <em>Remote EU</em></p></div>
+        <div class="grid3">
+          <div class="card pad"><div class="stat-label">New high-fit jobs</div><div class="big-num num">5</div><div class="hint">fit ≥ 65 since yesterday</div></div>
+          <div class="card pad"><div class="stat-label">Shortlisted jobs that changed</div><div class="big-num num">1</div><div class="hint">compensation added</div></div>
+          <div class="card pad"><div class="stat-label">Sources needing attention</div><div class="big-num num" style="color:var(--caution)">2</div><div class="hint">1 failed · 1 slow</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>New high-fit jobs</h3><button class="btn sm" data-goto="inbox">Open inbox</button></div>
+          <div class="pad" style="padding-top:4px;padding-bottom:8px"><ul class="list-plain" id="today-list"></ul></div>
+        </div>
+        <div class="card pad"><h3>Source health</h3>
+          <ul class="list-plain" style="margin-top:6px">
+            <li><span class="status fail">✕ Failed</span><span>Harbor Systems</span><span class="muted">Board token not found (HTTP 404)</span></li>
+            <li><span class="status warn">! Slow</span><span>Quill Analytics</span><span class="muted">Retried after HTTP 429; finished with 1 retry</span></li>
+          </ul>
+        </div>
+      </div></div>
+    </section>
+
+    <!-- ================= COMPANIES ================= -->
+    <section class="view" id="view-companies">
+      <div class="cmp">
+        <div class="cmp-list">
+          <div class="cmp-tools">
+            <label class="search"><svg class="ico"><use href="#i-search"/></svg><input id="cmp-q" type="search" placeholder="Search companies…" aria-label="Search companies"></label>
+            <div class="ctl"><span class="stat-label">New offers in the last</span>
+              <span class="seg" id="cmp-period" role="group" aria-label="Period"><button data-p="7" aria-pressed="false">7 d</button><button data-p="15" aria-pressed="true">15 d</button><button data-p="30" aria-pressed="false">30 d</button></span></div>
+            <label class="check"><input type="checkbox" id="cmp-rel"> Only offers relevant to my profile</label>
+            <div class="hint" id="cmp-count"></div>
+          </div>
+          <div class="cmp-items" id="cmp-items" role="listbox" aria-label="Companies"></div>
+        </div>
+        <div class="cmp-detail" id="cmp-detail"></div>
+      </div>
+    </section>
+
+    
+<!-- ================= TRENDS ================= -->
+    <section class="view" id="view-trends">
+      <div class="page"><div class="page-inner">
+        <div style="display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap">
+          <div><h2 class="page-title">Market trends</h2><p class="page-sub">Only jobs relevant to your profile (fit ≥ 45). Synthetic data in this mock-up.</p></div>
+          <span class="seg" role="group" aria-label="Period"><button aria-pressed="false">4 weeks</button><button aria-pressed="true">12 weeks</button><button aria-pressed="false" disabled title="Available after 6 months of data" style="opacity:.5;cursor:not-allowed">6 months</button></span>
+        </div>
+        <div class="banner">History available: <strong>3 weeks</strong> (collection started 2026-10-08). The 6-month view unlocks automatically once enough data exists.</div>
+        <div class="grid2" style="align-items:start">
+          <div class="card"><div class="card-head"><h3>Technologies</h3><span class="hint">open relevant jobs</span></div><table class="t" id="tech-table"></table></div>
+          <div class="card"><div class="card-head"><h3>Role families</h3><span class="hint">open relevant jobs</span></div><table class="t" id="role-table"></table></div>
+        </div>
+        <div class="card pad"><h3>Reading this page</h3><p class="muted" style="margin:6px 0 0">Each row shows the number of relevant open jobs now, the change since the start of the period, and a small weekly sparkline. The sparkline shows the shape of the trend at a glance; in the real app, hovering it reveals the exact weekly values.</p></div>
+      </div></div>
+    </section>
+
+    <!-- ================= SOURCES ================= -->
+    <section class="view" id="view-sources">
+      <div class="page"><div class="page-inner">
+        <div style="display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap">
+          <div><h2 class="page-title">Sources</h2><p class="page-sub">Greenhouse job boards · one board per company</p></div>
+          <button class="btn primary">Run all now</button>
+        </div>
+        <div class="grid2" style="align-items:start">
+          <div class="card pad"><h3>Daily schedule</h3>
+            <div class="form-row" style="margin-top:10px">
+              <label class="field">Run at<input type="time" value="07:30"></label>
+              <label class="field">Time zone<select><option>Europe/Lisbon</option><option>UTC</option><option>Europe/Berlin</option></select></label>
+              <button class="btn">Save</button>
+            </div>
+            <p class="hint" style="margin-top:10px">Next run: <strong class="num">tomorrow 07:30 (Europe/Lisbon)</strong> · executed by the background worker</p>
+          </div>
+          <div class="card pad"><h3>Add a board</h3>
+            <div class="form-row" style="margin-top:10px">
+              <label class="field">Board token<input value="contoso-robotics" aria-describedby="tok-hint"></label>
+              <button class="btn">Validate &amp; add</button>
+            </div>
+            <p class="hint" id="tok-hint" style="margin-top:10px"><span class="status ok" style="font-size:12px">✓ Valid</span> 42 postings found. Tokens are checked before they are saved.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Configured boards</h3><span class="hint">Last run 07:30 · duration 48 s</span></div>
+          <table class="t">
+            <thead><tr><th>Company</th><th>Status</th><th class="r">Postings</th><th class="r">New</th><th class="r">Changed</th><th>Last update</th><th></th></tr></thead>
+            <tbody id="src-body"></tbody>
+          </table>
+        </div>
+      </div></div>
+    </section>
+
+    <!-- ================= PROFILE & INTENT ================= -->
+    <section class="view" id="view-profile">
+      <div class="pi">
+        <div class="pi-head">
+          <div class="pi-select">
+            <label class="field">Career profile<select><option>AI Solutions · revision 3</option><option>Data Engineering · revision 1</option></select></label>
+            <label class="field">Search intent<select><option>Remote EU contracts · revision 2</option><option>Hybrid Lisbon · revision 1</option></select></label>
+            <button class="btn sm">+ New profile</button><button class="btn sm">+ New intent</button>
+          </div>
+          <div class="subtabs" role="tablist" aria-label="Profile and intent sections">
+            <button data-pitab="profile" aria-selected="true">Profile</button>
+            <button data-pitab="import" aria-selected="false">Import CV</button>
+            <button data-pitab="intent" aria-selected="false">Search intent</button>
+            <button data-pitab="weights" aria-selected="false">Scoring weights</button>
+            <button data-pitab="history" aria-selected="false">History</button>
+          </div>
+        </div>
+        <div class="pi-body">
+          <!-- ---- Profile ---- -->
+          <div class="pi-panel active" data-panel="profile"><div class="pi-inner">
+            <p class="muted" style="margin:0">Your career facts, independent of any job search. Each change creates a new immutable revision; earlier revisions are kept.</p>
+            <div class="card pad"><h3>Summary</h3>
+              <div class="grid2" style="margin-top:10px">
+                <label class="field">Headline<input value="AI solutions and integration engineer" data-dirty></label>
+                <label class="field">Location &amp; time zone<input value="Lisbon, Portugal · Europe/Lisbon" data-dirty></label>
+                <label class="field">Languages<input value="Portuguese (native), English (fluent)" data-dirty></label>
+                <label class="field">Years of experience<input value="12" data-dirty></label>
+              </div>
+            </div>
+            <div class="card"><div class="card-head"><h3>Skills</h3><button class="btn sm">+ Add skill</button></div>
+              <table class="t"><thead><tr><th>Skill</th><th>Level</th><th class="r">Years</th><th>Origin</th><th></th></tr></thead><tbody>
+                <tr><td><strong>Python</strong></td><td><select data-dirty class="mini"><option>Expert</option><option>Advanced</option></select></td><td class="r">10</td><td><span class="tag-source">From CV</span></td><td class="actions"><button class="btn sm ghost" aria-label="Remove Python">✕</button></td></tr>
+                <tr><td><strong>LLM evaluation</strong></td><td><select data-dirty class="mini"><option>Advanced</option><option>Expert</option></select></td><td class="r">2</td><td><span class="tag-source">Manual</span></td><td class="actions"><button class="btn sm ghost" aria-label="Remove LLM evaluation">✕</button></td></tr>
+                <tr><td><strong>API design</strong></td><td><select data-dirty class="mini"><option>Advanced</option></select></td><td class="r">8</td><td><span class="tag-ai">AI proposal · accepted</span></td><td class="actions"><button class="btn sm ghost" aria-label="Remove API design">✕</button></td></tr>
+                <tr><td><strong>Kubernetes</strong></td><td><select data-dirty class="mini"><option>Intermediate</option></select></td><td class="r">4</td><td><span class="tag-source">From CV</span></td><td class="actions"><button class="btn sm ghost" aria-label="Remove Kubernetes">✕</button></td></tr>
+              </tbody></table>
+            </div>
+            <div class="card"><div class="card-head"><h3>Experience</h3><button class="btn sm">+ Add role</button></div>
+              <div class="pad"><ul class="list-plain">
+                <li style="align-items:start"><div style="flex:1"><strong>Solutions Architect</strong> · Example Corp <span class="faint">· 2019 – 2024</span><div class="muted">Led integration of machine-learning features into enterprise platforms for telecom customers.</div></div><span class="tag-source">From CV</span></li>
+                <li style="align-items:start"><div style="flex:1"><strong>Senior Software Engineer</strong> · Sample Systems <span class="faint">· 2014 – 2019</span><div class="muted">Backend services and data pipelines.</div></div><span class="tag-source">From CV</span></li>
+              </ul></div>
+            </div>
+            <div class="card pad" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="muted" style="flex:1">Your data stays on this machine.</span><button class="btn">Export profile (JSON)</button><button class="btn" style="color:var(--bad)">Delete profile data…</button></div>
+          </div></div>
+
+          <!-- ---- Import CV ---- -->
+          <div class="pi-panel" data-panel="import"><div class="pi-inner">
+            <div class="drop"><strong>Drop a CV here</strong> <span class="muted">PDF (with text), DOCX or TXT</span><div style="margin-top:8px"><button class="btn primary">Choose file</button></div></div>
+            <div class="chips-row"><span class="chip accent">Original file is not stored</span><span class="chip">Processing: this machine · qwen3:8b</span><span class="chip">Contact details redacted before any cloud use</span></div>
+            <div class="card"><div class="card-head"><div><h3>Proposals from “example-cv.pdf”</h3><span class="hint">Nothing becomes part of your profile until you accept or edit it.</span></div><span id="rv-count" class="chip">0 of 6 decided</span></div>
+              <div id="rv-list"></div>
+              <div class="card-head" style="border-top:1px solid var(--border);border-bottom:0"><span class="hint">Rejected and deferred items are kept for audit but never enter your profile.</span><button class="btn primary" id="rv-apply">Apply review → creates revision 4</button></div>
+            </div>
+          </div></div>
+
+          <!-- ---- Search intent ---- -->
+          <div class="pi-panel" data-panel="intent"><div class="pi-inner">
+            <p class="muted" style="margin:0">What you are looking for right now. For each option choose <strong>Preferred</strong>, <strong>OK</strong> or <strong>Reject</strong>. A rejected option rules a job out (Not recommended), whatever its score. Changing anything creates a new intent revision and never touches your profile facts.</p>
+            <div class="card pad"><div class="form-row"><label class="field" style="flex:1">Intent name<input value="AI & telecom billing — remote first" data-dirty style="width:100%"></label>
+              <label class="check" style="padding-bottom:7px"><input type="checkbox" checked> Enabled (included in daily collection and digest)</label></div></div>
+
+            <div class="card pad"><h3>Roles</h3><p class="hint" style="margin:4px 0 8px">Role families you want, accept or never want. Keywords help the AI find them.</p>
+              <div id="st-roles"></div>
+              <div class="stat-label" style="margin-top:12px">Helpful keywords</div>
+              <div class="chips-row" style="margin-top:6px"><span class="chip">LLM ✕</span><span class="chip">RAG ✕</span><span class="chip">billing ✕</span><span class="chip">charging ✕</span><span class="chip">mediation ✕</span><input class="inline-in" placeholder="Add keyword…"></div></div>
+
+            <div class="card pad"><h3>Work arrangement &amp; location</h3><p class="hint" style="margin:4px 0 8px">Where you will work depends on the arrangement, so each one has its own place rule.</p>
+              <div id="st-work"></div>
+              <div class="grid2" style="margin-top:12px">
+                <div class="scope"><div class="stat-label">Remote: regions you can work from</div><div class="chips-row" style="margin-top:6px"><span class="chip accent">EU ✕</span><span class="chip accent">UK ✕</span><input class="inline-in" placeholder="Add…"></div>
+                  <label class="field" style="margin-top:8px">Time zone tolerance<select data-dirty><option>±2 h of Europe/Lisbon</option><option>±4 h</option><option>Any</option></select></label></div>
+                <div class="scope"><div class="stat-label">Hybrid &amp; on-site: stay within</div><div class="form-row" style="margin-top:6px"><label class="field">Distance (km)<input value="40" data-dirty style="min-width:90px;width:90px"></label><label class="field">of<input value="Lisbon, Portugal" data-dirty></label></div>
+                  <p class="hint" style="margin:8px 0 0">A remote job restricted to regions outside your list counts as Reject.</p></div>
+              </div></div>
+
+            <div class="card pad"><h3>Engagement</h3><div id="st-engagement" style="margin-top:6px"></div></div>
+
+            <div class="card pad"><h3>Compensation</h3><p class="hint" style="margin:4px 0 8px">Pay is compared in the form it is given: an annual salary for employees, a day rate for contractors.</p>
+              <div class="grid2">
+                <div><div class="stat-label" style="margin-bottom:6px">Employee · gross pay <span class="faint">(per month and per year, linked)</span></div>
+                  <div class="pay-grid">
+                    <span></span><span class="stat-label">Per month</span><span class="stat-label">Per year</span>
+                    <span class="stat-label">Minimum</span><input id="pay-min-m" inputmode="numeric" aria-label="Minimum per month"><input id="pay-min-a" inputmode="numeric" aria-label="Minimum per year">
+                    <span class="stat-label">Target</span><input id="pay-tgt-m" inputmode="numeric" aria-label="Target per month"><input id="pay-tgt-a" inputmode="numeric" aria-label="Target per year">
+                  </div>
+                  <div class="form-row" style="margin-top:8px"><span class="seg" role="group" aria-label="Payments per year"><button type="button" data-pay-n="12" aria-pressed="false">12 payments</button><button type="button" data-pay-n="14" aria-pressed="true">14 payments</button></span>
+                  <label class="field">Currency<select data-dirty class="mini"><option>EUR</option><option>GBP</option><option>USD</option></select></label></div>
+                  <p class="hint" style="margin:6px 0 0">Edit either field and the other updates. The year amount is the one that is saved.</p></div>
+                <div><div class="stat-label" style="margin-bottom:6px">Contractor / freelance · day rate</div><div class="form-row"><label class="field">Minimum<input value="450" data-dirty style="min-width:90px;width:100px"></label><label class="field">Target<input value="550" data-dirty style="min-width:90px;width:100px"></label><label class="field">Currency<select data-dirty class="mini"><option>EUR</option><option>GBP</option><option>USD</option></select></label></div></div>
+              </div>
+              <label class="check" style="margin-top:10px"><input type="checkbox" checked data-dirty> Reject jobs whose <em>stated</em> pay is below my minimum</label>
+              <p class="hint" style="margin:6px 0 0">If a posting does not state pay it counts as unknown and adds nothing to the score.</p></div>
+
+            <div class="card pad"><h3>Seniority</h3><div id="st-seniority" style="margin-top:6px"></div></div>
+            <div class="card pad"><h3>Domain &amp; sector</h3><div id="st-sectors" style="margin-top:6px"></div></div>
+
+            <div class="card pad"><h3>Employer</h3><div id="st-employer" style="margin-top:6px"></div>
+              <div class="grid2" style="margin-top:14px"><div><div class="stat-label">Companies to ignore</div><div class="chips-row" style="margin-top:6px"><span class="chip">Harbor Systems ✕</span><input class="inline-in" placeholder="Add company…"></div></div>
+              <div><div class="stat-label">Words in the posting that rule it out</div><div class="chips-row" style="margin-top:6px"><span class="chip">unpaid ✕</span><span class="chip">internship ✕</span><input class="inline-in" placeholder="Add word…"></div></div></div></div>
+
+            <div class="card pad"><h3>Languages</h3>
+              <div class="chips-row" style="margin-top:8px"><span class="stat-label" style="margin:0">I can work in:</span><span class="chip accent">Portuguese ✕</span><span class="chip accent">English ✕</span><input class="inline-in" placeholder="Add language…"></div>
+              <label class="check" style="margin-top:10px"><input type="checkbox" checked data-dirty> Reject postings that require a language I do not work in</label></div>
+
+            <div class="card pad"><h3>Other</h3>
+              <div class="form-row" style="margin-top:6px"><label class="field">Only jobs posted within<select data-dirty><option>Any time</option><option>7 days</option><option>15 days</option><option>30 days</option></select></label>
+              <label class="check" style="padding-bottom:7px"><input type="checkbox" data-dirty> I need visa sponsorship or relocation help</label></div>
+              <div style="display:flex;align-items:center;gap:14px;margin-top:14px"><span class="stat-label" style="margin:0;white-space:nowrap">Alert threshold</span><input type="range" min="0" max="100" value="65" id="alert-th" style="flex:1"><strong class="num" style="min-width:5.5ch" id="alert-val">≥ 65</strong></div>
+              <p class="hint" style="margin:6px 0 0">Jobs at or above this fit appear in the Today digest as high-fit.</p></div>
+          </div></div>
+
+          
+<!-- ---- Scoring weights ---- -->
+          <div class="pi-panel" data-panel="weights"><div class="pi-inner wide">
+            <div class="banner"><strong>Changing weights does not change scores that were already calculated.</strong> New weights apply to jobs evaluated from now on. Because the AI judgements are stored, you can optionally re-score existing jobs with the new weights without new AI calls.</div>
+            <div class="weights-grid">
+              <div class="card pad"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><h3>What matters most to you</h3><span class="hint">Drag to change. Weights are relative: the score is always out of 100.</span></div><button class="btn sm" id="w-reset">Reset to defaults</button></div>
+                <div id="w-list" style="margin-top:8px"></div>
+                <div id="w-warn" class="err" style="display:none">At least one weight must be above 0.</div>
+                <label class="check" style="margin-top:12px"><input type="checkbox" id="w-rescore"> After saving, also re-score existing jobs (uses stored AI judgements, no new AI calls)</label>
+                <div style="display:flex;gap:8px;margin-top:12px"><button class="btn primary">Save as intent revision 3</button><button class="btn">Discard</button></div>
+              </div>
+              <div class="card pad" style="position:sticky;top:0;align-self:start"><h3>Impact preview <span class="faint" style="text-transform:none;letter-spacing:0;font-weight:400">· on your current jobs</span></h3><div id="w-preview" style="margin-top:6px"></div><p class="hint" style="margin:8px 0 0">Hard constraints are unaffected: a hard mismatch stays Not recommended.</p></div>
+            </div>
+          </div></div>
+
+          <!-- ---- History ---- -->
+          <div class="pi-panel" data-panel="history"><div class="pi-inner">
+            <p class="muted" style="margin:0">Revisions are append-only. “Restore” creates a new revision with the old content; nothing is overwritten.</p>
+            <div class="card"><div class="card-head"><h3>Profile revisions · AI Solutions</h3></div><table class="t"><thead><tr><th>Rev</th><th>Date</th><th>Change</th><th></th></tr></thead><tbody>
+              <tr><td class="num"><strong>3</strong> <span class="chip accent">current</span></td><td class="muted">2026-10-08</td><td>Added “API design” (AI proposal accepted)</td><td class="actions"><button class="btn sm ghost">View</button></td></tr>
+              <tr><td class="num">2</td><td class="muted">2026-10-08</td><td>Imported 5 facts from CV</td><td class="actions"><button class="btn sm ghost">View</button><button class="btn sm">Compare</button><button class="btn sm">Restore</button></td></tr>
+              <tr><td class="num">1</td><td class="muted">2026-10-08</td><td>Created manually</td><td class="actions"><button class="btn sm ghost">View</button><button class="btn sm">Restore</button></td></tr></tbody></table></div>
+            <div class="card"><div class="card-head"><h3>Intent revisions · Remote EU contracts</h3></div><table class="t"><thead><tr><th>Rev</th><th>Date</th><th>Change</th><th></th></tr></thead><tbody>
+              <tr><td class="num"><strong>2</strong> <span class="chip accent">current</span></td><td class="muted">2026-10-08</td><td>Alert threshold 70 → 65; added exclusion “unpaid”</td><td class="actions"><button class="btn sm ghost">View</button><button class="btn sm">Compare</button></td></tr>
+              <tr><td class="num">1</td><td class="muted">2026-10-08</td><td>Created</td><td class="actions"><button class="btn sm ghost">View</button><button class="btn sm">Restore</button></td></tr></tbody></table></div>
+          </div></div>
+        </div>
+        <div class="dirty-bar" id="dirty-bar"><span>You have unsaved changes. Saving creates a new revision.</span><span><button class="btn sm">Discard</button> <button class="btn sm primary">Save revision</button></span></div>
+      </div>
+    </section>
+
+    
+<!-- ================= SETTINGS ================= -->
+    <section class="view" id="view-settings">
+      <div class="page"><div class="page-inner">
+        <div><h2 class="page-title">AI &amp; privacy</h2><p class="page-sub">Choose where processing happens. Secrets are write-only.</p></div>
+        <div class="card pad"><h3>Connection</h3>
+          <div class="form-row" style="margin-top:10px">
+            <label class="field">Provider<select><option>Local · Ollama</option><option>OpenAI</option><option>MiniMax</option><option>Compatible endpoint</option><option>None (collect only)</option></select></label>
+            <label class="field">Model<select><option>qwen3:8b</option><option>gemma3:12b</option><option>qwen3:4b</option></select></label>
+            <button class="btn">Test connection</button>
+          </div>
+          <p class="hint" style="margin-top:10px">Processing location: <strong>this machine</strong> · nothing leaves your network.</p>
+        </div>
+        <div class="card pad"><h3>Privacy</h3>
+          <ul class="list-plain" style="margin-top:6px">
+            <li>Redact contact details before any cloud processing <span class="chip accent" style="margin-left:auto">On</span></li>
+            <li>Ask for consent before the first cloud use of a document <span class="chip accent" style="margin-left:auto">On</span></li>
+            <li>Uploaded CVs are never stored <span class="chip" style="margin-left:auto">Fixed</span></li>
+          </ul>
+        </div>
+      </div></div>
+    </section>
+  </div>
+</div>
+
+<div class="overlay" id="help" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+  <div class="card">
+    <h3 style="font-size:15px;margin-bottom:10px">Keyboard shortcuts</h3>
+    <table><tbody>
+      <tr><td><kbd>j</kbd> <kbd>k</kbd></td><td>Next / previous job</td></tr>
+      <tr><td><kbd>s</kbd></td><td>Shortlist / remove from shortlist</td></tr>
+      <tr><td><kbd>u</kbd></td><td>Mark unread</td></tr>
+      <tr><td><kbd>r</kbd></td><td>Restore (ignored, archived, applied)</td></tr>
+      <tr><td><kbd>z</kbd></td><td>Undo last action</td></tr>
+      <tr><td><kbd>x</kbd></td><td>Ignore</td></tr>
+      <tr><td><kbd>e</kbd></td><td>Archive</td></tr>
+      <tr><td><kbd>a</kbd></td><td>Record application</td></tr>
+      <tr><td><kbd>/</kbd></td><td>Search</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Close this panel</td></tr>
+    </tbody></table>
+  </div>
+</div>
+
+<script>
+/* ---------- Synthetic data ---------- */
+const DIMS = ["Role & responsibilities","Skills & technology","Work arrangement & location","Engagement & contract terms","Compensation","Seniority & experience","Domain & sector","Company profile"];
+const OPT_DIMS = ["Benefits & flexibility","Qualifications"]; /* optional criteria: weight 0 by default */
+const ALL_DIMS = DIMS.concat(OPT_DIMS);
+const WEIGHTS = [25,15,15,10,10,8,10,7];
+/* Job data below is stored in the earlier order [role, tech, mode, engagement, seniority, sector, compensation, company]; ORDER maps a scoring-dimension index to the stored index */
+const ORDER = [0,1,2,3,6,4,5,7];
+/* s: strength per dimension — number 0..1 (match), 0 (mismatch), null (unknown).
+   evd: per dimension [text from the posting, matching profile fact, highlight word]; null = not stated. */
+const JOBS = [
+ {id:1,title:"Senior AI Solutions Engineer",company:"Northwind Labs",loc:"Remote · EU",mode:"Remote",type:"Contract",age:"2h",state:"unread",star:false,sites:["Careers site","JobPortal.example"],s:[1,.9,1,.9,.9,.7,null,.8],
+   narr:"Strong overlap with your LLM evaluation and integration experience. Remote within the EU matches your constraint. Compensation is not stated.",
+   ev:["Design and evaluate LLM-powered features for enterprise customers.","Fully remote within EU time zones."],change:null,
+   evd:[["Design and evaluate LLM-powered features for enterprise customers.","Target role family: AI solutions / integration","LLM-powered features"],
+        ["Experience with Python, LLM evaluation frameworks and API design.","Skills: Python, LLM evaluation, API design","Python, LLM evaluation"],
+        ["Fully remote within EU time zones.","Constraint: remote work, EU time zones","Fully remote"],
+        ["12-month contract, extendable.","Preference: contract / freelance","contract"],
+        ["Senior-level role; 8+ years of relevant experience.","Seniority: senior (12 years)","Senior-level"],
+        ["Our customers are large enterprises in finance and telecom.","Sector experience: telecom, enterprise IT","telecom"],
+        null,
+        ["Direct employer; 14 open roles seen over 3 weeks.","Preference: direct employers","Direct employer"]]},
+ {id:2,title:"Applied AI Architect",company:"Contoso Robotics",loc:"Remote · Europe",mode:"Remote",type:"Permanent",age:"5h",state:"unread",star:false,sites:["Careers site"],s:[.9,.8,1,.4,.8,.5,null,.6],
+   narr:"Good role fit and remote-friendly. The contract is permanent while your intent prefers contracting, so engagement type scores lower.",ev:["You will own reference architectures for generative AI projects."],change:null,
+   evd:[["You will own reference architectures for generative AI projects.","Target role family: AI solutions / integration","reference architectures"],
+        ["Hands-on with Python and cloud-native deployment of ML services.","Skills: Python, cloud deployment","Python"],
+        ["Remote-first team across Europe.","Constraint: remote work","Remote-first"],
+        ["This is a permanent, full-time position.","Preference: contract / freelance (permanent scores lower)","permanent"],
+        ["Experience leading architecture decisions.","Seniority: senior","leading architecture decisions"],
+        ["We build robotics software for logistics.","Sector experience: telecom, enterprise IT (partial)","logistics"],
+        null,
+        ["Direct employer.","Preference: direct employers","Direct employer"]]},
+ {id:3,title:"Solutions Architect, Generative AI",company:"Fabrikam Data",loc:"Lisbon, PT · Hybrid",mode:"Hybrid",type:"Permanent",age:"1d",state:"updated",star:true,sites:["Careers site","JobPortal.example","Boards.example"],s:[.8,.7,.5,.4,.8,.6,.8,.7],
+   narr:"Relevant architecture scope. Hybrid in Lisbon partially matches your location preference.",ev:["Hybrid: 3 days per week in our Lisbon office."],change:"Compensation was added: €85–105k (previously not stated).",
+   evd:[["Shape generative AI solutions together with customers.","Target role family: AI solutions / integration","generative AI solutions"],
+        ["Python, SQL and experience with LLM APIs.","Skills: Python, LLM APIs","Python"],
+        ["Hybrid: 3 days per week in our Lisbon office.","Constraint: remote; hybrid in Lisbon is a partial match","Hybrid"],
+        ["Permanent position.","Preference: contract / freelance","Permanent"],
+        ["Senior consultant level.","Seniority: senior","Senior"],
+        ["Clients in data and analytics.","Sector experience: enterprise IT","data and analytics"],
+        ["Salary range: €85–105k.","Rate expectation: within range","€85–105k"],
+        ["Established company with 3 sites listed.","Preference: direct employers","Established"]]},
+ {id:4,title:"AI Governance Lead",company:"Harbor Systems",loc:"Remote · EU",mode:"Remote",type:"Contract",age:"1d",state:"unread",star:false,sites:["Careers site"],s:[.7,.4,1,1,.7,.8,null,.7],
+   narr:"Governance focus matches your interest area; technical depth is lower than your target.",ev:["Define policies for responsible AI use across engineering teams."],change:null},
+ {id:5,title:"Machine Learning Engineer",company:"Quill Analytics",loc:"Berlin, DE · On-site",mode:"On-site",type:"Permanent",age:"2d",state:"unread",star:false,sites:["Careers site"],s:[.5,.8,0,0,.7,.4,null,.6],hard:true,
+   narr:"Role is technically adjacent but on-site in Berlin conflicts with your remote-only constraint.",ev:["This position is on-site in our Berlin headquarters."],change:null,
+   evd:[["Build and deploy machine learning models for analytics products.","Target role family: AI solutions / integration (adjacent)","machine learning models"],
+        ["PyTorch, Python and MLOps tooling.","Skills: Python","Python"],
+        ["This position is on-site in our Berlin headquarters.","Hard constraint: remote only — mismatch, so the job is Not recommended","on-site"],
+        ["Permanent employment contract.","Preference: contract / freelance","Permanent"],
+        ["3–5 years of experience.","Seniority: senior","3–5 years"],
+        ["Analytics software for retail.","Sector experience: telecom, enterprise IT","retail"],
+        null,["Direct employer.","Preference: direct employers","Direct employer"]]},
+ {id:6,title:"Staff Software Engineer, Platform",company:"Northwind Labs",loc:"Remote · Worldwide",mode:"Remote",type:"Permanent",age:"2d",state:"read",star:false,sites:["Careers site"],s:[.4,.7,1,.4,.7,.5,null,.8],
+   narr:"General platform engineering; limited AI focus.",ev:["Build and operate internal developer platform services."],change:null},
+ {id:7,title:"Prompt & Evaluation Specialist",company:"Contoso Robotics",loc:"Remote · EU",mode:"Remote",type:"Contract",age:"3d",state:"read",star:true,sites:["Careers site","Boards.example"],s:[.7,.9,1,1,.5,.6,.6,.6],
+   narr:"Hands-on evaluation work; seniority appears lower than your target.",ev:["Create evaluation suites and review model outputs."],change:null},
+ {id:8,title:"Data Analyst, Customer Insights",company:"Fabrikam Data",loc:"Madrid, ES · Hybrid",mode:"Hybrid",type:"Permanent",age:"4d",state:"ignored",star:false,sites:["Careers site"],s:[.1,.2,.5,.4,.4,.3,null,.7],
+   narr:"Low overlap with your target role families.",ev:["Analyse customer data and prepare reports."],change:null},
+ {id:9,title:"AI Product Integration Consultant",company:"Orbit Consulting",loc:"Remote · EU",mode:"Remote",type:"Contract",age:"4d",state:"unread",pending:true,star:false,sites:["Boards.example"],s:null,
+   narr:null,ev:["Help clients integrate generative AI into existing systems."],change:null},
+ {id:10,title:"Generative AI Engineer",company:"Contoso Robotics",loc:"Remote · EU",mode:"Remote",type:"Contract",age:"6d",state:"archived",star:false,sites:["Careers site"],s:[.8,.8,1,1,.6,.5,null,.6],narr:"Archived earlier; kept for reference.",ev:["Prototype and ship generative AI features."],change:null},
+];
+const BANDS = [[80,"Excellent fit","excellent","Excellent"],[65,"Strong fit","strong","Strong"],[45,"Average fit","partial","Average"],[0,"Low fit","low","Low"]];
+function evaluate(j){
+  if(!j.s) return {pending:true};
+  const dims = DIMS.map((n,i)=>{ const st=j.s[ORDER[i]]; const w=WEIGHTS[i];
+    const status = st===null?"unknown":(st===0?"mismatch":"match");
+    return {name:n,weight:w,status,pts: st? +(w*st).toFixed(1):0}; });
+  const score = Math.max(0,Math.min(100,Math.round(dims.reduce((a,d)=>a+d.pts,0))));
+  const band = BANDS.find(b=>score>=b[0]); let label=band[1], key=band[2], short=band[3];
+  if(j.hard){ label="Not recommended"; key="notrec"; short="Not rec."; }
+  return {dims,score,label,key,short};
+}
+const fillFor = k => ({excellent:"fill-good",strong:"fill-good",partial:"fill-caution",low:"fill-neutral",notrec:"fill-bad"})[k];
+const bandClass = k => "b-"+k;
+/* Evidence for a dimension: explicit per job when available, otherwise derived from the job's fields (mock-up only) */
+function evidenceFor(j,i,d){
+  if(j.evd && j.evd[ORDER[i]]) return j.evd[ORDER[i]];
+  if(d.status==="unknown") return null;
+  const fallback=[j.ev[0],"Profile fact compared","",j.mode+" work","Seniority","Sector","Compensation","Company"];
+  return [i===2?j.loc:i===3?j.type+" position":j.ev[0], "Compared with your profile and intent", i===2?j.mode:""];
+}
+function popHtml(j,i,d){
+  const e=evidenceFor(j,i,d);
+  if(!e) return `<div class="pop" role="tooltip"><h4>What the posting says</h4><blockquote>Not stated in the posting.</blockquote><p class="why">Missing information is shown as unknown and adds nothing to the score.</p><div class="foot">Judged by local model · prompt extract-v1</div></div>`;
+  const quote = e[2] ? e[0].replace(e[2], `<mark>${e[2]}</mark>`) : e[0];
+  return `<div class="pop" role="tooltip"><h4>What the posting says</h4><blockquote>“${quote}”</blockquote>
+    <h4>Compared with your profile</h4><p class="why">${e[1]}</p><div class="foot">Judged by local model qwen3:8b · prompt extract-v1 · ${d.status==="match"?"match":d.status}</div></div>`;
+}
+/* Key signals shown on each card: the facts that usually decide "look or skip" */
+function signalsFor(j,e){
+  if(e.pending) return [["Awaiting evaluation","unknown"]];
+  /* a match with low strength is shown as partial (~), not as a full match */
+  const st=i=>{ const d=e.dims[i]; return (d.status==="match" && j.s[ORDER[i]]<0.5) ? "partial" : d.status; };
+  return [[j.mode+(j.mode==="Remote"?" · EU":""),st(2)],[j.type,st(3)],[st(4)==="unknown"?"Pay not stated":"Pay stated",st(4)]];
+}
+
+/* ---------- Inbox rendering ---------- */
+let tab="unread", sel=1, lastAction=null, toastTimer=null;
+const TABS=[["unread","To review"],["updated","Updated"],["shortlist","Shortlist"],["read","Reviewed"],["ignored","Ignored"],["archived","Archived"],["applied","Applied"]];
+const matches = (j,t)=> t==="shortlist"? j.star : (t==="unread"? (j.state==="unread") : (j.state===t));
+const sorted = list => list.slice().sort((a,b)=> (evaluate(b).score??-1)-(evaluate(a).score??-1));
+const ICON={match:"✓",mismatch:"✕",unknown:"?",partial:"~"};
+function renderTabs(){
+  document.getElementById("tabs").innerHTML = TABS.map(([k,l])=>{
+    const n = JOBS.filter(j=>matches(j,k)).length;
+    return `<button class="tab" role="tab" data-tab="${k}" aria-selected="${tab===k}">${l}<span class="n">${n}</span></button>`;}).join("");
+  document.getElementById("nav-unread").textContent = JOBS.filter(j=>j.state==="unread"||j.state==="updated").length;
+}
+function fitHtml(e){
+  if(e.pending) return `<span class="band b-low" title="Evaluation queued">Not evaluated</span>`;
+  return `<span class="fit"><span class="score num">${e.score}</span><span class="meter" aria-hidden="true"><span class="${fillFor(e.key)}" style="width:${e.score}%"></span></span><span class="band ${bandClass(e.key)}">${e.label}</span></span>`;
+}
+function renderRows(){
+  const list = sorted(JOBS.filter(j=>matches(j,tab)));
+  const el = document.getElementById("rows");
+  if(!list.length){ el.innerHTML = `<div class="empty-note">Nothing here.</div>`; document.getElementById("detail").innerHTML=""; return; }
+  if(!list.find(j=>j.id===sel)) sel=list[0].id;
+  el.innerHTML = list.map(j=>{ const e=evaluate(j);
+    const isNew = (j.state==="unread"||j.state==="updated");
+    const tile = e.pending ? `<div class="tile pending"><div class="n">—</div><div class="l">Pending</div></div>`
+                           : `<div class="tile ${bandClass(e.key)}"><div class="n">${e.score}</div><div class="l">${e.short}</div></div>`;
+    return `<div class="row ${j.state}" role="option" tabindex="-1" data-id="${j.id}" aria-selected="${j.id===sel}">
+      ${tile}
+      <div style="min-width:0">
+        <div class="r-title">${j.star?'<span class="star" aria-label="Shortlisted">★</span>':''}<span class="t-text">${j.title}</span>${isNew?`<span class="new">${j.state==="updated"?"UPDATED":"NEW"}</span>`:''}</div>
+        <div class="r-meta"><span>${j.company}</span><span class="sep">·</span><span>${j.loc}</span></div>
+        <div class="signals">${signalsFor(j,e).map(([t,s])=>`<span class="sig ${s}"><span class="i ${s}" aria-hidden="true">${ICON[s]}</span>${t}<span class="sr-only"> (${s})</span></span>`).join("")}</div>
+      </div>
+      <div class="r-right"><span>${j.age} ago</span>${j.sites.length>1?`<span>${j.sites.length} sites</span>`:''}${j.state==="ignored"||j.state==="archived"||j.state==="applied"?`<span class="chip">${j.state}</span>`:''}</div></div>`;}).join("");
+  renderDetail();
+}
+function actionsHtml(j){
+  const star = `<button class="btn" data-act="star">${j.star?"★ Shortlisted — remove":"☆ Shortlist"} <kbd>s</kbd></button>`;
+  if(j.state==="ignored"||j.state==="archived")
+    return `<button class="btn primary" data-act="restore">↩ Restore <kbd>r</kbd></button><button class="btn" data-act="open">Open original ↗</button>${star}`;
+  if(j.state==="applied")
+    return `<button class="btn primary" data-act="restore">↩ Undo applied <kbd>r</kbd></button><button class="btn" data-act="open">Open original ↗</button>${star}`;
+  return `<button class="btn primary" data-act="open">Open original ↗</button>${star}
+     <button class="btn" data-act="ignore">Ignore <kbd>x</kbd></button><button class="btn" data-act="archive">Archive <kbd>e</kbd></button><button class="btn ghost" data-act="applied">Mark applied <kbd>a</kbd></button>`;
+}
+function renderDetail(){
+  const j = JOBS.find(x=>x.id===sel); const el=document.getElementById("detail");
+  if(!j){ el.innerHTML=""; return; }
+  const e = evaluate(j);
+  const dimsHtml = e.pending ? `<p class="muted" style="margin:0">This job is queued for evaluation by the local model. You can still read it and decide manually.</p>` :
+    e.dims.map((d,i)=>`<div class="dim ${i>=5?"up":""}" tabindex="0" aria-label="${d.name}: ${d.status}, ${d.pts} of ${d.weight} points. Show evidence"><span class="st ${d.status}" aria-hidden="true">${ICON[d.status]}</span>
+      <div><div class="d-name">${d.name}<span class="stl">${d.status==="unknown"?"Unknown — not stated":d.status==="match"?"Match":"Mismatch"}</span></div></div>
+      <div class="d-pts num">${d.pts}<small>of ${d.weight}</small></div>${popHtml(j,i,d)}</div>`).join("");
+  const stateNote = (j.state==="ignored"||j.state==="archived"||j.state==="applied") ?
+    `<div class="state-note"><span>This job is <strong>${j.state}</strong>${j.state==="applied"?" (application recorded)":""}.</span></div>` : "";
+  el.innerHTML = `
+   <div class="d-head">
+     <h2>${j.title}</h2>
+     <div class="muted">${j.company} · ${j.loc}</div>
+     <div class="d-chips"><span class="chip">${j.mode}</span><span class="chip">${j.type}</span><span class="chip">First seen ${j.age} ago</span>${j.star?'<span class="chip accent">★ Shortlisted</span>':''}</div>
+     ${e.pending?`<div class="d-score"><span class="band b-low">Not evaluated</span></div>`:
+     `<div class="d-score"><div class="big num">${e.score}<small>/100</small></div>
+        <div style="flex:1"><div class="band ${bandClass(e.key)}" style="display:inline-block;margin-bottom:6px">${e.label}</div>
+        <div class="meter lg" role="meter" aria-label="Fit score" aria-valuenow="${e.score}" aria-valuemin="0" aria-valuemax="100" aria-valuetext="${e.score} out of 100, ${e.label}"><span class="${fillFor(e.key)}" style="width:${e.score}%"></span></div></div></div>`}
+     ${stateNote}${j.change?`<div class="change"><strong>Updated:</strong> ${j.change}</div>`:''}
+   </div>
+   ${j.narr?`<div class="d-section"><h3>Summary <span class="tag-ai">AI-generated</span></h3><p class="narr">${j.narr}</p></div>`:''}
+   <div class="d-section"><h3>Why this score <span class="faint" style="text-transform:none;letter-spacing:0;font-weight:400">· hover or focus a row to see the posting's words</span></h3>${dimsHtml}
+     ${e.pending?'':`<p class="hint" style="margin:8px 0 0">Unknown facts add nothing to the score. Policy matching-v1 · profile rev 3 · intent rev 2.</p>`}</div>
+   <div class="d-section" style="padding-top:6px;padding-bottom:6px">
+     <details><summary>Evidence from the job text <span class="tag-source">Source</span></summary>${j.ev.map(t=>`<blockquote>“${t}”</blockquote>`).join("")}</details>
+     <details><summary>Full description</summary><p class="muted" style="margin:4px 0 8px">The complete original posting appears here, exactly as published.</p></details>
+     <details><summary>Where this job was seen (${j.sites.length})</summary><div class="seen-on" style="padding-bottom:8px">${j.sites.map((s,i)=>`<span>${i===0?'<strong>'+s+'</strong> <span class="chip">primary</span>':s}</span>`).join("")}${j.sites.length>1?'<span class="hint">Linked as one opportunity — same company, title and description.</span>':''}</div></details>
+   </div>
+   <div class="d-section"><h3>Company</h3><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><strong>${j.company}</strong><div class="muted">Direct employer · 14 open roles</div></div><button class="btn sm" data-goto="companies">Open dossier</button></div></div>
+   <div class="actions">${actionsHtml(j)}</div>`;
+}
+function setSel(id){ sel=id; document.querySelectorAll(".row").forEach(r=>r.setAttribute("aria-selected", +r.dataset.id===id)); renderDetail(); const r=document.querySelector(`.row[data-id="${id}"]`); r&&r.scrollIntoView({block:"nearest"}); }
+const MSG={star:j=>j.star?"Added to shortlist":"Removed from shortlist",ignore:()=>"Ignored",archive:()=>"Archived",applied:()=>"Marked as applied",restore:()=>"Restored",unread:()=>"Marked unread"};
+function act(a){ const j=JOBS.find(x=>x.id===sel); if(!j) return;
+  if(a==="open") return;
+  lastAction={id:j.id,state:j.state,star:j.star};
+  if(a==="star") j.star=!j.star; else if(a==="ignore") j.state="ignored"; else if(a==="archive") j.state="archived"; else if(a==="applied") j.state="applied";
+  else if(a==="unread") j.state="unread"; else if(a==="restore") j.state="read";
+  renderTabs(); renderRows(); toast(MSG[a](j)); }
+function undo(){ if(!lastAction) return; const j=JOBS.find(x=>x.id===lastAction.id); j.state=lastAction.state; j.star=lastAction.star; sel=j.id; lastAction=null; hideToast(); renderTabs(); renderRows(); }
+function toast(msg){ const t=document.getElementById("toast"); t.innerHTML=`<span>${msg}</span><button data-act-undo>Undo <kbd>z</kbd></button>`; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(hideToast,7000); }
+function hideToast(){ document.getElementById("toast").classList.remove("show"); }
+
+document.addEventListener("click",ev=>{
+  const row=ev.target.closest(".row"); if(row){ setSel(+row.dataset.id); return; }
+  if(ev.target.closest("[data-act-undo]")){ undo(); return; }
+  const tabBtn=ev.target.closest("[data-tab]"); if(tabBtn){ tab=tabBtn.dataset.tab; renderTabs(); renderRows(); return; }
+  const actBtn=ev.target.closest("button[data-act]"); if(actBtn){ act(actBtn.dataset.act); return; }
+  const go=ev.target.closest("[data-goto]"); if(go){ show(go.dataset.goto); return; }
+  const nav=ev.target.closest(".nav-item[data-view]"); if(nav){ show(nav.dataset.view); return; }
+  /* NOTE: selectors are restricted to <button>: the <html> element also carries data-accent/data-theme/data-density */
+  const ac=ev.target.closest("button[data-accent]"); if(ac){ document.documentElement.dataset.accent=ac.dataset.accent; pressed("button[data-accent]",ac); return; }
+  const th=ev.target.closest("button[data-theme]"); if(th){ document.documentElement.dataset.theme=th.dataset.theme; pressed("button[data-theme]",th); return; }
+  const dn=ev.target.closest("button[data-density]"); if(dn){ document.documentElement.dataset.density=dn.dataset.density; pressed("button[data-density]",dn); return; }
+  if(ev.target.closest("#help-btn")) document.getElementById("help").classList.add("open");
+  if(ev.target.id==="help") document.getElementById("help").classList.remove("open");
+});
+function pressed(sel,btn){ document.querySelectorAll(sel).forEach(b=>b.setAttribute("aria-pressed", b===btn)); }
+document.addEventListener("keydown",ev=>{
+  if(/input|select|textarea/i.test(ev.target.tagName)) return;
+  if(!document.getElementById("view-inbox").classList.contains("active")) return;
+  const rows=[...document.querySelectorAll(".row")]; const idx=rows.findIndex(r=>+r.dataset.id===sel);
+  if(ev.key==="j"&&rows[idx+1]) setSel(+rows[idx+1].dataset.id);
+  else if(ev.key==="k"&&rows[idx-1]) setSel(+rows[idx-1].dataset.id);
+  else if(ev.key==="s") act("star"); else if(ev.key==="x") act("ignore"); else if(ev.key==="e") act("archive"); else if(ev.key==="a") act("applied"); else if(ev.key==="u") act("unread"); else if(ev.key==="r") act("restore"); else if(ev.key==="z") undo();
+  else if(ev.key==="?") document.getElementById("help").classList.add("open");
+  else if(ev.key==="Escape") document.getElementById("help").classList.remove("open");
+  else if(ev.key==="/"){ ev.preventDefault(); document.querySelector(".search input").focus(); }
+});
+
+const TITLES={today:"Today",inbox:"Inbox",companies:"Companies",trends:"Trends",sources:"Sources",profile:"Profile & intent",settings:"AI & privacy"};
+function show(v){
+  document.querySelectorAll(".view").forEach(s=>s.classList.toggle("active", s.id==="view-"+v));
+  document.querySelectorAll(".nav-item[data-view]").forEach(b=>{ if(b.dataset.view===v) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current"); });
+  document.getElementById("page-title").textContent=TITLES[v]; history.replaceState(null,"","#"+v);
+}
+
+/* ---------- Sparklines & tables ---------- */
+function spark(values,{w=96,h=26,color="var(--accent)"}={}){
+  const min=Math.min(...values), max=Math.max(...values), rng=(max-min)||1;
+  const pts=values.map((v,i)=>[ (i/(values.length-1))*(w-4)+2, h-3-((v-min)/rng)*(h-6) ]);
+  const d=pts.map((p,i)=>(i?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1)).join(" ");
+  const last=pts[pts.length-1];
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" aria-hidden="true"><path d="${d}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${last[0]}" cy="${last[1]}" r="2.2" fill="${color}"/></svg>`;
+}
+function trendRows(rows){
+  return `<thead><tr><th>Name</th><th class="r">Now</th><th class="r">Change</th><th>Weekly</th></tr></thead><tbody>`+rows.map(([n,now,ch,vals])=>{
+    const cls=ch>0?"up":ch<0?"down":"flat"; const arrow=ch>0?"▲":ch<0?"▼":"–";
+    return `<tr><td>${n}</td><td class="r">${now}</td><td class="r"><span class="delta ${cls}">${arrow} ${Math.abs(ch)}%</span></td><td>${spark(vals)}</td></tr>`;}).join("")+`</tbody>`;
+}
+document.getElementById("tech-table").innerHTML = trendRows([
+  ["Python",48,12,[38,40,41,43,44,46,48]],["LLM evaluation",31,34,[18,20,22,25,27,29,31]],["TypeScript",27,4,[25,26,26,27,26,27,27]],
+  ["Kubernetes",22,-9,[26,25,24,24,23,22,22]],["Java",17,-15,[22,21,20,19,18,17,17]],["RAG / vector search",15,41,[7,8,10,11,12,14,15]]]);
+document.getElementById("role-table").innerHTML = trendRows([
+  ["AI / solutions architect",19,27,[12,13,14,16,17,18,19]],["Software developer",41,6,[37,38,38,40,39,41,41]],["Data / ML engineer",23,0,[23,22,23,23,24,23,23]],
+  ["Analyst",9,-22,[14,13,12,11,10,9,9]],["Consultant (AI)",12,18,[9,9,10,10,11,11,12]]]);
+
+const SRC=[["Northwind Labs","ok","OK",86,5,1,"Today 07:30"],["Contoso Robotics","ok","OK",42,3,0,"Today 07:30"],["Fabrikam Data","ok","OK",31,2,1,"Today 07:30"],
+ ["Quill Analytics","warn","Slow",24,0,0,"Today 07:31 · 1 retry after HTTP 429"],["Harbor Systems","fail","Failed",0,0,0,"Today 07:31","Board token not found (HTTP 404). Check the token or remove this board."],
+ ["Orbit Consulting","idle","Never run",0,0,0,"—"]];
+document.getElementById("src-body").innerHTML = SRC.map(s=>`<tr><td><strong>${s[0]}</strong></td>
+  <td><span class="status ${s[1]}">${s[1]==="ok"?"✓":s[1]==="warn"?"!":s[1]==="fail"?"✕":"○"} ${s[2]}</span>${s[7]?`<div class="err">${s[7]}</div>`:''}</td>
+  <td class="r">${s[3]}</td><td class="r">${s[4]}</td><td class="r">${s[5]}</td><td class="muted">${s[6]}</td>
+  <td class="actions"><button class="btn sm">Run</button> <button class="btn sm ghost">Edit</button></td></tr>`).join("");
+document.getElementById("today-list").innerHTML = sorted(JOBS.filter(j=>["unread","updated"].includes(j.state)&&!j.pending)).slice(0,4).map(j=>{const e=evaluate(j);
+  return `<li><div style="flex:1;min-width:0"><div style="font-weight:600">${j.title}</div><div class="muted">${j.company} · ${j.loc}</div></div>${fitHtml(e)}</li>`;}).join("");
+
+/* ---------- Companies (list + search + sort + dossier) ---------- */
+/* o = new offers seen in the last 7/15/30 days (all); r = same, relevant to the profile only */
+const COMPANIES=[
+ {n:"Northwind Labs",type:"Direct employer",sector:"Developer tooling",o:[9,18,36],r:[4,7,13],open:86,tech:["Python","TypeScript","Kubernetes","LLM evaluation"],home:"northwind.example",careers:"northwind.example/careers",wk:[2,3,4,4,6,8,9],jobs:[1,6]},
+ {n:"Contoso Robotics",type:"Direct employer",sector:"Robotics",o:[7,13,27],r:[3,5,9],open:42,tech:["Python","C++","ROS"],home:"contoso-robotics.example",careers:"contoso-robotics.example/jobs",wk:[3,3,4,5,5,6,7],jobs:[2,7,10]},
+ {n:"Fabrikam Data",type:"Direct employer",sector:"Data & analytics",o:[6,11,24],r:[2,4,8],open:31,tech:["SQL","Python","dbt"],home:"fabrikam.example",careers:"fabrikam.example/careers",wk:[3,3,4,4,5,5,6],jobs:[3,8]},
+ {n:"Tailspin Cloud",type:"Direct employer",sector:"Cloud infrastructure",o:[8,15,31],r:[1,3,6],open:58,tech:["Go","Kubernetes","Terraform"],home:"tailspin.example",careers:"tailspin.example/careers",wk:[5,6,6,7,7,8,8],jobs:[]},
+ {n:"Litware AI",type:"Direct employer",sector:"Applied AI",o:[5,9,21],r:[3,6,11],open:19,tech:["Python","PyTorch","RAG"],home:"litware.example",careers:"litware.example/careers",wk:[1,2,2,3,4,4,5],jobs:[]},
+ {n:"Quill Analytics",type:"Direct employer",sector:"Analytics software",o:[4,9,19],r:[1,2,3],open:24,tech:["Python","PyTorch","Spark"],home:"quill.example",careers:"quill.example/careers",wk:[3,3,3,4,4,4,4],jobs:[5]},
+ {n:"Proseware Health",type:"Direct employer",sector:"Health tech",o:[4,8,15],r:[0,1,2],open:21,tech:["Java","FHIR"],home:"proseware.example",careers:"proseware.example/careers",wk:[2,2,3,3,3,4,4],jobs:[]},
+ {n:"Harbor Systems",type:"Direct employer",sector:"Enterprise software",o:[3,5,12],r:[1,2,4],open:17,tech:["Java","Policy / governance"],home:"harbor.example",careers:"harbor.example/careers",wk:[1,2,2,2,3,3,3],jobs:[4]},
+ {n:"Orbit Consulting",type:"Agency / consultancy",sector:"IT consulting",o:[2,6,10],r:[1,3,5],open:12,tech:["Various"],home:"orbit-consulting.example",careers:"orbit-consulting.example/work",wk:[1,1,2,2,2,2,2],jobs:[9]},
+ {n:"Margie's Logistics",type:"Direct employer",sector:"Logistics",o:[2,3,9],r:[0,1,1],open:9,tech:["Java","SQL"],home:"margies.example",careers:"margies.example/careers",wk:[1,1,1,2,2,2,2],jobs:[]},
+ {n:"Adventure Works Tech",type:"Direct employer",sector:"Retail technology",o:[1,3,7],r:[0,1,2],open:11,tech:["TypeScript","Node.js"],home:"adventure-works.example",careers:"adventure-works.example/jobs",wk:[0,1,1,1,2,2,1],jobs:[]},
+ {n:"Wingtip Systems",type:"Direct employer",sector:"Industrial software",o:[0,2,6],r:[0,1,1],open:8,tech:["C#",".NET"],home:"wingtip.example",careers:"wingtip.example/careers",wk:[1,1,1,1,1,0,0],jobs:[]},
+ {n:"Lucerne Publishing",type:"Direct employer",sector:"Media",o:[1,2,4],r:[0,0,1],open:5,tech:["Python","CMS"],home:"lucerne.example",careers:"lucerne.example/careers",wk:[0,1,1,1,1,1,1],jobs:[]},
+ {n:"Alpine Ski House",type:"Direct employer",sector:"Travel & leisure",o:[0,1,3],r:[0,0,0],open:3,tech:["PHP"],home:"alpine.example",careers:"alpine.example/jobs",wk:[0,0,1,1,1,0,0],jobs:[]},
+];
+let cq="", cper=15, crel=false, csel="Northwind Labs";
+function cmpData(){ const idx={7:0,15:1,30:2}[cper];
+  return COMPANIES.filter(c=>c.n.toLowerCase().includes(cq.toLowerCase())).map(c=>({c,v:(crel?c.r:c.o)[idx]})).sort((a,b)=>b.v-a.v||a.c.n.localeCompare(b.c.n)); }
+function renderCompanyList(){
+  const data=cmpData(); const el=document.getElementById("cmp-items");
+  document.getElementById("cmp-count").textContent = `${data.length} of ${COMPANIES.length} companies · sorted by new offers in the last ${cper} days${crel?" (relevant only)":""}`;
+  if(!data.length){ el.innerHTML='<div class="empty-note">No company matches.</div>'; return; }
+  el.innerHTML=data.map(({c,v},i)=>`<div class="cmp-item" role="option" tabindex="0" data-c="${c.n}" aria-selected="${c.n===csel}"><span class="rk">${i+1}</span><div style="min-width:0"><div class="nm">${c.n}</div><div class="sub">${c.type} · ${c.sector}</div></div><div class="cnt"><b>${v}</b><span>new in ${cper} d</span></div></div>`).join("");
+}
+function renderCompanyDetail(){
+  const c=COMPANIES.find(x=>x.n===csel)||COMPANIES[0]; const idx={7:0,15:1,30:2}[cper];
+  const jobs=c.jobs.map(id=>JOBS.find(j=>j.id===id)).filter(Boolean);
+  document.getElementById("cmp-detail").innerHTML=`
+   <div style="display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap">
+     <div><h2 class="page-title">${c.n}</h2><p class="page-sub">${c.type} · ${c.sector} · ${c.open} open roles · first seen 2026-10-08</p></div>
+     <div class="links"><a class="btn sm" href="#" aria-label="Homepage of ${c.n}">🌐 Homepage ↗</a><a class="btn sm" href="#" aria-label="Careers site of ${c.n}">Careers site ↗</a></div></div>
+   <div class="banner">Facts carry a label: <span class="tag-source">Source</span> comes from the job page, careers site or a named public dataset; <span class="tag-ai">AI inference</span> is the model's interpretation and may be wrong.</div>
+   <div class="grid2">
+     <div class="card pad"><h3 style="margin-bottom:10px">Profile</h3><dl class="facts">
+       <dt>Homepage</dt><dd><a href="#">${c.home}</a> <span class="tag-source">Wikidata · 2026-10-08</span></dd>
+       <dt>Careers site</dt><dd><a href="#">${c.careers}</a> <span class="tag-source">Job board</span></dd>
+       <dt>Type</dt><dd>${c.type} <span class="tag-source">Source</span></dd>
+       <dt>Sector</dt><dd>${c.sector} <span class="tag-ai">AI inference</span></dd>
+       <dt>Size</dt><dd class="muted">Not stated <span class="chip">unknown</span></dd>
+       <dt>Technologies seen</dt><dd>${c.tech.map(t=>`<span class="chip">${t}</span>`).join("")}</dd></dl></div>
+     <div class="card pad"><h3>New offers per week <span class="faint" style="font-weight:400">· last 7 weeks</span></h3>
+       <div style="display:flex;align-items:end;gap:18px;margin-top:10px"><div><div class="big-num num">${c.o[idx]}</div><div class="stat-label">new in ${cper} days</div></div>${spark(c.wk,{w:150,h:44})}</div>
+       <p class="hint" style="margin-top:10px"><strong>${c.r[idx]}</strong> of them are relevant to your profile. History starts 2026-10-08.</p></div>
+   </div>
+   <div class="card"><div class="card-head"><h3>Offers from this company</h3><span class="hint">${jobs.length?"sorted by fit":"none in the current mock data"}</span></div>
+     <div class="pad" style="padding-top:2px;padding-bottom:6px"><ul class="list-plain">${sorted(jobs).map(j=>`<li><div style="flex:1;min-width:0"><div style="font-weight:600">${j.title}</div><div class="muted">${j.loc} · ${j.age} ago</div></div>${fitHtml(evaluate(j))}</li>`).join("")||'<li class="muted">No offers to show in this mock-up.</li>'}</ul></div></div>
+   <div class="card pad"><h3>Summary <span class="tag-ai">AI-generated</span></h3><p class="narr" style="margin-top:6px">${c.n} appears to be hiring in ${c.sector.toLowerCase()}, with ${c.r[2]} offers in the last 30 days that match your profile. <span class="faint">(Synthetic text for the mock-up.)</span></p></div>`;
+}
+document.addEventListener("click",ev=>{
+  const it=ev.target.closest(".cmp-item"); if(it){ csel=it.dataset.c; renderCompanyList(); renderCompanyDetail(); return; }
+  const pb=ev.target.closest("#cmp-period button"); if(pb){ cper=+pb.dataset.p; pressed("#cmp-period button",pb); renderCompanyList(); renderCompanyDetail(); }
+});
+document.getElementById("cmp-q").addEventListener("input",e=>{ cq=e.target.value; renderCompanyList(); });
+document.getElementById("cmp-rel").addEventListener("change",e=>{ crel=e.target.checked; renderCompanyList(); });
+document.addEventListener("keydown",ev=>{ if((ev.key==="Enter"||ev.key===" ")&&ev.target.classList&&ev.target.classList.contains("cmp-item")){ ev.preventDefault(); ev.target.click(); } });
+
+/* ---------- Profile & intent ---------- */
+document.addEventListener("click",ev=>{
+  const tb=ev.target.closest("[data-pitab]"); if(tb){
+    document.querySelectorAll("[data-pitab]").forEach(b=>b.setAttribute("aria-selected", b===tb));
+    document.querySelectorAll(".pi-panel").forEach(p=>p.classList.toggle("active", p.dataset.panel===tb.dataset.pitab)); }
+});
+document.addEventListener("input",ev=>{ if(ev.target.hasAttribute&&ev.target.hasAttribute("data-dirty")) document.getElementById("dirty-bar").classList.add("show"); });
+document.addEventListener("change",ev=>{ if(ev.target.hasAttribute&&ev.target.hasAttribute("data-dirty")) document.getElementById("dirty-bar").classList.add("show"); });
+document.getElementById("alert-th").addEventListener("input",e=>{ document.getElementById("alert-val").textContent="≥ "+e.target.value; document.getElementById("dirty-bar").classList.add("show"); });
+
+/* CV proposal review */
+const PROPOSALS=[
+ {path:"Skill",val:"Python — Expert, 10 years",q:"“10+ years of Python across backend and data projects”",c:94},
+ {path:"Skill",val:"Kubernetes — Intermediate, 4 years",q:"“Deployed services on Kubernetes (AKS/EKS)”",c:81},
+ {path:"Experience",val:"Solutions Architect · Example Corp · 2019–2024",q:"“Solutions Architect, Example Corp (2019–2024)”",c:97},
+ {path:"Language",val:"Portuguese (native), English (fluent)",q:"“Languages: Portuguese (native), English (fluent)”",c:90},
+ {path:"Skill",val:"Rust — Advanced, 6 years",q:"“Familiar with Rust for tooling”",c:42},
+ {path:"Location",val:"Lisbon, Portugal",q:"“Lisbon, PT”",c:96},
+];
+const DEC={}; 
+function renderReview(){
+  document.getElementById("rv-list").innerHTML=PROPOSALS.map((p,i)=>{ const d=DEC[i]||"pending";
+    return `<div class="rv ${d}"><div><div class="path">${p.path} <span class="tag-ai">AI proposal</span><span class="conf">confidence ${p.c}%</span></div><div class="val">${p.val}</div><span class="qt">${p.q}</span></div>
+    <div class="seg" role="group" aria-label="Decision for ${p.val}">${["accepted:Accept","edited:Edit","rejected:Reject","deferred:Defer"].map(x=>{const [k,l]=x.split(":");return `<button data-dec="${i}:${k}" aria-pressed="${d===k}">${l}</button>`;}).join("")}</div></div>`;}).join("");
+  const n=Object.keys(DEC).length; document.getElementById("rv-count").textContent=`${n} of ${PROPOSALS.length} decided`;
+}
+document.addEventListener("click",ev=>{ const b=ev.target.closest("[data-dec]"); if(b){ const [i,k]=b.dataset.dec.split(":"); DEC[i]=k; renderReview(); } });
+renderReview();
+
+/* Scoring weights */
+const WDEF=[25,15,15,10,10,8,10,7,0,0]; let W=WDEF.slice();
+const WDESC=[
+ "How well the job's role and day-to-day responsibilities match the role families you prefer. A role family you marked Reject rules the job out.",
+ "Overlap between the skills and technologies the posting asks for and those in your profile. The technology stack is a frequent deal-breaker for developers.",
+ "Remote, hybrid or on-site, and whether the place fits: eligible regions and time zone for remote work, distance from your base for hybrid or on-site. An arrangement you marked Reject rules the job out.",
+ "Employment type and terms (contract, freelance, permanent, part-time) compared with what you prefer. Types you marked Reject rule the job out.",
+ "The stated salary or day rate compared with your expectation, using the right form (annual salary or day rate). If pay is not stated it is unknown and adds nothing.",
+ "Whether the level the job asks for matches your experience and the levels you prefer.",
+ "The industry or domain of the employer and product compared with the sectors you prefer, accept or reject.",
+ "Employer type (direct employer, agency), size and how clearly the company and role are described.",
+ "Optional. Benefits and flexibility the posting mentions, such as equity, learning budget, four-day week or flexible hours. Off by default because postings state them inconsistently.",
+ "Optional. Education or certifications the posting asks for compared with yours. Off by default."];
+function weightsTotal(){ return W.reduce((a,b)=>a+b,0); }
+function bandOf(score,hard){ if(hard) return ["Not recommended","notrec"]; const b=BANDS.find(x=>score>=x[0]); return [b[1],b[2]]; }
+function scoreWith(j,w){ const sum=w.reduce((a,b)=>a+b,0); if(!j.s||!sum) return null; let t=0; for(let i=0;i<8;i++){ const s=j.s[ORDER[i]]; if(s) t+=w[i]*s; } return Math.round(100*t/sum); }
+function renderWeights(){
+  document.getElementById("w-list").innerHTML=ALL_DIMS.map((n,i)=>(i===8?'<div class="wgroup">Optional criteria · off by default</div>':'')+`<div class="wrow" id="wrow-${i}">
+    <span class="wlabel" tabindex="0">${n}<span class="info" aria-hidden="true">i</span><span class="pop" role="tooltip"><h4>${n}</h4><p class="why" style="margin:0">${WDESC[i]}</p></span></span>
+    <div><input type="range" min="0" max="40" value="${W[i]}" data-w="${i}" aria-label="${n} weight"><div class="wdef">default ${WDEF[i]} <a href="#" data-wreset="${i}" id="wr-${i}" style="display:none">· reset</a></div></div>
+    <div class="wval"><b id="wv-${i}">${W[i]}</b><span id="ws-${i}"></span></div></div>`).join("");
+  updateWeights();
+}
+function updateWeights(){
+  const tot=weightsTotal();
+  W.forEach((v,i)=>{ document.getElementById("wv-"+i).textContent=v; document.getElementById("ws-"+i).textContent=v===0?"Excluded from score":(tot?Math.round(100*v/tot)+"% of score":"—"); document.getElementById("wrow-"+i).classList.toggle("off",v===0);
+    const mod=v!==WDEF[i]; const el=document.getElementById("wv-"+i); el.classList.toggle("wmod",mod); document.getElementById("wr-"+i).style.display=mod?"inline":"none"; });
+  document.getElementById("w-warn").style.display=tot?"none":"block";
+  const rows=JOBS.filter(j=>j.s).map(j=>({j,old:evaluate(j).score,now:scoreWith(j,W)})).filter(r=>r.now!==null).sort((a,b)=>b.now-a.now).slice(0,7);
+  document.getElementById("w-preview").innerHTML=rows.map(({j,old,now})=>{ const d=now-old; const [lab,key]=bandOf(now,j.hard);
+    return `<div class="pv"><div style="min-width:0"><div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${j.title}</div><div class="muted" style="font-size:12px">${j.company} · <span class="band ${bandClass(key)}" style="padding:0 6px">${lab}</span></div></div>
+      <div class="d ${d>0?"up":d<0?"down":"same"}">${old} → ${now} <span aria-hidden="true">${d>0?"▲":d<0?"▼":"–"}</span><span class="sr-only">${d>0?"up":d<0?"down":"unchanged"}</span></div></div>`;}).join("")||'<p class="muted">Set at least one weight above 0.</p>';
+}
+document.addEventListener("input",ev=>{ const s=ev.target.dataset&&ev.target.dataset.w; if(s!==undefined){ W[+s]=+ev.target.value; updateWeights(); document.getElementById("dirty-bar").classList.remove("show"); } });
+document.addEventListener("click",ev=>{
+  const r=ev.target.closest("[data-wreset]"); if(r){ ev.preventDefault(); const i=+r.dataset.wreset; W[i]=WDEF[i]; document.querySelector(`[data-w="${i}"]`).value=WDEF[i]; updateWeights(); }
+  if(ev.target.closest("#w-reset")){ W=WDEF.slice(); renderWeights(); } });
+renderWeights();
+
+/* Intent stances (Preferred / OK / Reject) — example data reflects a real search: AI or telecom billing preferred, general software engineering acceptable */
+const STANCE=[["P","Preferred"],["A","OK"],["R","Reject"]];
+const INTENT={
+ roles:[["AI solutions & AI engineering","P"],["Telecom billing (BSS/OSS)","P"],["Software engineer (general)","A"],["Data analyst","R"],["Sales / account management","R"]],
+ work:[["Remote","P"],["Hybrid","A"],["On-site","A"]],
+ engagement:[["Contract / B2B","P"],["Freelance","P"],["Permanent employee","A"],["Fixed-term employee","A"],["Part-time","R"],["Internship","R"]],
+ seniority:[["Junior","R"],["Mid-level","A"],["Senior","P"],["Staff / Principal","P"],["Management","A"]],
+ sectors:[["Telecom","P"],["Enterprise IT","P"],["Finance","A"],["Public sector","A"],["Gambling","R"],["Defence","R"]],
+ employer:[["Direct employer","P"],["Agency / recruiter","A"],["Consultancy / outsourcer","A"]],
+};
+function renderStances(key){
+  document.getElementById("st-"+key).innerHTML=INTENT[key].map(([label,s],i)=>`<div class="strow"><span>${label}</span><span class="seg stance" role="group" aria-label="${label}">${STANCE.map(([k,l])=>`<button data-stance="${key}:${i}:${k}" class="s-${k}" aria-pressed="${s===k}">${l}</button>`).join("")}</span></div>`).join("");
+}
+Object.keys(INTENT).forEach(renderStances);
+document.addEventListener("click",ev=>{ const b=ev.target.closest("[data-stance]"); if(b){ const [key,i,k]=b.dataset.stance.split(":"); INTENT[key][+i][1]=k; renderStances(key); document.getElementById("dirty-bar").classList.add("show"); } });
+
+/* Employee pay: monthly and annual fields are linked; annual is canonical, 12 or 14 payments per year */
+let payN=14; const PAY={minA:60000,tgtA:75000};
+const fmt=n=>Number.isFinite(n)?Math.round(n).toLocaleString("en-GB").replace(/,/g," "):"";
+const num=v=>parseFloat(String(v).replace(/[\s,]/g,""));
+function renderPay(){ document.getElementById("pay-min-a").value=fmt(PAY.minA); document.getElementById("pay-tgt-a").value=fmt(PAY.tgtA);
+  document.getElementById("pay-min-m").value=fmt(PAY.minA/payN); document.getElementById("pay-tgt-m").value=fmt(PAY.tgtA/payN); }
+[["pay-min-m","pay-min-a","minA"],["pay-tgt-m","pay-tgt-a","tgtA"]].forEach(([mId,aId,key])=>{
+  const mEl=document.getElementById(mId), aEl=document.getElementById(aId);
+  mEl.addEventListener("input",()=>{ const v=num(mEl.value); if(!Number.isFinite(v)) return; PAY[key]=v*payN; aEl.value=fmt(PAY[key]); document.getElementById("dirty-bar").classList.add("show"); });
+  aEl.addEventListener("input",()=>{ const v=num(aEl.value); if(!Number.isFinite(v)) return; PAY[key]=v; mEl.value=fmt(v/payN); document.getElementById("dirty-bar").classList.add("show"); });
+});
+document.addEventListener("click",ev=>{ const b=ev.target.closest("[data-pay-n]"); if(b){ payN=+b.dataset.payN; pressed("[data-pay-n]",b); renderPay(); document.getElementById("dirty-bar").classList.add("show"); } });
+renderPay();
+
+/* Companies initial render */
+renderCompanyList(); renderCompanyDetail();
+
+/* ---------- Init ---------- */
+renderTabs(); renderRows();
+const initial=location.hash.slice(1); if(TITLES[initial]) show(initial);
+</script>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

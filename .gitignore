@@ -65,7 +65,7 @@ ai-dev/archive/
 ai-dev/archives/
 ai-dev/iw-config/
 ai-dev/logs/
-ai-dev/
+#ai-dev/
 
 # Generated work item reports
 reports/

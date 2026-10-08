@@ -20,7 +20,8 @@ class Settings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_prefix="JOBS_RADAR_",
-        env_file=".env",
+        # Repository root .env when run from backend/ (alembic, make); real variables always win.
+        env_file=(".env", "../.env"),
         env_file_encoding="utf-8",
         extra="forbid",
         frozen=True,
@@ -34,6 +35,8 @@ class Settings(BaseSettings):
     api_port: int = Field(default=8100, ge=1, le=65535)
     frontend_port: int = Field(default=5180, ge=1, le=65535)
     cors_origins: list[str] = Field(default_factory=lambda: ["http://127.0.0.1:5180"])
+    # Host names the Vite dev server accepts (read by the frontend from the same .env).
+    frontend_allowed_hosts: str = "localhost,127.0.0.1"
 
     # PostgreSQL
     db_host: str = "127.0.0.1"

@@ -45,7 +45,7 @@ packages = ["src/jobs_radar"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
@@ -68,7 +68,9 @@ ignore = ["D203", "D213", "D107", "D105"]
 [tool.ruff.lint.per-file-ignores]
 # Tests use synthetic passwords and tokens on purpose (to prove they are redacted).
 "tests/**" = ["S101", "S105", "S106", "D", "E501"]
-"alembic/**" = ["D"]
+"alembic/**" = ["D", "E501"]
+# SQLAlchemy declarative models use a plain dict for __table_args__ by convention.
+"src/jobs_radar/db/models/**" = ["RUF012"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "pep257"

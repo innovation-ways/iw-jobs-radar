@@ -25,6 +25,26 @@ def test_defaults_match_adr_019_and_adr_032() -> None:
     assert settings.allow_local_providers is False
 
 
+def test_frontend_allowed_hosts_is_a_known_setting() -> None:
+    # The Vite dev server reads this key from the same .env, so the backend must accept it too.
+    assert make().frontend_allowed_hosts == "localhost,127.0.0.1"
+    assert make(frontend_allowed_hosts="localhost,iw-dev-01").frontend_allowed_hosts.endswith(
+        "iw-dev-01"
+    )
+
+
+def test_env_file_with_all_documented_keys_loads(tmp_path: object) -> None:
+    from pathlib import Path
+
+    example = Path(__file__).resolve().parents[3] / ".env.example"
+    env_file = Path(str(tmp_path)) / ".env"
+    env_file.write_text(
+        example.read_text().replace("JOBS_RADAR_DB_PASSWORD=", "JOBS_RADAR_DB_PASSWORD=x")
+    )
+    # Every key in .env.example must be a declared setting (strict mode rejects unknown keys).
+    Settings(_env_file=str(env_file))  # type: ignore[call-arg]
+
+
 def test_database_url_is_built_from_parts() -> None:
     settings = make(db_host="db", db_port=5432, db_name="jr", db_user="u", db_password="p@ss")
     assert settings.database_url == "postgresql+psycopg://u:p%40ss@db:5432/jr"

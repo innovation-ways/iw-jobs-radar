@@ -51,6 +51,13 @@ class Settings(BaseSettings):
     credential_key: SecretStr | None = None
     ollama_url: str = "http://host.docker.internal:11434"
     allow_local_providers: bool = False
+    # Local model defaults (owner decision, ODR-006); the AI & privacy screen overrides them later.
+    extraction_model: str = "qwen3:8b"
+    embedding_model: str = "qwen3-embedding:8b"
+    # Longest description sent to the model, in characters; longer text is truncated and flagged.
+    extraction_max_chars: int = Field(default=12000, ge=1000)
+    # Seconds a single local-model call may take.
+    ollama_timeout_seconds: int = Field(default=180, ge=5)
 
     # Worker
     worker_poll_seconds: int = Field(default=15, ge=1)

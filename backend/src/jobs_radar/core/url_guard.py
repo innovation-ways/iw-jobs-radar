@@ -4,7 +4,8 @@ Rules: HTTPS only; no credentials in the URL; the host must resolve, and **every
 resolves to must be a public one. Private, loopback, link-local (including the cloud metadata
 service), carrier-grade NAT (the Tailscale range), multicast, reserved and unspecified addresses
 are refused. Local targets such as a local Ollama server are allowed only when the deployment
-policy says so *and* the host is on an explicit allow-list; link-local addresses are never allowed.
+policy says so *and* the host is on an explicit allow-list; such a host may also use plain HTTP and
+an internal name (``host.docker.internal``). Link-local addresses are never allowed.
 
 Resolution is checked when the request is made and again for every redirect. A name that changes
 its answer between this check and the connection (DNS rebinding) is a known limitation of checking
@@ -69,17 +70,21 @@ class UrlGuard:
         except ValueError as exc:
             msg = "The URL is not valid."
             raise BlockedUrlError(msg) from exc
-        if parts.scheme.lower() != "https":
+        scheme = parts.scheme.lower()
+        host = (parts.hostname or "").lower().rstrip(".")
+        # A host the deployment explicitly allows as a local target (a local Ollama) is exempt from
+        # the https and internal-name rules; its resolved addresses are still checked below.
+        local_target = self._allow_private and host in self._allowed_private_hosts
+        if scheme != "https" and not (local_target and scheme == "http"):
             msg = "Only https URLs are allowed."
             raise BlockedUrlError(msg)
         if parts.username or parts.password:
             msg = "Credentials inside the URL are not allowed."
             raise BlockedUrlError(msg)
-        host = (parts.hostname or "").lower().rstrip(".")
         if not host:
             msg = "The URL has no host."
             raise BlockedUrlError(msg)
-        if host in _BLOCKED_NAMES or host.endswith(_BLOCKED_SUFFIXES):
+        if not local_target and (host in _BLOCKED_NAMES or host.endswith(_BLOCKED_SUFFIXES)):
             msg = f"{host} is not a public address."
             raise BlockedUrlError(msg)
 

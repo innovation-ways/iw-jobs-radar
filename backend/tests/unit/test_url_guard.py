@@ -117,3 +117,52 @@ async def test_the_local_policy_never_unlocks_link_local_or_metadata() -> None:
             allow_private=True,
             allowed_private_hosts=frozenset({"meta.lan"}),
         )
+
+
+LOCAL = {
+    "allow_private": True,
+    "allowed_private_hosts": frozenset({"host.docker.internal", "127.0.0.1", "localhost"}),
+}
+
+
+async def test_an_explicitly_allowed_local_host_may_use_plain_http() -> None:
+    mapping = {"host.docker.internal": ["172.17.0.1"]}
+    await check("http://host.docker.internal:11434/api/chat", mapping, **LOCAL)
+    await check("http://127.0.0.1:11434/api/chat", {}, **LOCAL)
+    await check("http://localhost:11434/api/chat", {"localhost": ["127.0.0.1"]}, **LOCAL)
+
+
+async def test_plain_http_to_a_local_host_needs_the_policy_and_the_allow_list() -> None:
+    mapping = {"host.docker.internal": ["172.17.0.1"]}
+    with pytest.raises(BlockedUrlError):  # policy off
+        await check("http://host.docker.internal:11434/x", mapping)
+    with pytest.raises(BlockedUrlError):  # policy on, host not listed
+        await check("http://host.docker.internal:11434/x", mapping, allow_private=True)
+
+
+async def test_plain_http_stays_blocked_for_hosts_that_are_not_allowed_local_targets() -> None:
+    with pytest.raises(BlockedUrlError, match="https"):
+        await check("http://boards.example.test/x", None, **LOCAL)
+
+
+async def test_an_allowed_local_name_may_be_internal_but_an_unlisted_one_may_not() -> None:
+    await check("https://host.docker.internal/x", {"host.docker.internal": ["172.17.0.1"]}, **LOCAL)
+    with pytest.raises(BlockedUrlError):
+        await check(
+            "https://metadata.google.internal/x",
+            {"metadata.google.internal": ["10.0.0.1"]},
+            **LOCAL,
+        )
+    with pytest.raises(BlockedUrlError):
+        await check(
+            "http://localhost:11434/x", {"localhost": ["127.0.0.1"]}
+        )  # needs the allow-list too
+
+
+async def test_a_listed_local_host_pointing_at_link_local_is_still_blocked_over_http() -> None:
+    with pytest.raises(BlockedUrlError):
+        await check(
+            "http://host.docker.internal/x",
+            {"host.docker.internal": ["169.254.169.254"]},
+            **LOCAL,
+        )

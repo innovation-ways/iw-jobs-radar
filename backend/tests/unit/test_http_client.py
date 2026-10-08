@@ -108,3 +108,50 @@ async def test_a_blocked_url_never_reaches_the_network() -> None:
             "https://evil.example.test/x"
         )  # resolves to a private address; no respx mock needed
     assert error.value.error_class == "blocked_url"
+
+
+@respx.mock
+async def test_post_json_sends_the_body_and_returns_the_answer() -> None:
+    route = respx.post("https://boards.example.test/api/chat").respond(200, json={"ok": True})
+    response = await make_client().post_json(
+        "https://boards.example.test/api/chat", {"model": "m", "stream": False}
+    )
+    assert response.status == 200 and response.body == b'{"ok":true}'
+    request = route.calls.last.request
+    assert request.headers["content-type"] == "application/json"
+    assert request.headers["user-agent"] == "JobsRadar/test"
+    assert request.read() == b'{"model":"m","stream":false}'
+
+
+@respx.mock
+async def test_post_json_is_guarded_like_get() -> None:
+    with pytest.raises(FetchError) as error:
+        await make_client().post_json("https://evil.example.test/api/chat", {})
+    assert error.value.error_class == "blocked_url"
+
+
+@respx.mock
+async def test_post_json_does_not_follow_redirects() -> None:
+    respx.post("https://boards.example.test/api/chat").respond(
+        302, headers={"Location": "https://other.example.test/x"}
+    )
+    response = await make_client().post_json("https://boards.example.test/api/chat", {})
+    assert response.status == 302  # returned for the caller to classify, never followed
+
+
+@respx.mock
+async def test_post_json_accepts_a_longer_timeout_per_call_and_maps_timeouts() -> None:
+    respx.post("https://boards.example.test/api/chat").mock(side_effect=httpx.ReadTimeout("slow"))
+    with pytest.raises(FetchError) as error:
+        await make_client().post_json("https://boards.example.test/api/chat", {}, timeout=120)
+    assert error.value.error_class == "timeout"
+
+
+@respx.mock
+async def test_post_json_maps_connection_failures_without_leaking_addresses() -> None:
+    respx.post("https://boards.example.test/api/chat").mock(
+        side_effect=httpx.ConnectError("10.0.0.5 refused")
+    )
+    with pytest.raises(FetchError) as error:
+        await make_client().post_json("https://boards.example.test/api/chat", {})
+    assert error.value.error_class == "network_error" and "10.0.0.5" not in error.value.message

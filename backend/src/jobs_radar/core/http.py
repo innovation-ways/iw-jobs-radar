@@ -7,6 +7,7 @@ leak addresses or internals. No adapter creates its own HTTP client.
 """
 
 import asyncio
+import json
 from collections.abc import Mapping
 from dataclasses import dataclass
 from urllib.parse import urljoin
@@ -41,7 +42,7 @@ class HttpResponse:
 
 
 class GuardedHttpClient:
-    """Guarded, bounded ``GET`` requests."""
+    """Guarded, bounded ``GET`` and JSON ``POST`` requests."""
 
     def __init__(
         self,
@@ -95,10 +96,57 @@ class GuardedHttpClient:
         msg = "The source redirected too many times."
         raise FetchError("too_many_redirects", msg)
 
-    async def _request_once(self, url: str, headers: Mapping[str, str]) -> HttpResponse:
+    async def post_json(
+        self,
+        url: str,
+        payload: Mapping[str, object],
+        *,
+        headers: Mapping[str, str] | None = None,
+        timeout: float | None = None,
+    ) -> HttpResponse:
+        """POST ``payload`` as JSON and return the answer; redirects are never followed.
+
+        ``timeout`` overrides the total time for this call (local models can be slow).
+
+        Raises:
+            FetchError: blocked URL, timeout, network failure or oversized body.
+        """
         try:
-            async with asyncio.timeout(self._total_timeout):
-                async with self._http().stream("GET", url, headers=dict(headers)) as response:
+            await self._guard.check(url)
+        except BlockedUrlError as exc:
+            raise FetchError("blocked_url", str(exc)) from exc
+        request_headers = {
+            "User-Agent": self._user_agent,
+            "Content-Type": "application/json",
+            **(headers or {}),
+        }
+        return await self._request_once(
+            url,
+            request_headers,
+            method="POST",
+            content=json.dumps(payload, separators=(",", ":")).encode(),
+            timeout=timeout,
+        )
+
+    async def _request_once(
+        self,
+        url: str,
+        headers: Mapping[str, str],
+        *,
+        method: str = "GET",
+        content: bytes | None = None,
+        timeout: float | None = None,
+    ) -> HttpResponse:
+        total = timeout if timeout is not None else self._total_timeout
+        try:
+            async with asyncio.timeout(total):
+                async with self._http().stream(
+                    method,
+                    url,
+                    headers=dict(headers),
+                    content=content,
+                    timeout=httpx.Timeout(total, connect=self._timeout.connect),
+                ) as response:
                     body = bytearray()
                     async for chunk in response.aiter_bytes():
                         body.extend(chunk)

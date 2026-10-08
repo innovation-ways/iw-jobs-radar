@@ -159,6 +159,17 @@ class SourceErrorClass(StrEnum):
     UNKNOWN = "unknown"
 
 
+class ProviderErrorClass(StrEnum):
+    """Stable, machine-readable reason why an AI provider call failed."""
+
+    UNAVAILABLE = "unavailable"
+    TIMEOUT = "timeout"
+    MODEL_NOT_FOUND = "model_not_found"
+    INVALID_RESPONSE = "invalid_response"
+    BLOCKED_URL = "blocked_url"
+    HTTP_ERROR = "http_error"
+
+
 class JobExtractionStatus(StrEnum):
     """State of an AI extraction for a job snapshot."""
 

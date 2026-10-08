@@ -46,6 +46,8 @@ async def test_extract_posts_a_deterministic_schema_constrained_chat_request() -
     assert body["think"] is False  # no reasoning mode: faster and repeatable
     assert body["options"]["temperature"] == 0
     assert body["options"]["seed"] == 0
+    # a runaway generation must end: the output is capped (a normal answer is under 2,000 tokens)
+    assert body["options"]["num_predict"] == 4096
     assert body["messages"] == [
         {"role": "system", "content": "Extract."},
         {"role": "user", "content": "Job text."},

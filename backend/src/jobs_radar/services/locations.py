@@ -21,6 +21,18 @@ from jobs_radar.domain.geo import normalise_place
 _DECORATION = re.compile(r"\([^)]*\)")
 
 
+def _codes(text: str) -> frozenset[str]:
+    return frozenset(text.split())
+
+
+# US state codes: "San Francisco, CA" means California, not Canada or another San Francisco.
+_US_STATES = _codes(
+    "AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ "
+    "NM "
+    "NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY DC"
+)
+
+
 @dataclass(frozen=True)
 class Place:
     """A resolved city."""
@@ -96,10 +108,13 @@ class Gazetteer:
         explicit = country.upper() if country else None
         hint = explicit or self._country_in(parts[1:])
         indices = self._candidates(name, hint)
-        if not indices and explicit is None and hint is not None:
-            # A trailing token such as the state in ``San Francisco, CA`` may look like a country
-            # code; when it matches nothing, fall back to the name alone.
-            indices = self._candidates(name, None)
+        if not indices and explicit is None:
+            state = parts[1].strip().upper() if len(parts) > 1 else ""
+            if state in _US_STATES:
+                indices = self._candidates(name, "US")  # ``City, CA``: a US state, not a country
+            if not indices and hint is not None:
+                # A trailing token that looked like a country code matched nothing: use the name.
+                indices = self._candidates(name, None)
         if not indices or len({self._cities[i]["countrycode"] for i in indices}) > 1:
             return None
         return self._place(max(indices, key=lambda i: self._cities[i]["population"]))
@@ -132,3 +147,42 @@ def load_gazetteer() -> Gazetteer:
     data = geonamescache.GeonamesCache()
     countries = {code: info["name"] for code, info in data.get_countries().items()}
     return Gazetteer(data.get_cities().values(), countries)
+
+
+_SEPARATORS = re.compile(r"\s*[;|]\s*")
+
+
+def split_locations(raws: Iterable[str]) -> list[str]:
+    """Split strings that join several places (``A; B | C``) and drop blanks and duplicates."""
+    places: list[str] = []
+    seen: set[str] = set()
+    for raw in raws:
+        for place in _SEPARATORS.split(raw):
+            clean = " ".join(place.split())
+            if clean and clean.casefold() not in seen:
+                seen.add(clean.casefold())
+                places.append(clean)
+    return places
+
+
+def resolve_all(raws: Iterable[str], gazetteer: Gazetteer | None = None) -> list[dict[str, Any]]:
+    """Resolve each place of ``raws`` offline; an unknown or ambiguous place stays unresolved."""
+    book = gazetteer or load_gazetteer()
+    resolved: list[dict[str, Any]] = []
+    for raw in split_locations(raws):
+        place = book.resolve(raw)
+        if place is None:
+            resolved.append({"raw": raw, "resolved": False})
+        else:
+            resolved.append(
+                {
+                    "raw": raw,
+                    "resolved": True,
+                    "city": place.city,
+                    "country": place.country,
+                    "latitude": place.latitude,
+                    "longitude": place.longitude,
+                    "timezone": place.timezone,
+                }
+            )
+    return resolved

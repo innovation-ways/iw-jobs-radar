@@ -150,3 +150,34 @@ def test_a_small_injected_gazetteer_follows_the_same_rules() -> None:
     assert gamma is not None and gamma.country == "YY"
     beta = small.resolve("Beta")
     assert beta is not None and beta.city == "Beta"
+
+
+# --- splitting and resolving several places ------------------------------------------------------------------
+
+
+def test_job_boards_join_several_places_in_one_string_and_they_are_split() -> None:
+    from jobs_radar.services.locations import split_locations
+
+    assert split_locations(["New York City, NY; San Francisco, CA | Remote"]) == [
+        "New York City, NY",
+        "San Francisco, CA",
+        "Remote",
+    ]
+    assert split_locations(["Lisbon", "Madrid; Berlin"]) == ["Lisbon", "Madrid", "Berlin"]
+    assert split_locations(["  ;  ", ""]) == []
+    assert split_locations(["Lisbon", "lisbon"]) == ["Lisbon"]  # duplicates (any case) once
+
+
+def test_each_place_is_resolved_on_its_own_and_unknown_ones_stay_unresolved(
+    gazetteer: Gazetteer,
+) -> None:
+    from jobs_radar.services.locations import resolve_all
+
+    result = resolve_all(["San Francisco, CA; Remote - EU; Lisbon, Portugal"], gazetteer)
+    assert [(r["raw"], r["resolved"]) for r in result] == [
+        ("San Francisco, CA", True),  # CA is a state here: the name alone is unambiguous in the US
+        ("Remote - EU", False),
+        ("Lisbon, Portugal", True),
+    ]
+    assert result[0]["country"] == "US" and result[2]["country"] == "PT"
+    assert set(result[2]) >= {"city", "latitude", "longitude", "timezone"}

@@ -25,7 +25,7 @@ from jobs_radar.services.extraction import (
     ExtractionResult,
     JobExtractor,
 )
-from jobs_radar.services.locations import load_gazetteer
+from jobs_radar.services.locations import resolve_all
 from jobs_radar.services.skills import SkillCanonicaliser
 
 SessionFactory = Callable[[], AbstractAsyncContextManager[AsyncSession]]
@@ -68,30 +68,12 @@ def _hints(snapshot: JobSnapshot) -> dict[str, list[str]]:
 def _resolved_locations(
     result: ExtractionResult, hints: dict[str, list[str]]
 ) -> list[dict[str, Any]]:
-    """Resolve place names offline; an unknown or ambiguous place stays unresolved."""
+    """Resolve the extracted places (else the source's own) offline."""
     attribute = result.output.locations
     raws = (
         attribute.value if attribute.status == "known" and attribute.value else hints["locations"]
     )
-    gazetteer = load_gazetteer()
-    resolved: list[dict[str, Any]] = []
-    for raw in raws:
-        place = gazetteer.resolve(raw)
-        if place is None:
-            resolved.append({"raw": raw, "resolved": False})
-        else:
-            resolved.append(
-                {
-                    "raw": raw,
-                    "resolved": True,
-                    "city": place.city,
-                    "country": place.country,
-                    "latitude": place.latitude,
-                    "longitude": place.longitude,
-                    "timezone": place.timezone,
-                }
-            )
-    return resolved
+    return resolve_all(raws)
 
 
 class ExtractionQueue:

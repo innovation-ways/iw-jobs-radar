@@ -6,11 +6,22 @@ import { describe, expect, it, vi } from 'vitest'
 import { AppRoutes } from '@/AppRoutes'
 import { ThemeProvider } from '@/theme/ThemeProvider'
 
+// Every screen is rendered by these tests; each endpoint answers in its own shape.
 vi.mock('@/api/client', () => ({
   api: {
-    GET: vi.fn().mockResolvedValue({
-      data: { status: 'ready', components: { database: 'up', worker: 'up' } },
-      response: { status: 200 },
+    GET: vi.fn((path: string) => {
+      if (path === '/readyz') {
+        return Promise.resolve({
+          data: { status: 'ready', components: { database: 'up', worker: 'up' } },
+          response: { status: 200 },
+        })
+      }
+      if (path === '/api/v1/inbox') {
+        return Promise.resolve({
+          data: { items: [], next_cursor: null, counts: { total: 0 }, search_intent_id: null },
+        })
+      }
+      return Promise.resolve({ data: { items: [] }, response: { status: 200 } })
     }),
   },
 }))

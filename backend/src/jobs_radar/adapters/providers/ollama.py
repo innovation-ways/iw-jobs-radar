@@ -20,6 +20,9 @@ from jobs_radar.domain.enums import ProviderErrorClass
 
 # Context window requested from the model: the description (12,000 characters) plus instructions.
 _NUM_CTX = 16384
+# Cap on generated tokens. A normal extraction is well under 2,000 tokens; without a cap a model
+# that falls into a repetition loop keeps generating until the request times out.
+_NUM_PREDICT = 4096
 
 _FETCH_CLASSES = {
     "blocked_url": ProviderErrorClass.BLOCKED_URL,
@@ -75,7 +78,12 @@ class OllamaProvider:
             "stream": False,
             "format": request.json_schema,
             "think": False,
-            "options": {"temperature": 0, "seed": 0, "num_ctx": _NUM_CTX},
+            "options": {
+                "temperature": 0,
+                "seed": 0,
+                "num_ctx": _NUM_CTX,
+                "num_predict": _NUM_PREDICT,
+            },
         }
         started = time.monotonic()
         response = await self._call(

@@ -9,6 +9,7 @@ pairs that have never been judged, and re-scoring after a weight change needs no
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -34,7 +35,17 @@ from jobs_radar.repositories.skills import SkillRepository
 from jobs_radar.schemas.intent import IntentDefinition
 from jobs_radar.schemas.profile import ProfileFacts
 from jobs_radar.services.evaluation_inputs import intent_view, job_attributes, profile_view
+from jobs_radar.services.locations import resolve_all
 from jobs_radar.services.skills import SkillRelationJudge
+
+
+def _place_names(attributes: dict[str, Any], snapshot: JobSnapshot) -> list[str]:
+    """Return the places to resolve: the extracted ones if known, else the source's own."""
+    locations = attributes["output"].get("locations", {})
+    if locations.get("status") == "known" and locations.get("value"):
+        return [str(place) for place in locations["value"]]
+    work = snapshot.normalised_json.get("work_arrangement", {})
+    return [loc["raw"] for loc in work.get("locations", []) if loc.get("raw")]
 
 
 @dataclass(frozen=True)
@@ -148,8 +159,13 @@ class EvaluationService:
         posting = await self._session.get(JobPosting, snapshot.job_posting_id)
         company = await self._session.get(Company, posting.company_id) if posting else None
 
+        # Places are resolved here (offline and cheap) rather than trusted from the stored result:
+        # the board's own locations are the reliable source, and gazetteer improvements then apply
+        # to extractions that were stored earlier.
+        attributes = dict(extraction.attributes_json)
+        attributes["locations_resolved"] = resolve_all(_place_names(attributes, snapshot))
         job = job_attributes(
-            extraction.attributes_json,
+            attributes,
             snapshot.normalised_json["title"],
             snapshot.normalised_json["description_text"],
             company.canonical_name if company else "",

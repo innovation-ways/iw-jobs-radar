@@ -343,3 +343,45 @@ async def test_get_returns_a_persisted_evaluation_and_hides_other_owners(
     assert len(record.dimensions) == 10
     with pytest.raises(NotFoundError):
         await service.get(LOCAL_OWNER_ID, 987654321)
+
+
+async def test_places_are_resolved_when_scoring_so_the_sources_own_locations_count(
+    db_session: AsyncSession,
+) -> None:
+    """The extraction cannot quote a job's location (it lives in the board's metadata), so the
+    source's own places are split and resolved at scoring time, with the offline gazetteer."""
+    from jobs_radar.db.models import JobSnapshot
+
+    w = await world(db_session)
+    extraction = await db_session.get(JobExtraction, w.extraction_id)
+    snapshot = await db_session.get(JobSnapshot, w.snapshot_id)
+    assert extraction is not None and snapshot is not None
+    output = extraction.attributes_json["output"]
+    output["work_mode"] = {
+        "value": "hybrid",
+        "status": "known",
+        "confidence": 0.9,
+        "evidence": "Hybrid",
+    }
+    output["locations"] = {"value": None, "status": "unknown", "confidence": 0.0, "evidence": None}
+    snapshot.normalised_json["work_arrangement"]["locations"] = [
+        {"raw": "Berlin, Germany; Setúbal, Portugal"}
+    ]
+    # the stored (older) resolution knew nothing about these places
+    extraction.attributes_json["locations_resolved"] = [
+        {"raw": "Berlin, Germany; Setúbal, Portugal", "resolved": False}
+    ]
+    await db_session.flush()
+
+    record = await EvaluationService(db_session, None).evaluate(
+        LOCAL_OWNER_ID,
+        job_snapshot_id=w.snapshot_id,
+        job_extraction_id=w.extraction_id,
+        profile_revision_id=w.profile_revision_id,
+        intent_revision_id=w.intent_revision_id,
+        judge=False,
+    )
+    work = {d.dimension_key: d for d in record.dimensions}["work_arrangement_location"]
+    assert work.status == "match"  # Setúbal is within 40 km of the base place
+    kms = {item["place"]: item["km"] for item in work.evidence_json["locations"]}
+    assert kms["Setúbal, Portugal"] < 40 and kms["Berlin, Germany"] > 1000

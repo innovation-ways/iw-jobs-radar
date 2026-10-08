@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router'
 import { AppShell } from '@/components/AppShell'
+import { Inbox } from '@/pages/Inbox'
 import { NotFound } from '@/pages/NotFound'
 import { Placeholder } from '@/pages/Placeholder'
 import { ProfileIntent } from '@/pages/ProfileIntent'
@@ -12,11 +13,14 @@ export function AppRoutes() {
     <Routes>
       <Route element={<AppShell />}>
         <Route index element={<Navigate to="/inbox" replace />} />
+        <Route path="/inbox" element={<Inbox />} />
         <Route path="/sources" element={<Sources />} />
         <Route path="/profile" element={<ProfileIntent />} />
-        {ALL_NAV.filter((item) => !['/sources', '/profile'].includes(item.path)).map((item) => (
-          <Route key={item.path} path={item.path} element={<Placeholder path={item.path} />} />
-        ))}
+        {ALL_NAV.filter((item) => !['/inbox', '/sources', '/profile'].includes(item.path)).map(
+          (item) => (
+            <Route key={item.path} path={item.path} element={<Placeholder path={item.path} />} />
+          ),
+        )}
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

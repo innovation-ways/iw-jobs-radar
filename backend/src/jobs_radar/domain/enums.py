@@ -143,6 +143,22 @@ class SourceOutcome(StrEnum):
     SKIPPED = "skipped"
 
 
+class SourceErrorClass(StrEnum):
+    """Stable, machine-readable reason why collecting a source failed."""
+
+    NOT_FOUND = "not_found"
+    RATE_LIMITED = "rate_limited"
+    TIMEOUT = "timeout"
+    SERVER_ERROR = "server_error"
+    INVALID_PAYLOAD = "invalid_payload"
+    NETWORK_ERROR = "network_error"
+    TOO_LARGE = "too_large"
+    BLOCKED_URL = "blocked_url"
+    HTTP_ERROR = "http_error"
+    CONFIGURATION = "configuration"
+    UNKNOWN = "unknown"
+
+
 class JobExtractionStatus(StrEnum):
     """State of an AI extraction for a job snapshot."""
 

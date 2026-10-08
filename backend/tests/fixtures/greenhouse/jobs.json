@@ -1,0 +1,105 @@
+{
+  "jobs": [
+    {
+      "absolute_url": "https://job-boards.greenhouse.io/synthco/jobs/1001?gh_src=abc",
+      "data_compliance": [
+        {
+          "type": "gdpr",
+          "requires_consent": false
+        }
+      ],
+      "internal_job_id": 9001,
+      "location": {
+        "name": "Remote - EU"
+      },
+      "metadata": [
+        {
+          "id": 1,
+          "name": "Location Type",
+          "value": "Remote"
+        }
+      ],
+      "id": 1001,
+      "updated_at": "2026-10-06T10:00:00-04:00",
+      "requisition_id": "R-1",
+      "title": "Senior AI Solutions Engineer",
+      "company_name": "Synthetic Co",
+      "first_published": "2026-10-01T09:30:00-04:00",
+      "language": "en",
+      "content": "&lt;div class=&quot;content-intro&quot;&gt;&lt;h2&gt;&lt;strong&gt;About the role&lt;/strong&gt;&lt;/h2&gt;&lt;p&gt;Design &amp;amp; evaluate &lt;em&gt;LLM-powered&lt;/em&gt; features for enterprise customers.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Fully remote within EU time zones&lt;/li&gt;&lt;li&gt;12-month contract&lt;/li&gt;&lt;/ul&gt;&lt;img style=&quot;display:none&quot; src=&quot;https://tracker.example.test/pixel?id=1&quot;&gt;&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;&lt;p onclick=&quot;steal()&quot;&gt;Apply&amp;nbsp;now&lt;/p&gt;&lt;/div&gt;",
+      "departments": [
+        {
+          "id": 1,
+          "name": "Engineering",
+          "child_ids": [],
+          "parent_id": null
+        }
+      ],
+      "offices": [
+        {
+          "id": 5,
+          "name": "Remote",
+          "location": "Remote - EU",
+          "child_ids": [],
+          "parent_id": null
+        }
+      ]
+    },
+    {
+      "absolute_url": "https://job-boards.greenhouse.io/synthco/jobs/1002",
+      "internal_job_id": 9002,
+      "location": {
+        "name": "Lisbon, Portugal"
+      },
+      "metadata": null,
+      "id": 1002,
+      "updated_at": "2026-10-05T08:00:00+00:00",
+      "requisition_id": "R-2",
+      "title": "Staff Software Engineer, Platform",
+      "company_name": "Synthetic Co",
+      "first_published": "2026-09-20T12:00:00+00:00",
+      "language": "en",
+      "content": "&lt;p&gt;Build platform services.&lt;/p&gt;&lt;p&gt;Hybrid: 3 days per week in our Lisbon office.&lt;/p&gt;",
+      "departments": [],
+      "offices": [
+        {
+          "id": 6,
+          "name": "Lisbon",
+          "location": "Lisbon, Portugal"
+        },
+        {
+          "id": 7,
+          "name": "Madrid",
+          "location": "Madrid, Spain"
+        }
+      ]
+    },
+    {
+      "absolute_url": "https://job-boards.greenhouse.io/synthco/jobs/1003",
+      "internal_job_id": 9003,
+      "location": {
+        "name": "Berlin, Germany"
+      },
+      "metadata": [],
+      "id": 1003,
+      "updated_at": "2026-10-04T08:00:00+00:00",
+      "title": "Data Analyst",
+      "company_name": "Synthetic Co",
+      "first_published": null,
+      "language": null,
+      "content": "",
+      "departments": [
+        {
+          "id": 2,
+          "name": "Data",
+          "child_ids": [],
+          "parent_id": null
+        }
+      ],
+      "offices": []
+    }
+  ],
+  "meta": {
+    "total": 3
+  }
+}

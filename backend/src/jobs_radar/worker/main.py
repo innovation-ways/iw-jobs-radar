@@ -15,10 +15,12 @@ from jobs_radar.adapters.providers.ollama import build_ollama_embedder, build_ol
 from jobs_radar.core.logging import configure_logging
 from jobs_radar.core.settings import Settings, get_settings
 from jobs_radar.db.session import build_engine, build_session_factory
+from jobs_radar.domain.enums import LOCAL_OWNER_ID
 from jobs_radar.services.dedup import DedupRunner
 from jobs_radar.services.evaluation import EvaluationRunner
 from jobs_radar.services.extraction_queue import ExtractionQueue
 from jobs_radar.services.heartbeat import HeartbeatService
+from jobs_radar.services.inbox import InboxRunner
 
 logger = structlog.get_logger()
 
@@ -34,12 +36,14 @@ class Worker:
         extraction: ExtractionQueue | None = None,
         evaluation: EvaluationRunner | None = None,
         dedup: DedupRunner | None = None,
+        inbox: InboxRunner | None = None,
     ) -> None:
         self._settings = settings
         self._heartbeat = HeartbeatService(session_factory, name)
         self._extraction = extraction
         self._evaluation = evaluation
         self._dedup = dedup
+        self._inbox = inbox
         self.beats = 0
 
     async def _beat(self) -> None:
@@ -54,6 +58,10 @@ class Worker:
             linked = await self._dedup.run()
             if linked:
                 logger.info("opportunities_linked", linked=linked)
+        if self._inbox is not None:
+            surfaced = await self._inbox.run()
+            if surfaced:
+                logger.info("inbox_items_created", created=surfaced)
         if self._extraction is not None:
             queued = await self._extraction.enqueue_missing()
             summary = await self._extraction.run_batch(
@@ -109,7 +117,12 @@ async def main() -> None:
         dedup = DedupRunner(session_factory, build_ollama_embedder(settings))
     try:
         await Worker(
-            settings, session_factory, extraction=extraction, evaluation=evaluation, dedup=dedup
+            settings,
+            session_factory,
+            extraction=extraction,
+            evaluation=evaluation,
+            dedup=dedup,
+            inbox=InboxRunner(session_factory, LOCAL_OWNER_ID),
         ).run(stop)
     finally:
         await engine.dispose()

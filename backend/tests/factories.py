@@ -206,8 +206,8 @@ async def make_opportunity(
     opportunity = JobOpportunity(
         company_id=posting.company_id,
         primary_job_posting_id=posting.job_posting_id,
-        first_seen_at=NOW,
-        last_seen_at=NOW,
+        first_seen_at=posting.first_seen_at,
+        last_seen_at=posting.last_seen_at,
     )
     session.add(opportunity)
     await session.flush()
@@ -243,6 +243,9 @@ async def make_evaluation(
     extraction: JobExtraction,
     profile_revision: ProfileRevision,
     intent_revision: IntentRevision,
+    *,
+    fit_score: int = 82,
+    recommendation: Recommendation = Recommendation.RECOMMENDED,
 ) -> tuple[MatchEvaluation, ScoreDimension]:
     """An evaluation with one dimension."""
     evaluation = MatchEvaluation(
@@ -252,8 +255,8 @@ async def make_evaluation(
         intent_revision_id=intent_revision.intent_revision_id,
         policy_version=MATCHING_POLICY_VERSION,
         job_source_hash=snapshot.content_hash,
-        fit_score=82,
-        recommendation=Recommendation.RECOMMENDED.value,
+        fit_score=fit_score,
+        recommendation=recommendation.value,
         gates_json=[],
         weights_json={},
     )

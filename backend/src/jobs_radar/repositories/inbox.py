@@ -1,17 +1,35 @@
 """Inbox items and their append-only event stream (LLD sections 3 and 7; ADR-006).
 
-This layer only offers safe primitives: optimistic version checks and an event for every change.
-Which transitions are legal is decided by the inbox service (task T4).
+This layer only offers safe primitives: optimistic version checks, an event for every change and
+the read queries behind the inbox list. Which transitions are legal is decided by the inbox
+service and the state machine in ``domain.inbox``.
 """
 
+from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import case, func, literal, or_, select, tuple_, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from jobs_radar.core.errors import ConflictError, NotFoundError
-from jobs_radar.db.models import InboxEvent, JobInboxItem
+from jobs_radar.db.models import (
+    Company,
+    InboxEvent,
+    IntentRevision,
+    JobChangeEvent,
+    JobInboxItem,
+    JobOpportunity,
+    JobOpportunityLink,
+    JobPosting,
+    JobSnapshot,
+    MatchEvaluation,
+    ScoreDimension,
+    SearchIntent,
+    SourceConfiguration,
+)
 from jobs_radar.domain.enums import Actor, InboxAction, InboxState
 
 # Columns a transition may change besides ``state`` and ``version``.
@@ -137,3 +155,316 @@ class InboxRepository:
         self._session.add(event)
         await self._session.flush()
         return event
+
+
+SORTS = ("fit_desc", "newest", "oldest")
+_STATES = tuple(state.value for state in InboxState)
+
+
+@dataclass(frozen=True)
+class ListQuery:
+    """Everything that narrows and orders the inbox list."""
+
+    owner_id: int
+    search_intent_id: int | None
+    state: str | None = None
+    shortlisted: bool | None = None
+    company: str | None = None
+    source: str | None = None
+    fit_min: int | None = None
+    fit_max: int | None = None
+    first_seen_from: datetime | None = None
+    first_seen_to: datetime | None = None
+    include_closed: bool = False
+    sort: str = "fit_desc"
+
+
+@dataclass(frozen=True)
+class RawRow:
+    """One inbox list row as read from the database."""
+
+    item: JobInboxItem
+    opportunity: JobOpportunity
+    company_name: str
+    posting: JobPosting
+    snapshot: JobSnapshot
+    evaluation: MatchEvaluation | None
+
+
+@dataclass(frozen=True)
+class PostingRow:
+    """A listing grouped under an opportunity, with its source and link."""
+
+    posting: JobPosting
+    source_display_name: str
+    link: JobOpportunityLink
+
+
+class InboxQueries:
+    """Read queries for the inbox list, counts and detail."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    def _select(self, query: ListQuery) -> Any:
+        snapshot = aliased(JobSnapshot)
+        newer_snapshot = aliased(JobSnapshot)
+        evaluation = aliased(MatchEvaluation)
+        newer_evaluation = aliased(MatchEvaluation)
+        latest_snapshot = (
+            select(func.max(newer_snapshot.job_snapshot_id))
+            .where(newer_snapshot.job_posting_id == JobOpportunity.primary_job_posting_id)
+            .scalar_subquery()
+        )
+        if query.search_intent_id is None:
+            on_evaluation: Any = literal(False)
+        else:
+            latest_evaluation = (
+                select(func.max(newer_evaluation.match_evaluation_id))
+                .join(
+                    IntentRevision,
+                    IntentRevision.intent_revision_id == newer_evaluation.intent_revision_id,
+                )
+                .where(
+                    newer_evaluation.job_snapshot_id == snapshot.job_snapshot_id,
+                    IntentRevision.search_intent_id == query.search_intent_id,
+                )
+                .scalar_subquery()
+            )
+            on_evaluation = evaluation.match_evaluation_id == latest_evaluation
+        statement = (
+            select(
+                JobInboxItem,
+                JobOpportunity,
+                Company.canonical_name,
+                JobPosting,
+                snapshot,
+                evaluation,
+            )
+            .select_from(JobInboxItem)
+            .join(
+                JobOpportunity, JobOpportunity.job_opportunity_id == JobInboxItem.job_opportunity_id
+            )
+            .join(Company, Company.company_id == JobOpportunity.company_id)
+            .join(JobPosting, JobPosting.job_posting_id == JobOpportunity.primary_job_posting_id)
+            .join(snapshot, snapshot.job_snapshot_id == latest_snapshot)
+            .outerjoin(evaluation, on_evaluation)
+            .where(JobInboxItem.owner_id == query.owner_id)
+        )
+        return statement, evaluation
+
+    def _filtered(self, query: ListQuery) -> tuple[Any, Any]:
+        statement, evaluation = self._select(query)
+        if query.state is not None:
+            statement = statement.where(JobInboxItem.state == query.state)
+        if query.shortlisted is not None:
+            statement = statement.where(JobInboxItem.is_shortlisted.is_(query.shortlisted))
+        if query.company:
+            statement = statement.where(Company.canonical_name.ilike(f"%{query.company}%"))
+        if query.source:
+            member = (
+                select(JobPosting.job_posting_id)
+                .join(
+                    JobOpportunityLink,
+                    JobOpportunityLink.job_posting_id == JobPosting.job_posting_id,
+                )
+                .join(
+                    SourceConfiguration,
+                    SourceConfiguration.source_configuration_id
+                    == JobPosting.source_configuration_id,
+                )
+                .where(
+                    JobOpportunityLink.job_opportunity_id == JobOpportunity.job_opportunity_id,
+                    JobOpportunityLink.state != "rejected",
+                    or_(
+                        SourceConfiguration.source_type == query.source,
+                        SourceConfiguration.display_name.ilike(f"%{query.source}%"),
+                    ),
+                )
+                .exists()
+            )
+            statement = statement.where(member)
+        if query.fit_min is not None:
+            statement = statement.where(evaluation.fit_score >= query.fit_min)
+        if query.fit_max is not None:
+            statement = statement.where(evaluation.fit_score <= query.fit_max)
+        if query.first_seen_from is not None:
+            statement = statement.where(JobOpportunity.first_seen_at >= query.first_seen_from)
+        if query.first_seen_to is not None:
+            statement = statement.where(JobOpportunity.first_seen_at <= query.first_seen_to)
+        if not query.include_closed:
+            statement = statement.where(
+                or_(
+                    JobOpportunity.closed_at.is_(None),
+                    JobInboxItem.state == InboxState.APPLIED.value,
+                )
+            )
+        return statement, evaluation
+
+    async def page(
+        self, query: ListQuery, *, limit: int, after: tuple[int, datetime, int] | None
+    ) -> list[RawRow]:
+        """Return up to ``limit`` rows after the keyset position ``after``.
+
+        The key is ``(fit, first seen, item id)``; for the date sorts the fit part is constant.
+        """
+        statement, evaluation = self._filtered(query)
+        fit = func.coalesce(evaluation.fit_score, -1)
+        seen, item_id = JobOpportunity.first_seen_at, JobInboxItem.job_inbox_item_id
+        order: tuple[Any, ...]
+        if query.sort == "fit_desc":
+            order = (fit.desc(), seen.desc(), item_id.desc())
+            key = tuple_(fit, seen, item_id)
+            descending = True
+        elif query.sort == "newest":
+            order = (seen.desc(), item_id.desc())
+            key = tuple_(literal(0), seen, item_id)
+            descending = True
+        else:
+            order = (seen.asc(), item_id.asc())
+            key = tuple_(literal(0), seen, item_id)
+            descending = False
+        if after is not None:
+            position = tuple_(literal(after[0]), literal(after[1]), literal(after[2]))
+            statement = statement.where(key < position if descending else key > position)
+        rows = (await self._session.execute(statement.order_by(*order).limit(limit))).all()
+        return [
+            RawRow(item, opportunity, company, posting, snapshot, ev)
+            for item, opportunity, company, posting, snapshot, ev in rows
+        ]
+
+    async def counts(self, owner_id: int, *, include_closed: bool) -> dict[str, int]:
+        """Return the number of items per state, the shortlisted ones and the total."""
+        shortlisted_flag = case((JobInboxItem.is_shortlisted.is_(True), 1), else_=0)
+        statement = (
+            select(JobInboxItem.state, func.count(), func.sum(shortlisted_flag))
+            .join(
+                JobOpportunity, JobOpportunity.job_opportunity_id == JobInboxItem.job_opportunity_id
+            )
+            .where(JobInboxItem.owner_id == owner_id)
+            .group_by(JobInboxItem.state)
+        )
+        if not include_closed:
+            statement = statement.where(
+                or_(
+                    JobOpportunity.closed_at.is_(None),
+                    JobInboxItem.state == InboxState.APPLIED.value,
+                )
+            )
+        counts = dict.fromkeys(_STATES, 0)
+        shortlisted = 0
+        for state, number, flagged in (await self._session.execute(statement)).all():
+            counts[state] = int(number)
+            shortlisted += int(flagged or 0)
+        return {**counts, "shortlisted": shortlisted, "total": sum(counts.values())}
+
+    async def dimensions(self, evaluation_ids: list[int]) -> dict[int, list[ScoreDimension]]:
+        """Return the dimensions of each evaluation."""
+        if not evaluation_ids:
+            return {}
+        rows = await self._session.execute(
+            select(ScoreDimension)
+            .where(ScoreDimension.match_evaluation_id.in_(evaluation_ids))
+            .order_by(ScoreDimension.score_dimension_id)
+        )
+        grouped: dict[int, list[ScoreDimension]] = {i: [] for i in evaluation_ids}
+        for row in rows.scalars():
+            grouped[row.match_evaluation_id].append(row)
+        return grouped
+
+    async def postings(self, opportunity_ids: list[int]) -> dict[int, list[PostingRow]]:
+        """Return the listings grouped under each opportunity."""
+        if not opportunity_ids:
+            return {}
+        rows = await self._session.execute(
+            select(JobOpportunityLink, JobPosting, SourceConfiguration.display_name)
+            .join(JobPosting, JobPosting.job_posting_id == JobOpportunityLink.job_posting_id)
+            .join(
+                SourceConfiguration,
+                SourceConfiguration.source_configuration_id == JobPosting.source_configuration_id,
+            )
+            .where(
+                JobOpportunityLink.job_opportunity_id.in_(opportunity_ids),
+                JobOpportunityLink.state != "rejected",
+            )
+            .order_by(JobPosting.job_posting_id)
+        )
+        grouped: dict[int, list[PostingRow]] = {i: [] for i in opportunity_ids}
+        for link, posting, display_name in rows.all():
+            grouped[link.job_opportunity_id].append(PostingRow(posting, display_name, link))
+        return grouped
+
+    async def one(self, query: ListQuery, job_inbox_item_id: int) -> RawRow | None:
+        """Return one row (same shape as the list) for an item, if it exists."""
+        statement, _evaluation = self._select(query)
+        statement = statement.where(JobInboxItem.job_inbox_item_id == job_inbox_item_id)
+        row = (await self._session.execute(statement)).first()
+        if row is None:
+            return None
+        item, opportunity, company, posting, snapshot, ev = row
+        return RawRow(item, opportunity, company, posting, snapshot, ev)
+
+    async def events(self, job_inbox_item_id: int, limit: int) -> list[InboxEvent]:
+        """Return the item's newest events first."""
+        rows = await self._session.execute(
+            select(InboxEvent)
+            .where(InboxEvent.job_inbox_item_id == job_inbox_item_id)
+            .order_by(InboxEvent.inbox_event_id.desc())
+            .limit(limit)
+        )
+        return list(rows.scalars())
+
+    async def latest_change(self, job_posting_id: int) -> JobChangeEvent | None:
+        """Return the posting's latest material change, if any."""
+        return (
+            await self._session.execute(
+                select(JobChangeEvent)
+                .where(JobChangeEvent.job_posting_id == job_posting_id)
+                .order_by(JobChangeEvent.job_change_event_id.desc())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+
+    async def default_intent_id(self, owner_id: int) -> int | None:
+        """Return the owner's first enabled intent (used when none is chosen)."""
+        return (
+            await self._session.execute(
+                select(SearchIntent.search_intent_id)
+                .where(SearchIntent.owner_id == owner_id, SearchIntent.enabled.is_(True))
+                .order_by(SearchIntent.search_intent_id)
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+
+    async def unsurfaced(self, owner_id: int, limit: int) -> list[int]:
+        """Return open opportunities that have no inbox item for the owner yet."""
+        has_item = (
+            select(JobInboxItem.job_inbox_item_id)
+            .where(
+                JobInboxItem.owner_id == owner_id,
+                JobInboxItem.job_opportunity_id == JobOpportunity.job_opportunity_id,
+            )
+            .exists()
+        )
+        rows = await self._session.execute(
+            select(JobOpportunity.job_opportunity_id)
+            .where(JobOpportunity.closed_at.is_(None), ~has_item)
+            .order_by(JobOpportunity.first_seen_at.desc(), JobOpportunity.job_opportunity_id.desc())
+            .limit(limit)
+        )
+        return [int(i) for i in rows.scalars()]
+
+    async def items_for_posting(self, job_posting_id: int) -> list[JobInboxItem]:
+        """Return the inbox items of the opportunity the posting is grouped under."""
+        rows = await self._session.execute(
+            select(JobInboxItem)
+            .join(
+                JobOpportunityLink,
+                JobOpportunityLink.job_opportunity_id == JobInboxItem.job_opportunity_id,
+            )
+            .where(
+                JobOpportunityLink.job_posting_id == job_posting_id,
+                JobOpportunityLink.state != "rejected",
+            )
+        )
+        return list(rows.scalars())

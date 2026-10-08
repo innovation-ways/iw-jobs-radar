@@ -683,3 +683,50 @@ async def test_the_source_listing_shows_the_last_result_and_open_postings(
     assert ran.company_name == source.display_name
     idle = rows[never.source_configuration_id]
     assert idle.last_result is None and idle.open_postings == 0
+
+
+async def test_a_material_change_moves_the_inbox_item_to_updated_unread_but_cosmetic_ones_do_not(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch, clock: Clock
+) -> None:
+    from jobs_radar.db.models import JobInboxItem, JobOpportunityLink
+    from jobs_radar.domain.enums import InboxAction
+    from jobs_radar.services.dedup import DedupService
+    from jobs_radar.services.inbox import InboxService
+
+    adapter = FakeAdapter(
+        [
+            listing(make_posting("1")),
+            listing(make_posting("1", title="  Senior  AI Solutions Engineer ")),  # cosmetic
+            listing(make_posting("1", title="Staff AI Solutions Engineer")),  # material
+        ]
+    )
+    source = await new_source(db_session, adapter)
+    service = collection(db_session, monkeypatch, adapter, clock)
+    await run_all(service, db_session, clock, source.source_configuration_id)
+    posting = (await postings_of(db_session, source))["1"]
+    await DedupService(db_session).link_posting(posting.job_posting_id)
+    inbox = InboxService(db_session)
+    await inbox.surface_new(LOCAL_OWNER_ID)
+    item = (
+        await db_session.execute(
+            select(JobInboxItem)
+            .join(
+                JobOpportunityLink,
+                JobOpportunityLink.job_opportunity_id == JobInboxItem.job_opportunity_id,
+            )
+            .where(JobOpportunityLink.job_posting_id == posting.job_posting_id)
+        )
+    ).scalar_one()
+    await inbox.act(
+        LOCAL_OWNER_ID, item.job_inbox_item_id, InboxAction.OPEN, expected_version=item.version
+    )
+
+    clock.tick()
+    await run_all(service, db_session, clock, source.source_configuration_id)  # cosmetic
+    await db_session.refresh(item)
+    assert item.state == "read"
+
+    clock.tick()
+    await run_all(service, db_session, clock, source.source_configuration_id)  # material
+    await db_session.refresh(item)
+    assert item.state == "updated_unread"

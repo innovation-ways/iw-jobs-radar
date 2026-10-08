@@ -99,6 +99,9 @@ class SkillRelationJudge:
 
     async def _judge(self, target: int, missing: list[int]) -> dict[int, str]:
         names = await self._skills.names({target, *missing})
+        missing = [skill_id for skill_id in missing if skill_id in names]  # skip dangling ids
+        if target not in names or not missing:
+            return {}
         by_normalised = {normalise_skill_name(names[skill_id]): skill_id for skill_id in missing}
         request = ExtractionRequest(
             system=_SYSTEM,

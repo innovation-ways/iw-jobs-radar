@@ -37,7 +37,11 @@ def _facts(view: RevisionView) -> ProfileFactsRead:
     """Attach each skill's canonical name to the stored facts."""
     facts: dict[str, Any] = dict(view.revision.facts_json)
     facts["skills"] = [
-        {**skill, "name": view.skill_names[int(skill["skill_id"])]} for skill in facts["skills"]
+        {
+            **skill,
+            "name": view.skill_names.get(int(skill["skill_id"]), f"Skill {skill['skill_id']}"),
+        }
+        for skill in facts["skills"]
     ]
     return ProfileFactsRead.model_validate(facts)
 

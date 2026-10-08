@@ -33,6 +33,7 @@ from jobs_radar.repositories.jobs import JobRepository
 from jobs_radar.repositories.runs import RunRepository
 from jobs_radar.repositories.sources import SourceRepository
 from jobs_radar.schemas.job import NormalisedJob
+from jobs_radar.services.inbox import InboxService
 from jobs_radar.services.normalise import build_normalised_job, material_of_job
 
 logger = logging.getLogger(__name__)
@@ -348,6 +349,8 @@ class CollectionService:
                 counts.new += 1
             elif content_changed:
                 counts.updated += 1
+                # a material source change moves eligible inbox items to updated_unread
+                await InboxService(session).notify_material_change(upsert.posting.job_posting_id)
                 previous_material = (
                     material_of_job(NormalisedJob.model_validate(previous_snapshot.normalised_json))
                     if previous_snapshot is not None

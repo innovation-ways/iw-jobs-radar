@@ -119,6 +119,30 @@
         "title": "CertificationInput",
         "type": "object"
       },
+      "ChangeRead": {
+        "additionalProperties": false,
+        "description": "The latest material change to the job.",
+        "properties": {
+          "changed_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Changed Fields",
+            "type": "array"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "changed_fields",
+          "created_at"
+        ],
+        "title": "ChangeRead",
+        "type": "object"
+      },
       "CollectionRunPage": {
         "additionalProperties": false,
         "description": "One page of run history, newest first; pass the cursor back to get older runs.",
@@ -462,6 +486,76 @@
           "annual_target"
         ],
         "title": "EmployeePay",
+        "type": "object"
+      },
+      "EvaluationBrief": {
+        "additionalProperties": false,
+        "description": "The score of the job under the chosen intent.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "fit_band": {
+            "enum": [
+              "excellent",
+              "strong",
+              "average",
+              "low",
+              "not_recommended"
+            ],
+            "title": "Fit Band",
+            "type": "string"
+          },
+          "fit_score": {
+            "title": "Fit Score",
+            "type": "integer"
+          },
+          "gates": {
+            "items": {
+              "$ref": "#/components/schemas/GateRead"
+            },
+            "title": "Gates",
+            "type": "array"
+          },
+          "intent_revision_id": {
+            "title": "Intent Revision Id",
+            "type": "integer"
+          },
+          "match_evaluation_id": {
+            "title": "Match Evaluation Id",
+            "type": "integer"
+          },
+          "policy_version": {
+            "title": "Policy Version",
+            "type": "string"
+          },
+          "profile_revision_id": {
+            "title": "Profile Revision Id",
+            "type": "integer"
+          },
+          "recommendation": {
+            "enum": [
+              "recommended",
+              "not_recommended"
+            ],
+            "title": "Recommendation",
+            "type": "string"
+          }
+        },
+        "required": [
+          "match_evaluation_id",
+          "policy_version",
+          "fit_score",
+          "fit_band",
+          "recommendation",
+          "gates",
+          "profile_revision_id",
+          "intent_revision_id",
+          "created_at"
+        ],
+        "title": "EvaluationBrief",
         "type": "object"
       },
       "EvaluationRead": {
@@ -878,6 +972,630 @@
           }
         },
         "title": "HoursStances",
+        "type": "object"
+      },
+      "InboxActionRequest": {
+        "additionalProperties": false,
+        "description": "One owner action; ``expected_version`` is the item version the client last saw.",
+        "properties": {
+          "action": {
+            "enum": [
+              "open",
+              "mark_unread",
+              "shortlist",
+              "unshortlist",
+              "ignore",
+              "restore",
+              "archive",
+              "record_application"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "application_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Url"
+          },
+          "applied_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied At"
+          },
+          "expected_version": {
+            "minimum": 1.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "action",
+          "expected_version"
+        ],
+        "title": "InboxActionRequest",
+        "type": "object"
+      },
+      "InboxActionResponse": {
+        "additionalProperties": false,
+        "description": "The item after the action and the event it appended (``null`` when nothing changed).",
+        "properties": {
+          "event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InboxEventRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "item": {
+            "$ref": "#/components/schemas/InboxItemSummary"
+          }
+        },
+        "required": [
+          "item",
+          "event"
+        ],
+        "title": "InboxActionResponse",
+        "type": "object"
+      },
+      "InboxCounts": {
+        "additionalProperties": false,
+        "description": "Items per state, for the tabs.",
+        "properties": {
+          "applied": {
+            "title": "Applied",
+            "type": "integer"
+          },
+          "archived": {
+            "title": "Archived",
+            "type": "integer"
+          },
+          "ignored": {
+            "title": "Ignored",
+            "type": "integer"
+          },
+          "read": {
+            "title": "Read",
+            "type": "integer"
+          },
+          "shortlisted": {
+            "title": "Shortlisted",
+            "type": "integer"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "unread": {
+            "title": "Unread",
+            "type": "integer"
+          },
+          "updated_unread": {
+            "title": "Updated Unread",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "unread",
+          "read",
+          "updated_unread",
+          "ignored",
+          "archived",
+          "applied",
+          "shortlisted",
+          "total"
+        ],
+        "title": "InboxCounts",
+        "type": "object"
+      },
+      "InboxEventRead": {
+        "additionalProperties": false,
+        "description": "One entry of an item's history.",
+        "properties": {
+          "action": {
+            "title": "Action",
+            "type": "string"
+          },
+          "actor": {
+            "enum": [
+              "user",
+              "system"
+            ],
+            "title": "Actor",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "from_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From State"
+          },
+          "inbox_event_id": {
+            "title": "Inbox Event Id",
+            "type": "integer"
+          },
+          "to_state": {
+            "title": "To State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "inbox_event_id",
+          "action",
+          "actor",
+          "from_state",
+          "to_state",
+          "created_at"
+        ],
+        "title": "InboxEventRead",
+        "type": "object"
+      },
+      "InboxItemDetail": {
+        "additionalProperties": false,
+        "description": "An item with the job text, the evidence behind its score and its history.",
+        "properties": {
+          "application_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Application Url"
+          },
+          "applied_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied At"
+          },
+          "apply_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apply Url"
+          },
+          "closed": {
+            "title": "Closed",
+            "type": "boolean"
+          },
+          "company_name": {
+            "title": "Company Name",
+            "type": "string"
+          },
+          "description_text": {
+            "title": "Description Text",
+            "type": "string"
+          },
+          "dimensions": {
+            "items": {
+              "$ref": "#/components/schemas/DimensionRead"
+            },
+            "title": "Dimensions",
+            "type": "array"
+          },
+          "evaluated": {
+            "title": "Evaluated",
+            "type": "boolean"
+          },
+          "evaluation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvaluationBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/InboxEventRead"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "first_seen_at": {
+            "format": "date-time",
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "ignore_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ignore Reason"
+          },
+          "is_shortlisted": {
+            "title": "Is Shortlisted",
+            "type": "boolean"
+          },
+          "job_inbox_item_id": {
+            "title": "Job Inbox Item Id",
+            "type": "integer"
+          },
+          "job_opportunity_id": {
+            "title": "Job Opportunity Id",
+            "type": "integer"
+          },
+          "job_posting_id": {
+            "title": "Job Posting Id",
+            "type": "integer"
+          },
+          "last_change": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChangeRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_seen_at": {
+            "format": "date-time",
+            "title": "Last Seen At",
+            "type": "string"
+          },
+          "locations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Locations",
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "possible_duplicate": {
+            "title": "Possible Duplicate",
+            "type": "boolean"
+          },
+          "read_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read At"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/SignalRead"
+            },
+            "title": "Signals",
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceRef"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "state": {
+            "enum": [
+              "unread",
+              "read",
+              "updated_unread",
+              "ignored",
+              "archived",
+              "applied"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "job_inbox_item_id",
+          "job_opportunity_id",
+          "job_posting_id",
+          "state",
+          "is_shortlisted",
+          "version",
+          "title",
+          "company_name",
+          "locations",
+          "first_seen_at",
+          "last_seen_at",
+          "closed",
+          "evaluated",
+          "evaluation",
+          "signals",
+          "sources",
+          "possible_duplicate",
+          "applied_at",
+          "note",
+          "description_text",
+          "apply_url",
+          "read_at",
+          "ignore_reason",
+          "application_url",
+          "dimensions",
+          "events",
+          "last_change"
+        ],
+        "title": "InboxItemDetail",
+        "type": "object"
+      },
+      "InboxItemSummary": {
+        "additionalProperties": false,
+        "description": "A row of the inbox list.",
+        "properties": {
+          "applied_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied At"
+          },
+          "closed": {
+            "title": "Closed",
+            "type": "boolean"
+          },
+          "company_name": {
+            "title": "Company Name",
+            "type": "string"
+          },
+          "evaluated": {
+            "title": "Evaluated",
+            "type": "boolean"
+          },
+          "evaluation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvaluationBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "first_seen_at": {
+            "format": "date-time",
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "is_shortlisted": {
+            "title": "Is Shortlisted",
+            "type": "boolean"
+          },
+          "job_inbox_item_id": {
+            "title": "Job Inbox Item Id",
+            "type": "integer"
+          },
+          "job_opportunity_id": {
+            "title": "Job Opportunity Id",
+            "type": "integer"
+          },
+          "job_posting_id": {
+            "title": "Job Posting Id",
+            "type": "integer"
+          },
+          "last_seen_at": {
+            "format": "date-time",
+            "title": "Last Seen At",
+            "type": "string"
+          },
+          "locations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Locations",
+            "type": "array"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "possible_duplicate": {
+            "title": "Possible Duplicate",
+            "type": "boolean"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/SignalRead"
+            },
+            "title": "Signals",
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceRef"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "state": {
+            "enum": [
+              "unread",
+              "read",
+              "updated_unread",
+              "ignored",
+              "archived",
+              "applied"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "job_inbox_item_id",
+          "job_opportunity_id",
+          "job_posting_id",
+          "state",
+          "is_shortlisted",
+          "version",
+          "title",
+          "company_name",
+          "locations",
+          "first_seen_at",
+          "last_seen_at",
+          "closed",
+          "evaluated",
+          "evaluation",
+          "signals",
+          "sources",
+          "possible_duplicate",
+          "applied_at",
+          "note"
+        ],
+        "title": "InboxItemSummary",
+        "type": "object"
+      },
+      "InboxList": {
+        "additionalProperties": false,
+        "description": "One page of the inbox.",
+        "properties": {
+          "counts": {
+            "$ref": "#/components/schemas/InboxCounts"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/InboxItemSummary"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "search_intent_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Intent Id"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "counts",
+          "search_intent_id"
+        ],
+        "title": "InboxList",
         "type": "object"
       },
       "IntentCreate": {
@@ -1384,6 +2102,30 @@
           "level"
         ],
         "title": "LanguageSkill",
+        "type": "object"
+      },
+      "LinkDecisionResponse": {
+        "additionalProperties": false,
+        "description": "The opportunity the posting belongs to after the owner's decision.",
+        "properties": {
+          "job_opportunity_id": {
+            "title": "Job Opportunity Id",
+            "type": "integer"
+          },
+          "state": {
+            "enum": [
+              "confirmed",
+              "rejected"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_opportunity_id",
+          "state"
+        ],
+        "title": "LinkDecisionResponse",
         "type": "object"
       },
       "LivenessResponse": {
@@ -2081,6 +2823,53 @@
         "title": "RunTrigger",
         "type": "string"
       },
+      "SignalRead": {
+        "additionalProperties": false,
+        "description": "A dimension's status, shown as a small signal on the card.",
+        "properties": {
+          "dimension_key": {
+            "title": "Dimension Key",
+            "type": "string"
+          },
+          "excluded": {
+            "title": "Excluded",
+            "type": "boolean"
+          },
+          "quality": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strong",
+                  "partial",
+                  "weak"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quality"
+          },
+          "status": {
+            "enum": [
+              "match",
+              "mismatch",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "dimension_key",
+          "status",
+          "quality",
+          "excluded"
+        ],
+        "title": "SignalRead",
+        "type": "object"
+      },
       "SkillInput": {
         "additionalProperties": false,
         "description": "A skill as typed by the owner.",
@@ -2313,6 +3102,67 @@
           "last_result"
         ],
         "title": "SourceRead",
+        "type": "object"
+      },
+      "SourceRef": {
+        "additionalProperties": false,
+        "description": "A listing of the opportunity on one source.",
+        "properties": {
+          "closed": {
+            "title": "Closed",
+            "type": "boolean"
+          },
+          "first_seen_at": {
+            "format": "date-time",
+            "title": "First Seen At",
+            "type": "string"
+          },
+          "job_opportunity_link_id": {
+            "title": "Job Opportunity Link Id",
+            "type": "integer"
+          },
+          "job_posting_id": {
+            "title": "Job Posting Id",
+            "type": "integer"
+          },
+          "link_state": {
+            "enum": [
+              "auto",
+              "possible",
+              "confirmed"
+            ],
+            "title": "Link State",
+            "type": "string"
+          },
+          "similarity": {
+            "title": "Similarity",
+            "type": "number"
+          },
+          "source_name": {
+            "title": "Source Name",
+            "type": "string"
+          },
+          "source_type": {
+            "title": "Source Type",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_posting_id",
+          "source_type",
+          "source_name",
+          "url",
+          "first_seen_at",
+          "closed",
+          "job_opportunity_link_id",
+          "link_state",
+          "similarity"
+        ],
+        "title": "SourceRef",
         "type": "object"
       },
       "SourceResultRead": {
@@ -2916,6 +3766,372 @@
         ]
       }
     },
+    "/api/v1/inbox": {
+      "get": {
+        "description": "Filter and sort the owner's inbox; scores come from the chosen (or first enabled) intent.",
+        "operationId": "list_inbox_api_v1_inbox_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "schema": {
+              "default": "unread",
+              "pattern": "^(all|unread|read|updated_unread|ignored|archived|applied)$",
+              "title": "State",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "shortlisted",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Shortlisted"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search_intent_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search Intent Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "company",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 200,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Company"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Source"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fit_min",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 100,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fit Min"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fit_max",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 100,
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fit Max"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_closed",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Closed",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "default": "fit_desc",
+              "enum": [
+                "fit_desc",
+                "newest",
+                "oldest"
+              ],
+              "title": "Sort",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 500,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Inbox",
+        "tags": [
+          "inbox"
+        ]
+      }
+    },
+    "/api/v1/inbox/{job_inbox_item_id}": {
+      "get": {
+        "description": "Return one item with its job text, evidence, sites and history.",
+        "operationId": "get_inbox_item_api_v1_inbox__job_inbox_item_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_inbox_item_id",
+            "required": true,
+            "schema": {
+              "title": "Job Inbox Item Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search_intent_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search Intent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxItemDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Inbox Item",
+        "tags": [
+          "inbox"
+        ]
+      }
+    },
+    "/api/v1/inbox/{job_inbox_item_id}/actions": {
+      "post": {
+        "description": "Perform one validated action; a stale ``expected_version`` is a 409.",
+        "operationId": "act_on_inbox_item_api_v1_inbox__job_inbox_item_id__actions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_inbox_item_id",
+            "required": true,
+            "schema": {
+              "title": "Job Inbox Item Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search_intent_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search Intent Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InboxActionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxActionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Act On Inbox Item",
+        "tags": [
+          "inbox"
+        ]
+      }
+    },
     "/api/v1/intents/{search_intent_id}": {
       "put": {
         "description": "Save the intent as its next immutable revision (no revision when nothing changed).",
@@ -3399,6 +4615,92 @@
         "summary": "Search Locations",
         "tags": [
           "locations"
+        ]
+      }
+    },
+    "/api/v1/opportunity-links/{job_opportunity_link_id}/confirm": {
+      "post": {
+        "description": "Confirm that two listings are the same opportunity.",
+        "operationId": "confirm_link_api_v1_opportunity_links__job_opportunity_link_id__confirm_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_opportunity_link_id",
+            "required": true,
+            "schema": {
+              "title": "Job Opportunity Link Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDecisionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Confirm Link",
+        "tags": [
+          "inbox"
+        ]
+      }
+    },
+    "/api/v1/opportunity-links/{job_opportunity_link_id}/reject": {
+      "post": {
+        "description": "Say two listings are different: the listing gets an opportunity of its own.",
+        "operationId": "reject_link_api_v1_opportunity_links__job_opportunity_link_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_opportunity_link_id",
+            "required": true,
+            "schema": {
+              "title": "Job Opportunity Link Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkDecisionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reject Link",
+        "tags": [
+          "inbox"
         ]
       }
     },

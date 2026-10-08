@@ -48,6 +48,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inbox": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Inbox
+         * @description Filter and sort the owner's inbox; scores come from the chosen (or first enabled) intent.
+         */
+        get: operations["list_inbox_api_v1_inbox_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inbox/{job_inbox_item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Inbox Item
+         * @description Return one item with its job text, evidence, sites and history.
+         */
+        get: operations["get_inbox_item_api_v1_inbox__job_inbox_item_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inbox/{job_inbox_item_id}/actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Act On Inbox Item
+         * @description Perform one validated action; a stale ``expected_version`` is a 409.
+         */
+        post: operations["act_on_inbox_item_api_v1_inbox__job_inbox_item_id__actions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/intents/{search_intent_id}": {
         parameters: {
             query?: never;
@@ -222,6 +282,46 @@ export interface paths {
         get: operations["search_locations_api_v1_locations_search_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/opportunity-links/{job_opportunity_link_id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm Link
+         * @description Confirm that two listings are the same opportunity.
+         */
+        post: operations["confirm_link_api_v1_opportunity_links__job_opportunity_link_id__confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/opportunity-links/{job_opportunity_link_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject Link
+         * @description Say two listings are different: the listing gets an opportunity of its own.
+         */
+        post: operations["reject_link_api_v1_opportunity_links__job_opportunity_link_id__reject_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -546,6 +646,19 @@ export interface components {
             year?: number | null;
         };
         /**
+         * ChangeRead
+         * @description The latest material change to the job.
+         */
+        ChangeRead: {
+            /** Changed Fields */
+            changed_fields: string[];
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
          * CollectionRunPage
          * @description One page of run history, newest first; pass the cursor back to get older runs.
          */
@@ -673,6 +786,39 @@ export interface components {
              * @enum {integer}
              */
             payments_per_year: 12 | 14;
+        };
+        /**
+         * EvaluationBrief
+         * @description The score of the job under the chosen intent.
+         */
+        EvaluationBrief: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Fit Band
+             * @enum {string}
+             */
+            fit_band: "excellent" | "strong" | "average" | "low" | "not_recommended";
+            /** Fit Score */
+            fit_score: number;
+            /** Gates */
+            gates: components["schemas"]["GateRead"][];
+            /** Intent Revision Id */
+            intent_revision_id: number;
+            /** Match Evaluation Id */
+            match_evaluation_id: number;
+            /** Policy Version */
+            policy_version: string;
+            /** Profile Revision Id */
+            profile_revision_id: number;
+            /**
+             * Recommendation
+             * @enum {string}
+             */
+            recommendation: "recommended" | "not_recommended";
         };
         /**
          * EvaluationRead
@@ -854,6 +1000,213 @@ export interface components {
         HoursStances: {
             /** @default acceptable */
             part_time: components["schemas"]["Stance"];
+        };
+        /**
+         * InboxActionRequest
+         * @description One owner action; ``expected_version`` is the item version the client last saw.
+         */
+        InboxActionRequest: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "open" | "mark_unread" | "shortlist" | "unshortlist" | "ignore" | "restore" | "archive" | "record_application";
+            /** Application Url */
+            application_url?: string | null;
+            /** Applied At */
+            applied_at?: string | null;
+            /** Expected Version */
+            expected_version: number;
+            /** Note */
+            note?: string | null;
+            /** Reason */
+            reason?: string | null;
+        };
+        /**
+         * InboxActionResponse
+         * @description The item after the action and the event it appended (``null`` when nothing changed).
+         */
+        InboxActionResponse: {
+            event: components["schemas"]["InboxEventRead"] | null;
+            item: components["schemas"]["InboxItemSummary"];
+        };
+        /**
+         * InboxCounts
+         * @description Items per state, for the tabs.
+         */
+        InboxCounts: {
+            /** Applied */
+            applied: number;
+            /** Archived */
+            archived: number;
+            /** Ignored */
+            ignored: number;
+            /** Read */
+            read: number;
+            /** Shortlisted */
+            shortlisted: number;
+            /** Total */
+            total: number;
+            /** Unread */
+            unread: number;
+            /** Updated Unread */
+            updated_unread: number;
+        };
+        /**
+         * InboxEventRead
+         * @description One entry of an item's history.
+         */
+        InboxEventRead: {
+            /** Action */
+            action: string;
+            /**
+             * Actor
+             * @enum {string}
+             */
+            actor: "user" | "system";
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** From State */
+            from_state: string | null;
+            /** Inbox Event Id */
+            inbox_event_id: number;
+            /** To State */
+            to_state: string;
+        };
+        /**
+         * InboxItemDetail
+         * @description An item with the job text, the evidence behind its score and its history.
+         */
+        InboxItemDetail: {
+            /** Application Url */
+            application_url: string | null;
+            /** Applied At */
+            applied_at: string | null;
+            /** Apply Url */
+            apply_url: string | null;
+            /** Closed */
+            closed: boolean;
+            /** Company Name */
+            company_name: string;
+            /** Description Text */
+            description_text: string;
+            /** Dimensions */
+            dimensions: components["schemas"]["DimensionRead"][];
+            /** Evaluated */
+            evaluated: boolean;
+            evaluation: components["schemas"]["EvaluationBrief"] | null;
+            /** Events */
+            events: components["schemas"]["InboxEventRead"][];
+            /**
+             * First Seen At
+             * Format: date-time
+             */
+            first_seen_at: string;
+            /** Ignore Reason */
+            ignore_reason: string | null;
+            /** Is Shortlisted */
+            is_shortlisted: boolean;
+            /** Job Inbox Item Id */
+            job_inbox_item_id: number;
+            /** Job Opportunity Id */
+            job_opportunity_id: number;
+            /** Job Posting Id */
+            job_posting_id: number;
+            last_change: components["schemas"]["ChangeRead"] | null;
+            /**
+             * Last Seen At
+             * Format: date-time
+             */
+            last_seen_at: string;
+            /** Locations */
+            locations: string[];
+            /** Note */
+            note: string | null;
+            /** Possible Duplicate */
+            possible_duplicate: boolean;
+            /** Read At */
+            read_at: string | null;
+            /** Signals */
+            signals: components["schemas"]["SignalRead"][];
+            /** Sources */
+            sources: components["schemas"]["SourceRef"][];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "unread" | "read" | "updated_unread" | "ignored" | "archived" | "applied";
+            /** Title */
+            title: string;
+            /** Version */
+            version: number;
+        };
+        /**
+         * InboxItemSummary
+         * @description A row of the inbox list.
+         */
+        InboxItemSummary: {
+            /** Applied At */
+            applied_at: string | null;
+            /** Closed */
+            closed: boolean;
+            /** Company Name */
+            company_name: string;
+            /** Evaluated */
+            evaluated: boolean;
+            evaluation: components["schemas"]["EvaluationBrief"] | null;
+            /**
+             * First Seen At
+             * Format: date-time
+             */
+            first_seen_at: string;
+            /** Is Shortlisted */
+            is_shortlisted: boolean;
+            /** Job Inbox Item Id */
+            job_inbox_item_id: number;
+            /** Job Opportunity Id */
+            job_opportunity_id: number;
+            /** Job Posting Id */
+            job_posting_id: number;
+            /**
+             * Last Seen At
+             * Format: date-time
+             */
+            last_seen_at: string;
+            /** Locations */
+            locations: string[];
+            /** Note */
+            note: string | null;
+            /** Possible Duplicate */
+            possible_duplicate: boolean;
+            /** Signals */
+            signals: components["schemas"]["SignalRead"][];
+            /** Sources */
+            sources: components["schemas"]["SourceRef"][];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "unread" | "read" | "updated_unread" | "ignored" | "archived" | "applied";
+            /** Title */
+            title: string;
+            /** Version */
+            version: number;
+        };
+        /**
+         * InboxList
+         * @description One page of the inbox.
+         */
+        InboxList: {
+            counts: components["schemas"]["InboxCounts"];
+            /** Items */
+            items: components["schemas"]["InboxItemSummary"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+            /** Search Intent Id */
+            search_intent_id: number | null;
         };
         /**
          * IntentCreate
@@ -1129,6 +1482,19 @@ export interface components {
              * @enum {string}
              */
             level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2" | "native";
+        };
+        /**
+         * LinkDecisionResponse
+         * @description The opportunity the posting belongs to after the owner's decision.
+         */
+        LinkDecisionResponse: {
+            /** Job Opportunity Id */
+            job_opportunity_id: number;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "confirmed" | "rejected";
         };
         /**
          * LivenessResponse
@@ -1428,6 +1794,23 @@ export interface components {
          */
         RunTrigger: "scheduled" | "manual";
         /**
+         * SignalRead
+         * @description A dimension's status, shown as a small signal on the card.
+         */
+        SignalRead: {
+            /** Dimension Key */
+            dimension_key: string;
+            /** Excluded */
+            excluded: boolean;
+            /** Quality */
+            quality: ("strong" | "partial" | "weak") | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "match" | "mismatch" | "unknown";
+        };
+        /**
          * SkillInput
          * @description A skill as typed by the owner.
          */
@@ -1523,6 +1906,36 @@ export interface components {
             url: string;
             /** Version */
             version: number;
+        };
+        /**
+         * SourceRef
+         * @description A listing of the opportunity on one source.
+         */
+        SourceRef: {
+            /** Closed */
+            closed: boolean;
+            /**
+             * First Seen At
+             * Format: date-time
+             */
+            first_seen_at: string;
+            /** Job Opportunity Link Id */
+            job_opportunity_link_id: number;
+            /** Job Posting Id */
+            job_posting_id: number;
+            /**
+             * Link State
+             * @enum {string}
+             */
+            link_state: "auto" | "possible" | "confirmed";
+            /** Similarity */
+            similarity: number;
+            /** Source Name */
+            source_name: string;
+            /** Source Type */
+            source_type: string;
+            /** Url */
+            url: string;
         };
         /**
          * SourceResultRead
@@ -1831,6 +2244,119 @@ export interface operations {
             };
         };
     };
+    list_inbox_api_v1_inbox_get: {
+        parameters: {
+            query?: {
+                state?: string;
+                shortlisted?: boolean | null;
+                search_intent_id?: number | null;
+                company?: string | null;
+                source?: string | null;
+                fit_min?: number | null;
+                fit_max?: number | null;
+                from?: string | null;
+                to?: string | null;
+                include_closed?: boolean;
+                sort?: "fit_desc" | "newest" | "oldest";
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_inbox_item_api_v1_inbox__job_inbox_item_id__get: {
+        parameters: {
+            query?: {
+                search_intent_id?: number | null;
+            };
+            header?: never;
+            path: {
+                job_inbox_item_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxItemDetail"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    act_on_inbox_item_api_v1_inbox__job_inbox_item_id__actions_post: {
+        parameters: {
+            query?: {
+                search_intent_id?: number | null;
+            };
+            header?: never;
+            path: {
+                job_inbox_item_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InboxActionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxActionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     save_intent_api_v1_intents__search_intent_id__put: {
         parameters: {
             query?: never;
@@ -2121,6 +2647,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlaceList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_link_api_v1_opportunity_links__job_opportunity_link_id__confirm_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_opportunity_link_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkDecisionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_link_api_v1_opportunity_links__job_opportunity_link_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_opportunity_link_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LinkDecisionResponse"];
                 };
             };
             /** @description Validation Error */

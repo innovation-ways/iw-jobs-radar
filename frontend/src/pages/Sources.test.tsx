@@ -143,6 +143,7 @@ describe('Sources screen', () => {
             country_codes: ['PT'],
             include_worldwide: true,
             any_country: false,
+            onsite_areas: [],
           },
         })
       return Promise.reject(new Error(`unexpected GET ${path}`))

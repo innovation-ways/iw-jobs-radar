@@ -2614,6 +2614,16 @@ export interface components {
             title: string;
         };
         /**
+         * OnsiteAreaRead
+         * @description A place and radius where hybrid or on-site work is acceptable.
+         */
+        OnsiteAreaRead: {
+            /** Place */
+            place: string;
+            /** Radius Km */
+            radius_km: number;
+        };
+        /**
          * OnsiteHybridRule
          * @description How far from a base place hybrid and on-site work may be.
          */
@@ -3431,6 +3441,8 @@ export interface components {
             country_codes: string[];
             /** Include Worldwide */
             include_worldwide: boolean;
+            /** Onsite Areas */
+            onsite_areas: components["schemas"]["OnsiteAreaRead"][];
         };
         /**
          * SourceType

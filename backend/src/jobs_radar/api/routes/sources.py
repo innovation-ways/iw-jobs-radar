@@ -28,6 +28,7 @@ from jobs_radar.schemas.source import (
     CatalogueList,
     CollectionRunPage,
     CollectionRunRead,
+    OnsiteAreaRead,
     SourceCreate,
     SourceList,
     SourcePreviewRead,
@@ -148,6 +149,10 @@ async def get_source_scope(
         country_codes=sorted(scope.country_codes),
         include_worldwide=scope.include_worldwide,
         any_country=scope.any_country,
+        onsite_areas=[
+            OnsiteAreaRead(place=area.place, radius_km=area.radius_km)
+            for area in scope.onsite_areas
+        ],
     )
 
 

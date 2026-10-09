@@ -26,7 +26,7 @@ export function ScopeNote() {
       </p>
     )
   }
-  const { configured, country_codes, include_worldwide, any_country } = scope.data
+  const { configured, country_codes, include_worldwide, any_country, onsite_areas } = scope.data
   if (!configured) {
     return (
       <p role="alert" className="rounded-md bg-caution-bg px-3 py-2 text-sm text-caution">
@@ -47,6 +47,7 @@ export function ScopeNote() {
       <span className="font-medium text-ink">
         {any_country ? 'any country' : `${shown}${rest}`}
         {include_worldwide && !any_country ? ', plus remote work from anywhere' : ''}
+        {onsite_areas.map((area) => `; on site within ${area.radius_km} km of ${area.place}`)}
       </span>{' '}
       (from your profile and search intents).{' '}
       <Link to="/profile" className="underline">

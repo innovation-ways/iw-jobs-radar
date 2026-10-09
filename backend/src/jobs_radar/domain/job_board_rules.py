@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import StrEnum
 
+from jobs_radar.domain.geo import haversine_km
 from jobs_radar.domain.regions import expand_regions
 
 
@@ -46,6 +47,16 @@ def eligibility_from_regions(regions: Sequence[str]) -> Eligibility:
 
 
 @dataclass(frozen=True)
+class OnsiteArea:
+    """A place and a radius around it where hybrid or on-site work is acceptable."""
+
+    place: str
+    latitude: float
+    longitude: float
+    radius_km: int
+
+
+@dataclass(frozen=True)
 class LocationScope:
     """Where the owner can work, derived from the profile and the search intents (ADR-049.11).
 
@@ -58,11 +69,14 @@ class LocationScope:
     country_codes: frozenset[str] = frozenset()
     include_worldwide: bool = False
     any_country: bool = False
+    onsite_areas: tuple[OnsiteArea, ...] = ()
 
     @property
     def is_empty(self) -> bool:
         """True when nothing is known about where the owner can work."""
-        return not (self.country_codes or self.include_worldwide or self.any_country)
+        return not (
+            self.country_codes or self.include_worldwide or self.any_country or self.onsite_areas
+        )
 
 
 @dataclass(frozen=True)
@@ -73,6 +87,7 @@ class LocationPreference:
     remote_regions: Sequence[str]
     remote_acceptable: bool
     local_acceptable: bool
+    onsite_area: OnsiteArea | None = None
 
 
 def derive_location_scope(preferences: Iterable[LocationPreference]) -> LocationScope:
@@ -83,6 +98,7 @@ def derive_location_scope(preferences: Iterable[LocationPreference]) -> Location
     contributes nothing for it.
     """
     countries: set[str] = set()
+    areas: list[OnsiteArea] = []
     worldwide = any_country = False
     for preference in preferences:
         if preference.remote_acceptable:
@@ -94,7 +110,9 @@ def derive_location_scope(preferences: Iterable[LocationPreference]) -> Location
                 countries |= expanded
         if preference.local_acceptable and preference.base_country:
             countries.add(preference.base_country.upper())
-    return LocationScope(frozenset(countries), worldwide, any_country)
+        if preference.local_acceptable and preference.onsite_area not in (None, *areas):
+            areas.append(preference.onsite_area)  # type: ignore[arg-type]  # not None here
+    return LocationScope(frozenset(countries), worldwide, any_country, tuple(areas))
 
 
 def allows_country(eligibility: Eligibility, scope: LocationScope) -> bool:
@@ -106,22 +124,58 @@ def allows_country(eligibility: Eligibility, scope: LocationScope) -> bool:
     return scope.any_country or bool(eligibility.countries & scope.country_codes)
 
 
-# Keyword families per technology area; matched on whole words after hyphens become spaces.
+@dataclass(frozen=True)
+class LocationCandidate:
+    """What a posting says about where the work is done.
+
+    ``remote`` is ``True`` for remote work, ``False`` for hybrid or on-site work and ``None`` when
+    the board does not say. ``place`` is the latitude and longitude of the workplace when it could
+    be read.
+    """
+
+    remote: bool | None
+    eligibility: Eligibility
+    place: tuple[float, float] | None = None
+
+
+def allows_location(candidate: LocationCandidate, scope: LocationScope) -> bool:
+    """Whether a posting passes the owner's location scope.
+
+    On-site and hybrid work must fall inside the radius of one of the owner's places (or have a
+    place that could not be read, which is left to the later judgement); remote work follows the
+    country rules.
+    """
+    if candidate.remote is False:
+        if not scope.onsite_areas:
+            return False
+        if candidate.place is None:
+            return True
+        latitude, longitude = candidate.place
+        return any(
+            haversine_km(latitude, longitude, area.latitude, area.longitude) <= area.radius_km
+            for area in scope.onsite_areas
+        )
+    return allows_country(candidate.eligibility, scope)
+
+
+# Keyword families per technology area, matched on whole words after hyphens become spaces. They are
+# deliberately about the work, not the seniority: a bare "engineer" is not enough (a hardware or
+# wind engineer is not software), so the title must say what is built or run.
 _AREAS: dict[str, re.Pattern[str]] = {
     "software": re.compile(
-        r"\b(software|developer|programmer|engineer|engineering|backend|frontend|full stack|"
-        r"fullstack|mobile|android|ios|web|qa|sdet|architect|react|python|java|javascript|"
-        r"typescript|golang|rust|node|php|ruby|kotlin|swift)\b",
+        r"\b(software|developer|programmer|backend|frontend|full stack|fullstack|mobile|android|"
+        r"ios|qa|sdet|react|python|java|javascript|typescript|golang|rust|node|php|ruby|kotlin|"
+        r"swift|integration|solutions? (?:engineer|architect|consultant))\b",
         re.IGNORECASE,
     ),
     "data": re.compile(
-        r"\b(data|analytics|analytic|machine learning|ml|ai|artificial intelligence|bi|etl|"
-        r"scientist|llm)\b",
+        r"\b(data|analytics|machine learning|ml|ai|artificial intelligence|llm|mlops|etl|bi|"
+        r"business intelligence|database|sql)\b",
         re.IGNORECASE,
     ),
     "devops": re.compile(
-        r"\b(devops|sre|site reliability|infrastructure|cloud|kubernetes|platform|sysadmin|"
-        r"system administrator|terraform)\b",
+        r"\b(devops|sre|site reliability|infrastructure|cloud|kubernetes|platform engineer|"
+        r"sysadmin|system administrator|terraform|linux)\b",
         re.IGNORECASE,
     ),
     "security": re.compile(
@@ -129,10 +183,20 @@ _AREAS: dict[str, re.Pattern[str]] = {
     ),
 }
 
+# Remote boards carry many data-labelling gigs, talent pools and spontaneous applications whose
+# titles mention "AI" or "data" but are not technology jobs; any of these words rules a title out.
+_NOISE = re.compile(
+    r"\b(annotat\w*|transcri\w*|linguist\w*|raters?|translators?|labell?ing|audio collection|"
+    r"sound design\w*|talent pool|initiativbewerbung|data entry|online data analyst)",
+    re.IGNORECASE,
+)
+
 
 def categorise(texts: Iterable[str]) -> frozenset[str]:
     """Technology areas suggested by titles, tags and category names (empty if none apply)."""
     text = " ".join(texts).replace("-", " ").replace("_", " ").replace("/", " ")
+    if _NOISE.search(text):
+        return frozenset()
     return frozenset(area for area, pattern in _AREAS.items() if pattern.search(text))
 
 

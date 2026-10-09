@@ -8,10 +8,13 @@ from jobs_radar.domain.job_board_rules import (
     UNKNOWN,
     WORLDWIDE,
     Eligibility,
+    LocationCandidate,
     LocationPreference,
     LocationScope,
+    OnsiteArea,
     Reach,
     allows_country,
+    allows_location,
     categorise,
     derive_location_scope,
     eligibility_from_regions,
@@ -124,12 +127,22 @@ def test_no_intent_or_nothing_acceptable_gives_an_empty_scope() -> None:
         (["Full-Stack Developer", "React"], {"software"}),
         (["Data-Analyst"], {"data"}),
         (["Machine Learning Scientist"], {"data"}),
-        (["Site Reliability Engineer"], {"devops", "software"}),
+        (["Site Reliability Engineer"], {"devops"}),
         (["DevOps / Cloud Platform"], {"devops"}),
-        (["Application Security Engineer"], {"security", "software"}),
+        (["Application Security Engineer"], {"security"}),
         (["Cybersecurity"], {"security"}),
         (["Marketing Manager", "Sales"], set()),
+        (["Solutions Engineer - Integration"], {"software"}),
+        (["Database Engineer"], {"data"}),
+        (["Lead AI Engineer"], {"data"}),
+        (["Data Analytics Team Lead"], {"data"}),
+        (["IT-Administrator Linux"], {"devops"}),
         (["Accountant"], set()),
+        (["Hardware Engineer - Power Electronics"], set()),
+        (["Freelance Senior Wind Engineer"], set()),
+        (["Remote Field Application Scientist"], set()),
+        (["Solar PV Field Testing Technician"], set()),
+        (["Support Engineer"], set()),
     ],
 )
 def test_categorise_maps_titles_and_tags_to_areas(texts: list[str], expected: set[str]) -> None:
@@ -156,3 +169,67 @@ def test_no_search_terms_keeps_everything_and_terms_match_any_case() -> None:
     assert matches_terms("Rust developer", [])
     assert matches_terms("Rust developer", ["PYTHON", "rust"])
     assert not matches_terms("Java developer", ["python", "rust"])
+
+
+@pytest.mark.parametrize(
+    "title",
+    [
+        "Gujarati PDF Annotation Specialist",
+        "Audio Transcription Specialist (Czech language)",
+        "Dutch Linguistic Projects -- Sigma AI",
+        "Ads Quality Rater - Dutch (Belgium)",
+        "Online Data Analyst - German (AT)",
+        "Slot Games Sound Designer Talent Pool",
+        "Initiativbewerbung",
+    ],
+)
+def test_data_labelling_gigs_and_talent_pools_have_no_area(title: str) -> None:
+    assert categorise([title, "AI", "Data"]) == set()
+
+
+# --- on-site work inside a radius -------------------------------------------------------------------
+
+LISBON = OnsiteArea("Lisbon", 38.72, -9.14, 40)
+PORTO = (41.15, -8.61)
+SETUBAL = (38.52, -8.89)
+
+
+def on_site(place: tuple[float, float] | None, *, remote: bool | None = False) -> LocationCandidate:
+    return LocationCandidate(remote=remote, eligibility=UNKNOWN, place=place)
+
+
+def scope_with_area() -> LocationScope:
+    return LocationScope(frozenset({"PT"}), include_worldwide=True, onsite_areas=(LISBON,))
+
+
+def test_an_on_site_posting_inside_the_radius_is_kept() -> None:
+    assert allows_location(on_site(SETUBAL), scope_with_area())
+
+
+def test_an_on_site_posting_outside_the_radius_is_dropped() -> None:
+    assert not allows_location(on_site(PORTO), scope_with_area())
+
+
+def test_an_on_site_posting_whose_place_is_unknown_is_kept_for_the_later_judgement() -> None:
+    assert allows_location(on_site(None), scope_with_area())
+
+
+def test_on_site_work_is_dropped_when_no_intent_accepts_it() -> None:
+    scope = LocationScope(frozenset({"PT"}), include_worldwide=True)
+    assert not allows_location(on_site(SETUBAL), scope)
+
+
+def test_a_remote_posting_follows_the_country_rules_not_the_radius() -> None:
+    candidate = LocationCandidate(remote=True, eligibility=WORLDWIDE, place=PORTO)
+    assert allows_location(candidate, scope_with_area())
+    far = LocationCandidate(
+        remote=True, eligibility=Eligibility(Reach.COUNTRIES, frozenset({"US"})), place=None
+    )
+    assert not allows_location(far, scope_with_area())
+
+
+def test_the_scope_collects_the_radius_of_each_intent_that_accepts_local_work() -> None:
+    preference = LocationPreference("PT", ("PT",), True, True, onsite_area=LISBON)
+    assert derive_location_scope([preference]).onsite_areas == (LISBON,)
+    rejects = LocationPreference("PT", ("PT",), True, False, onsite_area=LISBON)
+    assert derive_location_scope([rejects]).onsite_areas == ()

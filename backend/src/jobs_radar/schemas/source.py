@@ -137,6 +137,13 @@ class CatalogueList(StrictModel):
     items: list[CatalogueEntryRead]
 
 
+class OnsiteAreaRead(StrictModel):
+    """A place and radius where hybrid or on-site work is acceptable."""
+
+    place: str
+    radius_km: int
+
+
 class SourceScopeRead(StrictModel):
     """Where the owner can work, as derived from the profile and the enabled intents (read-only)."""
 
@@ -144,6 +151,7 @@ class SourceScopeRead(StrictModel):
     country_codes: list[str]
     include_worldwide: bool
     any_country: bool
+    onsite_areas: list[OnsiteAreaRead]
 
 
 class CollectionRunRead(StrictModel):

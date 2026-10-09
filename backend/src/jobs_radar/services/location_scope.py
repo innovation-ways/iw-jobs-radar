@@ -11,6 +11,7 @@ from jobs_radar.db.models import CareerProfile
 from jobs_radar.domain.job_board_rules import (
     LocationPreference,
     LocationScope,
+    OnsiteArea,
     derive_location_scope,
 )
 from jobs_radar.repositories.revisions import IntentRepository, ProfileRepository
@@ -51,6 +52,12 @@ class LocationScopeService:
                     remote_regions=definition.work_rules.remote.eligible_regions,
                     remote_acceptable=_acceptable(definition, (_REMOTE,)),
                     local_acceptable=_acceptable(definition, _LOCAL),
+                    onsite_area=OnsiteArea(
+                        definition.work_rules.onsite_hybrid.base_place,
+                        definition.work_rules.onsite_hybrid.latitude,
+                        definition.work_rules.onsite_hybrid.longitude,
+                        definition.work_rules.onsite_hybrid.radius_km,
+                    ),
                 )
             )
         return derive_location_scope(preferences)

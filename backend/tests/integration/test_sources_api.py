@@ -338,6 +338,7 @@ async def test_the_source_scope_is_empty_without_an_enabled_intent(
         "country_codes": [],
         "include_worldwide": False,
         "any_country": False,
+        "onsite_areas": [],
     }
 
 
@@ -355,6 +356,7 @@ async def test_the_source_scope_comes_from_the_profile_and_the_intent(
         assert body["configured"] is True
         assert {"PT", "GB"} <= set(body["country_codes"])  # base country, remote regions EU and UK
         assert body["include_worldwide"] is True
+        assert body["onsite_areas"] == [{"place": "Lisbon, Portugal", "radius_km": 40}]
     finally:
         async with session_factory() as session:
             await session.execute(update(SearchIntent).values(enabled=False))

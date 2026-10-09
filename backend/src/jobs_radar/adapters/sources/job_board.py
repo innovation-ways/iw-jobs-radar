@@ -28,8 +28,9 @@ from jobs_radar.core.http import GuardedHttpClient
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
 from jobs_radar.domain.job_board_rules import (
     Eligibility,
+    LocationCandidate,
     LocationScope,
-    allows_country,
+    allows_location,
     categorise,
     is_recent,
     matches_terms,
@@ -53,6 +54,9 @@ class Candidate:
     posting: SourcePosting
     eligibility: Eligibility
     area_texts: tuple[str, ...]
+    # Remote or on-site, as the board says; boards that list only remote work say True.
+    remote: bool | None = True
+    place: tuple[float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -251,7 +255,8 @@ class JobBoardAdapter:
             return False
         if not is_recent(posting.posted_at, now, filters.max_age_days):
             return False
-        if not allows_country(candidate.eligibility, scope):
+        where = LocationCandidate(candidate.remote, candidate.eligibility, candidate.place)
+        if not allows_location(where, scope):
             return False
         if filters.categories and not set(filters.categories) & categorise(
             (posting.title, *candidate.area_texts)

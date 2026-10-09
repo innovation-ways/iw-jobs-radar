@@ -10,7 +10,7 @@ import httpx
 from jobs_radar.adapters.sources.base import RateLimiter, SourceCheckpoint
 from jobs_radar.core.http import GuardedHttpClient
 from jobs_radar.core.url_guard import UrlGuard
-from jobs_radar.domain.job_board_rules import LocationScope
+from jobs_radar.domain.job_board_rules import LocationScope, OnsiteArea
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
@@ -50,7 +50,11 @@ def build(adapter_class: Callable[..., Any], sleeper: Sleeper | None = None) -> 
     )
 
 
-PORTUGAL = LocationScope(frozenset({"PT"}), include_worldwide=True)
+PORTUGAL = LocationScope(
+    frozenset({"PT"}),
+    include_worldwide=True,
+    onsite_areas=(OnsiteArea("Lisbon", 38.72, -9.14, 40),),
+)
 
 
 def checkpoint(

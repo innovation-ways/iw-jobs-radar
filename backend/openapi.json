@@ -3509,6 +3509,26 @@
         "title": "OfferRead",
         "type": "object"
       },
+      "OnsiteAreaRead": {
+        "additionalProperties": false,
+        "description": "A place and radius where hybrid or on-site work is acceptable.",
+        "properties": {
+          "place": {
+            "title": "Place",
+            "type": "string"
+          },
+          "radius_km": {
+            "title": "Radius Km",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "place",
+          "radius_km"
+        ],
+        "title": "OnsiteAreaRead",
+        "type": "object"
+      },
       "OnsiteHybridRule": {
         "additionalProperties": false,
         "description": "How far from a base place hybrid and on-site work may be.",
@@ -5608,13 +5628,21 @@
           "include_worldwide": {
             "title": "Include Worldwide",
             "type": "boolean"
+          },
+          "onsite_areas": {
+            "items": {
+              "$ref": "#/components/schemas/OnsiteAreaRead"
+            },
+            "title": "Onsite Areas",
+            "type": "array"
           }
         },
         "required": [
           "configured",
           "country_codes",
           "include_worldwide",
-          "any_country"
+          "any_country",
+          "onsite_areas"
         ],
         "title": "SourceScopeRead",
         "type": "object"

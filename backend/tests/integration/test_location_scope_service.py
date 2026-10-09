@@ -85,3 +85,13 @@ async def test_worldwide_remote_regions_accept_any_country(db_session: AsyncSess
     await only_ours(db_session)
     await enabled_intent(db_session, regions=["WORLD"])
     assert (await scope(db_session)).any_country is True
+
+
+async def test_the_scope_carries_the_radius_of_the_intent(db_session: AsyncSession) -> None:
+    await only_ours(db_session)
+    await enabled_intent(db_session)
+    result = await scope(db_session)
+    assert len(result.onsite_areas) == 1
+    area = result.onsite_areas[0]
+    assert (area.place, area.radius_km) == ("Lisbon, Portugal", 40)
+    assert abs(area.latitude - 38.72) < 0.1

@@ -33,7 +33,7 @@ _LATIN = re.compile(r"^[\N{SPACE}-\N{LATIN SMALL LETTER Y WITH STROKE}]+$")
 
 
 @lru_cache(maxsize=1)
-def _data() -> tuple[dict[str, str], frozenset[str], dict[str, tuple[int, str]]]:
+def _data() -> tuple[dict[str, str], frozenset[str], dict[str, tuple[int, str, float, float]]]:
     """Country names, ISO codes and a city index; built on first use because it is large."""
     import geonamescache  # type: ignore[import-untyped]  # the package ships no type information
 
@@ -44,15 +44,29 @@ def _data() -> tuple[dict[str, str], frozenset[str], dict[str, tuple[int, str]]]
         names[country["name"].lower()] = iso
         codes.add(iso)
     names.update(_ALIASES)
-    cities: dict[str, tuple[int, str]] = {}
-    for city in cache.get_cities().values():
-        population = int(city["population"])
-        for label in (city["name"], *city["alternatenames"]):
-            if len(label) > 40 or not _LATIN.match(label):
-                continue
-            key = label.lower()
-            if key not in cities or cities[key][0] < population:
-                cities[key] = (population, city["countrycode"])
+    cities: dict[str, tuple[int, str, float, float]] = {}
+    primary: set[str] = set()
+    # Official names first: "Porto" must be the Portuguese city, not a bigger city that merely has
+    # "Porto" among its alternate names. Alternate names only fill what no official name took.
+    for use_alternates in (False, True):
+        for city in cache.get_cities().values():
+            population = int(city["population"])
+            labels = city["alternatenames"] if use_alternates else (city["name"],)
+            for label in labels:
+                if len(label) > 40 or not _LATIN.match(label):
+                    continue
+                key = label.lower()
+                if use_alternates and key in primary:
+                    continue
+                if key not in cities or cities[key][0] < population:
+                    cities[key] = (
+                        population,
+                        city["countrycode"],
+                        float(city["latitude"]),
+                        float(city["longitude"]),
+                    )
+        if not use_alternates:
+            primary = set(cities)
     return names, frozenset(codes), cities
 
 
@@ -80,6 +94,22 @@ def country_of_place(place: str) -> str | None:
         found = cities.get(token.lower())
         if found:
             return found[1]
+    return None
+
+
+def place_coordinates(place: str) -> tuple[float, float] | None:
+    """Return the latitude and longitude of the city named in ``place``, or ``None``.
+
+    A country name alone is not a place: a radius around it would mean nothing.
+    """
+    tokens = [token.strip() for token in _SPLIT.split(place) if token.strip()]
+    _, _, cities = _data()
+    for token in tokens:
+        if token.lower() in {"remote", "hybrid", "onsite"} or country_code(token):
+            continue
+        found = cities.get(token.lower())
+        if found:
+            return found[2], found[3]
     return None
 
 

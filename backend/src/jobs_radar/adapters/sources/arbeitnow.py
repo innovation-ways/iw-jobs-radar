@@ -12,7 +12,7 @@ from typing import Any
 
 from jobs_radar.adapters.sources.base import SourceError, SourcePosting
 from jobs_radar.adapters.sources.catalogue import require_entry
-from jobs_radar.adapters.sources.countries import country_of_place
+from jobs_radar.adapters.sources.countries import country_of_place, place_coordinates
 from jobs_radar.adapters.sources.html_text import html_to_text
 from jobs_radar.adapters.sources.job_board import (
     MAX_PAGES_PER_STREAM,
@@ -75,7 +75,9 @@ def parse_job(job: object) -> Candidate:
         raw_payload=job,
         company_name=company,
     )
-    return Candidate(posting, eligibility, (*tags, *job_types))
+    # Arbeitnow lists on-site work too: where it is decides whether it is within reach.
+    place = place_coordinates(location) if location and not remote else None
+    return Candidate(posting, eligibility, (*tags, *job_types), remote=remote, place=place)
 
 
 class ArbeitnowAdapter(JobBoardAdapter):

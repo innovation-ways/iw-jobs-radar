@@ -122,6 +122,7 @@ const scope = {
   country_codes: ['PT', 'ES'],
   include_worldwide: true,
   any_country: false,
+  onsite_areas: [{ place: 'Lisbon, Portugal', radius_km: 40 }],
 }
 const schedule = {
   run_time_local: '07:30',
@@ -201,6 +202,7 @@ describe('Job boards section', () => {
     expect(note.textContent).toMatch(/Portugal/)
     expect(note.textContent).toMatch(/Spain/)
     expect(note.textContent).toMatch(/remote work from anywhere|worldwide/i)
+    expect(note.textContent).toMatch(/on site within 40 km of Lisbon, Portugal/)
     expect(boards.getByRole('link', { name: /Profile & intent/ })).toHaveAttribute(
       'href',
       '/profile',
@@ -213,6 +215,7 @@ describe('Job boards section', () => {
       country_codes: [],
       include_worldwide: false,
       any_country: false,
+      onsite_areas: [],
     }
     renderSources()
     const boards = await jobBoards()
@@ -395,6 +398,7 @@ describe('Adding a job board', () => {
       country_codes: [],
       include_worldwide: false,
       any_country: false,
+      onsite_areas: [],
     }
     const { boards } = await openForm('Arbeitnow')
     expect(boards.getByRole('button', { name: 'Check & preview' })).toBeDisabled()

@@ -9,6 +9,7 @@ from tests.job_board_support import PORTUGAL, Scripted, Sleeper, build, checkpoi
 from jobs_radar.adapters.sources.arbeitnow import ArbeitnowAdapter
 from jobs_radar.adapters.sources.base import SourceError
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
+from jobs_radar.domain.job_board_rules import LocationScope, OnsiteArea
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 URL = "https://www.arbeitnow.com/api/job-board-api"
@@ -33,8 +34,9 @@ async def test_collect_keeps_what_passes_the_filters_and_follows_the_pages() -> 
         "data-engineer-2",
         "sre-remote-7",
     ]
-    # Berlin on-site, Germany-only remote, a marketing role and a 40-day-old posting are left out.
-    assert result.dropped_count == 4
+    # Berlin and Porto on-site (outside 40 km of Lisbon), Germany-only remote, a marketing role and
+    # a 40-day-old posting are left out.
+    assert result.dropped_count == 5
     assert result.truncated is False
     assert result.outcome == "modified"
     assert result.etag is None
@@ -87,7 +89,7 @@ async def test_validate_reports_the_board_name_and_how_many_postings_match() -> 
     )
     assert info.name == "Arbeitnow"
     assert info.matching_count == 3
-    assert info.postings_count == 7
+    assert info.postings_count == 8
     assert info.matching_is_lower_bound is False
 
 
@@ -146,3 +148,24 @@ async def test_a_single_malformed_posting_is_skipped_and_counted_not_fatal() -> 
     result = await build(ArbeitnowAdapter).collect(checkpoint("arbeitnow"))
     assert result.postings == ()
     assert result.dropped_count == 2
+
+
+@respx.mock
+async def test_on_site_work_is_dropped_when_no_intent_accepts_it() -> None:
+    respx.get(URL).mock(side_effect=two_pages())
+    scope = LocationScope(frozenset({"PT"}), include_worldwide=True)
+    result = await build(ArbeitnowAdapter).collect(checkpoint("arbeitnow", scope=scope))
+    # Lisbon on-site goes too; only the remote postings remain.
+    assert [p.external_job_id for p in result.postings] == ["backend-engineer-1", "sre-remote-7"]
+
+
+@respx.mock
+async def test_a_bigger_radius_keeps_porto() -> None:
+    respx.get(URL).mock(side_effect=two_pages())
+    scope = LocationScope(
+        frozenset({"PT"}),
+        include_worldwide=True,
+        onsite_areas=(OnsiteArea("Lisbon", 38.72, -9.14, 400),),
+    )
+    result = await build(ArbeitnowAdapter).collect(checkpoint("arbeitnow", scope=scope))
+    assert "backend-porto-8" in [p.external_job_id for p in result.postings]

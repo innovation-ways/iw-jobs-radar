@@ -19,7 +19,10 @@
   and judged later. Jobicy is read through its `europe`, `anywhere` and country slugs only.
 - ITJobs.pt (Portugal) is not in the catalogue yet: its adapter waits for the owner's free API key.
 - A job board posting is not deleted from the list of sources; disable the board instead.
-- Notifications outside the app, other source types (Lever, Ashby), a larger place gazetteer and
+- Company boards of other applicant tracking systems (Workable, Recruitee, Teamtailor) are not
+  included; the identifier of a Lever, Ashby or SmartRecruiters board must be found by the owner
+  on the company's careers address.
+- Notifications outside the app, a larger place gazetteer and
   skill taxonomies such as ESCO are not included; see `ai-dev/docs/13` section 12.
 - Licence: the repository carries the GPL-3.0 text it was created with; the project is for the
   owner's personal use and is not published (ODR-007). Decide the licence again before any release.

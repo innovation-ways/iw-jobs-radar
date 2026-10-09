@@ -3242,6 +3242,8 @@ export interface components {
         SourceCreate: {
             /** Credential */
             credential?: string | null;
+            /** Display Name */
+            display_name?: string | null;
             /**
              * Enabled
              * @default true
@@ -3449,7 +3451,7 @@ export interface components {
          * @description Kind of job source adapter: ATS company boards first, then job boards (ADR-049).
          * @enum {string}
          */
-        SourceType: "greenhouse" | "lever" | "ashby" | "arbeitnow" | "jobicy" | "himalayas" | "itjobs_pt";
+        SourceType: "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "arbeitnow" | "jobicy" | "himalayas" | "itjobs_pt";
         /**
          * SourceUpdate
          * @description Change a source's settings; ``expected_version`` is the version the client last saw.

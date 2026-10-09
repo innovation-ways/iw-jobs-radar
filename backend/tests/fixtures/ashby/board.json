@@ -1,0 +1,96 @@
+{
+  "apiVersion": "1",
+  "jobs": [
+    {
+      "id": "aaaaaaaa-0000-0000-0000-000000000001",
+      "title": "Staff Infrastructure Engineer",
+      "department": "Engineering",
+      "team": "Core",
+      "employmentType": "FullTime",
+      "location": "Remote - Portugal",
+      "secondaryLocations": [
+        {
+          "location": "Spain",
+          "address": {
+            "postalAddress": {
+              "addressCountry": "Spain"
+            }
+          }
+        }
+      ],
+      "publishedAt": "2026-10-01T09:00:00.000+00:00",
+      "isListed": true,
+      "isRemote": true,
+      "workplaceType": "Remote",
+      "address": {
+        "postalAddress": {
+          "addressCountry": "Portugal"
+        }
+      },
+      "jobUrl": "https://jobs.ashbyhq.com/synthco/aaaaaaaa-0000-0000-0000-000000000001",
+      "applyUrl": "https://jobs.ashbyhq.com/synthco/aaaaaaaa-0000-0000-0000-000000000001/application",
+      "descriptionHtml": "<p>Run <strong>synthetic</strong> infrastructure.</p>",
+      "descriptionPlain": "Run synthetic infrastructure.",
+      "shouldDisplayCompensationOnJobPostings": true,
+      "compensation": {
+        "compensationTierSummary": "€80K – €110K • Offers Equity",
+        "scrapeableCompensationSalarySummary": "€80K - €110K",
+        "compensationTiers": [],
+        "summaryComponents": []
+      }
+    },
+    {
+      "id": "aaaaaaaa-0000-0000-0000-000000000002",
+      "title": "Account Executive",
+      "department": "Engineering",
+      "team": "Core",
+      "employmentType": "FullTime",
+      "location": "Lisbon",
+      "secondaryLocations": [],
+      "publishedAt": "2026-10-02T09:00:00.000+00:00",
+      "isListed": true,
+      "isRemote": false,
+      "workplaceType": "OnSite",
+      "address": {
+        "postalAddress": {
+          "addressCountry": "Portugal"
+        }
+      },
+      "jobUrl": "https://jobs.ashbyhq.com/synthco/aaaaaaaa-0000-0000-0000-000000000002",
+      "applyUrl": "https://jobs.ashbyhq.com/synthco/aaaaaaaa-0000-0000-0000-000000000002/application",
+      "descriptionHtml": "<p>Run <strong>synthetic</strong> infrastructure.</p>",
+      "descriptionPlain": "Run synthetic infrastructure.",
+      "shouldDisplayCompensationOnJobPostings": false,
+      "compensation": null
+    },
+    {
+      "id": "aaaaaaaa-0000-0000-0000-000000000003",
+      "title": "Hidden Role",
+      "department": "Engineering",
+      "team": "Core",
+      "employmentType": "FullTime",
+      "location": "Lisbon",
+      "secondaryLocations": [],
+      "publishedAt": "2026-10-03T09:00:00.000+00:00",
+      "isListed": false,
+      "isRemote": false,
+      "workplaceType": "OnSite",
+      "address": {
+        "postalAddress": {
+          "addressCountry": "Portugal"
+        }
+      },
+      "jobUrl": "https://jobs.ashbyhq.com/synthco/aaaaaaaa-0000-0000-0000-000000000003",
+      "applyUrl": "https://jobs.ashbyhq.com/synthco/aaaaaaaa-0000-0000-0000-000000000003/application",
+      "descriptionHtml": "<p>Run <strong>synthetic</strong> infrastructure.</p>",
+      "descriptionPlain": "Run synthetic infrastructure.",
+      "shouldDisplayCompensationOnJobPostings": true,
+      "compensation": {
+        "compensationTierSummary": "€80K – €110K • Offers Equity",
+        "scrapeableCompensationSalarySummary": "€80K - €110K",
+        "compensationTiers": [],
+        "summaryComponents": []
+      }
+    }
+  ]
+}

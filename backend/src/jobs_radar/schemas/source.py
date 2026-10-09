@@ -31,6 +31,8 @@ class SourceCreate(StrictModel):
     enabled: bool = True
     credential: str | None = Field(default=None, min_length=1, max_length=500, repr=False)
     filters: JobBoardFilters | None = None
+    # Company boards whose ATS publishes no company name (Lever, Ashby) take the owner's wording.
+    display_name: Annotated[str, Field(min_length=1, max_length=200)] | None = None
 
 
 class SourcePreviewRequest(StrictModel):

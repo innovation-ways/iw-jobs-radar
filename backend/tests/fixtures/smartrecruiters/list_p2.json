@@ -1,0 +1,79 @@
+{
+  "offset": 3,
+  "limit": 3,
+  "totalFound": 5,
+  "content": [
+    {
+      "id": "744000154700004",
+      "name": "Backend Developer",
+      "uuid": "u-4",
+      "jobAdId": "ad-4",
+      "defaultJobAd": true,
+      "refNumber": "REF4",
+      "company": {
+        "identifier": "SynthCo",
+        "name": "Synth Co"
+      },
+      "releasedDate": "2026-10-08T10:00:00.000Z",
+      "location": {
+        "city": "Lisbon",
+        "country": "pt",
+        "remote": true,
+        "hybrid": false,
+        "fullLocation": "Lisbon, Portugal"
+      },
+      "function": {
+        "id": "human_resources",
+        "label": "Human Resources"
+      },
+      "department": {
+        "id": "d1",
+        "label": "Core"
+      },
+      "typeOfEmployment": {
+        "id": "permanent",
+        "label": "Full-time"
+      },
+      "experienceLevel": {
+        "id": "mid_senior_level",
+        "label": "Mid-Senior"
+      }
+    },
+    {
+      "id": "744000154700005",
+      "name": "Data Platform Lead",
+      "uuid": "u-5",
+      "jobAdId": "ad-5",
+      "defaultJobAd": true,
+      "refNumber": "REF5",
+      "company": {
+        "identifier": "SynthCo",
+        "name": "Synth Co"
+      },
+      "releasedDate": "2026-10-08T10:00:00.000Z",
+      "location": {
+        "city": "Lisbon",
+        "country": "pt",
+        "remote": false,
+        "hybrid": false,
+        "fullLocation": "Lisbon, Portugal"
+      },
+      "function": {
+        "id": "information_technology",
+        "label": "Information Technology"
+      },
+      "department": {
+        "id": "d1",
+        "label": "Core"
+      },
+      "typeOfEmployment": {
+        "id": "permanent",
+        "label": "Full-time"
+      },
+      "experienceLevel": {
+        "id": "mid_senior_level",
+        "label": "Mid-Senior"
+      }
+    }
+  ]
+}

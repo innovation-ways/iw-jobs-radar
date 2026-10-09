@@ -91,3 +91,28 @@ class Scripted:
             if all(params.get(key) == value for key, value in wanted.items()):
                 return httpx.Response(status, content=body)
         return httpx.Response(599, content=b"unexpected request")
+
+
+def build_ats(
+    adapter_class: Callable[..., Any], sleeper: Sleeper | None = None, **kwargs: Any
+) -> Any:
+    """Create a company-board adapter (no clock) on the same guarded client."""
+
+    async def resolve(host: str) -> list[str]:
+        return ["93.184.216.34"]
+
+    client = GuardedHttpClient(guard=UrlGuard(resolver=resolve), user_agent="JobsRadar/test")
+    sleeper = sleeper or Sleeper()
+    return adapter_class(
+        client, sleep=sleeper, limiter=RateLimiter(sleep=sleeper, clock=lambda: 0.0), **kwargs
+    )
+
+
+def ats_checkpoint(identifier: str, etag: str | None = None) -> SourceCheckpoint:
+    """A checkpoint for a company-board source."""
+    return SourceCheckpoint(
+        identifier=identifier,
+        url=f"https://example.test/{identifier}",
+        etag=etag,
+        rate_limit_per_minute=60,
+    )

@@ -41,3 +41,13 @@ def test_the_limitations_mention_the_job_board_caveats() -> None:
     text = (ROOT / "docs/operations/known-limitations.md").read_text()
     assert "job board" in text.lower()
     assert "ITJobs.pt" in text
+
+
+def test_the_runbook_describes_every_company_board_type() -> None:
+    from jobs_radar.domain.enums import SourceCategory, SourceType
+    from jobs_radar.domain.sources import source_category
+
+    runbook = (ROOT / "docs/operations/sources-and-providers-runbook.md").read_text().lower()
+    for source_type in SourceType:
+        if source_category(source_type) is SourceCategory.COMPANY_BOARD:
+            assert source_type.value in runbook, f"{source_type.value} is not in the runbook"

@@ -200,6 +200,7 @@ async def create_source(
         enabled=body.enabled,
         credential=body.credential,
         filters=body.filters,
+        display_name=body.display_name,
     )
     await session.commit()
     return await _one(service, source.source_configuration_id)

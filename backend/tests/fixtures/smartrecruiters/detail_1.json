@@ -1,0 +1,70 @@
+{
+  "id": "744000154700001",
+  "name": "Senior DevOps Engineer",
+  "uuid": "u-1",
+  "jobAdId": "ad-1",
+  "defaultJobAd": true,
+  "refNumber": "REF1",
+  "company": {
+    "identifier": "SynthCo",
+    "name": "Synth Co"
+  },
+  "releasedDate": "2026-10-08T10:00:00.000Z",
+  "location": {
+    "city": "Lisbon",
+    "country": "pt",
+    "remote": false,
+    "hybrid": true,
+    "fullLocation": "Lisbon, Portugal"
+  },
+  "function": {
+    "id": "information_technology",
+    "label": "Information Technology"
+  },
+  "department": {
+    "id": "d1",
+    "label": "Core"
+  },
+  "typeOfEmployment": {
+    "id": "permanent",
+    "label": "Full-time"
+  },
+  "experienceLevel": {
+    "id": "mid_senior_level",
+    "label": "Mid-Senior"
+  },
+  "postingUrl": "https://jobs.smartrecruiters.com/SynthCo/744000154700001-slug",
+  "applyUrl": "https://jobs.smartrecruiters.com/SynthCo/744000154700001-slug?oga=true",
+  "language": {
+    "code": "en",
+    "label": "English"
+  },
+  "active": true,
+  "visibility": "PUBLIC",
+  "jobAd": {
+    "sections": {
+      "companyDescription": {
+        "title": "Company Description",
+        "text": "<p>Synth Co builds <em>things</em>.</p>"
+      },
+      "jobDescription": {
+        "title": "Job Description",
+        "text": "<p>You will run pipelines.</p>"
+      },
+      "qualifications": {
+        "title": "Qualifications",
+        "text": "<p>Python and SQL.</p>"
+      },
+      "additionalInformation": {
+        "title": "Additional Information",
+        "text": "<p>Flexible hours.</p>"
+      },
+      "videos": {
+        "title": "Videos",
+        "urls": [
+          "https://youtu.be/x"
+        ]
+      }
+    }
+  }
+}

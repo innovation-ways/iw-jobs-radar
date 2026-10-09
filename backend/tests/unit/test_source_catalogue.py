@@ -18,7 +18,12 @@ JOB_BOARDS = {
     SourceType.HIMALAYAS,
     SourceType.ITJOBS_PT,
 }
-COMPANY_BOARDS = {SourceType.GREENHOUSE, SourceType.LEVER, SourceType.ASHBY}
+COMPANY_BOARDS = {
+    SourceType.GREENHOUSE,
+    SourceType.LEVER,
+    SourceType.ASHBY,
+    SourceType.SMARTRECRUITERS,
+}
 
 
 # --- categories ---------------------------------------------------------------------------------
@@ -182,3 +187,22 @@ def test_a_credential_in_a_request_never_shows_in_its_repr() -> None:
     )
     preview = SourcePreviewRequest(catalogue_key="itjobs_pt", credential="k3y-secret")
     assert "k3y-secret" not in repr(created) and "k3y-secret" not in repr(preview)
+
+
+def test_smartrecruiters_is_a_company_board_and_the_ats_boards_have_adapters() -> None:
+    from jobs_radar.adapters.sources.registry import build_source_adapters
+    from jobs_radar.domain.dedup import EMPLOYER_SOURCES
+    from jobs_radar.domain.sources import default_rate_limit
+
+    assert source_category(SourceType.SMARTRECRUITERS) is SourceCategory.COMPANY_BOARD
+    assert set(build_source_adapters()) >= {
+        SourceType.GREENHOUSE,
+        SourceType.LEVER,
+        SourceType.ASHBY,
+        SourceType.SMARTRECRUITERS,
+    }
+    assert "smartrecruiters" in EMPLOYER_SOURCES
+    # SmartRecruiters needs one request per posting, so it is allowed a faster pace.
+    assert default_rate_limit(SourceType.SMARTRECRUITERS) > default_rate_limit(
+        SourceType.GREENHOUSE
+    )

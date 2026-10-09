@@ -319,6 +319,48 @@ describe('Sources screen', () => {
       expect(screen.getByLabelText(/board token/i)).toHaveValue('nope')
     })
 
+    it('adds a Lever board with the company name the owner typed', async () => {
+      post.mockResolvedValue({
+        data: source({ display_name: 'Real Co' }),
+        response: { status: 201 },
+      })
+      renderSources()
+      await screen.findByText('Acme Robotics')
+      await userEvent.selectOptions(screen.getByLabelText(/board type/i), 'lever')
+      await userEvent.type(screen.getByLabelText(/company identifier/i), 'real-co')
+      await userEvent.type(screen.getByLabelText(/company name/i), 'Real Co')
+      await userEvent.click(screen.getByRole('button', { name: /validate & add/i }))
+      expect(post).toHaveBeenCalledWith('/api/v1/sources', {
+        body: {
+          source_type: 'lever',
+          external_identifier: 'real-co',
+          enabled: true,
+          display_name: 'Real Co',
+        },
+      })
+    })
+
+    it('does not ask for a company name when the board publishes one', async () => {
+      renderSources()
+      await screen.findByText('Acme Robotics')
+      expect(screen.queryByLabelText(/company name/i)).not.toBeInTheDocument()
+      await userEvent.selectOptions(screen.getByLabelText(/board type/i), 'smartrecruiters')
+      expect(screen.queryByLabelText(/company name/i)).not.toBeInTheDocument()
+      expect(screen.getByLabelText(/company identifier/i)).toBeInTheDocument()
+    })
+
+    it('sends no company name when it was left empty', async () => {
+      post.mockResolvedValue({ data: source(), response: { status: 201 } })
+      renderSources()
+      await screen.findByText('Acme Robotics')
+      await userEvent.selectOptions(screen.getByLabelText(/board type/i), 'ashby')
+      await userEvent.type(screen.getByLabelText(/company identifier/i), 'some-co')
+      await userEvent.click(screen.getByRole('button', { name: /validate & add/i }))
+      expect(post).toHaveBeenCalledWith('/api/v1/sources', {
+        body: { source_type: 'ashby', external_identifier: 'some-co', enabled: true },
+      })
+    })
+
     it('explains an unreachable server', async () => {
       post.mockRejectedValue(new Error('network'))
       renderSources()

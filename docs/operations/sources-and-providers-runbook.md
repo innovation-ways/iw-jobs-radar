@@ -2,8 +2,15 @@
 
 ## Job sources (Sources screen)
 
-- A source is one company's job board. Add it by token; the board is validated against the public
-  API before it is saved. The first type is the Greenhouse Job Board API.
+- A source is one company's job board. Add it by identifier and choose the board type; the board is
+  validated against the public API before it is saved. Types: Greenhouse (the token of
+  `boards.greenhouse.io/<token>`), Lever (`jobs.lever.co/<identifier>`), Ashby
+  (`jobs.ashbyhq.com/<identifier>`) and SmartRecruiters (`jobs.smartrecruiters.com/<identifier>`).
+- Lever and Ashby do not publish the company name: a name is guessed from the identifier, and you
+  can type the real one when adding (it cannot be edited afterwards).
+- SmartRecruiters lists postings without text, so it reads the details of technical postings only,
+  at most 200 per run; a company with more is `partial` (it never closes postings) and a company
+  with no open postings is refused as not found. Its default pace is 30 requests a minute.
 - A run never blocks on one failing board. The table shows the last outcome and the reason
   (`not_found`, `rate_limited`, `timeout`, `server_error`, `invalid_payload`, `blocked_url`).
 - A posting closes only after two consecutive successful runs without it; a failed run never

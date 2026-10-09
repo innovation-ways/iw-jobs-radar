@@ -361,3 +361,55 @@ async def test_the_source_scope_comes_from_the_profile_and_the_intent(
         async with session_factory() as session:
             await session.execute(update(SearchIntent).values(enabled=False))
             await session.commit()
+
+
+# --- other company boards (ADR-050) ----------------------------------------------------------------
+
+
+async def test_a_lever_board_is_added_with_the_company_name_the_owner_typed(
+    client: httpx.AsyncClient, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    adapter = FakeAdapter(board=BoardInfo("Guessed Name", 3))
+    monkeypatch.setattr(app.state, "adapters", {SourceType.LEVER: adapter})
+    response = await client.post(
+        "/api/v1/sources",
+        json={
+            "source_type": "lever",
+            "external_identifier": unique("lever-co"),
+            "display_name": "Real Company Ltd",
+        },
+    )
+    assert response.status_code == 201, response.text
+    source = response.json()
+    assert source["category"] == "company_board"
+    assert source["display_name"] == "Real Company Ltd"
+    assert source["company_name"] == "Real Company Ltd"
+
+
+async def test_without_a_typed_name_the_guessed_one_is_used(
+    client: httpx.AsyncClient, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        app.state, "adapters", {SourceType.ASHBY: FakeAdapter(board=BoardInfo("Guessed Co", 1))}
+    )
+    response = await client.post(
+        "/api/v1/sources", json={"source_type": "ashby", "external_identifier": unique("ashby-co")}
+    )
+    assert response.status_code == 201
+    assert response.json()["display_name"] == "Guessed Co"
+
+
+async def test_a_smartrecruiters_board_gets_a_faster_default_pace(
+    client: httpx.AsyncClient, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        app.state,
+        "adapters",
+        {SourceType.SMARTRECRUITERS: FakeAdapter(board=BoardInfo("Synth", 9))},
+    )
+    response = await client.post(
+        "/api/v1/sources",
+        json={"source_type": "smartrecruiters", "external_identifier": unique("SynthCo")},
+    )
+    assert response.status_code == 201
+    assert response.json()["rate_limit_per_minute"] == 30

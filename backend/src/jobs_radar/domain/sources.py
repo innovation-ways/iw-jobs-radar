@@ -4,7 +4,9 @@ from datetime import datetime, timedelta
 
 from jobs_radar.domain.enums import SourceCategory, SourceType
 
-_COMPANY_BOARDS = frozenset({SourceType.GREENHOUSE, SourceType.LEVER, SourceType.ASHBY})
+_COMPANY_BOARDS = frozenset(
+    {SourceType.GREENHOUSE, SourceType.LEVER, SourceType.ASHBY, SourceType.SMARTRECRUITERS}
+)
 
 
 def source_category(source_type: SourceType) -> SourceCategory:
@@ -16,6 +18,16 @@ def source_category(source_type: SourceType) -> SourceCategory:
     if source_type in _COMPANY_BOARDS:
         return SourceCategory.COMPANY_BOARD
     return SourceCategory.JOB_BOARD
+
+
+_DEFAULT_RATE = 6
+# SmartRecruiters needs one request per posting detail, so it is allowed a faster pace.
+_RATE_OVERRIDES = {SourceType.SMARTRECRUITERS: 30}
+
+
+def default_rate_limit(source_type: SourceType) -> int:
+    """Return the default requests per minute for a company board of ``source_type``."""
+    return _RATE_OVERRIDES.get(source_type, _DEFAULT_RATE)
 
 
 def next_run_allowed_at(

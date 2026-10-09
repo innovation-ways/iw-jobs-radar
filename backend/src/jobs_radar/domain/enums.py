@@ -113,6 +113,7 @@ class SourceType(StrEnum):
     GREENHOUSE = "greenhouse"
     LEVER = "lever"
     ASHBY = "ashby"
+    SMARTRECRUITERS = "smartrecruiters"
     ARBEITNOW = "arbeitnow"
     JOBICY = "jobicy"
     HIMALAYAS = "himalayas"

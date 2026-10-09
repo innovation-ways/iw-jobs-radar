@@ -16,7 +16,7 @@ from jobs_radar.core.errors import (
 )
 from jobs_radar.db.models import Company, SourceConfiguration, SourceRunResult
 from jobs_radar.domain.enums import SourceCategory, SourceErrorClass, SourceType
-from jobs_radar.domain.sources import next_run_allowed_at, source_category
+from jobs_radar.domain.sources import default_rate_limit, next_run_allowed_at, source_category
 from jobs_radar.repositories.companies import CompanyRepository
 from jobs_radar.repositories.jobs import JobRepository
 from jobs_radar.repositories.runs import RunRepository
@@ -93,6 +93,7 @@ class SourceService:
         enabled: bool = True,
         credential: str | None = None,
         filters: JobBoardFilters | None = None,
+        display_name: str | None = None,
     ) -> SourceConfiguration:
         """Validate a board and create its source (and company when new).
 
@@ -120,15 +121,17 @@ class SourceService:
             msg = "This board is already configured."
             raise ConflictError(msg, details={"external_identifier": identifier})
         info = await self.validate(source_type, identifier)
-        company = await CompanyRepository(self._session).get_or_create(info.name)
+        name = (display_name or "").strip() or info.name
+        company = await CompanyRepository(self._session).get_or_create(name)
         return await self._sources.create(
             owner_id=owner_id,
             company_id=company.company_id,
             source_type=source_type,
             external_identifier=identifier,
-            display_name=info.name,
+            display_name=name,
             url=self._adapter(source_type).endpoint(identifier),
             enabled=enabled,
+            rate_limit_per_minute=default_rate_limit(source_type),
         )
 
     # --- job boards (ADR-049) ------------------------------------------------------------------

@@ -5063,6 +5063,19 @@
             ],
             "title": "Credential"
           },
+          "display_name": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          },
           "enabled": {
             "default": true,
             "title": "Enabled",
@@ -5653,6 +5666,7 @@
           "greenhouse",
           "lever",
           "ashby",
+          "smartrecruiters",
           "arbeitnow",
           "jobicy",
           "himalayas",

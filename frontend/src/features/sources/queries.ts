@@ -51,6 +51,17 @@ export function useSourcesData() {
   return { sources, runs, activeRun }
 }
 
+/** The company boards (one company per source) an owner can add by identifier. */
+export type CompanyBoardType = 'greenhouse' | 'lever' | 'ashby' | 'smartrecruiters'
+
+/** What the owner types to add a company board. */
+export interface CompanyBoardDraft {
+  sourceType: CompanyBoardType
+  identifier: string
+  /** Only for boards whose ATS publishes no company name (Lever, Ashby). */
+  displayName?: string
+}
+
 /** Mutations of the Sources screen; each refreshes what it changes. */
 export function useSourceActions() {
   const queryClient = useQueryClient()
@@ -61,10 +72,15 @@ export function useSourceActions() {
     ])
 
   const addBoard = useMutation({
-    mutationFn: (token: string) =>
+    mutationFn: (board: CompanyBoardDraft) =>
       unwrap(
         api.POST('/api/v1/sources', {
-          body: { source_type: 'greenhouse', external_identifier: token, enabled: true },
+          body: {
+            source_type: board.sourceType,
+            external_identifier: board.identifier,
+            enabled: true,
+            ...(board.displayName ? { display_name: board.displayName } : {}),
+          },
         }),
       ),
     onSuccess: refresh,

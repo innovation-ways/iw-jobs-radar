@@ -14,7 +14,7 @@ PNPM := PATH="$$HOME/.local/bin:$$PATH" pnpm --dir $(FRONTEND)
         test-frontend test-frontend-watch fe-coverage test-e2e \
         lint format format-check typecheck arch-check security license-check docs-check quality \
         fe-lint fe-format fe-format-check fe-typecheck fe-license-check quality-frontend check check-all \
-        security-sast secret-scan config-check security-audit docs-schema openapi api-client seed-dev-sources backup restore-drill backup-list restore config-check security-audit fe-install clean
+        security-sast secret-scan config-check security-audit docs-schema openapi api-client seed-dev-sources backup restore-drill backup-list restore config-check security-audit smoke fe-install clean
 
 ##@ Run the app
 
@@ -163,6 +163,9 @@ security-sast: ## Static security analysis (semgrep; downloads rule packs)
 security-audit: ## Known vulnerabilities in the Python and frontend dependencies (needs network)
 	cd $(BACKEND) && uv run pip-audit --skip-editable 2>&1 | grep -v "^WARNING:cachecontrol"
 	$(PNPM) audit --prod
+
+smoke: ## Opt-in smoke tests against REAL services (Greenhouse, Wikidata, local Ollama; cloud if keys set)
+	cd $(BACKEND) && JOBS_RADAR_SMOKE=1 uv run pytest tests/smoke --force-enable-socket -q -p no:cacheprovider
 
 config-check: ## Check the configuration for exposure and secret mistakes (prints no secret)
 	cd $(BACKEND) && uv run python -m jobs_radar.tools.config_check

@@ -4,6 +4,17 @@ import { Button } from '@/components/ui/button'
 import { JobDetail } from '@/features/inbox/JobDetail'
 import { JobRow } from '@/features/inbox/JobRow'
 import {
+  DEFAULT_OPTIONS,
+  FIT_LABELS,
+  hasActiveFilters,
+  parseSort,
+  SEEN_LABELS,
+  SORT_LABELS,
+  type FitFilter,
+  type ListOptions,
+  type SeenFilter,
+} from '@/features/inbox/listOptions'
+import {
   TABS,
   useInboxActions,
   useInboxDetail,
@@ -19,6 +30,7 @@ import { cn } from '@/lib/utils'
 
 const DENSITY_KEY = 'jobs-radar:inbox-density'
 const INTENT_KEY = 'jobs-radar:inbox-intent'
+const SORT_KEY = 'jobs-radar:inbox-sort'
 const TOAST_MS = 7000
 const SEARCH_DELAY_MS = 300
 
@@ -69,6 +81,10 @@ export function Inbox() {
   const [density, setDensity] = useState<Density>(() =>
     readStored(DENSITY_KEY) === 'compact' ? 'compact' : 'comfortable',
   )
+  const [options, setOptions] = useState<ListOptions>(() => ({
+    ...DEFAULT_OPTIONS,
+    sort: parseSort(readStored(SORT_KEY)),
+  }))
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [helpOpen, setHelpOpen] = useState(false)
   const [toast, setToast] = useState<{ message: string; undo: LastAction | null } | null>(null)
@@ -93,7 +109,13 @@ export function Inbox() {
     return () => clearTimeout(timer)
   }, [search])
 
-  const list = useInboxList({ tab, search: debouncedSearch, intentId, enabled: !waitingForIntents })
+  const list = useInboxList({
+    tab,
+    search: debouncedSearch,
+    intentId,
+    options,
+    enabled: !waitingForIntents,
+  })
   const items = list.items
   const selected = items.find((i) => i.job_inbox_item_id === selectedId) ?? items[0] ?? null
   const detail = useInboxDetail(selected?.job_inbox_item_id ?? null, intentId)
@@ -239,6 +261,63 @@ export function Inbox() {
             onChange={(event) => setSearch(event.target.value)}
             className="min-w-48 flex-1 rounded-md bg-surface-2 px-2.5 py-1.5 text-sm"
           />
+          <label className="flex items-center gap-1.5 text-xs text-ink-2">
+            Sort by
+            <select
+              value={options.sort}
+              onChange={(event) => {
+                const sort = parseSort(event.target.value)
+                setOptions({ ...options, sort })
+                store(SORT_KEY, sort)
+              }}
+              className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm text-ink"
+            >
+              {Object.entries(SORT_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-ink-2">
+            Fit
+            <select
+              value={options.fit}
+              onChange={(event) => setOptions({ ...options, fit: event.target.value as FitFilter })}
+              className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm text-ink"
+            >
+              {Object.entries(FIT_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-ink-2">
+            First seen
+            <select
+              value={options.seen}
+              onChange={(event) =>
+                setOptions({ ...options, seen: event.target.value as SeenFilter })
+              }
+              className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm text-ink"
+            >
+              {Object.entries(SEEN_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {hasActiveFilters(options) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setOptions({ ...DEFAULT_OPTIONS, sort: options.sort })}
+            >
+              Clear filters
+            </Button>
+          )}
           {intentList.length > 1 && (
             <label className="flex items-center gap-1.5 text-xs text-ink-2">
               Scored for

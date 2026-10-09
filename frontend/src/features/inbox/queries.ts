@@ -2,6 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import { api } from '@/api/client'
 import { unwrap } from '@/api/errors'
 import type { components } from '@/api/schema'
+import { toQuery, type ListOptions } from './listOptions'
 import type { OwnerAction } from './undo'
 
 type Schemas = components['schemas']
@@ -43,15 +44,17 @@ interface ListParams {
   tab: TabKey
   search: string
   intentId: number | null
+  /** Sort order and filters chosen by the owner. */
+  options: ListOptions
   /** False until the intent is known, so the first request already carries it. */
   enabled?: boolean
 }
 
 /** The inbox list for a section, loaded page by page with the API's cursor. */
-export function useInboxList({ tab, search, intentId, enabled = true }: ListParams) {
+export function useInboxList({ tab, search, intentId, options, enabled = true }: ListParams) {
   const info = TABS.find((t) => t.key === tab)!
   const query = useInfiniteQuery({
-    queryKey: ['inbox', 'list', tab, search, intentId],
+    queryKey: ['inbox', 'list', tab, search, intentId, options],
     enabled,
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) =>
@@ -63,7 +66,8 @@ export function useInboxList({ tab, search, intentId, enabled = true }: ListPara
               ...(info.shortlisted ? { shortlisted: true } : {}),
               ...(search ? { q: search } : {}),
               ...(intentId !== null ? { search_intent_id: intentId } : {}),
-              sort: 'fit_desc',
+              // "first seen within" is counted from the moment the page is requested.
+              ...toQuery(options, new Date()),
               limit: PAGE_SIZE,
               ...(pageParam ? { cursor: pageParam } : {}),
             },

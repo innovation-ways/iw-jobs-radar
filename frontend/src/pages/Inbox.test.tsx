@@ -98,7 +98,7 @@ describe('Inbox screen', () => {
   describe('list', () => {
     it('shows the tabs with counts and the jobs in the order the API gave', async () => {
       renderInbox()
-      await screen.findAllByRole('option')
+      await screen.findByRole('option', { name: /Applied AI Architect/ }) // the sort/filter selects also have options
       const tabs = screen.getByRole('tablist', { name: /inbox sections/i })
       expect(
         within(tabs)
@@ -117,7 +117,7 @@ describe('Inbox screen', () => {
         'aria-selected',
         'true',
       )
-      const options = await screen.findAllByRole('option')
+      const options = within(await screen.findByRole('listbox')).getAllByRole('option')
       expect(options.map((o) => o.textContent)).toEqual([
         expect.stringContaining('Applied AI Architect'),
         expect.stringContaining('Platform Engineer'),
@@ -255,6 +255,43 @@ describe('Inbox screen', () => {
       await screen.findByRole('option', { name: /Applied AI Architect/ })
       await userEvent.type(screen.getByRole('searchbox', { name: /search jobs/i }), 'kuber')
       await waitFor(() => expect(lastListQuery().q).toBe('kuber'))
+    })
+
+    it('sorts by best fit by default and lets the owner change the order, remembering it', async () => {
+      renderInbox()
+      await screen.findByRole('option', { name: /Applied AI Architect/ })
+      expect(lastListQuery().sort).toBe('fit_desc')
+      await userEvent.selectOptions(screen.getByLabelText('Sort by'), 'newest')
+      await waitFor(() => expect(lastListQuery().sort).toBe('newest'))
+      expect(localStorage.getItem('jobs-radar:inbox-sort')).toBe('newest')
+    })
+
+    it('starts from the remembered sort order', async () => {
+      localStorage.setItem('jobs-radar:inbox-sort', 'oldest')
+      renderInbox()
+      await screen.findByRole('option', { name: /Applied AI Architect/ })
+      expect(lastListQuery().sort).toBe('oldest')
+      expect(screen.getByLabelText('Sort by')).toHaveValue('oldest')
+    })
+
+    it('filters by fit and by when the job was first seen, and clears the filters', async () => {
+      renderInbox()
+      await screen.findByRole('option', { name: /Applied AI Architect/ })
+      expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument()
+
+      await userEvent.selectOptions(screen.getByLabelText('Fit'), '65')
+      await waitFor(() => expect(lastListQuery().fit_min).toBe(65))
+      await userEvent.selectOptions(screen.getByLabelText('First seen'), '7d')
+      await waitFor(() => expect(typeof lastListQuery().from).toBe('string'))
+
+      await userEvent.selectOptions(screen.getByLabelText('Fit'), 'unscored')
+      await waitFor(() => expect(lastListQuery()).toMatchObject({ evaluated: false }))
+      expect(lastListQuery().fit_min).toBeUndefined()
+
+      await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
+      await waitFor(() => expect(lastListQuery().from).toBeUndefined())
+      expect(lastListQuery().evaluated).toBeUndefined()
+      expect(screen.getByLabelText('Fit')).toHaveValue('any')
     })
   })
 

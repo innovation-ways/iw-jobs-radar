@@ -5,6 +5,7 @@ from jobs_radar.adapters.sources.ashby import AshbyAdapter
 from jobs_radar.adapters.sources.base import JobSourceAdapter
 from jobs_radar.adapters.sources.greenhouse import GreenhouseAdapter
 from jobs_radar.adapters.sources.himalayas import HimalayasAdapter
+from jobs_radar.adapters.sources.itjobs import ItJobsAdapter
 from jobs_radar.adapters.sources.jobicy import JobicyAdapter
 from jobs_radar.adapters.sources.lever import LeverAdapter
 from jobs_radar.adapters.sources.smartrecruiters import SmartRecruitersAdapter
@@ -15,7 +16,7 @@ from jobs_radar.domain.enums import SourceType
 def build_source_adapters() -> dict[SourceType, JobSourceAdapter]:
     """Create the adapters: four company-board ATS and the job boards (ADR-049, ADR-050).
 
-    ITJobs.pt waits for its key (T9.6).
+    ITJobs.pt needs the owner's key and is unverified against the live service (T9.6).
     """
     client = build_http_client()
     return {
@@ -26,4 +27,5 @@ def build_source_adapters() -> dict[SourceType, JobSourceAdapter]:
         SourceType.ARBEITNOW: ArbeitnowAdapter(client),
         SourceType.JOBICY: JobicyAdapter(client),
         SourceType.HIMALAYAS: HimalayasAdapter(client),
+        SourceType.ITJOBS_PT: ItJobsAdapter(client),
     }

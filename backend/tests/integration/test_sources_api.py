@@ -301,7 +301,9 @@ async def test_the_catalogue_lists_the_available_job_boards_without_secrets(
     response = await client.get("/api/v1/source-catalogue")
     assert response.status_code == 200
     items = {item["catalogue_key"]: item for item in response.json()["items"]}
-    assert set(items) == {"arbeitnow", "jobicy", "himalayas"}
+    assert set(items) == {"arbeitnow", "jobicy", "himalayas", "itjobs_pt"}
+    assert items["itjobs_pt"]["requires_credential"] is True
+    assert items["itjobs_pt"]["credential_label"] == "ITJobs API key"
     himalayas = items["himalayas"]
     assert himalayas["requires_credential"] is False
     assert himalayas["already_added"] is False

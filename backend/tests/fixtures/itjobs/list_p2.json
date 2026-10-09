@@ -1,0 +1,79 @@
+{
+  "total": 4,
+  "page": 2,
+  "limit": 2,
+  "results": [
+    {
+      "id": 103,
+      "company": {
+        "id": 7,
+        "name": "Synth Co",
+        "logo": "",
+        "description": "",
+        "address": "",
+        "phone": "",
+        "email": "",
+        "url": "https://synth.example.test",
+        "slug": "synth-co"
+      },
+      "companyId": 7,
+      "title": "DevOps Engineer",
+      "body": "<p>Run clusters on site.</p>",
+      "ref": "R103",
+      "salaryMin": null,
+      "salaryMax": null,
+      "workModel": 0,
+      "types": [
+        {
+          "id": "1",
+          "name": "Programação"
+        }
+      ],
+      "locations": [
+        {
+          "id": "1",
+          "name": "Porto"
+        }
+      ],
+      "publishedAt": "2026-10-08 10:00:00",
+      "updatedAt": "2026-10-08 10:00:00",
+      "slug": "devops-engineer"
+    },
+    {
+      "id": 104,
+      "company": {
+        "id": 7,
+        "name": "Synth Co",
+        "logo": "",
+        "description": "",
+        "address": "",
+        "phone": "",
+        "email": "",
+        "url": "https://synth.example.test",
+        "slug": "synth-co"
+      },
+      "companyId": 7,
+      "title": "Marketing Manager",
+      "body": "<p>Brand.</p>",
+      "ref": "R104",
+      "salaryMin": null,
+      "salaryMax": null,
+      "workModel": 0,
+      "types": [
+        {
+          "id": "1",
+          "name": "Programação"
+        }
+      ],
+      "locations": [
+        {
+          "id": "1",
+          "name": "Lisboa"
+        }
+      ],
+      "publishedAt": "2026-10-08 10:00:00",
+      "updatedAt": "2026-10-08 10:00:00",
+      "slug": "marketing-manager"
+    }
+  ]
+}

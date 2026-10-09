@@ -17,7 +17,9 @@
   Technology areas are matched by keywords in titles and tags, so the filter is loose on purpose.
 - Arbeitnow and Jobicy do not state who may apply: a posting whose place cannot be read is kept
   and judged later. Jobicy is read through its `europe`, `anywhere` and country slugs only.
-- ITJobs.pt (Portugal) is not in the catalogue yet: its adapter waits for the owner's free API key.
+- ITJobs.pt (Portugal) follows its public documentation but was not tested with a real key: the
+  offer link is built from the public offer address, and remote work is recognised from the words
+  "remote" or "remoto" because its `workModel` codes are not documented.
 - A job board posting is not deleted from the list of sources; disable the board instead.
 - Company boards of other applicant tracking systems (Workable, Recruitee, Teamtailor) are not
   included; the identifier of a Lever, Ashby or SmartRecruiters board must be found by the owner

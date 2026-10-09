@@ -105,8 +105,6 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
         rate_limit_per_minute=6,
         requires_credential=True,
         credential_label="ITJobs API key",
-        # Finished in T9.6, once the owner has a key and confirms the response fields.
-        available=False,
     ),
 )
 

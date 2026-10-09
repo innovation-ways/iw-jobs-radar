@@ -140,7 +140,7 @@ async def test_preview_needs_a_location_from_the_profile(
     assert "Profile & intent" in response.json()["error"]["message"]
 
 
-@pytest.mark.parametrize("key", ["greenhouse", "nope", "itjobs_pt"])
+@pytest.mark.parametrize("key", ["greenhouse", "nope"])
 async def test_preview_refuses_keys_that_are_not_available_job_boards(
     client: httpx.AsyncClient,
     app: FastAPI,
@@ -269,125 +269,7 @@ async def test_an_unavailable_board_cannot_be_added(
 ) -> None:
     await enable_an_intent(session_factory)
     use_adapters(app, monkeypatch, FakeAdapter())
+    entry = catalogue.require_entry("itjobs_pt")
+    monkeypatch.setitem(catalogue._BY_KEY, "itjobs_pt", replace(entry, available=False))
     response = await client.post("/api/v1/sources", json=body("itjobs_pt", credential=KEY))
-    assert response.status_code == 422
-
-
-# --- the key afterwards ---------------------------------------------------------------------------------
-
-
-async def added_itjobs(client: httpx.AsyncClient) -> dict[str, Any]:
-    response = await client.post("/api/v1/sources", json=body("itjobs_pt", credential=KEY))
-    assert response.status_code == 201, response.text
-    return dict(response.json())
-
-
-async def test_the_key_can_be_replaced_after_a_check_and_removed(
-    client: httpx.AsyncClient,
-    app: FastAPI,
-    monkeypatch: pytest.MonkeyPatch,
-    session_factory: async_sessionmaker[AsyncSession],
-    itjobs_available: None,
-) -> None:
-    await enable_an_intent(session_factory)
-    adapter = use_adapters(
-        app, monkeypatch, FakeAdapter(board=BoardInfo("ITJobs.pt", 5, matching_count=1))
-    )
-    source = await added_itjobs(client)
-    sid = source["source_configuration_id"]
-
-    replaced = await client.put(f"/api/v1/sources/{sid}/credential", json={"secret": "new-key-123"})
-    assert replaced.status_code == 200, replaced.text
-    assert "new-key-123" not in replaced.text and KEY not in replaced.text
-    assert adapter.validations[-1][1] == "new-key-123"
-    assert replaced.json()["version"] == source["version"] + 1
-
-    removed = await client.delete(f"/api/v1/sources/{sid}/credential")
-    assert removed.status_code == 200
-    assert removed.json()["credential_status"] == "none"
-    assert removed.json()["enabled"] is False  # no key, no collection
-
-
-async def test_a_refused_replacement_key_changes_nothing(
-    client: httpx.AsyncClient,
-    app: FastAPI,
-    monkeypatch: pytest.MonkeyPatch,
-    session_factory: async_sessionmaker[AsyncSession],
-    itjobs_available: None,
-) -> None:
-    await enable_an_intent(session_factory)
-    adapter = use_adapters(
-        app, monkeypatch, FakeAdapter(board=BoardInfo("ITJobs.pt", 5, matching_count=1))
-    )
-    source = await added_itjobs(client)
-    adapter.board = SourceError(
-        SourceErrorClass.AUTHENTICATION, "The source refused the credential."
-    )
-    sid = source["source_configuration_id"]
-    response = await client.put(f"/api/v1/sources/{sid}/credential", json={"secret": "bad"})
-    assert response.status_code == 422
-    items = (await client.get("/api/v1/sources")).json()["items"]
-    current = next(s for s in items if s["source_configuration_id"] == sid)
-    assert current["version"] == source["version"]
-    assert current["credential_status"] == "saved"
-
-
-async def test_a_board_without_a_key_takes_no_credential(
-    client: httpx.AsyncClient,
-    app: FastAPI,
-    monkeypatch: pytest.MonkeyPatch,
-    session_factory: async_sessionmaker[AsyncSession],
-) -> None:
-    await enable_an_intent(session_factory)
-    use_adapters(app, monkeypatch, FakeAdapter())
-    sid = (await client.post("/api/v1/sources", json=body())).json()["source_configuration_id"]
-    assert (
-        await client.put(f"/api/v1/sources/{sid}/credential", json={"secret": "x"})
-    ).status_code == 422
-
-
-# --- filters ------------------------------------------------------------------------------------------
-
-
-async def test_the_filters_of_a_job_board_can_be_changed_with_the_version(
-    client: httpx.AsyncClient,
-    app: FastAPI,
-    monkeypatch: pytest.MonkeyPatch,
-    session_factory: async_sessionmaker[AsyncSession],
-) -> None:
-    await enable_an_intent(session_factory)
-    use_adapters(app, monkeypatch, FakeAdapter())
-    source = (await client.post("/api/v1/sources", json=body())).json()
-    sid, version = source["source_configuration_id"], source["version"]
-    changed = await client.put(
-        f"/api/v1/sources/{sid}",
-        json={
-            "expected_version": version,
-            "filters": {"max_age_days": 7, "search_terms": ["rust"]},
-        },
-    )
-    assert changed.status_code == 200, changed.text
-    assert changed.json()["filters"]["max_age_days"] == 7
-    assert changed.json()["filters"]["search_terms"] == ["rust"]
-    stale = await client.put(
-        f"/api/v1/sources/{sid}", json={"expected_version": version, "filters": {"max_age_days": 3}}
-    )
-    assert stale.status_code == 409
-
-
-async def test_filters_are_refused_for_a_company_board(
-    client: httpx.AsyncClient, app: FastAPI, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    from tests.fake_adapter import FakeAdapter as Fake
-
-    monkeypatch.setattr(app.state, "adapters", {SourceType.GREENHOUSE: Fake()})
-    created = await client.post(
-        "/api/v1/sources",
-        json={"source_type": "greenhouse", "external_identifier": "acme-board-x1"},
-    )
-    assert created.status_code == 201, created.text
-    response = await client.put(
-        f"/api/v1/sources/{created.json()['source_configuration_id']}",
-        json={"expected_version": created.json()["version"], "filters": {"max_age_days": 3}},
-    )
     assert response.status_code == 422

@@ -79,10 +79,22 @@ def test_the_key_is_asked_for_only_where_the_catalogue_says_so() -> None:
         assert bool(entry.credential_label) == entry.requires_credential
 
 
-def test_itjobs_stays_hidden_until_its_adapter_is_finished() -> None:
-    assert {entry.source_type for entry in available_entries()} == JOB_BOARDS - {
-        SourceType.ITJOBS_PT
-    }
+def test_every_job_board_is_available_now() -> None:
+    assert {entry.source_type for entry in available_entries()} == JOB_BOARDS
+
+
+def test_an_entry_marked_unavailable_stays_out_of_the_list(monkeypatch: pytest.MonkeyPatch) -> None:
+    from dataclasses import replace
+
+    from jobs_radar.adapters.sources import catalogue
+
+    unfinished = replace(catalogue.require_entry("jobicy"), available=False)
+    monkeypatch.setattr(
+        catalogue,
+        "CATALOGUE",
+        tuple(unfinished if e.catalogue_key == "jobicy" else e for e in catalogue.CATALOGUE),
+    )
+    assert "jobicy" not in {entry.catalogue_key for entry in catalogue.available_entries()}
 
 
 def test_get_entry_finds_by_key_and_rejects_unknown_keys() -> None:

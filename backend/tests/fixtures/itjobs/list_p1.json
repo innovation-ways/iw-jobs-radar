@@ -1,0 +1,83 @@
+{
+  "total": 4,
+  "page": 1,
+  "limit": 2,
+  "results": [
+    {
+      "id": 101,
+      "company": {
+        "id": 7,
+        "name": "Synth Co",
+        "logo": "",
+        "description": "",
+        "address": "",
+        "phone": "",
+        "email": "",
+        "url": "https://synth.example.test",
+        "slug": "synth-co"
+      },
+      "companyId": 7,
+      "title": "Backend Engineer",
+      "body": "<p>Build <strong>services</strong> in Python.</p>",
+      "ref": "R101",
+      "salaryMin": 30000,
+      "salaryMax": 45000,
+      "workModel": 0,
+      "types": [
+        {
+          "id": "1",
+          "name": "Programação"
+        }
+      ],
+      "locations": [
+        {
+          "id": "1",
+          "name": "Lisboa"
+        }
+      ],
+      "publishedAt": "2026-10-08 10:00:00",
+      "updatedAt": "2026-10-08 10:00:00",
+      "slug": "backend-engineer"
+    },
+    {
+      "id": 102,
+      "company": {
+        "id": 7,
+        "name": "Globex",
+        "logo": "",
+        "description": "",
+        "address": "",
+        "phone": "",
+        "email": "",
+        "url": "https://synth.example.test",
+        "slug": "synth-co"
+      },
+      "companyId": 7,
+      "title": "Data Engineer - Remoto",
+      "body": "<p>Pipelines. Trabalho remoto.</p>",
+      "ref": "R102",
+      "salaryMin": null,
+      "salaryMax": null,
+      "workModel": 0,
+      "types": [
+        {
+          "id": "1",
+          "name": "Programação"
+        }
+      ],
+      "locations": [
+        {
+          "id": "1",
+          "name": "Porto"
+        },
+        {
+          "id": "2",
+          "name": "Remoto"
+        }
+      ],
+      "publishedAt": "2026-10-08 10:00:00",
+      "updatedAt": "2026-10-08 10:00:00",
+      "slug": "data-engineer---remoto"
+    }
+  ]
+}

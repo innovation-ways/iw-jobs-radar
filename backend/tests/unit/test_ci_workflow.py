@@ -26,3 +26,8 @@ def test_the_workflow_uses_no_secrets_and_none_of_the_opt_in_or_network_targets(
         "secret-scan",
     ):
         assert forbidden not in code
+
+
+def test_the_workflow_pins_pnpm_to_the_version_the_frontend_declares() -> None:
+    text = WORKFLOW.read_text()
+    assert "corepack prepare" in text and "frontend/package.json" in text

@@ -27,8 +27,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Enable pnpm through corepack
-        run: corepack enable
+      # `make` calls pnpm from the repository root, where corepack finds no packageManager field and
+      # would download the newest pnpm; pin the version the frontend declares.
+      - name: Enable the pnpm version pinned by the frontend
+        run: |
+          corepack enable
+          corepack prepare "$(node -p "require('./frontend/package.json').packageManager")" --activate
       - name: Install dependencies
         run: make install
       - name: Quality gates and tests

@@ -8,7 +8,7 @@ failing never stops the others, and a failed run never closes anything (document
 import logging
 from collections.abc import Awaitable, Callable, Mapping
 from contextlib import AbstractAsyncContextManager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +20,7 @@ from jobs_radar.adapters.sources.base import (
     SourceError,
 )
 from jobs_radar.adapters.sources.catalogue import CatalogueEntry, get_entry
+from jobs_radar.adapters.sources.posting_filter import apply_filters
 from jobs_radar.core.crypto import CredentialBox, CredentialKeyError
 from jobs_radar.core.errors import ConflictError, InputValidationError, NotFoundError
 from jobs_radar.db.models import CollectionRun, SourceConfiguration, SourceRunResult
@@ -69,6 +70,8 @@ class _SourceView:
     is_job_board: bool = False
     next_allowed_at: datetime | None = None
     credential_problem: str | None = None  # why the stored key cannot be used, if it cannot
+    # Company boards only: the owner's opt-in filters, applied after the fetch (ADR-051).
+    company_filters: JobBoardFilters | None = None
 
 
 @dataclass
@@ -246,7 +249,7 @@ class CollectionService:
                 if source_category(source_type) is SourceCategory.JOB_BOARD
                 else None
             )
-            filters = scope = next_allowed = credential = problem = None
+            filters = scope = next_allowed = credential = problem = company_filters = None
             if entry is not None:
                 # The countries are never typed into a source: they come from the profile and the
                 # enabled intents (ADR-049.11).
@@ -261,6 +264,9 @@ class CollectionService:
                 )
                 next_allowed = next_run_allowed_at(last, entry.min_interval_minutes)
                 credential, problem = self._credential_for(entry, source)
+            elif source.config_json:
+                company_filters = JobBoardFilters.model_validate(source.config_json)
+                scope = await LocationScopeService(session).for_owner(run.owner_id)
             return _SourceView(
                 source_configuration_id=source.source_configuration_id,
                 source_type=source_type,
@@ -277,7 +283,24 @@ class CollectionService:
                 is_job_board=entry is not None,
                 next_allowed_at=next_allowed,
                 credential_problem=problem,
+                company_filters=company_filters,
             )
+
+    def _filter_company_board(
+        self, view: _SourceView, fetched: CollectionResult
+    ) -> CollectionResult:
+        """Apply the owner's opt-in filters to a company board's postings (a 304 has none)."""
+        if fetched.outcome == "not_modified" or view.company_filters is None:
+            return fetched
+        outcome = apply_filters(
+            list(fetched.postings), view.company_filters, view.checkpoint.scope, self._clock()
+        )
+        return replace(
+            fetched,
+            postings=tuple(outcome.kept),
+            dropped_count=fetched.dropped_count + outcome.dropped,
+            truncated=fetched.truncated or outcome.truncated,
+        )
 
     def _credential_for(
         self, entry: CatalogueEntry, source: SourceConfiguration
@@ -331,6 +354,8 @@ class CollectionService:
                     None,
                 )
 
+        if fetched is not None and view.company_filters is not None:
+            fetched = self._filter_company_board(view, fetched)
         if fetched is not None:
             try:
                 return await self._store_success(collection_run_id, view, fetched, started)

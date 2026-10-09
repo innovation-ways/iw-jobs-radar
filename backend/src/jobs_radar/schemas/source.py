@@ -59,6 +59,8 @@ class SourceUpdate(StrictModel):
     enabled: bool | None = None
     rate_limit_per_minute: Annotated[int, Field(ge=1, le=60)] | None = None
     filters: JobBoardFilters | None = None
+    # Company boards only: go back to keeping every posting.
+    clear_filters: bool | None = None
 
 
 class SourceResultRead(StrictModel):

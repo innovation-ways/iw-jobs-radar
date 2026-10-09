@@ -188,6 +188,16 @@ export function useJobBoardActions() {
     // Refresh even on failure: a version conflict means the list on screen is stale.
     onSettled: refresh,
   })
+  const clearFilters = useMutation({
+    mutationFn: (change: { id: number; version: number }) =>
+      unwrap(
+        api.PUT('/api/v1/sources/{source_configuration_id}', {
+          params: { path: { source_configuration_id: change.id } },
+          body: { expected_version: change.version, clear_filters: true },
+        }),
+      ),
+    onSettled: refresh,
+  })
   const writeKey = useMutation({
     mutationFn: (change: { id: number; secret: string }) =>
       unwrap(
@@ -207,7 +217,7 @@ export function useJobBoardActions() {
       ),
     onSettled: refresh,
   })
-  return { previewBoard, addJobBoard, saveFilters, writeKey, removeKey }
+  return { previewBoard, addJobBoard, saveFilters, clearFilters, writeKey, removeKey }
 }
 
 export type ScheduleRead = components['schemas']['ScheduleRead']

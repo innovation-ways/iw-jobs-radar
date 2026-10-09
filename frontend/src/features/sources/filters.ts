@@ -1,6 +1,15 @@
 import type { components } from '@/api/schema'
 import type { JobBoardFilters } from './queries'
 
+/** The filters a company board starts with when the owner opts in (the server's defaults). */
+export const DEFAULT_FILTERS: JobBoardFilters = {
+  schema_version: 1,
+  categories: ['software', 'data', 'devops', 'security'],
+  search_terms: [],
+  max_age_days: 30,
+  max_postings_per_run: 500,
+}
+
 /** Fill the optional fields of filters received from the API (it always sends all of them). */
 export function withDefaults(
   filters: Partial<components['schemas']['JobBoardFilters']> | null | undefined,

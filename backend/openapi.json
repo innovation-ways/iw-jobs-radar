@@ -5679,6 +5679,17 @@
         "additionalProperties": false,
         "description": "Change a source's settings; ``expected_version`` is the version the client last saw.",
         "properties": {
+          "clear_filters": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clear Filters"
+          },
           "enabled": {
             "anyOf": [
               {

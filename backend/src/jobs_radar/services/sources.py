@@ -299,6 +299,7 @@ class SourceService:
         rate_limit_per_minute: int | None = None,
         display_name: str | None = None,
         filters: JobBoardFilters | None = None,
+        clear_filters: bool = False,
     ) -> SourceConfiguration:
         """Change a source's settings, checking the version the caller saw.
 
@@ -312,12 +313,15 @@ class SourceService:
             raise ConflictError(
                 msg, details={"expected": expected_version, "actual": source.version}
             )
-        if filters is not None:
-            if self._board_entry(source) is None:
-                msg = "Filters apply to job boards only."
+        if clear_filters:
+            if self._board_entry(source) is not None:
+                msg = "The filters of a job board cannot be cleared; change them instead."
                 raise InputValidationError(
                     msg, details={"error_class": SourceErrorClass.CONFIGURATION.value}
                 )
+            source.config_json = {}
+        elif filters is not None:
+            # A company board keeps every posting until the owner opts in to filters (ADR-051).
             source.config_json = filters.model_dump(mode="json")
         if enabled is not None:
             source.enabled = enabled

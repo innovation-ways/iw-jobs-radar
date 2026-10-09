@@ -3457,6 +3457,8 @@ export interface components {
          * @description Change a source's settings; ``expected_version`` is the version the client last saw.
          */
         SourceUpdate: {
+            /** Clear Filters */
+            clear_filters?: boolean | null;
             /** Enabled */
             enabled?: boolean | null;
             /** Expected Version */

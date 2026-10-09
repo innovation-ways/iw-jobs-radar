@@ -273,3 +273,47 @@ async def test_an_unavailable_board_cannot_be_added(
     monkeypatch.setitem(catalogue._BY_KEY, "itjobs_pt", replace(entry, available=False))
     response = await client.post("/api/v1/sources", json=body("itjobs_pt", credential=KEY))
     assert response.status_code == 422
+
+
+async def test_a_company_board_can_opt_in_to_filters_and_opt_out_again(
+    client: httpx.AsyncClient, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from tests.factories import unique
+
+    monkeypatch.setattr(app.state, "adapters", {SourceType.GREENHOUSE: FakeAdapter()})
+    created = await client.post(
+        "/api/v1/sources",
+        json={"source_type": "greenhouse", "external_identifier": unique("filter-co")},
+    )
+    assert created.status_code == 201, created.text
+    source = created.json()
+    assert source["filters"] is None  # no filters: every posting is kept
+    sid = source["source_configuration_id"]
+    turned_on = await client.put(
+        f"/api/v1/sources/{sid}",
+        json={"expected_version": source["version"], "filters": {"categories": ["software"]}},
+    )
+    assert turned_on.status_code == 200, turned_on.text
+    assert turned_on.json()["filters"]["categories"] == ["software"]
+    turned_off = await client.put(
+        f"/api/v1/sources/{sid}",
+        json={"expected_version": turned_on.json()["version"], "clear_filters": True},
+    )
+    assert turned_off.status_code == 200
+    assert turned_off.json()["filters"] is None
+
+
+async def test_job_board_filters_cannot_be_cleared(
+    client: httpx.AsyncClient,
+    app: FastAPI,
+    monkeypatch: pytest.MonkeyPatch,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    await enable_an_intent(session_factory)
+    use_adapters(app, monkeypatch, FakeAdapter())
+    source = (await client.post("/api/v1/sources", json=body())).json()
+    response = await client.put(
+        f"/api/v1/sources/{source['source_configuration_id']}",
+        json={"expected_version": source["version"], "clear_filters": True},
+    )
+    assert response.status_code == 422

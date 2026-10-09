@@ -1,7 +1,7 @@
 import { Play } from 'lucide-react'
 import { AddBoardCard } from '@/features/sources/AddBoardCard'
 import { JobBoardsSection } from '@/features/sources/JobBoardsSection'
-import { useSourceActions, useSourcesData } from '@/features/sources/queries'
+import { useJobBoardActions, useSourceActions, useSourcesData } from '@/features/sources/queries'
 import { RunHistory } from '@/features/sources/RunHistory'
 import { ScheduleCard } from '@/features/sources/ScheduleCard'
 import { SourcesTable } from '@/features/sources/SourcesTable'
@@ -17,6 +17,7 @@ export function Sources() {
   const companyBoards = sources.data?.filter((source) => source.category !== 'job_board')
   const jobBoards = sources.data?.filter((source) => source.category === 'job_board') ?? []
   const { addBoard, runSource, runAll, setEnabled } = useSourceActions()
+  const boardActions = useJobBoardActions()
   const busy = Boolean(activeRun) || runSource.isPending || runAll.isPending
   const actionError = [runAll, runSource, setEnabled].find((mutation) => mutation.isError)?.error
 
@@ -63,6 +64,7 @@ export function Sources() {
         {companyBoards && companyBoards.length > 0 && (
           <SourcesTable
             sources={companyBoards}
+            actions={boardActions}
             activeRun={activeRun}
             busy={busy}
             onRun={(source) => runSource.mutate(source.source_configuration_id)}

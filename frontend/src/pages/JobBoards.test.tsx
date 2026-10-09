@@ -492,3 +492,81 @@ describe('Job board settings', () => {
     })
   })
 })
+
+describe('Company board filters', () => {
+  beforeEach(() => {
+    get.mockReset()
+    put.mockReset()
+    sources = [
+      company,
+      {
+        ...company,
+        source_configuration_id: 2,
+        display_name: 'Contoso',
+        company_name: 'Contoso',
+        external_identifier: 'contoso',
+        filters: { ...FILTERS, categories: ['software'] },
+        version: 4,
+      },
+    ]
+    currentScope = scope
+    get.mockImplementation((path: string) => {
+      if (path === '/api/v1/sources') return Promise.resolve({ data: { items: sources } })
+      if (path === '/api/v1/collection-runs')
+        return Promise.resolve({ data: { items: [], next_before_collection_run_id: null } })
+      if (path === '/api/v1/settings/schedule') return Promise.resolve({ data: schedule })
+      if (path === '/api/v1/source-catalogue')
+        return Promise.resolve({ data: { items: catalogue } })
+      if (path === '/api/v1/source-scope') return Promise.resolve({ data: currentScope })
+      return Promise.reject(new Error(`unexpected GET ${path}`))
+    })
+  })
+
+  async function open(name: string) {
+    const user = userEvent.setup()
+    renderSources()
+    const boards = within(await screen.findByRole('region', { name: 'Company boards' }))
+    await user.click(await boards.findByRole('button', { name: `Filters for ${name}` }))
+    return { user, boards }
+  }
+
+  it('keeps every posting until the owner opts in', async () => {
+    const { boards } = await open('Acme Robotics')
+    const toggle = boards.getByRole('checkbox', { name: /keep only postings that match/i })
+    expect(toggle).not.toBeChecked()
+    expect(boards.queryByLabelText('Posted within (days)')).not.toBeInTheDocument()
+    expect(boards.getByText(/every posting is kept/i)).toBeInTheDocument()
+  })
+
+  it('opts in with the default filters and saves with the version the owner saw', async () => {
+    const { user, boards } = await open('Acme Robotics')
+    await user.click(boards.getByRole('checkbox', { name: /keep only postings that match/i }))
+    expect(boards.getByLabelText('Posted within (days)')).toHaveValue(30)
+    expect(boards.getByText(/from your profile and search intents/i)).toBeInTheDocument()
+    put.mockResolvedValue({ data: company })
+    await user.click(boards.getByRole('button', { name: 'Save filters' }))
+    expect(put).toHaveBeenCalledWith('/api/v1/sources/{source_configuration_id}', {
+      params: { path: { source_configuration_id: 1 } },
+      body: { expected_version: 2, filters: FILTERS },
+    })
+  })
+
+  it('shows saved filters and opts out with clear_filters', async () => {
+    const { user, boards } = await open('Contoso')
+    const toggle = boards.getByRole('checkbox', { name: /keep only postings that match/i })
+    expect(toggle).toBeChecked()
+    expect(boards.getByRole('checkbox', { name: 'devops' })).not.toBeChecked()
+    await user.click(toggle)
+    put.mockResolvedValue({ data: company })
+    await user.click(boards.getByRole('button', { name: 'Save filters' }))
+    expect(put).toHaveBeenCalledWith('/api/v1/sources/{source_configuration_id}', {
+      params: { path: { source_configuration_id: 2 } },
+      body: { expected_version: 4, clear_filters: true },
+    })
+  })
+
+  it('cannot save until something changed', async () => {
+    const { boards } = await open('Contoso')
+    expect(boards.getByRole('button', { name: 'Save filters' })).toBeDisabled()
+  })
+})

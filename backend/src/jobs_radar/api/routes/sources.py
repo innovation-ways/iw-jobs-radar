@@ -97,7 +97,9 @@ def _source(row: SourceStatusRow) -> SourceRead:
         filters=(
             JobBoardFilters.model_validate(source.config_json or entry.default_filters.model_dump())
             if entry
-            else None
+            else (
+                JobBoardFilters.model_validate(source.config_json) if source.config_json else None
+            )
         ),
         credential_status=credential_status,
         credential_updated_at=source.credential_updated_at,
@@ -263,6 +265,7 @@ async def update_source(
         enabled=body.enabled,
         rate_limit_per_minute=body.rate_limit_per_minute,
         filters=body.filters,
+        clear_filters=bool(body.clear_filters),
     )
     await session.commit()
     return await _one(service, source_configuration_id)

@@ -11,6 +11,11 @@
 - SmartRecruiters lists postings without text, so it reads the details of technical postings only,
   at most 200 per run; a company with more is `partial` (it never closes postings) and a company
   with no open postings is refused as not found. Its default pace is 30 requests a minute.
+- **Filters on a company board** are off by default (every posting is kept). For a large company
+  open **Filters** on its row and tick *Keep only postings that match my areas and location*: only
+  postings in the chosen technology areas, remote work open to your countries, or on-site work
+  inside your radius are stored (the rest are counted as dropped). Places that cannot be read are
+  kept. A new filter applies from the next run and does not close postings already stored.
 - A run never blocks on one failing board. The table shows the last outcome and the reason
   (`not_found`, `rate_limited`, `timeout`, `server_error`, `invalid_payload`, `blocked_url`).
 - A posting closes only after two consecutive successful runs without it; a failed run never

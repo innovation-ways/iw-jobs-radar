@@ -59,6 +59,10 @@ many postings would be kept), then **Add**. Nothing is saved before the check su
   forbid storing postings, or that needs HTML scraping, is deliberately not in the catalogue.
 - A job board posting and the same job on the company's own board are linked as one opportunity;
   the company board listing is the primary one.
+- **Closing takes two complete runs.** A posting that a new filter (or the board) no longer lists
+  is closed after two complete runs; a job board allows a run only after its minimum interval (6
+  hours for Himalayas and ITJobs.pt), so postings left over from older filters disappear after
+  about 12 hours. Turn on the daily schedule to let the worker do it.
 - Disable a misbehaving board instead of deleting it; its collected postings stay in the inbox.
 
 ## Daily schedule

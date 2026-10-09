@@ -239,6 +239,9 @@ async def test_an_unusable_answer_fails_with_invalid_output_after_three_attempts
     row = await extraction_of(db_session, snapshot.job_snapshot_id)
     assert (row.status, row.attempts, row.error_class) == ("failed", 3, "invalid_output")
     assert len(provider.requests) == 6  # each attempt: the answer and one repair
+    # what was wrong is kept on the row, so the failure can be understood later
+    assert row.failure_json["answer_chars"] == len("not json at all")
+    assert row.failure_json["answer_tail"] == "not json at all"
 
 
 async def test_a_claim_is_not_taken_twice_but_a_stale_one_is_recovered(

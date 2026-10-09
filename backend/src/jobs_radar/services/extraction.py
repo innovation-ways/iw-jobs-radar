@@ -36,11 +36,22 @@ _INFRASTRUCTURE = frozenset(
 _PROBLEM_LIMIT = 800
 
 
+_TAIL_CHARS = 500
+
+
 class ExtractionError(Exception):
     """The extraction could not be produced. ``counts_as_attempt`` says whether the job used one."""
 
-    def __init__(self, error_class: str, message: str, *, counts_as_attempt: bool) -> None:
+    def __init__(
+        self,
+        error_class: str,
+        message: str,
+        *,
+        counts_as_attempt: bool,
+        detail: dict[str, Any] | None = None,
+    ) -> None:
         super().__init__(message)
+        self.detail = detail
         self.error_class = error_class
         self.message = message
         self.counts_as_attempt = counts_as_attempt
@@ -122,7 +133,16 @@ class JobExtractor:
                 parsed = parse_lenient(raw)
             except ValueError as second:
                 msg = "The AI answer could not be used after one repair."
-                raise ExtractionError("invalid_output", msg, counts_as_attempt=True) from second
+                # Keep the end of the answer (a public job text, no personal data): it shows
+                # whether the model was cut off or looped, which the error class alone cannot.
+                detail = {
+                    "answer_chars": len(raw),
+                    "answer_tail": raw[-_TAIL_CHARS:],
+                    "problem": _problem(second),
+                }
+                raise ExtractionError(
+                    "invalid_output", msg, counts_as_attempt=True, detail=detail
+                ) from second
         return self._checked(parsed, job, prepared, latency)
 
     async def _call(self, request: Any) -> tuple[str, int]:

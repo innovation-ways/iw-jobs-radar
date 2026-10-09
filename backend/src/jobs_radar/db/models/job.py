@@ -145,6 +145,11 @@ class JobExtraction(CreatedAtMixin, Base):
     error_class: Mapped[str | None] = text_column(
         "Classified failure reason.", length=50, nullable=True
     )
+    failure_json: Mapped[Any | None] = json_column(
+        "Size and last characters of the unusable answer of the latest failed attempt, "
+        "so the failure can be diagnosed.",
+        nullable=True,
+    )
     attempts: Mapped[int] = int_column("Number of attempts made so far.", default=0)
     latency_ms: Mapped[int | None] = int_column(
         "Duration of the last attempt in milliseconds.", nullable=True

@@ -80,6 +80,18 @@ async def test_two_unusable_answers_fail_and_count_as_an_attempt() -> None:
     assert len(provider.requests) == 2  # one repair only, never more
 
 
+async def test_an_unusable_answer_keeps_its_size_and_end_for_diagnosis() -> None:
+    cut = '{"title": ' + "x" * 900  # a cut-off answer: the model ran out of output budget
+    provider = FakeProvider(["nope", cut])
+    with pytest.raises(ExtractionError) as error:
+        await extractor(provider).extract(job())
+    detail = error.value.detail
+    assert detail is not None
+    assert detail["answer_chars"] == len(cut)
+    assert detail["answer_tail"] == cut[-500:]  # only the end, enough to see where it was cut
+    assert detail["problem"]
+
+
 @pytest.mark.parametrize(
     ("provider_error", "counts"),
     [

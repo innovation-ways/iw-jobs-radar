@@ -163,10 +163,12 @@ class ExtractionRepository:
         error_class: str,
         now: datetime,
         max_attempts: int,
+        detail: dict[str, Any] | None = None,
     ) -> bool:
         """Count a failed attempt; finalise as ``failed`` when attempts run out. Returns that."""
         extraction.attempts += 1
         extraction.error_class = error_class
+        extraction.failure_json = detail
         extraction.claimed_at = None
         final = extraction.attempts >= max_attempts
         if final:

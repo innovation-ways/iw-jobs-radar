@@ -206,6 +206,7 @@ class ExtractionQueue:
                 error_class=error.error_class,
                 now=self._clock(),
                 max_attempts=self._max_attempts,
+                detail=error.detail,
             )
             await session.commit()
             return "failed" if final else "retry"

@@ -267,6 +267,7 @@ AI attribute extractions per job snapshot (immutable once finalised).
 | `truncated` | BOOLEAN | no | True when the description was truncated before extraction. |
 | `attributes_json` | JSONB | yes | Extracted attributes with evidence. |
 | `error_class` | VARCHAR(50) | yes | Classified failure reason. |
+| `failure_json` | JSONB | yes | Size and last characters of the unusable answer of the latest failed attempt, so the failure can be diagnosed. |
 | `attempts` | INTEGER | no | Number of attempts made so far. |
 | `latency_ms` | INTEGER | yes | Duration of the last attempt in milliseconds. |
 | `claimed_at` | DATETIME | yes | UTC time at which a worker claimed the task. |

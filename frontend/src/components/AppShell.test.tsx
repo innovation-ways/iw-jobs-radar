@@ -61,6 +61,9 @@ vi.mock('@/api/client', () => ({
           },
         })
       }
+      if (path === '/api/v1/pipeline/status') {
+        return Promise.reject(new Error('the pipeline summary is not under test here'))
+      }
       if (path === '/api/v1/inbox') {
         return Promise.resolve({
           data: { items: [], next_cursor: null, counts: { total: 0 }, search_intent_id: null },

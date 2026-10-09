@@ -528,6 +528,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pipeline/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Pipeline Status
+         * @description Analysis and scoring progress, pace, time left, failures and the worker's state.
+         */
+        get: operations["pipeline_status_api_v1_pipeline_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/profiles": {
         parameters: {
             query?: never;
@@ -1845,6 +1865,18 @@ export interface components {
             value: unknown;
         };
         /**
+         * FailuresRead
+         * @description Open jobs whose analysis failed, with the reason of the latest failure.
+         */
+        FailuresRead: {
+            /** Count */
+            count: number;
+            /** Last Error Class */
+            last_error_class: string | null;
+            /** Last Failed At */
+            last_failed_at: string | null;
+        };
+        /**
          * Filters
          * @description Optional filters that are not scored.
          */
@@ -2452,6 +2484,29 @@ export interface components {
             weeks: number;
         };
         /**
+         * PipelineStatusRead
+         * @description Everything the interface needs to show whether analysis and scoring are keeping up.
+         */
+        PipelineStatusRead: {
+            /** Ai Model */
+            ai_model: string | null;
+            analysis: components["schemas"]["QueueRead"];
+            failures: components["schemas"]["FailuresRead"];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            recent: components["schemas"]["RecentRead"];
+            scoring: components["schemas"]["QueueRead"];
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "no_ai" | "worker_stopped" | "idle" | "working" | "no_progress";
+            worker: components["schemas"]["WorkerRead"];
+        };
+        /**
          * PlaceList
          * @description Search results, most populous first.
          */
@@ -2785,6 +2840,24 @@ export interface components {
             origin: components["schemas"]["EvidenceOrigin"];
         };
         /**
+         * QueueRead
+         * @description Progress through one stage for the jobs that are still open.
+         */
+        QueueRead: {
+            /** Done */
+            done: number;
+            /** Failed */
+            failed: number;
+            /** Minutes Left */
+            minutes_left?: number | null;
+            /** Search Intent Id */
+            search_intent_id?: number | null;
+            /** Total */
+            total: number;
+            /** Waiting */
+            waiting: number;
+        };
+        /**
          * ReadinessResponse
          * @description Body of ``/readyz``.
          */
@@ -2795,6 +2868,22 @@ export interface components {
             };
             /** Status */
             status: string;
+        };
+        /**
+         * RecentRead
+         * @description Work finished in the recent window, from which the pace and the time left are derived.
+         */
+        RecentRead: {
+            /** Analysed */
+            analysed: number;
+            /** Analysed Per Minute */
+            analysed_per_minute: number;
+            /** Scored */
+            scored: number;
+            /** Scored Per Minute */
+            scored_per_minute: number;
+            /** Window Minutes */
+            window_minutes: number;
         };
         /**
          * RemoteRule
@@ -3355,6 +3444,19 @@ export interface components {
         WorkRules: {
             onsite_hybrid: components["schemas"]["OnsiteHybridRule"];
             remote: components["schemas"]["RemoteRule"];
+        };
+        /**
+         * WorkerRead
+         * @description The worker process as seen through its heartbeat.
+         */
+        WorkerRead: {
+            /** Last Beat At */
+            last_beat_at: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "up" | "stale" | "missing";
         };
     };
     responses: never;
@@ -4229,6 +4331,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LinkDecisionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pipeline_status_api_v1_pipeline_status_get: {
+        parameters: {
+            query?: {
+                search_intent_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PipelineStatusRead"];
                 };
             };
             /** @description Validation Error */

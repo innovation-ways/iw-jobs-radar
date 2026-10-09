@@ -283,6 +283,29 @@ class EvaluationRepository:
             for owner_id, intent, snapshot, extraction, profile_revision, intent_revision in rows
         ]
 
+    async def queue_counts(
+        self,
+        intent_id: int,
+        policy_version: str,
+        extraction_filter: tuple[str, str, str] | None,
+    ) -> tuple[int, int]:
+        """Return ``(analysed jobs, of which scored)`` for the intent, as the worker sees them."""
+        statement = self._candidates(
+            policy_version=policy_version,
+            intent_id=intent_id,
+            extraction_filter=extraction_filter,
+        )
+        eligible = (
+            await self._session.execute(select(func.count()).select_from(statement.subquery()))
+        ).scalar_one()
+        scored_statement = statement.where(self._scored_for_intent(policy_version))
+        scored = (
+            await self._session.execute(
+                select(func.count()).select_from(scored_statement.subquery())
+            )
+        ).scalar_one()
+        return int(eligible), int(scored)
+
     async def count_scored(self, intent_id: int, policy_version: str) -> int:
         """Count open postings whose latest snapshot has been scored for the intent."""
         statement = self._candidates(

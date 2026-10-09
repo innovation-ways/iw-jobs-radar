@@ -22,6 +22,7 @@ describe('navigation badges', () => {
   beforeEach(() => {
     get.mockReset()
     get.mockImplementation((path: string) => {
+      if (path === '/api/v1/pipeline/status') return Promise.reject(new Error('not under test'))
       if (path === '/api/v1/digests/daily')
         return Promise.resolve({
           data: {
@@ -43,15 +44,17 @@ describe('navigation badges', () => {
 
   it('shows no badge when there is nothing to do', async () => {
     get.mockImplementation((path: string) =>
-      path === '/api/v1/digests/daily'
-        ? Promise.resolve({
-            data: {
-              counts: { new_high_fit: 0, changed_shortlisted: 0, sources_needing_attention: 0 },
-            },
-          })
-        : path === '/api/v1/inbox'
-          ? Promise.resolve({ data: { items: [], counts: { unread: 0, updated_unread: 0 } } })
-          : Promise.resolve({ data: { status: 'ready', components: {} } }),
+      path === '/api/v1/pipeline/status'
+        ? Promise.reject(new Error('not under test'))
+        : path === '/api/v1/digests/daily'
+          ? Promise.resolve({
+              data: {
+                counts: { new_high_fit: 0, changed_shortlisted: 0, sources_needing_attention: 0 },
+              },
+            })
+          : path === '/api/v1/inbox'
+            ? Promise.resolve({ data: { items: [], counts: { unread: 0, updated_unread: 0 } } })
+            : Promise.resolve({ data: { status: 'ready', components: {} } }),
     )
     renderSidebar()
     await screen.findByRole('link', { name: /Today/ })

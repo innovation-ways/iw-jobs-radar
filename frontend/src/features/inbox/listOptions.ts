@@ -65,3 +65,8 @@ const SORTS = Object.keys(SORT_LABELS) as SortKey[]
 export function parseSort(value: string | null): SortKey {
   return SORTS.find((key) => key === value) ?? DEFAULT_OPTIONS.sort
 }
+
+/** A fit filter taken from a link such as ``/inbox?fit=unscored``; unknown values are ignored. */
+export function parseFit(value: string | null): FitFilter {
+  return (Object.keys(FIT_LABELS) as FitFilter[]).find((key) => key === value) ?? 'any'
+}

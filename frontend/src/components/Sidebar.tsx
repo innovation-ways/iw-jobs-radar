@@ -1,6 +1,7 @@
 import { Radar } from 'lucide-react'
 import { NavLink } from 'react-router'
 import { ApiStatus } from '@/components/ApiStatus'
+import { PipelineStatus } from '@/components/PipelineStatus'
 import { MAIN_NAV, SETUP_NAV, type NavItem } from '@/navigation'
 import { useNavBadges } from '@/features/today/queries'
 import { cn } from '@/lib/utils'
@@ -64,6 +65,7 @@ export function Sidebar() {
       </nav>
       <div className="mt-auto border-t border-line px-2.5 pt-2.5">
         <ApiStatus />
+        <PipelineStatus />
         <p className="mt-2 text-[11px] text-ink-3">
           <NavLink to="/about" className="underline">
             About &amp; credits

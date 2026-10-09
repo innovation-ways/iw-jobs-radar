@@ -1971,6 +1971,46 @@
         "title": "FactRead",
         "type": "object"
       },
+      "FailuresRead": {
+        "additionalProperties": false,
+        "description": "Open jobs whose analysis failed, with the reason of the latest failure.",
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "last_error_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error Class"
+          },
+          "last_failed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Failed At"
+          }
+        },
+        "required": [
+          "count",
+          "last_error_class",
+          "last_failed_at"
+        ],
+        "title": "FailuresRead",
+        "type": "object"
+      },
       "Filters": {
         "additionalProperties": false,
         "description": "Optional filters that are not scored.",
@@ -3365,6 +3405,66 @@
         "title": "PeriodRead",
         "type": "object"
       },
+      "PipelineStatusRead": {
+        "additionalProperties": false,
+        "description": "Everything the interface needs to show whether analysis and scoring are keeping up.",
+        "properties": {
+          "ai_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Model"
+          },
+          "analysis": {
+            "$ref": "#/components/schemas/QueueRead"
+          },
+          "failures": {
+            "$ref": "#/components/schemas/FailuresRead"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "recent": {
+            "$ref": "#/components/schemas/RecentRead"
+          },
+          "scoring": {
+            "$ref": "#/components/schemas/QueueRead"
+          },
+          "state": {
+            "enum": [
+              "no_ai",
+              "worker_stopped",
+              "idle",
+              "working",
+              "no_progress"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "worker": {
+            "$ref": "#/components/schemas/WorkerRead"
+          }
+        },
+        "required": [
+          "state",
+          "ai_model",
+          "worker",
+          "analysis",
+          "scoring",
+          "recent",
+          "failures",
+          "generated_at"
+        ],
+        "title": "PipelineStatusRead",
+        "type": "object"
+      },
       "PlaceList": {
         "additionalProperties": false,
         "description": "Search results, most populous first.",
@@ -4211,6 +4311,58 @@
         "title": "Provenance",
         "type": "object"
       },
+      "QueueRead": {
+        "additionalProperties": false,
+        "description": "Progress through one stage for the jobs that are still open.",
+        "properties": {
+          "done": {
+            "title": "Done",
+            "type": "integer"
+          },
+          "failed": {
+            "title": "Failed",
+            "type": "integer"
+          },
+          "minutes_left": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minutes Left"
+          },
+          "search_intent_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Search Intent Id"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "waiting": {
+            "title": "Waiting",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "done",
+          "failed",
+          "waiting"
+        ],
+        "title": "QueueRead",
+        "type": "object"
+      },
       "ReadinessResponse": {
         "description": "Body of ``/readyz``.",
         "properties": {
@@ -4231,6 +4383,41 @@
           "components"
         ],
         "title": "ReadinessResponse",
+        "type": "object"
+      },
+      "RecentRead": {
+        "additionalProperties": false,
+        "description": "Work finished in the recent window, from which the pace and the time left are derived.",
+        "properties": {
+          "analysed": {
+            "title": "Analysed",
+            "type": "integer"
+          },
+          "analysed_per_minute": {
+            "title": "Analysed Per Minute",
+            "type": "number"
+          },
+          "scored": {
+            "title": "Scored",
+            "type": "integer"
+          },
+          "scored_per_minute": {
+            "title": "Scored Per Minute",
+            "type": "number"
+          },
+          "window_minutes": {
+            "title": "Window Minutes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "window_minutes",
+          "analysed",
+          "scored",
+          "analysed_per_minute",
+          "scored_per_minute"
+        ],
+        "title": "RecentRead",
         "type": "object"
       },
       "RemoteRule": {
@@ -5589,6 +5776,39 @@
           "onsite_hybrid"
         ],
         "title": "WorkRules",
+        "type": "object"
+      },
+      "WorkerRead": {
+        "additionalProperties": false,
+        "description": "The worker process as seen through its heartbeat.",
+        "properties": {
+          "last_beat_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Beat At"
+          },
+          "status": {
+            "enum": [
+              "up",
+              "stale",
+              "missing"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "last_beat_at"
+        ],
+        "title": "WorkerRead",
         "type": "object"
       }
     }
@@ -7251,6 +7471,57 @@
         "summary": "Reject Link",
         "tags": [
           "inbox"
+        ]
+      }
+    },
+    "/api/v1/pipeline/status": {
+      "get": {
+        "description": "Analysis and scoring progress, pace, time left, failures and the worker's state.",
+        "operationId": "pipeline_status_api_v1_pipeline_status_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search_intent_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search Intent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PipelineStatusRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Pipeline Status",
+        "tags": [
+          "pipeline"
         ]
       }
     },

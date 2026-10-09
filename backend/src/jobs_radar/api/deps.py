@@ -23,6 +23,7 @@ from jobs_radar.services.evaluation import EvaluationService
 from jobs_radar.services.inbox import InboxService
 from jobs_radar.services.integrations import IntegrationService
 from jobs_radar.services.intents import IntentService
+from jobs_radar.services.pipeline import PipelineService
 from jobs_radar.services.profile_data import ProfileDataService
 from jobs_radar.services.profiles import ProfileService
 from jobs_radar.services.proposal_review import ReviewService
@@ -95,6 +96,14 @@ def get_evaluation_service(
 ) -> EvaluationService:
     """Build the evaluation service; the API never calls an AI provider (the worker does)."""
     return EvaluationService(session, provider=None)
+
+
+def get_pipeline_service(
+    request: Request, session: Annotated[AsyncSession, Depends(get_session)]
+) -> PipelineService:
+    """Build the pipeline status service on the request's session."""
+    settings: Settings = request.app.state.settings
+    return PipelineService(session, settings.worker_heartbeat_max_age_seconds)
 
 
 def get_inbox_service(session: Annotated[AsyncSession, Depends(get_session)]) -> InboxService:

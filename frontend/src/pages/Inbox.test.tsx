@@ -30,11 +30,11 @@ function listQuery(call: unknown[]) {
 const lastListQuery = () =>
   listQuery(get.mock.calls.filter(([path]) => path === '/api/v1/inbox').at(-1)!)
 
-function renderInbox() {
+function renderInbox(url = '/') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[url]}>
         <Inbox />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -272,6 +272,19 @@ describe('Inbox screen', () => {
       await screen.findByRole('option', { name: /Applied AI Architect/ })
       expect(lastListQuery().sort).toBe('oldest')
       expect(screen.getByLabelText('Sort by')).toHaveValue('oldest')
+    })
+
+    it('opens already filtered to the jobs not evaluated when the link says so', async () => {
+      renderInbox('/inbox?fit=unscored')
+      await screen.findByRole('option', { name: /Applied AI Architect/ })
+      expect(lastListQuery()).toMatchObject({ evaluated: false })
+      expect(screen.getByLabelText('Fit')).toHaveValue('unscored')
+    })
+
+    it('ignores an unknown fit in the link', async () => {
+      renderInbox('/inbox?fit=bogus')
+      await screen.findByRole('option', { name: /Applied AI Architect/ })
+      expect(screen.getByLabelText('Fit')).toHaveValue('any')
     })
 
     it('filters by fit and by when the job was first seen, and clears the filters', async () => {

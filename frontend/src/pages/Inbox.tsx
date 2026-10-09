@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { JobDetail } from '@/features/inbox/JobDetail'
 import { JobRow } from '@/features/inbox/JobRow'
@@ -7,6 +7,7 @@ import {
   DEFAULT_OPTIONS,
   FIT_LABELS,
   hasActiveFilters,
+  parseFit,
   parseSort,
   SEEN_LABELS,
   SORT_LABELS,
@@ -81,8 +82,11 @@ export function Inbox() {
   const [density, setDensity] = useState<Density>(() =>
     readStored(DENSITY_KEY) === 'compact' ? 'compact' : 'comfortable',
   )
+  // A link from the pipeline panel can open the inbox already filtered (``?fit=unscored``).
+  const [searchParams] = useSearchParams()
   const [options, setOptions] = useState<ListOptions>(() => ({
     ...DEFAULT_OPTIONS,
+    fit: parseFit(searchParams.get('fit')),
     sort: parseSort(readStored(SORT_KEY)),
   }))
   const [selectedId, setSelectedId] = useState<number | null>(null)

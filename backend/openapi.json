@@ -3311,7 +3311,7 @@
       },
       "JobBoardFilters": {
         "additionalProperties": false,
-        "description": "Which postings of a job board are kept.",
+        "description": "Which postings of a job board are kept. Countries come from the profile, not from here.",
         "properties": {
           "categories": {
             "items": {
@@ -3322,20 +3322,6 @@
             "maxItems": 20,
             "title": "Categories",
             "type": "array"
-          },
-          "country_codes": {
-            "items": {
-              "pattern": "^[A-Z]{2}$",
-              "type": "string"
-            },
-            "maxItems": 60,
-            "title": "Country Codes",
-            "type": "array"
-          },
-          "include_worldwide": {
-            "default": true,
-            "title": "Include Worldwide",
-            "type": "boolean"
           },
           "max_age_days": {
             "default": 30,
@@ -5267,6 +5253,18 @@
               }
             ]
           },
+          "next_run_allowed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Run Allowed At"
+          },
           "open_postings": {
             "title": "Open Postings",
             "type": "integer"
@@ -5321,7 +5319,8 @@
           "credential_status",
           "credential_updated_at",
           "terms_url",
-          "attribution_text"
+          "attribution_text",
+          "next_run_allowed_at"
         ],
         "title": "SourceRead",
         "type": "object"
@@ -5407,6 +5406,10 @@
             "title": "Deduplicated Count",
             "type": "integer"
           },
+          "dropped_count": {
+            "title": "Dropped Count",
+            "type": "integer"
+          },
           "duration_ms": {
             "title": "Duration Ms",
             "type": "integer"
@@ -5481,12 +5484,46 @@
           "updated_count",
           "deduplicated_count",
           "closed_count",
+          "dropped_count",
           "http_status",
           "error_class",
           "error_message",
           "duration_ms"
         ],
         "title": "SourceResultRead",
+        "type": "object"
+      },
+      "SourceScopeRead": {
+        "additionalProperties": false,
+        "description": "Where the owner can work, as derived from the profile and the enabled intents (read-only).",
+        "properties": {
+          "any_country": {
+            "title": "Any Country",
+            "type": "boolean"
+          },
+          "configured": {
+            "title": "Configured",
+            "type": "boolean"
+          },
+          "country_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Country Codes",
+            "type": "array"
+          },
+          "include_worldwide": {
+            "title": "Include Worldwide",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "configured",
+          "country_codes",
+          "include_worldwide",
+          "any_country"
+        ],
+        "title": "SourceScopeRead",
         "type": "object"
       },
       "SourceType": {
@@ -8991,6 +9028,28 @@
           }
         },
         "summary": "List Source Catalogue",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/source-scope": {
+      "get": {
+        "description": "Show where job boards look for postings: derived from the profile and the intents.",
+        "operationId": "get_source_scope_api_v1_source_scope_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceScopeRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Source Scope",
         "tags": [
           "sources"
         ]

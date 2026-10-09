@@ -713,6 +713,7 @@ Per-source outcome of a collection run (append-only).
 | `updated_count` | INTEGER | no | Postings that changed materially. |
 | `deduplicated_count` | INTEGER | no | Postings recognised as already known. |
 | `closed_count` | INTEGER | no | Postings marked closed in this run. |
+| `dropped_count` | INTEGER | no | Postings left out by the source's filters (job boards). |
 | `http_status` | INTEGER | yes | HTTP status of the main request, if any. |
 | `error_class` | VARCHAR(50) | yes | Classified failure reason. |
 | `error_message` | TEXT | yes | Safe human-readable failure message. |

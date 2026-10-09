@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 import pytest
 import respx
-from tests.job_board_support import Scripted, Sleeper, build, checkpoint, payload
+from tests.job_board_support import PORTUGAL, Scripted, Sleeper, build, checkpoint, payload
 
 from jobs_radar.adapters.sources.arbeitnow import ArbeitnowAdapter
 from jobs_radar.adapters.sources.base import SourceError
@@ -82,7 +82,9 @@ async def test_search_terms_keep_only_matching_postings() -> None:
 @respx.mock
 async def test_validate_reports_the_board_name_and_how_many_postings_match() -> None:
     respx.get(URL).mock(side_effect=two_pages())
-    info = await build(ArbeitnowAdapter).validate("arbeitnow", filters=JobBoardFilters())
+    info = await build(ArbeitnowAdapter).validate(
+        "arbeitnow", filters=JobBoardFilters(), scope=PORTUGAL
+    )
     assert info.name == "Arbeitnow"
     assert info.matching_count == 3
     assert info.postings_count == 7

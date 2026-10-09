@@ -25,7 +25,7 @@ from jobs_radar.adapters.sources.job_board import (
     Stream,
 )
 from jobs_radar.domain.enums import SourceErrorClass
-from jobs_radar.domain.job_board_rules import eligibility_from_regions
+from jobs_radar.domain.job_board_rules import LocationScope, eligibility_from_regions
 from jobs_radar.domain.regions import EUROPE
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
@@ -47,19 +47,21 @@ def _strings(value: object) -> tuple[str, ...]:
     return tuple(item.strip() for item in value if isinstance(item, str) and item.strip())
 
 
-def geo_slugs(filters: JobBoardFilters) -> list[str]:
+def geo_slugs(scope: LocationScope) -> list[str]:
     """Return the Jobicy ``geo`` slugs covering the owner's countries (and worldwide, if wanted)."""
     slugs: list[str] = []
-    if any(code in EUROPE for code in filters.country_codes):
+    codes = sorted(scope.country_codes)
+    # Remote work from anywhere also reaches European postings, so both big regions are read.
+    if scope.any_country or any(code in EUROPE for code in codes):
         slugs.append("europe")
-    for code in filters.country_codes:
+    for code in codes:
         if code in EUROPE:
             continue
         name = country_name(code)
         slug = _SLUG_EXCEPTIONS.get(code) or (re.sub(r"\W+", "-", name.lower()) if name else "")
         if slug and slug not in slugs:
             slugs.append(slug)
-    if filters.include_worldwide:
+    if scope.include_worldwide or scope.any_country:
         slugs.append("anywhere")
     return slugs
 
@@ -120,7 +122,12 @@ class JobicyAdapter(JobBoardAdapter):
     source_type = _ENTRY.source_type
 
     def _streams(
-        self, filters: JobBoardFilters, *, per_minute: int, credential: str | None
+        self,
+        filters: JobBoardFilters,
+        scope: LocationScope,
+        *,
+        per_minute: int,
+        credential: str | None,
     ) -> list[Stream]:
         def stream(slug: str) -> Stream:
             async def pages() -> AsyncIterator[Page]:
@@ -158,4 +165,4 @@ class JobicyAdapter(JobBoardAdapter):
 
             return pages
 
-        return [stream(slug) for slug in geo_slugs(filters)]
+        return [stream(slug) for slug in geo_slugs(scope)]

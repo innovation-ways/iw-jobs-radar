@@ -11,6 +11,7 @@ from jobs_radar.adapters.sources.base import (
     SourcePosting,
 )
 from jobs_radar.domain.enums import SourceType
+from jobs_radar.domain.job_board_rules import LocationScope
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 
@@ -21,6 +22,7 @@ def make_posting(
     description: str = "Design and evaluate LLM-powered features.",
     locations: tuple[str, ...] = ("Remote - EU",),
     url: str | None = None,
+    company_name: str | None = None,
 ) -> SourcePosting:
     """A synthetic posting; tweak fields to simulate changes."""
     url = url or f"https://jobs.example.test/{external_id}"
@@ -36,6 +38,7 @@ def make_posting(
         departments=("Engineering",),
         language="en",
         raw_payload={"id": external_id, "title": title},
+        company_name=company_name,
     )
 
 
@@ -64,6 +67,7 @@ class FakeAdapter:
         identifier: str,
         credential: str | None = None,
         filters: JobBoardFilters | None = None,
+        scope: LocationScope | None = None,
     ) -> BoardInfo:
         if isinstance(self.board, Exception):
             raise self.board
@@ -78,9 +82,23 @@ class FakeAdapter:
         return item
 
 
-def listing(*postings: SourcePosting, etag: str | None = 'W/"v1"') -> CollectionResult:
-    """A successful, modified listing."""
-    return CollectionResult("modified", tuple(postings), etag, 200, 12, len(postings))
+def listing(
+    *postings: SourcePosting,
+    etag: str | None = 'W/"v1"',
+    dropped: int = 0,
+    truncated: bool = False,
+) -> CollectionResult:
+    """A successful, modified listing (job boards also report what the filters dropped)."""
+    return CollectionResult(
+        "modified",
+        tuple(postings),
+        etag,
+        200,
+        12,
+        len(postings),
+        dropped_count=dropped,
+        truncated=truncated,
+    )
 
 
 def not_modified(etag: str | None = 'W/"v1"') -> CollectionResult:

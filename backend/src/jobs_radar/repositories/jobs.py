@@ -37,6 +37,7 @@ class JobRepository:
         title: str,
         content_hash: str,
         seen_at: datetime,
+        company_id: int | None = None,
     ) -> UpsertResult:
         """Create the posting or refresh the existing one.
 
@@ -44,7 +45,9 @@ class JobRepository:
         reopened if it had been marked closed. The result also carries the content hash the
         posting had before, so callers can tell whether its content changed.
         """
-        if source.company_id is None:
+        # A company board has its own company; a job board names the company of each posting.
+        owner_company_id = source.company_id if source.company_id is not None else company_id
+        if owner_company_id is None:
             msg = "The source has no company; link it to a company before collecting."
             raise InputValidationError(msg)
         existing = (
@@ -60,7 +63,7 @@ class JobRepository:
         if existing is None:
             posting = JobPosting(
                 source_configuration_id=source.source_configuration_id,
-                company_id=source.company_id,
+                company_id=owner_company_id,
                 external_job_id=external_job_id,
                 source_type=source.source_type,
                 source_url=source_url,

@@ -24,7 +24,13 @@ from jobs_radar.adapters.sources.job_board import (
     Stream,
 )
 from jobs_radar.domain.enums import SourceErrorClass
-from jobs_radar.domain.job_board_rules import UNKNOWN, WORLDWIDE, Eligibility, Reach
+from jobs_radar.domain.job_board_rules import (
+    UNKNOWN,
+    WORLDWIDE,
+    Eligibility,
+    LocationScope,
+    Reach,
+)
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 _ENTRY = require_entry("himalayas")
@@ -115,7 +121,12 @@ class HimalayasAdapter(JobBoardAdapter):
     source_type = _ENTRY.source_type
 
     def _streams(
-        self, filters: JobBoardFilters, *, per_minute: int, credential: str | None
+        self,
+        filters: JobBoardFilters,
+        scope: LocationScope,
+        *,
+        per_minute: int,
+        credential: str | None,
     ) -> list[Stream]:
         def stream(selector: dict[str, str]) -> Stream:
             async def pages() -> AsyncIterator[Page]:
@@ -154,9 +165,13 @@ class HimalayasAdapter(JobBoardAdapter):
 
             return pages
 
+        if scope.any_country:
+            # Remote work from anywhere is acceptable: read the newest postings of every country.
+            return [stream({})]
         streams = [
-            stream({"country": code, "exclude_worldwide": "true"}) for code in filters.country_codes
+            stream({"country": code, "exclude_worldwide": "true"})
+            for code in sorted(scope.country_codes)
         ]
-        if filters.include_worldwide:
+        if scope.include_worldwide:
             streams.append(stream({"worldwide": "true"}))
         return streams

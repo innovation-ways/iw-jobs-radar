@@ -2,10 +2,12 @@
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.adapters.sources.base import BoardInfo, JobSourceAdapter, SourceError
+from jobs_radar.adapters.sources.catalogue import get_entry
 from jobs_radar.core.errors import (
     ConflictError,
     DependencyUnavailableError,
@@ -13,9 +15,10 @@ from jobs_radar.core.errors import (
 )
 from jobs_radar.db.models import Company, SourceConfiguration, SourceRunResult
 from jobs_radar.domain.enums import SourceCategory, SourceErrorClass, SourceType
-from jobs_radar.domain.sources import source_category
+from jobs_radar.domain.sources import next_run_allowed_at, source_category
 from jobs_radar.repositories.companies import CompanyRepository
 from jobs_radar.repositories.jobs import JobRepository
+from jobs_radar.repositories.runs import RunRepository
 from jobs_radar.repositories.sources import SourceRepository
 
 # Failures caused by what the owner typed; every other class means the source itself is unavailable.
@@ -30,6 +33,7 @@ class SourceStatusRow:
     company_name: str | None
     open_postings: int
     last_result: SourceRunResult | None
+    next_run_allowed_at: datetime | None = None
 
 
 def translate_source_error(error: SourceError) -> InputValidationError | DependencyUnavailableError:
@@ -155,9 +159,23 @@ class SourceService:
                 companies[source.company_id] = (
                     company.canonical_name if company else source.display_name
                 )
+        runs = RunRepository(self._session)
+        allowed: dict[int, datetime | None] = {}
+        for source in sources:
+            entry = (
+                get_entry(source.external_identifier)
+                if source_category(SourceType(source.source_type)) is SourceCategory.JOB_BOARD
+                else None
+            )
+            if entry is not None:
+                last = await runs.last_attempt_finished_at(source.source_configuration_id)
+                allowed[source.source_configuration_id] = next_run_allowed_at(
+                    last, entry.min_interval_minutes
+                )
         return [
             SourceStatusRow(
                 source=source,
+                next_run_allowed_at=allowed.get(source.source_configuration_id),
                 company_name=companies.get(source.company_id)
                 if source.company_id is not None
                 else None,

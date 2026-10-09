@@ -19,21 +19,27 @@ from jobs_radar.adapters.sources.base import (
     SourceCheckpoint,
     SourceError,
 )
-from jobs_radar.core.errors import InputValidationError, NotFoundError
+from jobs_radar.adapters.sources.catalogue import get_entry
+from jobs_radar.core.errors import ConflictError, InputValidationError, NotFoundError
 from jobs_radar.db.models import CollectionRun, SourceConfiguration, SourceRunResult
 from jobs_radar.domain.enums import (
     RunStatus,
     RunTrigger,
+    SourceCategory,
     SourceErrorClass,
     SourceOutcome,
     SourceType,
 )
 from jobs_radar.domain.job_content import MATERIAL_FIELDS, changed_fields, content_hash
+from jobs_radar.domain.sources import next_run_allowed_at, source_category
+from jobs_radar.repositories.companies import CompanyRepository
 from jobs_radar.repositories.jobs import JobRepository
 from jobs_radar.repositories.runs import RunRepository
 from jobs_radar.repositories.sources import SourceRepository
 from jobs_radar.schemas.job import NormalisedJob
+from jobs_radar.schemas.source_filters import JobBoardFilters
 from jobs_radar.services.inbox import InboxService
+from jobs_radar.services.location_scope import LocationScopeService
 from jobs_radar.services.normalise import build_normalised_job, material_of_job
 
 logger = logging.getLogger(__name__)
@@ -43,7 +49,8 @@ Clock = Callable[[], datetime]
 Progress = Callable[[], Awaitable[None]]
 
 _RUN_MISSING = "Collection run not found."
-_OK = {SourceOutcome.SUCCESS, SourceOutcome.NOT_MODIFIED}
+# Outcomes that are not a failure; a skipped source (ran too recently) is not one either.
+_OK = {SourceOutcome.SUCCESS, SourceOutcome.NOT_MODIFIED, SourceOutcome.SKIPPED}
 
 
 def _utc_now() -> datetime:
@@ -56,8 +63,10 @@ class _SourceView:
 
     source_configuration_id: int
     source_type: SourceType
-    company_id: int
+    company_id: int | None  # empty for a job board: each posting names its company
     checkpoint: SourceCheckpoint
+    is_job_board: bool = False
+    next_allowed_at: datetime | None = None
 
 
 @dataclass
@@ -97,7 +106,8 @@ class CollectionService:
         async with self._session_factory() as session:
             sources = SourceRepository(session)
             if source_configuration_id is not None:
-                await sources.get(owner_id, source_configuration_id)
+                source = await sources.get(owner_id, source_configuration_id)
+                await self._check_interval(session, source)
             elif not await sources.list_for_owner(owner_id, only_enabled=True):
                 msg = "There is no enabled source to collect. Enable or add a source first."
                 raise InputValidationError(msg)
@@ -106,6 +116,23 @@ class CollectionService:
             )
             await session.commit()
             return run
+
+    async def _check_interval(self, session: AsyncSession, source: SourceConfiguration) -> None:
+        """Refuse a manual run of a job board that was contacted less than its minimum ago."""
+        entry = (
+            get_entry(source.external_identifier)
+            if source_category(SourceType(source.source_type)) is SourceCategory.JOB_BOARD
+            else None
+        )
+        if entry is None:
+            return
+        last = await RunRepository(session).last_attempt_finished_at(source.source_configuration_id)
+        allowed = next_run_allowed_at(last, entry.min_interval_minutes)
+        if allowed is not None and allowed > self._clock():
+            msg = f"{entry.display_name} was contacted recently; try again later."
+            raise ConflictError(
+                msg, details={"reason": "too_soon", "next_run_allowed_at": allowed.isoformat()}
+            )
 
     async def list_runs(
         self, owner_id: int, *, limit: int, before_id: int | None
@@ -189,7 +216,7 @@ class CollectionService:
 
         if all(outcome in _OK for outcome in outcomes):
             status = RunStatus.SUCCEEDED
-        elif not any(outcome in _OK for outcome in outcomes):
+        elif all(outcome is SourceOutcome.FAILED for outcome in outcomes):
             status = RunStatus.FAILED
         else:
             status = RunStatus.PARTIAL
@@ -209,16 +236,40 @@ class CollectionService:
             if run is None:  # pragma: no cover - the run was claimed by the caller
                 raise NotFoundError(_RUN_MISSING)
             source = await SourceRepository(session).get(run.owner_id, source_configuration_id)
+            source_type = SourceType(source.source_type)
+            entry = (
+                get_entry(source.external_identifier)
+                if source_category(source_type) is SourceCategory.JOB_BOARD
+                else None
+            )
+            filters = scope = next_allowed = None
+            if entry is not None:
+                # The countries are never typed into a source: they come from the profile and the
+                # enabled intents (ADR-049.11).
+                filters = (
+                    JobBoardFilters.model_validate(source.config_json)
+                    if source.config_json
+                    else entry.default_filters
+                )
+                scope = await LocationScopeService(session).for_owner(run.owner_id)
+                last = await RunRepository(session).last_attempt_finished_at(
+                    source.source_configuration_id
+                )
+                next_allowed = next_run_allowed_at(last, entry.min_interval_minutes)
             return _SourceView(
                 source_configuration_id=source.source_configuration_id,
-                source_type=SourceType(source.source_type),
-                company_id=int(source.company_id or 0),
+                source_type=source_type,
+                company_id=source.company_id,
                 checkpoint=SourceCheckpoint(
                     identifier=source.external_identifier,
                     url=source.url,
                     etag=source.etag,
                     rate_limit_per_minute=source.rate_limit_per_minute,
+                    filters=filters,
+                    scope=scope,
                 ),
+                is_job_board=entry is not None,
+                next_allowed_at=next_allowed,
             )
 
     async def _process_source(
@@ -229,7 +280,14 @@ class CollectionService:
         adapter = self._adapters.get(view.source_type)
         failure: tuple[SourceErrorClass, str, int | None] | None = None
         fetched: CollectionResult | None = None
-        if adapter is None:
+        if view.next_allowed_at is not None and view.next_allowed_at > started:
+            await self._store_skipped(collection_run_id, view, started)
+            return SourceOutcome.SKIPPED
+        scope = view.checkpoint.scope
+        if view.is_job_board and (scope is None or scope.is_empty):
+            msg = "Set your base location and remote regions in Profile & intent first."
+            failure = (SourceErrorClass.CONFIGURATION, msg, None)
+        elif adapter is None:
             failure = (SourceErrorClass.CONFIGURATION, "This source type is not supported.", None)
         else:
             try:
@@ -267,6 +325,25 @@ class CollectionService:
         assert failure is not None  # noqa: S101  # either the fetch or the ingest failed above
         await self._store_failure(collection_run_id, view, started, failure)
         return SourceOutcome.FAILED
+
+    async def _store_skipped(
+        self, collection_run_id: int, view: _SourceView, started: datetime
+    ) -> None:
+        """Record that a job board was left alone because it ran less than its minimum ago."""
+        allowed = view.next_allowed_at
+        async with self._session_factory() as session:
+            await RunRepository(session).add_result(
+                collection_run_id=collection_run_id,
+                source_configuration_id=view.source_configuration_id,
+                started_at=started,
+                finished_at=self._clock(),
+                outcome=SourceOutcome.SKIPPED,
+                error_message=(
+                    "Ran recently; the next run is allowed at "
+                    f"{allowed.isoformat() if allowed else 'a later time'}."
+                ),
+            )
+            await session.commit()
 
     async def _store_failure(
         self,
@@ -308,7 +385,8 @@ class CollectionService:
                 outcome = SourceOutcome.NOT_MODIFIED
             else:
                 counts = await self._ingest(session, view, fetched, started, previous_success)
-                outcome = SourceOutcome.SUCCESS
+                # A run that stopped at its limit saw only part of the board (ADR-049.5).
+                outcome = SourceOutcome.PARTIAL if fetched.truncated else SourceOutcome.SUCCESS
             source = await session.get(SourceConfiguration, view.source_configuration_id)
             if source is not None:
                 source.etag = fetched.etag
@@ -324,6 +402,7 @@ class CollectionService:
                 updated_count=counts.updated,
                 deduplicated_count=counts.deduplicated,
                 closed_count=counts.closed,
+                dropped_count=fetched.dropped_count,
                 http_status=fetched.http_status,
                 duration_ms=int((finished - started).total_seconds() * 1000),
             )
@@ -345,11 +424,21 @@ class CollectionService:
             raise NotFoundError(msg)
         counts = _Counts(collected=len(fetched.postings))
         seen: set[str] = set()
+        companies = CompanyRepository(session)
+        company_ids: dict[str, int] = {}
         for posting in fetched.postings:
             seen.add(posting.external_job_id)
-            job = build_normalised_job(
-                posting, company_id=view.company_id, source_type=view.source_type
-            )
+            company_id = view.company_id
+            if company_id is None:
+                # A job board names the company of each posting; one lookup per name per run.
+                name = posting.company_name
+                if not name:
+                    counts.collected -= 1
+                    continue
+                if name not in company_ids:
+                    company_ids[name] = (await companies.get_or_create(name)).company_id
+                company_id = company_ids[name]
+            job = build_normalised_job(posting, company_id=company_id, source_type=view.source_type)
             material = material_of_job(job)
             new_hash = content_hash(material)
 
@@ -366,6 +455,7 @@ class CollectionService:
                 title=posting.title,
                 content_hash=new_hash,
                 seen_at=started,
+                company_id=company_id,
             )
             snapshot, snapshot_created = await jobs.add_snapshot_if_new(
                 upsert.posting,
@@ -398,10 +488,11 @@ class CollectionService:
                 counts.deduplicated += 1
             del snapshot_created  # creation is implied by content_changed / created
 
-        counts.closed = await jobs.close_unseen(
-            view.source_configuration_id,
-            seen,
-            previous_success_started_at=previous_success,
-            closed_at=started,
-        )
+        if not fetched.truncated:
+            counts.closed = await jobs.close_unseen(
+                view.source_configuration_id,
+                seen,
+                previous_success_started_at=previous_success,
+                closed_at=started,
+            )
         return counts

@@ -165,3 +165,12 @@ def test_the_employers_own_ats_is_preferred_then_the_earliest_listing() -> None:
     assert choose_primary(candidates[:1]) == 1  # only an aggregator
     ties = [PrimaryCandidate(9, "lever", T0), PrimaryCandidate(4, "ashby", T0)]
     assert choose_primary(ties) == 4  # same time: lowest id, so the choice is reproducible
+
+
+def test_a_job_board_listing_never_beats_the_company_board_as_primary() -> None:
+    candidates = [
+        PrimaryCandidate(1, "himalayas", T0),
+        PrimaryCandidate(2, "arbeitnow", T0 + timedelta(days=1)),
+        PrimaryCandidate(3, "greenhouse", T0 + timedelta(days=5)),
+    ]
+    assert choose_primary(candidates) == 3

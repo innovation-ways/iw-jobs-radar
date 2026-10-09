@@ -170,6 +170,9 @@ class SourceRunResult(CreatedAtMixin, Base):
     updated_count: Mapped[int] = int_column("Postings that changed materially.", default=0)
     deduplicated_count: Mapped[int] = int_column("Postings recognised as already known.", default=0)
     closed_count: Mapped[int] = int_column("Postings marked closed in this run.", default=0)
+    dropped_count: Mapped[int] = int_column(
+        "Postings left out by the source's filters (job boards).", default=0
+    )
     http_status: Mapped[int | None] = int_column(
         "HTTP status of the main request, if any.", nullable=True
     )

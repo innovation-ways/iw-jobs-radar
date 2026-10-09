@@ -10,6 +10,7 @@ import httpx
 from jobs_radar.adapters.sources.base import RateLimiter, SourceCheckpoint
 from jobs_radar.core.http import GuardedHttpClient
 from jobs_radar.core.url_guard import UrlGuard
+from jobs_radar.domain.job_board_rules import LocationScope
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
@@ -49,14 +50,22 @@ def build(adapter_class: Callable[..., Any], sleeper: Sleeper | None = None) -> 
     )
 
 
-def checkpoint(identifier: str, filters: JobBoardFilters | None = None) -> SourceCheckpoint:
-    """A checkpoint for a job board source."""
+PORTUGAL = LocationScope(frozenset({"PT"}), include_worldwide=True)
+
+
+def checkpoint(
+    identifier: str,
+    filters: JobBoardFilters | None = None,
+    scope: LocationScope | None = PORTUGAL,
+) -> SourceCheckpoint:
+    """A checkpoint for a job board source; the scope is what the profile and intents give."""
     return SourceCheckpoint(
         identifier=identifier,
         url=f"https://example.test/{identifier}",
         etag=None,
         rate_limit_per_minute=60,
         filters=filters,
+        scope=scope,
     )
 
 

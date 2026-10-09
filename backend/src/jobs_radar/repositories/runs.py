@@ -97,6 +97,7 @@ class RunRepository:
         updated_count: int = 0,
         deduplicated_count: int = 0,
         closed_count: int = 0,
+        dropped_count: int = 0,
         http_status: int | None = None,
         error_class: str | None = None,
         error_message: str | None = None,
@@ -114,6 +115,7 @@ class RunRepository:
             updated_count=updated_count,
             deduplicated_count=deduplicated_count,
             closed_count=closed_count,
+            dropped_count=dropped_count,
             http_status=http_status,
             error_class=error_class,
             error_message=error_message,
@@ -129,6 +131,16 @@ class RunRepository:
             select(func.max(SourceRunResult.started_at)).where(
                 SourceRunResult.source_configuration_id == source_configuration_id,
                 SourceRunResult.outcome.in_(_SUCCESSFUL),
+            )
+        )
+        return value.scalar_one_or_none()
+
+    async def last_attempt_finished_at(self, source_configuration_id: int) -> datetime | None:
+        """End time of the latest run that contacted the source (skipped runs do not count)."""
+        value = await self._session.execute(
+            select(func.max(SourceRunResult.finished_at)).where(
+                SourceRunResult.source_configuration_id == source_configuration_id,
+                SourceRunResult.outcome != SourceOutcome.SKIPPED.value,
             )
         )
         return value.scalar_one_or_none()

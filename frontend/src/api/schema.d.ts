@@ -982,6 +982,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/source-scope": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Source Scope
+         * @description Show where job boards look for postings: derived from the profile and the intents.
+         */
+        get: operations["get_source_scope_api_v1_source_scope_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sources": {
         parameters: {
             query?: never;
@@ -2455,18 +2475,11 @@ export interface components {
         };
         /**
          * JobBoardFilters
-         * @description Which postings of a job board are kept.
+         * @description Which postings of a job board are kept. Countries come from the profile, not from here.
          */
         JobBoardFilters: {
             /** Categories */
             categories?: string[];
-            /** Country Codes */
-            country_codes?: string[];
-            /**
-             * Include Worldwide
-             * @default true
-             */
-            include_worldwide: boolean;
             /**
              * Max Age Days
              * @default 30
@@ -3242,6 +3255,8 @@ export interface components {
             external_identifier: string;
             filters: components["schemas"]["JobBoardFilters"] | null;
             last_result: components["schemas"]["SourceResultRead"] | null;
+            /** Next Run Allowed At */
+            next_run_allowed_at: string | null;
             /** Open Postings */
             open_postings: number;
             /** Rate Limit Per Minute */
@@ -3299,6 +3314,8 @@ export interface components {
             collection_run_id: number;
             /** Deduplicated Count */
             deduplicated_count: number;
+            /** Dropped Count */
+            dropped_count: number;
             /** Duration Ms */
             duration_ms: number;
             /** Error Class */
@@ -3324,6 +3341,20 @@ export interface components {
             started_at: string;
             /** Updated Count */
             updated_count: number;
+        };
+        /**
+         * SourceScopeRead
+         * @description Where the owner can work, as derived from the profile and the enabled intents (read-only).
+         */
+        SourceScopeRead: {
+            /** Any Country */
+            any_country: boolean;
+            /** Configured */
+            configured: boolean;
+            /** Country Codes */
+            country_codes: string[];
+            /** Include Worldwide */
+            include_worldwide: boolean;
         };
         /**
          * SourceType
@@ -5365,6 +5396,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CatalogueList"];
+                };
+            };
+        };
+    };
+    get_source_scope_api_v1_source_scope_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceScopeRead"];
                 };
             };
         };

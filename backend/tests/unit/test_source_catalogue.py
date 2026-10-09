@@ -97,8 +97,6 @@ def test_boards_with_a_delayed_feed_say_so() -> None:
 def test_filter_defaults_follow_adr_049() -> None:
     filters = JobBoardFilters()
     assert filters.schema_version == 1
-    assert filters.country_codes == ["PT"]
-    assert filters.include_worldwide is True
     assert filters.max_age_days == 30
     assert filters.max_postings_per_run == 500
     assert filters.search_terms == []
@@ -106,7 +104,7 @@ def test_filter_defaults_follow_adr_049() -> None:
 
 
 def test_filters_round_trip_through_json_for_config_json() -> None:
-    filters = JobBoardFilters(country_codes=["PT", "ES"], search_terms=["python"], max_age_days=7)
+    filters = JobBoardFilters(search_terms=["python"], max_age_days=7)
     restored = JobBoardFilters.model_validate(filters.model_dump(mode="json"))
     assert restored == filters
 
@@ -114,8 +112,8 @@ def test_filters_round_trip_through_json_for_config_json() -> None:
 @pytest.mark.parametrize(
     "bad",
     [
-        {"country_codes": ["pt"]},
-        {"country_codes": ["PRT"]},
+        {"country_codes": ["PT"]},
+        {"include_worldwide": True},
         {"max_age_days": 0},
         {"max_age_days": 366},
         {"max_postings_per_run": 0},

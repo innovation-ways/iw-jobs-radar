@@ -23,7 +23,7 @@ from jobs_radar.adapters.sources.job_board import (
     Stream,
 )
 from jobs_radar.domain.enums import SourceErrorClass
-from jobs_radar.domain.job_board_rules import UNKNOWN, Eligibility, Reach
+from jobs_radar.domain.job_board_rules import UNKNOWN, Eligibility, LocationScope, Reach
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 _ENTRY = require_entry("arbeitnow")
@@ -85,7 +85,12 @@ class ArbeitnowAdapter(JobBoardAdapter):
     source_type = _ENTRY.source_type
 
     def _streams(
-        self, filters: JobBoardFilters, *, per_minute: int, credential: str | None
+        self,
+        filters: JobBoardFilters,
+        scope: LocationScope,
+        *,
+        per_minute: int,
+        credential: str | None,
     ) -> list[Stream]:
         async def pages() -> AsyncIterator[Page]:
             for number in range(1, MAX_PAGES_PER_STREAM + 1):

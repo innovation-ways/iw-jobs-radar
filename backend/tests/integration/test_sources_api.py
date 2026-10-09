@@ -9,11 +9,11 @@ import pytest_asyncio
 from fastapi import FastAPI
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from tests.factories import unique
+from tests.factories import make_intent, make_profile, unique
 from tests.fake_adapter import FakeAdapter, listing, make_posting
 
 from jobs_radar.adapters.sources.base import BoardInfo, SourceError
-from jobs_radar.db.models import SourceConfiguration
+from jobs_radar.db.models import SearchIntent, SourceConfiguration
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
 from jobs_radar.services.collection import CollectionService
 
@@ -305,7 +305,8 @@ async def test_the_catalogue_lists_the_available_job_boards_without_secrets(
     himalayas = items["himalayas"]
     assert himalayas["requires_credential"] is False
     assert himalayas["already_added"] is False
-    assert himalayas["default_filters"]["country_codes"] == ["PT"]
+    assert "country_codes" not in himalayas["default_filters"]
+    assert himalayas["default_filters"]["max_age_days"] == 30
     assert himalayas["terms_url"].startswith("https://")
     assert himalayas["available_categories"]
     assert not {"endpoint", "credential"} & himalayas.keys()
@@ -332,3 +333,39 @@ async def test_a_job_board_type_cannot_be_added_before_its_adapter_exists(
     )
     assert response.status_code == 422
     assert response.json()["error"]["details"]["error_class"] == "configuration"
+
+
+async def test_the_source_scope_is_empty_without_an_enabled_intent(
+    client: httpx.AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    async with session_factory() as session:
+        await session.execute(update(SearchIntent).values(enabled=False))
+        await session.commit()
+    response = await client.get("/api/v1/source-scope")
+    assert response.status_code == 200
+    assert response.json() == {
+        "configured": False,
+        "country_codes": [],
+        "include_worldwide": False,
+        "any_country": False,
+    }
+
+
+async def test_the_source_scope_comes_from_the_profile_and_the_intent(
+    client: httpx.AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    async with session_factory() as session:
+        await session.execute(update(SearchIntent).values(enabled=False))
+        profile, _ = await make_profile(session)
+        intent, _ = await make_intent(session, profile)
+        intent.enabled = True
+        await session.commit()
+    try:
+        body = (await client.get("/api/v1/source-scope")).json()
+        assert body["configured"] is True
+        assert {"PT", "GB"} <= set(body["country_codes"])  # base country, remote regions EU and UK
+        assert body["include_worldwide"] is True
+    finally:
+        async with session_factory() as session:
+            await session.execute(update(SearchIntent).values(enabled=False))
+            await session.commit()

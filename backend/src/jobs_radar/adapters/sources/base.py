@@ -13,6 +13,7 @@ from typing import Any, Literal, Protocol
 
 from jobs_radar.core.http import FetchError
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
+from jobs_radar.domain.job_board_rules import LocationScope
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 
@@ -58,6 +59,7 @@ class SourceCheckpoint:
     # ``repr`` so it cannot reach a log line or a traceback.
     credential: str | None = field(default=None, repr=False)
     filters: JobBoardFilters | None = None
+    scope: LocationScope | None = None
 
 
 @dataclass(frozen=True)
@@ -121,6 +123,7 @@ class JobSourceAdapter(Protocol):
         identifier: str,
         credential: str | None = None,
         filters: JobBoardFilters | None = None,
+        scope: LocationScope | None = None,
     ) -> BoardInfo:
         """Check that the board exists and describe it. Raises :class:`SourceError`."""
         ...

@@ -45,15 +45,65 @@ def eligibility_from_regions(regions: Sequence[str]) -> Eligibility:
     return Eligibility(Reach.COUNTRIES, countries)
 
 
-def allows_country(
-    eligibility: Eligibility, country_codes: Sequence[str], *, include_worldwide: bool
-) -> bool:
-    """Whether a posting with ``eligibility`` passes the owner's country filter."""
+@dataclass(frozen=True)
+class LocationScope:
+    """Where the owner can work, derived from the profile and the search intents (ADR-049.11).
+
+    It is never typed into a source: ``country_codes`` are the countries of the owner's base
+    location and of the regions where remote work is acceptable, ``include_worldwide`` says whether
+    postings open to anyone are wanted, and ``any_country`` is set when remote work is acceptable
+    from anywhere.
+    """
+
+    country_codes: frozenset[str] = frozenset()
+    include_worldwide: bool = False
+    any_country: bool = False
+
+    @property
+    def is_empty(self) -> bool:
+        """True when nothing is known about where the owner can work."""
+        return not (self.country_codes or self.include_worldwide or self.any_country)
+
+
+@dataclass(frozen=True)
+class LocationPreference:
+    """What one enabled search intent says about location, with its profile's base country."""
+
+    base_country: str | None
+    remote_regions: Sequence[str]
+    remote_acceptable: bool
+    local_acceptable: bool
+
+
+def derive_location_scope(preferences: Iterable[LocationPreference]) -> LocationScope:
+    """Combine the location wishes of every enabled intent into one scope.
+
+    Remote work contributes the countries of its eligible regions (and worldwide postings); hybrid
+    or on-site work contributes the base country. An intent that rejects an arrangement
+    contributes nothing for it.
+    """
+    countries: set[str] = set()
+    worldwide = any_country = False
+    for preference in preferences:
+        if preference.remote_acceptable:
+            worldwide = True
+            expanded, recognised = expand_regions(preference.remote_regions)
+            if recognised and expanded is None:
+                any_country = True
+            elif expanded:
+                countries |= expanded
+        if preference.local_acceptable and preference.base_country:
+            countries.add(preference.base_country.upper())
+    return LocationScope(frozenset(countries), worldwide, any_country)
+
+
+def allows_country(eligibility: Eligibility, scope: LocationScope) -> bool:
+    """Whether a posting with ``eligibility`` passes the owner's location scope."""
     if eligibility.reach is Reach.UNKNOWN:
         return True
     if eligibility.reach is Reach.WORLDWIDE:
-        return include_worldwide
-    return bool(eligibility.countries & set(country_codes))
+        return scope.include_worldwide
+    return scope.any_country or bool(eligibility.countries & scope.country_codes)
 
 
 # Keyword families per technology area; matched on whole words after hyphens become spaces.

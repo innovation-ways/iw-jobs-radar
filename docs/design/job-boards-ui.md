@@ -61,7 +61,7 @@ Add a job board                                                        [ Close ]
 Add ITJobs.pt
   API key        [••••••••••••        ]  Free key from itjobs.pt/api (request it by email).
                                          Stored encrypted. It is sent once and never shown again.
-  Keep postings in these countries   [ Portugal × ]  [x] Also worldwide remote
+  Countries     Portugal, Spain, … + worldwide remote   (from your profile and intents)  [ Change in Profile & intent ]
   Categories     [ Software × ] [ Data × ] [ DevOps × ] [ Security × ]
   Search terms   [ optional ]            Posted within  [ 30 ▾ ] days
   Per run limit  [ 500 ]
@@ -77,7 +77,7 @@ Behaviour:
 - `Add` calls `POST /api/v1/sources` with the same body; the server validates again, saves, and the new row appears (and the panel closes with a `role="status"` message: "Added ITJobs.pt. Run it to collect its jobs.").
 - Boards without a key skip the key field. Their only extra step is the preview.
 - The key input is `type="password"`, `autoComplete="off"`, and its value is cleared from state after a successful save, as in `ConnectionCard`.
-- Defaults come from the catalogue (`country_codes=["PT"]`, worldwide included, last 30 days, 500 per run); the same defaults are used by the Settings drawer.
+- The countries are **read-only** and come from the profile and the enabled intents (`GET /api/v1/source-scope`, ADR-049.11); the form links to Profile & intent. Without an enabled intent the form says so and `Check & preview` is disabled. Other defaults come from the catalogue (last 30 days, 500 per run); the Settings drawer uses the same ones.
 
 ## 4. Row settings (disclosure level 2)
 
@@ -85,7 +85,7 @@ Behaviour:
 
 ```
 Himalayas settings
-  Filters   countries [ Portugal × ] [x] worldwide   categories [...]   terms [ ]   max age [30] days   limit [500]
+  Filters   categories [...]   terms [ ]   max age [30] days   limit [500]      Countries: Portugal, Spain, … (from your profile)
             [ Save filters ]   Applies from the next run. Postings already kept are not closed by a new filter.
   Key       Credential: saved (updated 2026-10-09)   [ Replace… ] [ Remove key ]      ← only for boards that need a key
   Source    Himalayas · data refreshed every 24 h · next run allowed after 07:31 · Terms ↗ · Link back required
@@ -125,7 +125,8 @@ Himalayas settings
 | `PUT /api/v1/sources/{source_configuration_id}` | Existing; adds `filters` |
 | `PUT` / `DELETE /api/v1/sources/{source_configuration_id}/credential` | Write or remove the key; `SourceRead` returns only `credential_status` (`saved`, `none`, `not_needed`) and `credential_updated_at` |
 | `DELETE /api/v1/sources/{source_configuration_id}` | Remove a board (job boards; company boards keep the current behaviour unless already supported) |
-| `SourceRead` additions | `category` (`company_board` or `job_board`), `coverage_note`, `filters`, `credential_status`, `next_run_allowed_at`, `terms_url`, `attribution_text` |
+| `GET /api/v1/source-scope` | Read-only `{configured, country_codes, include_worldwide, any_country}` derived from the profile and the enabled intents |
+| `SourceRead` additions | `category` (`company_board` or `job_board`), `coverage_note`, `filters`, `credential_status`, `next_run_allowed_at`, `terms_url`, `attribution_text`, `next_run_allowed_at` (and `dropped_count` on run results) |
 
 IDs are integers, errors use the common envelope (`422` invalid filters, `409` stale version or `too_soon`, `503` source unavailable), no credential in any response or log.
 

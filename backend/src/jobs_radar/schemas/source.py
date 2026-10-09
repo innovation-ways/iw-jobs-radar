@@ -47,6 +47,7 @@ class SourceResultRead(StrictModel):
     updated_count: int
     deduplicated_count: int
     closed_count: int
+    dropped_count: int
     http_status: int | None
     error_class: str | None
     error_message: str | None
@@ -76,6 +77,7 @@ class SourceRead(StrictModel):
     credential_updated_at: datetime | None
     terms_url: str | None
     attribution_text: str | None
+    next_run_allowed_at: datetime | None
 
 
 class SourceList(StrictModel):
@@ -108,6 +110,15 @@ class CatalogueList(StrictModel):
     """The job boards that can be added now."""
 
     items: list[CatalogueEntryRead]
+
+
+class SourceScopeRead(StrictModel):
+    """Where the owner can work, as derived from the profile and the enabled intents (read-only)."""
+
+    configured: bool
+    country_codes: list[str]
+    include_worldwide: bool
+    any_country: bool
 
 
 class CollectionRunRead(StrictModel):

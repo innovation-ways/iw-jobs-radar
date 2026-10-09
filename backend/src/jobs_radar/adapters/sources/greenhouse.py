@@ -23,6 +23,7 @@ from jobs_radar.adapters.sources.html_text import html_to_text
 from jobs_radar.adapters.sources.polite_http import PoliteGetter
 from jobs_radar.core.http import GuardedHttpClient, HttpResponse
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
+from jobs_radar.domain.job_board_rules import LocationScope
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 BASE_URL = "https://boards-api.greenhouse.io/v1/boards"
@@ -130,6 +131,7 @@ class GreenhouseAdapter:
         identifier: str,
         credential: str | None = None,
         filters: JobBoardFilters | None = None,
+        scope: LocationScope | None = None,
     ) -> BoardInfo:
         """Check the board exists and return its name and number of postings."""
         token = self._token(identifier)

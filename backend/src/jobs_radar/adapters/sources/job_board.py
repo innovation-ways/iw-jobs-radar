@@ -28,6 +28,7 @@ from jobs_radar.core.http import GuardedHttpClient
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
 from jobs_radar.domain.job_board_rules import (
     Eligibility,
+    LocationScope,
     allows_country,
     categorise,
     is_recent,
@@ -113,7 +114,12 @@ class JobBoardAdapter:
             raise SourceError(SourceErrorClass.CONFIGURATION, msg)
 
     def _streams(
-        self, filters: JobBoardFilters, *, per_minute: int, credential: str | None
+        self,
+        filters: JobBoardFilters,
+        scope: LocationScope,
+        *,
+        per_minute: int,
+        credential: str | None,
     ) -> list[Stream]:
         raise NotImplementedError
 
@@ -122,13 +128,18 @@ class JobBoardAdapter:
         identifier: str,
         credential: str | None = None,
         filters: JobBoardFilters | None = None,
+        scope: LocationScope | None = None,
     ) -> BoardInfo:
         """Scan a bounded sample of the board and report how many postings match the filters."""
         self._check(identifier)
         filters = filters or self.entry.default_filters
         limit = min(filters.max_postings_per_run, PREVIEW_LIMIT)
         scan = await self._scan(
-            filters, limit, per_minute=self.entry.rate_limit_per_minute, credential=credential
+            filters,
+            self._require_scope(scope),
+            limit,
+            per_minute=self.entry.rate_limit_per_minute,
+            credential=credential,
         )
         return BoardInfo(
             name=self.entry.display_name,
@@ -144,6 +155,7 @@ class JobBoardAdapter:
         started = asyncio.get_running_loop().time()
         scan = await self._scan(
             filters,
+            self._require_scope(checkpoint.scope),
             filters.max_postings_per_run,
             per_minute=checkpoint.rate_limit_per_minute,
             credential=checkpoint.credential,
@@ -162,16 +174,30 @@ class JobBoardAdapter:
 
     # --- scanning and filtering ------------------------------------------------------------------
 
+    @staticmethod
+    def _require_scope(scope: LocationScope | None) -> LocationScope:
+        """Refuse to collect when the owner's location is unknown: nothing could be filtered."""
+        if scope is None or scope.is_empty:
+            msg = "Set your base location and remote regions in Profile & intent first."
+            raise SourceError(SourceErrorClass.CONFIGURATION, msg)
+        return scope
+
     async def _scan(
-        self, filters: JobBoardFilters, limit: int, *, per_minute: int, credential: str | None
+        self,
+        filters: JobBoardFilters,
+        scope: LocationScope,
+        limit: int,
+        *,
+        per_minute: int,
+        credential: str | None,
     ) -> _Scan:
         now = self._clock()
         scan = _Scan([], 0, None, 0, False)
         ids: set[str] = set()
-        for stream in self._streams(filters, per_minute=per_minute, credential=credential):
+        for stream in self._streams(filters, scope, per_minute=per_minute, credential=credential):
             pages = stream()
             try:
-                if await self._read_stream(pages, filters, limit, now, scan, ids):
+                if await self._read_stream(pages, filters, scope, limit, now, scan, ids):
                     return scan
             finally:
                 await pages.aclose()  # type: ignore[attr-defined]  # async generators have aclose
@@ -181,6 +207,7 @@ class JobBoardAdapter:
         self,
         pages: AsyncIterator[Page],
         filters: JobBoardFilters,
+        scope: LocationScope,
         limit: int,
         now: datetime,
         scan: _Scan,
@@ -201,7 +228,7 @@ class JobBoardAdapter:
                 scan.seen += 1
                 if is_recent(posting.posted_at, now, filters.max_age_days):
                     all_old = False
-                if not self._passes(candidate, filters, now):
+                if not self._passes(candidate, filters, scope, now):
                     scan.dropped += 1
                     continue
                 if len(scan.kept) >= limit:
@@ -216,17 +243,15 @@ class JobBoardAdapter:
         return False
 
     @staticmethod
-    def _passes(candidate: Candidate, filters: JobBoardFilters, now: datetime) -> bool:
+    def _passes(
+        candidate: Candidate, filters: JobBoardFilters, scope: LocationScope, now: datetime
+    ) -> bool:
         posting = candidate.posting
         if not posting.company_name:
             return False
         if not is_recent(posting.posted_at, now, filters.max_age_days):
             return False
-        if not allows_country(
-            candidate.eligibility,
-            filters.country_codes,
-            include_worldwide=filters.include_worldwide,
-        ):
+        if not allows_country(candidate.eligibility, scope):
             return False
         if filters.categories and not set(filters.categories) & categorise(
             (posting.title, *candidate.area_texts)

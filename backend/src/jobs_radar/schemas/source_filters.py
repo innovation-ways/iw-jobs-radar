@@ -8,7 +8,7 @@ from typing import Annotated, Literal
 
 from pydantic import AfterValidator, Field, StringConstraints
 
-from jobs_radar.schemas.common import CountryCode, StrictModel
+from jobs_radar.schemas.common import StrictModel
 
 # Technology areas a board entry can be narrowed to; each adapter maps its own tags onto them.
 JOB_BOARD_CATEGORIES = ("software", "data", "devops", "security")
@@ -28,13 +28,9 @@ def _drop_blank(values: list[str]) -> list[str]:
 
 
 class JobBoardFilters(StrictModel):
-    """Which postings of a job board are kept."""
+    """Which postings of a job board are kept. Countries come from the profile, not from here."""
 
     schema_version: Literal[1] = 1
-    country_codes: Annotated[list[CountryCode], AfterValidator(_unique)] = Field(
-        default_factory=lambda: ["PT"], max_length=60
-    )
-    include_worldwide: bool = True
     categories: Annotated[list[CategoryKey], AfterValidator(_unique)] = Field(
         default_factory=lambda: list(JOB_BOARD_CATEGORIES), max_length=20
     )

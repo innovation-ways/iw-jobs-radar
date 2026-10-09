@@ -23,6 +23,7 @@ from jobs_radar.services.evaluation import EvaluationService
 from jobs_radar.services.inbox import InboxService
 from jobs_radar.services.integrations import IntegrationService
 from jobs_radar.services.intents import IntentService
+from jobs_radar.services.location_scope import LocationScopeService
 from jobs_radar.services.pipeline import PipelineService
 from jobs_radar.services.profile_data import ProfileDataService
 from jobs_radar.services.profiles import ProfileService
@@ -67,6 +68,13 @@ def get_source_service(
 ) -> SourceService:
     """Build the source service on the request's session."""
     return SourceService(session, adapters)
+
+
+def get_location_scope_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> LocationScopeService:
+    """Build the location scope service on the request's session."""
+    return LocationScopeService(session)
 
 
 def get_collection_service(request: Request) -> CollectionService:

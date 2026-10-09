@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from jobs_radar.adapters.sources.catalogue import available_entries, get_entry
 from jobs_radar.api.deps import (
     get_collection_service,
+    get_location_scope_service,
     get_session,
     get_source_service,
 )
@@ -30,10 +31,12 @@ from jobs_radar.schemas.source import (
     SourceList,
     SourceRead,
     SourceResultRead,
+    SourceScopeRead,
     SourceUpdate,
 )
 from jobs_radar.schemas.source_filters import JobBoardFilters
 from jobs_radar.services.collection import CollectionService
+from jobs_radar.services.location_scope import LocationScopeService
 from jobs_radar.services.sources import SourceService, SourceStatusRow
 
 router = APIRouter(tags=["sources"])
@@ -51,6 +54,7 @@ def _result(row: SourceRunResult) -> SourceResultRead:
         updated_count=row.updated_count,
         deduplicated_count=row.deduplicated_count,
         closed_count=row.closed_count,
+        dropped_count=row.dropped_count,
         http_status=row.http_status,
         error_class=row.error_class,
         error_message=row.error_message,
@@ -95,6 +99,7 @@ def _source(row: SourceStatusRow) -> SourceRead:
         credential_updated_at=source.credential_updated_at,
         terms_url=entry.terms_url if entry else None,
         attribution_text=entry.attribution_text if entry else None,
+        next_run_allowed_at=row.next_run_allowed_at,
     )
 
 
@@ -126,6 +131,20 @@ async def list_sources(
     """List configured sources with their latest status."""
     return SourceList(
         items=[_source(row) for row in await service.list_with_status(LOCAL_OWNER_ID)]
+    )
+
+
+@router.get("/source-scope", response_model=SourceScopeRead)
+async def get_source_scope(
+    service: Annotated[LocationScopeService, Depends(get_location_scope_service)],
+) -> SourceScopeRead:
+    """Show where job boards look for postings: derived from the profile and the intents."""
+    scope = await service.for_owner(LOCAL_OWNER_ID)
+    return SourceScopeRead(
+        configured=not scope.is_empty,
+        country_codes=sorted(scope.country_codes),
+        include_worldwide=scope.include_worldwide,
+        any_country=scope.any_country,
     )
 
 

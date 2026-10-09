@@ -142,24 +142,40 @@ class SmartRecruitersAdapter(CompanyBoardAdapter):
         wanted: list[str] = []
         dropped = 0
         declared: int | None = None
-        offset = 0
-        for _ in range(MAX_PAGES):
-            listing = self._json(
-                await self._get(f"{base}?limit={PAGE_SIZE}&offset={offset}", identifier, per_minute)
-            )
-            content = self._content(listing)
-            total = listing.get("totalFound")
-            declared = total if isinstance(total, int) else declared
-            for item in content:
-                if isinstance(item, dict) and item.get("id") and _looks_technical(item):
-                    wanted.append(str(item["id"]))
-                else:
-                    dropped += 1
-            offset += len(content)
-            if len(wanted) > self._max_details:
-                break  # more are known than can be read: the rest need not even be listed
-            if not content or declared is None or offset >= declared:
-                break
+        # With the owner's location known (filters on), only the countries they can work in are
+        # listed: a large company's postings elsewhere are never even read.
+        scope = checkpoint.scope
+        countries: list[str | None] = [None]
+        if scope is not None and scope.country_codes and not scope.any_country:
+            countries = [code.lower() for code in sorted(scope.country_codes)]
+        seen: set[str] = set()
+        for country in countries:
+            offset = 0
+            for _ in range(MAX_PAGES):
+                query = f"limit={PAGE_SIZE}&offset={offset}" + (
+                    f"&country={country}" if country else ""
+                )
+                listing = self._json(await self._get(f"{base}?{query}", identifier, per_minute))
+                content = self._content(listing)
+                total = listing.get("totalFound")
+                if isinstance(total, int) and offset == 0:
+                    declared = (declared or 0) + total
+                for item in content:
+                    posting_id = (
+                        str(item["id"]) if isinstance(item, dict) and item.get("id") else ""
+                    )
+                    if not posting_id or posting_id in seen:
+                        continue
+                    seen.add(posting_id)
+                    if _looks_technical(item):
+                        wanted.append(posting_id)
+                    else:
+                        dropped += 1
+                offset += len(content)
+                if len(wanted) > self._max_details:
+                    break  # more are known than can be read: the rest need not even be listed
+                if not content or not isinstance(total, int) or offset >= total:
+                    break
         truncated = len(wanted) > self._max_details
         postings: list[SourcePosting] = []
         for posting_id in wanted[: self._max_details]:

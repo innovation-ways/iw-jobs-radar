@@ -170,3 +170,43 @@ async def test_listing_stops_once_more_postings_are_known_than_can_be_read() -> 
     )
     assert len(scripted.calls) == 1  # the other 4,998 postings are not even listed
     assert len(result.postings) == 1 and result.truncated is True
+
+
+@respx.mock
+async def test_with_a_location_scope_only_the_owners_countries_are_listed() -> None:
+    from dataclasses import replace
+
+    from jobs_radar.domain.job_board_rules import LocationScope
+
+    scripted = Scripted(
+        [
+            ({"country": "pt", "offset": "0"}, 200, payload("smartrecruiters", "list_p2.json")),
+            (
+                {"country": "pt", "offset": "2"},
+                200,
+                b'{"offset": 2, "limit": 100, "totalFound": 2, "content": []}',
+            ),
+        ]
+    )
+    respx.get(BASE).mock(side_effect=scripted)
+    for number in (4, 5):
+        respx.get(f"{BASE}/7440001547{number:05d}").respond(
+            200, content=payload("smartrecruiters", f"detail_{number}.json")
+        )
+    scope = LocationScope(frozenset({"PT"}), include_worldwide=True)
+    checkpoint = replace(ats_checkpoint("SynthCo"), scope=scope)
+    result = await build_ats(SmartRecruitersAdapter).collect(checkpoint)
+    assert {call.get("country") for call in scripted.calls} == {"pt"}
+    assert [p.external_job_id for p in result.postings] == ["744000154700004", "744000154700005"]
+
+
+@respx.mock
+async def test_remote_work_from_anywhere_lists_every_country() -> None:
+    from dataclasses import replace
+
+    from jobs_radar.domain.job_board_rules import LocationScope
+
+    scripted = serve()
+    scope = LocationScope(frozenset({"PT"}), include_worldwide=True, any_country=True)
+    await build_ats(SmartRecruitersAdapter).collect(replace(ats_checkpoint("SynthCo"), scope=scope))
+    assert all("country" not in call for call in scripted.calls)

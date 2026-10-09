@@ -10,7 +10,8 @@
   can type the real one when adding (it cannot be edited afterwards).
 - SmartRecruiters lists postings without text, so it reads the details of technical postings only,
   at most 200 per run; a company with more is `partial` (it never closes postings) and a company
-  with no open postings is refused as not found. Its default pace is 30 requests a minute.
+  with no open postings is refused as not found. Its default pace is 30 requests a minute. With
+  filters on, only your countries are listed, so the 200 details go to postings that can pass.
 - **Filters on a company board** are off by default (every posting is kept). For a large company
   open **Filters** on its row and tick *Keep only postings that match my areas and location*: only
   postings in the chosen technology areas, remote work open to your countries, or on-site work

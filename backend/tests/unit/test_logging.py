@@ -48,3 +48,18 @@ def test_request_id_is_added_to_log_lines(capsys: object) -> None:
     assert line["event"] == "hello"
     assert line["password"] == "[REDACTED]"
     assert "timestamp" in line
+
+
+def test_redaction_covers_every_secret_and_content_key_used_by_later_tasks() -> None:
+    keys = [
+        "github_token",
+        "credential_key",
+        "credential_ciphertext",
+        "api_key",
+        "secret",
+        "source_excerpt",
+        "extracted_text",
+        "raw_text",
+    ]
+    result = redact_secrets(None, "info", {"event": "x", **dict.fromkeys(keys, "v")})
+    assert {key: result[key] for key in keys} == dict.fromkeys(keys, "[REDACTED]")

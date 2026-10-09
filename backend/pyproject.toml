@@ -44,6 +44,7 @@ dev = [
     "watchfiles",
     "httpx2>=2.13.1",
     "reportlab>=5.0.1",
+    "pip-audit>=2.10.1",
 ]
 
 [build-system]

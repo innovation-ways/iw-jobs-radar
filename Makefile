@@ -14,7 +14,7 @@ PNPM := PATH="$$HOME/.local/bin:$$PATH" pnpm --dir $(FRONTEND)
         test-frontend test-frontend-watch fe-coverage test-e2e \
         lint format format-check typecheck arch-check security license-check docs-check quality \
         fe-lint fe-format fe-format-check fe-typecheck fe-license-check quality-frontend check check-all \
-        security-sast secret-scan docs-schema openapi api-client seed-dev-sources backup restore-drill backup-list restore fe-install clean
+        security-sast secret-scan config-check security-audit docs-schema openapi api-client seed-dev-sources backup restore-drill backup-list restore config-check security-audit fe-install clean
 
 ##@ Run the app
 
@@ -152,13 +152,20 @@ quality-frontend: fe-lint fe-format-check fe-typecheck fe-license-check ## All f
 check: quality quality-frontend test test-frontend ## Everything fast: quality gates + all tests (needs Docker)
 	@echo "All checks passed."
 
-check-all: check security-sast secret-scan ## check + security scan + secret scan (needs network and Docker)
+check-all: check security-sast secret-scan security-audit ## check + SAST + secret scan + dependency audit (needs network and Docker)
 	@echo "Everything passed (run 'make test-e2e' too when the app is running)."
 
 ##@ Security (needs network / Docker)
 
 security-sast: ## Static security analysis (semgrep; downloads rule packs)
 	cd $(BACKEND) && uvx semgrep --config p/python --config p/security-audit --metrics off --error --quiet src
+
+security-audit: ## Known vulnerabilities in the Python and frontend dependencies (needs network)
+	cd $(BACKEND) && uv run pip-audit --skip-editable 2>&1 | grep -v "^WARNING:cachecontrol"
+	$(PNPM) audit --prod
+
+config-check: ## Check the configuration for exposure and secret mistakes (prints no secret)
+	cd $(BACKEND) && uv run python -m jobs_radar.tools.config_check
 
 # Scans the git history and the staged changes, i.e. everything that could be committed. The local,
 # git-ignored .env (which legitimately holds secrets) is deliberately not scanned.

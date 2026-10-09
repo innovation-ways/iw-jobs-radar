@@ -22,6 +22,10 @@ _SENSITIVE_PARTS = (
     "credential",
     "cookie",
     "cv_text",
+    "excerpt",
+    "extracted_text",
+    "raw_text",
+    "secret",
     "description",
     "prompt",
 )

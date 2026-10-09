@@ -155,3 +155,19 @@ async def test_post_json_maps_connection_failures_without_leaking_addresses() ->
     with pytest.raises(FetchError) as error:
         await make_client().post_json("https://boards.example.test/api/chat", {})
     assert error.value.error_class == "network_error" and "10.0.0.5" not in error.value.message
+
+
+async def test_the_http_library_never_logs_a_url_with_a_key(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """``httpx`` logs every request URL at INFO; a key in the query must not reach any log."""
+    import logging
+
+    async def resolve(host: str) -> list[str]:
+        return ["93.184.216.34"]
+
+    client = GuardedHttpClient(guard=UrlGuard(resolver=resolve), user_agent="JobsRadar/test")
+    with respx.mock, caplog.at_level(logging.DEBUG):
+        respx.get("https://api.example.test/list").respond(200, json={})
+        await client.get("https://api.example.test/list?api_key=s3cr3t-key-value&page=1")
+    assert "s3cr3t-key-value" not in caplog.text

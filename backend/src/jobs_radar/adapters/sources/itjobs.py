@@ -7,9 +7,12 @@ source URL. The response shape follows the public documentation; it has not yet 
 against the live service with a real key, so every field is read defensively and a surprise is
 reported as ``invalid_payload`` instead of guessed.
 
-ITJobs.pt does not document the numeric ``workModel``, so remote work is recognised from the words
-"remote" or "remoto" in the title, places or text; a posting that does not say so is treated as
-on-site and judged by the owner's radius when its place can be read.
+ITJobs.pt does not document the numeric ``workModel``. On 300 real postings (2026-10-09) ``1`` went
+with postings that name no place and say "remoto" (remote work), ``2`` with "híbrido" (hybrid) and
+``0`` with on-site work, so those codes are used, as an observation and not as a guarantee. A
+posting without a ``workModel`` is recognised as remote from the words "remote" or "remoto" in its
+title, places or text. A remote posting is open from Portugal; a hybrid or on-site one must be
+inside the owner's radius when its place can be read.
 """
 
 import re
@@ -36,6 +39,8 @@ from jobs_radar.schemas.source_filters import JobBoardFilters
 
 _ENTRY = require_entry("itjobs_pt")
 _PAGE_SIZE = 100
+# Observed ``workModel`` codes: 0 on site, 1 remote, 2 hybrid (see the module docstring).
+_WORK_MODEL_REMOTE = {0: False, 1: True, 2: False}
 _REMOTE = re.compile(r"\b(remote|remoto|remota|teletrabalho|home office)\b", re.IGNORECASE)
 
 
@@ -71,7 +76,11 @@ def parse_job(job: object) -> Candidate:
     )
     places = _names(job.get("locations"))
     body = html_to_text(job["body"] if isinstance(job.get("body"), str) else None)
-    remote = bool(_REMOTE.search(" ".join((title, *places, body))))
+    work_model = job.get("workModel")
+    if isinstance(work_model, int) and work_model in _WORK_MODEL_REMOTE:
+        remote = _WORK_MODEL_REMOTE[work_model]
+    else:
+        remote = bool(_REMOTE.search(" ".join((title, *places, body))))
     place = None
     if not remote:
         for name in places:

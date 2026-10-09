@@ -8,6 +8,7 @@ leak addresses or internals. No adapter creates its own HTTP client.
 
 import asyncio
 import json
+import logging
 from collections.abc import Mapping
 from dataclasses import dataclass
 from urllib.parse import urljoin
@@ -16,6 +17,12 @@ import httpx
 
 from jobs_radar import __version__
 from jobs_radar.core.url_guard import BlockedUrlError, UrlGuard
+
+# httpx and httpcore log every request URL at INFO. A URL can carry a key in its query string
+# (ITJobs.pt), and these records bypass the redaction of our own logger, so they are limited to
+# warnings, which never contain the URL.
+for _noisy in ("httpx", "httpcore"):
+    logging.getLogger(_noisy).setLevel(logging.WARNING)
 
 DEFAULT_MAX_BYTES = 25 * 1024 * 1024
 _REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})

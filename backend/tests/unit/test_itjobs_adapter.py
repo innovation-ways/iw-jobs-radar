@@ -38,11 +38,11 @@ async def test_collect_keeps_what_passes_the_filters_and_follows_the_pages() -> 
     scripted = pages()
     respx.get(URL).mock(side_effect=scripted)
     result = await build(ItJobsAdapter).collect(keyed())
-    # Lisbon backend (inside 40 km) and the remote job stay; Porto on site is outside the radius
-    # and the marketing role has no technology area.
-    assert [p.external_job_id for p in result.postings] == ["101", "102"]
+    # The hybrid Lisbon job (inside 40 km), the remote job and the job whose text says remote stay;
+    # the on-site Porto job is outside the radius and the marketing role has no technology area.
+    assert [p.external_job_id for p in result.postings] == ["101", "102", "105"]
     assert result.dropped_count == 2
-    assert result.declared_total == 4
+    assert result.declared_total == 5
     assert result.truncated is False
     assert [(c["page"], c["limit"]) for c in scripted.calls] == [("1", "100"), ("2", "100")]
 
@@ -50,7 +50,7 @@ async def test_collect_keeps_what_passes_the_filters_and_follows_the_pages() -> 
 @respx.mock
 async def test_a_posting_is_mapped_with_its_company_places_and_salary() -> None:
     respx.get(URL).mock(side_effect=pages())
-    first, second = (await build(ItJobsAdapter).collect(keyed())).postings
+    first, second, _ = (await build(ItJobsAdapter).collect(keyed())).postings
     assert first.company_name == "Synth Co"
     assert first.title == "Backend Engineer"
     assert first.locations == ("Lisboa",)
@@ -121,7 +121,7 @@ async def test_validate_checks_the_key_and_reports_matches() -> None:
     info = await build(ItJobsAdapter).validate(
         "itjobs_pt", credential=KEY, filters=JobBoardFilters(), scope=PORTUGAL
     )
-    assert (info.name, info.postings_count, info.matching_count) == ("ITJobs.pt", 4, 2)
+    assert (info.name, info.postings_count, info.matching_count) == ("ITJobs.pt", 5, 3)
 
 
 async def test_validate_without_a_key_is_refused() -> None:
@@ -134,3 +134,45 @@ def test_type_and_endpoint_never_contain_the_key() -> None:
     adapter = build(ItJobsAdapter)
     assert adapter.source_type is SourceType.ITJOBS_PT
     assert adapter.endpoint("itjobs_pt") == URL
+
+
+@pytest.mark.parametrize(
+    ("work_model", "place", "kept"),
+    [
+        (1, "Porto", True),  # remote: the place is where the company is, not where the work is
+        (2, "Porto", False),  # hybrid outside 40 km of Lisbon
+        (2, "Lisboa", True),
+        (0, "Porto", False),  # on site outside the radius
+        (0, "Lisboa", True),
+    ],
+)
+@respx.mock
+async def test_the_work_model_decides_whether_the_place_matters(
+    work_model: int, place: str, kept: bool
+) -> None:
+    job = {
+        "id": 7,
+        "company": {"name": "Synth Co"},
+        "title": "Backend Engineer",
+        "body": "<p>Build services.</p>",
+        "workModel": work_model,
+        "locations": [{"id": "1", "name": place}],
+        "slug": "backend-engineer",
+    }
+    body = (
+        __import__("json").dumps({"total": 1, "page": 1, "limit": 100, "results": [job]}).encode()
+    )
+    respx.get(URL).respond(200, content=body)
+    result = await build(ItJobsAdapter).collect(keyed())
+    assert [p.external_job_id for p in result.postings] == (["7"] if kept else [])
+
+
+@respx.mock
+async def test_a_posting_without_places_is_kept_for_the_later_judgement() -> None:
+    job = {"id": 8, "company": {"name": "Synth Co"}, "title": "Python Developer", "workModel": 2}
+    body = (
+        __import__("json").dumps({"total": 1, "page": 1, "limit": 100, "results": [job]}).encode()
+    )
+    respx.get(URL).respond(200, content=body)
+    result = await build(ItJobsAdapter).collect(keyed())
+    assert len(result.postings) == 1 and result.postings[0].locations == ()

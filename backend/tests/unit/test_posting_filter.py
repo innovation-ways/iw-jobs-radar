@@ -82,6 +82,14 @@ def test_old_postings_are_dropped_but_an_unknown_date_is_kept() -> None:
         (("Berlin", "Remote - EU"), True),
         (("Madrid", "Berlin"), False),
         (("HQ campus",), True),  # a place that cannot be read is judged later
+        (("Spain", "United Kingdom"), False),  # a bare country is where the person may live
+        (("United States",), False),
+        (("Portugal",), True),
+        (("Greece", "Portugal"), True),
+        (("Hybrid", "Austin, TX, United States"), False),  # "Hybrid" is a marker, not a place
+        (("In-Office", "London, United Kingdom"), False),
+        (("Hybrid", "Lisboa, Lisboa, Portugal"), True),
+        (("Hybrid",), True),
         ((), True),
     ],
 )

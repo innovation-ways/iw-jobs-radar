@@ -274,7 +274,9 @@ class CollectionService:
                 checkpoint=SourceCheckpoint(
                     identifier=source.external_identifier,
                     url=source.url,
-                    etag=source.etag,
+                    # A 304 refreshes every open posting, so a filtered board is always fetched in
+                    # full: postings the filters now reject must go unseen to be closed (ADR-051).
+                    etag=None if company_filters is not None else source.etag,
                     rate_limit_per_minute=source.rate_limit_per_minute,
                     filters=filters,
                     scope=scope,

@@ -320,9 +320,12 @@ class SourceService:
                     msg, details={"error_class": SourceErrorClass.CONFIGURATION.value}
                 )
             source.config_json = {}
+            source.etag = None
         elif filters is not None:
             # A company board keeps every posting until the owner opts in to filters (ADR-051).
             source.config_json = filters.model_dump(mode="json")
+            # A 304 would keep the postings the old filters let in, so the next run must fetch.
+            source.etag = None
         if enabled is not None:
             source.enabled = enabled
         if rate_limit_per_minute is not None:

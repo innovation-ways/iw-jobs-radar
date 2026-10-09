@@ -115,3 +115,62 @@ async def test_the_limit_makes_a_filtered_run_partial(
     postings, result = await collect(db_session, monkeypatch, adapter, config)
     assert len(postings) == 1
     assert result.outcome == SourceOutcome.PARTIAL.value
+
+
+async def test_changing_the_filters_forgets_the_etag_so_the_next_run_fetches_again(
+    db_session: AsyncSession,
+) -> None:
+    from jobs_radar.schemas.source_filters import JobBoardFilters
+    from jobs_radar.services.sources import SourceService
+
+    source = await make_source(db_session, await make_company(db_session))
+    source.etag = 'W/"old"'
+    await db_session.flush()
+    service = SourceService(db_session, {})
+    await service.update(
+        LOCAL_OWNER_ID,
+        source.source_configuration_id,
+        expected_version=source.version,
+        filters=JobBoardFilters(categories=["software"]),
+    )
+    assert source.etag is None  # a 304 would otherwise keep the postings the old filters let in
+    source.etag = 'W/"again"'
+    await service.update(
+        LOCAL_OWNER_ID,
+        source.source_configuration_id,
+        expected_version=source.version,
+        clear_filters=True,
+    )
+    assert source.etag is None
+
+
+async def test_a_filtered_board_is_always_fetched_in_full(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A 304 would refresh every open posting, so postings the filter now rejects never close."""
+    adapter = three_postings()
+    source = await make_source(db_session, await make_company(db_session))
+    source.config_json = {"schema_version": 1, "categories": ["software"]}
+    source.etag = 'W/"stored"'
+    await db_session.flush()
+    service = build(db_session, monkeypatch, adapter)
+    run = await service.request_run(
+        LOCAL_OWNER_ID, source_configuration_id=source.source_configuration_id
+    )
+    await service.execute_run(run.collection_run_id)
+    assert adapter.checkpoints[0].etag is None
+
+
+async def test_an_unfiltered_board_still_sends_its_etag(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    adapter = three_postings()
+    source = await make_source(db_session, await make_company(db_session))
+    source.etag = 'W/"stored"'
+    await db_session.flush()
+    service = build(db_session, monkeypatch, adapter)
+    run = await service.request_run(
+        LOCAL_OWNER_ID, source_configuration_id=source.source_configuration_id
+    )
+    await service.execute_run(run.collection_run_id)
+    assert adapter.checkpoints[0].etag == 'W/"stored"'

@@ -17,8 +17,10 @@ from jobs_radar.adapters.sources.base import SourcePosting
 from jobs_radar.adapters.sources.countries import country_code, place_coordinates
 from jobs_radar.domain.job_board_rules import (
     UNKNOWN,
+    Eligibility,
     LocationCandidate,
     LocationScope,
+    Reach,
     allows_location,
     categorise,
     eligibility_from_regions,
@@ -37,6 +39,8 @@ _NOT_A_REGION = re.compile(
     r"within|in)\b",
     re.IGNORECASE,
 )
+# Words that describe how the work is done, not where; a place made only of them says nothing.
+_MARKER = re.compile(r"^(hybrid|in[- ]?office|on[- ]?site|office|onsite)$", re.IGNORECASE)
 _SPLIT = re.compile(r"[,;/|()\[\]\N{EN DASH}\N{EM DASH}-]")
 
 
@@ -49,8 +53,14 @@ class FilterOutcome:
     truncated: bool
 
 
-def _candidate(place: str) -> LocationCandidate:
-    """Read one place text: remote work open to the regions it names, or a workplace."""
+def _candidate(place: str) -> LocationCandidate | None:
+    """Read one place text: remote work open to the regions it names, or a workplace.
+
+    A bare country ("Spain") means the person may live there. A marker such as "Hybrid" is not a
+    place and gives ``None``.
+    """
+    if _MARKER.match(place.strip()):
+        return None
     if _REMOTE.search(place):
         regions = [
             code or token
@@ -59,13 +69,19 @@ def _candidate(place: str) -> LocationCandidate:
             for code in [country_code(token)]
         ]
         return LocationCandidate(remote=True, eligibility=eligibility_from_regions(regions))
+    code = country_code(place)
+    if code:
+        return LocationCandidate(
+            remote=None, eligibility=Eligibility(Reach.COUNTRIES, frozenset({code}))
+        )
     return LocationCandidate(remote=False, eligibility=UNKNOWN, place=place_coordinates(place))
 
 
 def _location_ok(posting: SourcePosting, scope: LocationScope) -> bool:
-    if not posting.locations:
+    candidates = [c for place in posting.locations if (c := _candidate(place)) is not None]
+    if not candidates:
         return True
-    return any(allows_location(_candidate(place), scope) for place in posting.locations)
+    return any(allows_location(candidate, scope) for candidate in candidates)
 
 
 def keep_posting(

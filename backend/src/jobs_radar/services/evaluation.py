@@ -6,9 +6,10 @@ rewritten. The score is a pure function of stored data; the model is used only t
 pairs that have never been judged, and re-scoring after a weight change needs no model at all.
 """
 
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import select
@@ -314,20 +315,42 @@ class EvaluationRunner:
         self,
         session_factory: Callable[[], AbstractAsyncContextManager[AsyncSession]],
         provider: ExtractionProvider,
+        clock: Callable[[], datetime] | None = None,
     ) -> None:
         self._session_factory = session_factory
         self._provider = provider
+        self._clock = clock or (lambda: datetime.now(UTC))
 
-    async def run(self, limit: int = 200) -> int:
-        """Score jobs extracted by the current model that were never scored; return how many."""
-        async with self._session_factory() as session:
-            scored = await EvaluationService(session, self._provider).evaluate_pending(
-                limit=limit,
-                extraction_filter=(
-                    self._provider.provider,
-                    self._provider.model,
-                    EXTRACTION_PROMPT_VERSION,
-                ),
-            )
-            await session.commit()
-            return scored
+    async def run(
+        self,
+        limit: int = 200,
+        *,
+        budget_seconds: float = 45.0,
+        heartbeat: Callable[[], Awaitable[None]] | None = None,
+    ) -> int:
+        """Score jobs extracted by the current model that were never scored; return how many.
+
+        Every job is its own short transaction, so a score is saved as soon as it is ready and a
+        failure never loses earlier work. Judging skill pairs calls the model, which can take
+        minutes for the first jobs; the time budget and the heartbeat after each job keep the worker
+        visibly alive, and whatever is left waits for the next iteration.
+        """
+        deadline = self._clock() + timedelta(seconds=budget_seconds)
+        scored = 0
+        while scored < limit and self._clock() < deadline:
+            async with self._session_factory() as session:
+                done = await EvaluationService(session, self._provider).evaluate_pending(
+                    limit=1,
+                    extraction_filter=(
+                        self._provider.provider,
+                        self._provider.model,
+                        EXTRACTION_PROMPT_VERSION,
+                    ),
+                )
+                await session.commit()
+            if done == 0:
+                break
+            scored += done
+            if heartbeat is not None:
+                await heartbeat()
+        return scored

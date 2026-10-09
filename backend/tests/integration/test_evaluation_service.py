@@ -21,7 +21,7 @@ from jobs_radar.db.models import (
 )
 from jobs_radar.domain.enums import LOCAL_OWNER_ID
 from jobs_radar.schemas.intent import IntentDefinition
-from jobs_radar.services.evaluation import EvaluationService
+from jobs_radar.services.evaluation import EvaluationRunner, EvaluationService
 from jobs_radar.services.intents import IntentService
 
 pytestmark = pytest.mark.integration
@@ -385,3 +385,51 @@ async def test_places_are_resolved_when_scoring_so_the_sources_own_locations_cou
     assert work.status == "match"  # Setúbal is within 40 km of the base place
     kms = {item["place"]: item["km"] for item in work.evidence_json["locations"]}
     assert kms["Setúbal, Portugal"] < 40 and kms["Berlin, Germany"] > 1000
+
+
+# --- the worker's runner: one short transaction per job, heartbeat, time budget -------------------------------
+
+
+async def test_the_runner_commits_each_job_and_beats_the_heartbeat_between_jobs(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A long scoring pass must keep the worker alive and save progress job by job."""
+    from tests.factories import session_factory_for
+
+    provider = FakeProvider(responder=lambda _request: {"equivalent": [], "related": []})
+    w = await world(db_session, extracted_by=(provider.provider, provider.model))
+    factory = session_factory_for(db_session, monkeypatch)
+    commits: list[int] = []
+    monkeypatch.setattr(db_session, "commit", lambda: _record(commits, db_session))
+    beats: list[int] = []
+
+    async def beat() -> None:
+        beats.append(1)
+
+    scored = await EvaluationRunner(factory, provider).run(heartbeat=beat)
+
+    assert scored == 1
+    assert len(beats) >= 1
+    assert len(commits) >= 1
+    assert await count(db_session, MatchEvaluation, job_snapshot_id=w.snapshot_id) == 1
+
+
+async def _record(commits: list[int], session: AsyncSession) -> None:
+    commits.append(1)
+    await session.flush()
+
+
+async def test_the_runner_stops_when_its_time_budget_is_spent(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """With no time left nothing is scored, and the job stays waiting for the next iteration."""
+    from tests.factories import session_factory_for
+
+    provider = FakeProvider(responder=lambda _request: {"equivalent": [], "related": []})
+    w = await world(db_session, extracted_by=(provider.provider, provider.model))
+    factory = session_factory_for(db_session, monkeypatch)
+
+    scored = await EvaluationRunner(factory, provider).run(budget_seconds=0)
+
+    assert scored == 0
+    assert await count(db_session, MatchEvaluation, job_snapshot_id=w.snapshot_id) == 0

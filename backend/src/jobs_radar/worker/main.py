@@ -118,7 +118,14 @@ class Worker:
                 budget_seconds=float(self._settings.worker_heartbeat_max_age_seconds) / 2,
                 heartbeat=self._beat,
             )
-            scored = await evaluation.run() if evaluation is not None else 0
+            scored = (
+                await evaluation.run(
+                    budget_seconds=float(self._settings.worker_heartbeat_max_age_seconds) / 2,
+                    heartbeat=self._beat,
+                )
+                if evaluation is not None
+                else 0
+            )
             if queued or scored or summary.succeeded or summary.failed or summary.stopped:
                 logger.info(
                     "extraction_batch",

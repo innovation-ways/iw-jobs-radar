@@ -174,6 +174,7 @@ class ListQuery:
     text: str | None = None
     fit_min: int | None = None
     fit_max: int | None = None
+    evaluated: bool | None = None
     first_seen_from: datetime | None = None
     first_seen_to: datetime | None = None
     include_closed: bool = False
@@ -300,6 +301,13 @@ class InboxQueries:
             statement = statement.where(evaluation.fit_score >= query.fit_min)
         if query.fit_max is not None:
             statement = statement.where(evaluation.fit_score <= query.fit_max)
+        if query.evaluated is not None:
+            # An outer join leaves the evaluation empty for a job that has no score yet.
+            statement = statement.where(
+                evaluation.match_evaluation_id.is_not(None)
+                if query.evaluated
+                else evaluation.match_evaluation_id.is_(None)
+            )
         if query.first_seen_from is not None:
             statement = statement.where(JobOpportunity.first_seen_at >= query.first_seen_from)
         if query.first_seen_to is not None:

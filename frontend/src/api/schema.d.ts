@@ -3773,6 +3773,7 @@ export interface operations {
                 q?: string | null;
                 fit_min?: number | null;
                 fit_max?: number | null;
+                evaluated?: boolean | null;
                 from?: string | null;
                 to?: string | null;
                 include_closed?: boolean;

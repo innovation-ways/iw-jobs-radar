@@ -53,6 +53,7 @@ class InboxFilters:
     text: str | None = None
     fit_min: int | None = None
     fit_max: int | None = None
+    evaluated: bool | None = None
     first_seen_from: datetime | None = None
     first_seen_to: datetime | None = None
     include_closed: bool = False
@@ -269,6 +270,7 @@ class InboxService:
             text=filters.text,
             fit_min=filters.fit_min,
             fit_max=filters.fit_max,
+            evaluated=filters.evaluated,
             first_seen_from=filters.first_seen_from,
             first_seen_to=filters.first_seen_to,
             include_closed=filters.include_closed,

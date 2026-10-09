@@ -281,6 +281,19 @@ async def test_the_default_state_filter_is_unread(db_session: AsyncSession) -> N
     assert len(await titles(db_session, s, state=None)) == 3
 
 
+async def test_filters_by_whether_the_job_has_a_score(db_session: AsyncSession) -> None:
+    s = await scene(db_session)
+    scored = await s.entry(fit=70, days=1)
+    unscored = await s.entry(days=2)
+
+    assert await titles(db_session, s, evaluated=True) == [scored.item.job_inbox_item_id]
+    assert await titles(db_session, s, evaluated=False) == [unscored.item.job_inbox_item_id]
+    assert set(await titles(db_session, s, evaluated=None)) == {
+        scored.item.job_inbox_item_id,
+        unscored.item.job_inbox_item_id,
+    }
+
+
 async def test_filters_by_shortlist_company_source_date_and_fit(db_session: AsyncSession) -> None:
     s = await scene(db_session)
     star = await s.entry(shortlisted=True, fit=90, days=1, company=f"{s.tag} Alpha Robotics")

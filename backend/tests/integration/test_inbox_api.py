@@ -113,6 +113,11 @@ async def test_filters_and_sorting_are_applied(
     assert await ids(client, s, source="lever") == [b.item.job_inbox_item_id]
     assert await ids(client, s, fit_min=60) == [a.item.job_inbox_item_id]
     assert await ids(client, s, fit_max=60) == [b.item.job_inbox_item_id]
+    assert await ids(client, s, evaluated="false") == [c.item.job_inbox_item_id]
+    assert set(await ids(client, s, evaluated="true")) == {
+        a.item.job_inbox_item_id,
+        b.item.job_inbox_item_id,
+    }
     assert await ids(client, s, sort="newest") == [
         c.item.job_inbox_item_id,
         b.item.job_inbox_item_id,

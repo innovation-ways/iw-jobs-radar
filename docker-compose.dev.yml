@@ -8,7 +8,7 @@ services:
         INSTALL_DEV: "true"
     command: >
       sh -c "alembic upgrade head &&
-             uvicorn jobs_radar.api.app:create_app --factory --host 0.0.0.0 --port 8000 --reload
+             uvicorn jobs_radar.api.app:create_app --factory --host ${JOBS_RADAR_API_BIND:-127.0.0.1} --port ${JOBS_RADAR_API_PORT:-8100} --reload
              --reload-dir /app/src"
     volumes:
       - ./backend/src:/app/src

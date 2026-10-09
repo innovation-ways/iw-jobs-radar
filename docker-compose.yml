@@ -26,24 +26,21 @@ services:
       context: ./backend
     env_file:
       - .env
-    environment:
-      # Inside the compose network the database is reached by service name on its internal port.
-      JOBS_RADAR_DB_HOST: db
-      JOBS_RADAR_DB_PORT: "5432"
-      JOBS_RADAR_API_BIND: "0.0.0.0"
-    # Migrations run before the server starts; the host-side bind address is set by `ports` below.
+    # Host networking, like the other local services that share the host's Ollama: the container
+    # reaches Ollama on 127.0.0.1 (which only listens on loopback) and PostgreSQL on its published
+    # loopback port (JOBS_RADAR_DB_HOST/PORT from .env). There is no `ports` mapping any more, so
+    # the exposure of the API is decided by uvicorn's --host, i.e. JOBS_RADAR_API_BIND (ADR-009).
+    network_mode: host
+    # Migrations run before the server starts.
     command: >
       sh -c "alembic upgrade head &&
-             uvicorn jobs_radar.api.app:create_app --factory --host 0.0.0.0 --port 8000"
-    ports:
-      - "${JOBS_RADAR_API_BIND:-127.0.0.1}:${JOBS_RADAR_API_PORT:-8100}:8000"
+             uvicorn jobs_radar.api.app:create_app --factory
+             --host ${JOBS_RADAR_API_BIND:-127.0.0.1} --port ${JOBS_RADAR_API_PORT:-8100}"
     depends_on:
       db:
         condition: service_healthy
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      test: ["CMD", "python", "-c", "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:%s/healthz' % os.environ.get('JOBS_RADAR_API_PORT', '8100'), timeout=3)"]
       interval: 5s
       timeout: 5s
       retries: 30
@@ -54,15 +51,11 @@ services:
       context: ./backend
     env_file:
       - .env
-    environment:
-      JOBS_RADAR_DB_HOST: db
-      JOBS_RADAR_DB_PORT: "5432"
+    network_mode: host  # same reason as the api service
     command: ["python", "-m", "jobs_radar.worker"]
     depends_on:
       api:
         condition: service_healthy
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     restart: unless-stopped
 
   # In development the frontend runs outside containers (ADR-019): `./jobs-radar.sh --frontend-start`.

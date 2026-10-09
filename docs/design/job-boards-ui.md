@@ -103,16 +103,17 @@ Himalayas settings
 | Never run | "Never run" (dashed circle) | |
 | Running | "Running…" (spinner) | polling as today |
 | Updated / unchanged | "Updated" / "Unchanged" (check) | boards without ETag report "Updated" when postings changed |
-| Partial | "Partial — limit reached" (alert, caution tone) | new; run hit the per-run limit, nothing was closed (ADR-049.5) |
+| Partial | "Partial: limit reached" (warning triangle, caution tone) | new; run hit the per-run limit, nothing was closed (ADR-049.5) |
+| Skipped | "Skipped: ran recently" (minus circle) | an all-sources run left the board alone because of its minimum interval |
 | Failed | "Failed" (alert) + `error_message` + `error_class` | classes include new `authentication` |
 | Disabled | "Disabled" (minus) | |
-| Too soon | Run now disabled with `title`/text "Allowed again at 14:05" | server returns `409 too_soon`; the client uses `next_run_allowed_at` from `SourceRead` so it normally never gets the 409 |
+| Too soon | Run now disabled and "Next run allowed {time}" under the status | server returns `409 too_soon`; the client uses `next_run_allowed_at` from `SourceRead` so it normally never gets the 409 |
 
 ## 6. Where the board shows up elsewhere
 
-- **Inbox row** (`JobRow`): a small text chip with the board name next to the company, only for postings from a job board ("via Himalayas"); company-board postings show nothing new.
-- **Job detail** (`JobDetail`): a "Sources" line listing each listing of the opportunity: "Anthropic careers (Greenhouse)" and "Himalayas ↗". The link goes to the board's canonical URL (this is also the attribution the board's terms ask for). Where the catalogue says so: "Delayed up to 24 h by Remotive".
-- **About & credits**: one entry per board that is currently added (name, link, short attribution text).
+- **Inbox row** (`JobRow`): a small text chip next to the place, only when a job board lists the job: "via Himalayas", or "also on Jobicy" when the company's own board has it too. Company-board postings show nothing new.
+- **Job detail** (`JobDetail`): the existing "Where this job was seen" list already names every listing of the opportunity with a link to its canonical URL, which is also the attribution the boards' terms ask for. No change was needed. (A per-posting "delayed" note is shown only in the board's settings panel.)
+- **About & credits**: one static entry naming the four boards with links (the page needs no data), saying each posting shows its board and links back.
 - **Trends**: no new widget; enabling, disabling or filtering a board appears through the existing source-change marker.
 
 ## 7. API changes (the implementation will regenerate `openapi.json` and `schema.d.ts`)

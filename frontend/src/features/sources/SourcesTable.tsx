@@ -1,26 +1,8 @@
-import {
-  CircleAlert,
-  CircleCheck,
-  CircleDashed,
-  CircleMinus,
-  Loader,
-  RefreshCw,
-} from 'lucide-react'
-import type { ReactNode } from 'react'
+import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { formatDateTime } from '@/lib/format'
-import { cn } from '@/lib/utils'
 import type { CollectionRunRead, SourceRead } from './queries'
-import { statusOf, type StatusKind } from './status'
-
-const STATUS_STYLE: Record<StatusKind, { icon: ReactNode; tone: string }> = {
-  running: { icon: <Loader className="size-3.5 animate-spin" />, tone: 'text-brand-text' },
-  succeeded: { icon: <CircleCheck className="size-3.5" />, tone: 'text-good' },
-  unchanged: { icon: <CircleCheck className="size-3.5" />, tone: 'text-good' },
-  failed: { icon: <CircleAlert className="size-3.5" />, tone: 'text-bad' },
-  never: { icon: <CircleDashed className="size-3.5" />, tone: 'text-ink-3' },
-  disabled: { icon: <CircleMinus className="size-3.5" />, tone: 'text-ink-3' },
-}
+import { StatusCell } from './StatusCell'
 
 interface Props {
   sources: SourceRead[]
@@ -62,8 +44,6 @@ export function SourcesTable({ sources, activeRun, busy, onRun, onToggle }: Prop
       </thead>
       <tbody>
         {sources.map((source) => {
-          const status = statusOf(source, activeRun)
-          const style = STATUS_STYLE[status.kind]
           const result = source.last_result
           const name = source.company_name ?? source.display_name
           return (
@@ -73,16 +53,7 @@ export function SourcesTable({ sources, activeRun, busy, onRun, onToggle }: Prop
                 <div className="text-xs text-ink-3">{source.external_identifier}</div>
               </td>
               <td className="px-3.5 py-2.5">
-                <span className={cn('inline-flex items-center gap-1.5 font-semibold', style.tone)}>
-                  {style.icon}
-                  {status.label}
-                </span>
-                {result?.outcome === 'failed' && (
-                  <div className="mt-0.5 text-xs text-bad">
-                    <span>{result.error_message ?? 'The run failed.'}</span>{' '}
-                    {result.error_class && <span className="font-mono">{result.error_class}</span>}
-                  </div>
-                )}
+                <StatusCell source={source} activeRun={activeRun} />
               </td>
               <td className="px-3.5 py-2.5 text-right">{source.open_postings}</td>
               <td className="px-3.5 py-2.5 text-right">{result ? result.new_count : '—'}</td>

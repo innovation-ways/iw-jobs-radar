@@ -10,6 +10,16 @@ interface Props {
   onSelect: () => void
 }
 
+const COMPANY_BOARDS = new Set(['greenhouse', 'lever', 'ashby'])
+
+/** "via Himalayas" for a job-board posting, "also on Jobicy" when the company board has it too. */
+function boardChip(item: InboxItem): string | null {
+  const boards = item.sources.filter((source) => !COMPANY_BOARDS.has(source.source_type))
+  if (boards.length === 0) return null
+  const names = boards.map((source) => source.source_name).join(', ')
+  return boards.length < item.sources.length ? `also on ${names}` : `via ${names}`
+}
+
 const SIGNAL_TONE: Record<string, string> = {
   match: 'text-good',
   mismatch: 'text-bad',
@@ -57,6 +67,11 @@ export function JobRow({ item, selected, onSelect }: Props) {
               <span className="text-ink-3">·</span>
               <span className="truncate">{item.locations.join('; ')}</span>
             </>
+          )}
+          {boardChip(item) && (
+            <span className="shrink-0 rounded border border-line px-1.5 text-xs text-ink-3">
+              {boardChip(item)}
+            </span>
           )}
         </div>
         <ul

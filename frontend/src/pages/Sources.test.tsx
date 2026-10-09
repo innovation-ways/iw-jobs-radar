@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, within } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Sources } from './Sources'
@@ -110,9 +111,11 @@ function envelope(message: string, errorClass?: string) {
 function renderSources() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
-    <QueryClientProvider client={client}>
-      <Sources />
-    </QueryClientProvider>,
+    <MemoryRouter>
+      <QueryClientProvider client={client}>
+        <Sources />
+      </QueryClientProvider>
+    </MemoryRouter>,
   )
 }
 
@@ -132,6 +135,16 @@ describe('Sources screen', () => {
       if (path === '/api/v1/collection-runs')
         return Promise.resolve({ data: { items: runs, next_before_collection_run_id: null } })
       if (path === '/api/v1/settings/schedule') return Promise.resolve({ data: schedule })
+      if (path === '/api/v1/source-catalogue') return Promise.resolve({ data: { items: [] } })
+      if (path === '/api/v1/source-scope')
+        return Promise.resolve({
+          data: {
+            configured: true,
+            country_codes: ['PT'],
+            include_worldwide: true,
+            any_country: false,
+          },
+        })
       return Promise.reject(new Error(`unexpected GET ${path}`))
     })
   })

@@ -55,6 +55,13 @@ export function About() {
             <Ext href="https://www.greenhouse.com">Greenhouse</Ext>; each posting links back to its
             source.
           </li>
+          <li>
+            Job boards you add: <Ext href="https://www.arbeitnow.com">Arbeitnow</Ext>,{' '}
+            <Ext href="https://jobicy.com">Jobicy</Ext>,{' '}
+            <Ext href="https://himalayas.app">Himalayas</Ext> and{' '}
+            <Ext href="https://www.itjobs.pt">ITJobs.pt</Ext>. Each posting shows which board it
+            came from and links back to it.
+          </li>
         </ul>
       </section>
 

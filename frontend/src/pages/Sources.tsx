@@ -1,5 +1,6 @@
 import { Play } from 'lucide-react'
 import { AddBoardCard } from '@/features/sources/AddBoardCard'
+import { JobBoardsSection } from '@/features/sources/JobBoardsSection'
 import { useSourceActions, useSourcesData } from '@/features/sources/queries'
 import { RunHistory } from '@/features/sources/RunHistory'
 import { ScheduleCard } from '@/features/sources/ScheduleCard'
@@ -7,11 +8,14 @@ import { SourcesTable } from '@/features/sources/SourcesTable'
 import { Button } from '@/components/ui/button'
 
 /**
- * Sources screen: configured Greenhouse boards with their last result, adding a board, running one
- * board or all enabled boards, and the daily schedule.
+ * Sources screen: company boards (Greenhouse, one per company) and job boards (many companies,
+ * added from a catalogue) with their last result, running one source or all enabled sources, and
+ * the daily schedule.
  */
 export function Sources() {
   const { sources, runs, activeRun } = useSourcesData()
+  const companyBoards = sources.data?.filter((source) => source.category !== 'job_board')
+  const jobBoards = sources.data?.filter((source) => source.category === 'job_board') ?? []
   const { addBoard, runSource, runAll, setEnabled } = useSourceActions()
   const busy = Boolean(activeRun) || runSource.isPending || runAll.isPending
   const actionError = [runAll, runSource, setEnabled].find((mutation) => mutation.isError)?.error
@@ -19,7 +23,7 @@ export function Sources() {
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4 px-6 py-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <p className="text-ink-2">Greenhouse job boards · one board per company</p>
+        <p className="text-ink-2">Company boards and job boards · one run per day by default</p>
         <Button onClick={() => runAll.mutate()} disabled={busy}>
           <Play /> Run all now
         </Button>
@@ -40,7 +44,7 @@ export function Sources() {
       </div>
       <section aria-labelledby="boards" className="rounded-lg border border-line bg-surface">
         <h2 id="boards" className="border-b border-line px-4 py-3 text-sm font-semibold">
-          Configured boards
+          Company boards
         </h2>
         {sources.isPending && <p className="px-4 py-6 text-ink-3">Loading boards…</p>}
         {sources.isError && (
@@ -51,14 +55,14 @@ export function Sources() {
             </Button>
           </div>
         )}
-        {sources.data?.length === 0 && (
+        {companyBoards?.length === 0 && (
           <p className="px-4 py-6 text-ink-2">
             No boards yet. Add a board token above to start collecting jobs.
           </p>
         )}
-        {sources.data && sources.data.length > 0 && (
+        {companyBoards && companyBoards.length > 0 && (
           <SourcesTable
-            sources={sources.data}
+            sources={companyBoards}
             activeRun={activeRun}
             busy={busy}
             onRun={(source) => runSource.mutate(source.source_configuration_id)}
@@ -72,6 +76,12 @@ export function Sources() {
           />
         )}
       </section>
+      <JobBoardsSection
+        sources={jobBoards}
+        activeRun={activeRun}
+        busy={busy}
+        onRun={(source) => runSource.mutate(source.source_configuration_id)}
+      />
       {runs.data && <RunHistory runs={runs.data} />}
     </div>
   )

@@ -5,6 +5,11 @@ import { unwrap } from '@/api/errors'
 import type { components } from '@/api/schema'
 
 export type SourceRead = components['schemas']['SourceRead']
+export type CatalogueEntryRead = components['schemas']['CatalogueEntryRead']
+export type SourcePreviewRead = components['schemas']['SourcePreviewRead']
+export type SourceScopeRead = components['schemas']['SourceScopeRead']
+/** The API marks fields with defaults as optional, but it always sends all of them. */
+export type JobBoardFilters = Required<components['schemas']['JobBoardFilters']>
 export type CollectionRunRead = components['schemas']['CollectionRunRead']
 
 const SOURCES = ['sources'] as const
@@ -89,6 +94,104 @@ export function useSourceActions() {
     onSettled: refresh,
   })
   return { addBoard, runSource, runAll, setEnabled }
+}
+
+const CATALOGUE = ['source-catalogue'] as const
+const SCOPE = ['source-scope'] as const
+
+/** The job boards that can be added, marking those already configured. */
+export function useCatalogue() {
+  return useQuery({
+    queryKey: CATALOGUE,
+    queryFn: async () => (await unwrap(api.GET('/api/v1/source-catalogue'))).items,
+  })
+}
+
+/** Where job boards look for postings, derived from the profile and the enabled intents. */
+export function useSourceScope() {
+  return useQuery({
+    queryKey: SCOPE,
+    queryFn: () => unwrap(api.GET('/api/v1/source-scope')),
+  })
+}
+
+/** What the owner enters to preview or add a catalogue board. */
+export interface BoardDraft {
+  catalogueKey: string
+  credential?: string
+  filters: JobBoardFilters
+}
+
+/** Mutations of the Job boards section; each refreshes what it changes. */
+export function useJobBoardActions() {
+  const queryClient = useQueryClient()
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: SOURCES }),
+      queryClient.invalidateQueries({ queryKey: CATALOGUE }),
+    ])
+  const credentialOf = (draft: BoardDraft) =>
+    draft.credential?.trim() ? { credential: draft.credential.trim() } : {}
+
+  const previewBoard = useMutation({
+    mutationFn: (draft: BoardDraft) =>
+      unwrap(
+        api.POST('/api/v1/sources/preview', {
+          body: {
+            catalogue_key: draft.catalogueKey,
+            filters: draft.filters,
+            ...credentialOf(draft),
+          },
+        }),
+      ),
+  })
+  const addJobBoard = useMutation({
+    mutationFn: (draft: BoardDraft) =>
+      unwrap(
+        api.POST('/api/v1/sources', {
+          // For a catalogue board the type and the identifier are both the catalogue key.
+          body: {
+            source_type: draft.catalogueKey as SourceRead['source_type'],
+            external_identifier: draft.catalogueKey,
+            enabled: true,
+            filters: draft.filters,
+            ...credentialOf(draft),
+          },
+        }),
+      ),
+    onSuccess: refresh,
+  })
+  const saveFilters = useMutation({
+    mutationFn: (change: { id: number; version: number; filters: JobBoardFilters }) =>
+      unwrap(
+        api.PUT('/api/v1/sources/{source_configuration_id}', {
+          params: { path: { source_configuration_id: change.id } },
+          body: { expected_version: change.version, filters: change.filters },
+        }),
+      ),
+    // Refresh even on failure: a version conflict means the list on screen is stale.
+    onSettled: refresh,
+  })
+  const writeKey = useMutation({
+    mutationFn: (change: { id: number; secret: string }) =>
+      unwrap(
+        api.PUT('/api/v1/sources/{source_configuration_id}/credential', {
+          params: { path: { source_configuration_id: change.id } },
+          body: { secret: change.secret },
+        }),
+      ),
+    onSettled: refresh,
+  })
+  const removeKey = useMutation({
+    mutationFn: (id: number) =>
+      unwrap(
+        api.DELETE('/api/v1/sources/{source_configuration_id}/credential', {
+          params: { path: { source_configuration_id: id } },
+        }),
+      ),
+    onSettled: refresh,
+  })
+  return { previewBoard, addJobBoard, saveFilters, writeKey, removeKey }
 }
 
 export type ScheduleRead = components['schemas']['ScheduleRead']

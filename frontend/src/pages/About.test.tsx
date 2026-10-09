@@ -23,6 +23,9 @@ describe('About & credits', () => {
     expect(within(credits).getByRole('link', { name: 'Wikidata' })).toBeInTheDocument()
     expect(within(credits).getByRole('link', { name: 'GLEIF' })).toBeInTheDocument()
     expect(within(credits).getByRole('link', { name: 'Greenhouse' })).toBeInTheDocument()
+    for (const board of ['Arbeitnow', 'Jobicy', 'Himalayas', 'ITJobs.pt']) {
+      expect(within(credits).getByRole('link', { name: board })).toBeInTheDocument()
+    }
   })
 
   it('states the known limitations and where the data stays', () => {

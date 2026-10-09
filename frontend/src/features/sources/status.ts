@@ -1,6 +1,7 @@
 import type { CollectionRunRead, SourceRead } from './queries'
 
-export type StatusKind = 'running' | 'succeeded' | 'unchanged' | 'failed' | 'never' | 'disabled'
+export type StatusKind =
+  'running' | 'succeeded' | 'unchanged' | 'partial' | 'skipped' | 'failed' | 'never' | 'disabled'
 
 /** Whether the active run is collecting (or will collect) this source and has no result yet. */
 function isBeingCollected(source: SourceRead, run: CollectionRunRead | undefined): boolean {
@@ -26,6 +27,10 @@ export function statusOf(
       return { kind: 'succeeded', label: 'Succeeded' }
     case 'not_modified':
       return { kind: 'unchanged', label: 'Unchanged' }
+    case 'partial':
+      return { kind: 'partial', label: 'Partial: limit reached' }
+    case 'skipped':
+      return { kind: 'skipped', label: 'Skipped: ran recently' }
     default:
       return { kind: 'failed', label: 'Failed' }
   }

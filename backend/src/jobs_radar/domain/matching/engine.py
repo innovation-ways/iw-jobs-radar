@@ -29,7 +29,8 @@ from jobs_radar.domain.matching.types import (
 )
 from jobs_radar.domain.regions import regions_intersect
 
-POLICY_VERSION = "matching-v1"
+# matching-v1.1 (ADR-052): same rules as matching-v1; the input mapping now reads country names.
+POLICY_VERSION = "matching-v1.1"
 
 ZERO, HALF, ONE = Fraction(0), Fraction(1, 2), Fraction(1)
 _STANCE = {"preferred": ONE, "acceptable": HALF, "rejected": ZERO}

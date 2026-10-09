@@ -88,7 +88,7 @@ export function DimensionList({ dimensions }: { dimensions: Dimension[] }) {
               </h4>
               <p className="text-[13px] text-ink-2">{dimension.explanation}</p>
               <p className="mt-2 text-[11px] text-ink-3">
-                matching-v1 · {dimension.contribution} of {dimension.weight} points
+                {dimension.contribution} of {dimension.weight} points
               </p>
             </div>
           </li>

@@ -8,7 +8,7 @@ import { useCatalogue, useJobBoardActions, type JobBoardFilters, type SourceRead
 
 type Actions = ReturnType<typeof useJobBoardActions>
 
-const FALLBACK_CATEGORIES = ['software', 'data', 'devops', 'security']
+const FALLBACK_CATEGORIES = ['software', 'data', 'devops', 'security', 'telecom']
 
 function sameFilters(a: JobBoardFilters, b: JobBoardFilters): boolean {
   return JSON.stringify(a) === JSON.stringify(b)

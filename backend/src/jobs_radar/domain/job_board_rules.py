@@ -178,6 +178,11 @@ _AREAS: dict[str, re.Pattern[str]] = {
         r"sysadmin|system administrator|terraform|linux)\b",
         re.IGNORECASE,
     ),
+    "telecom": re.compile(
+        r"\b(bss|oss|billing|telecom|telecoms|telecommunications?|charging|mediation|"
+        r"revenue assurance|convergent|ocs|ocf)\b",
+        re.IGNORECASE,
+    ),
     "security": re.compile(
         r"\b(security|cybersecurity|infosec|appsec|pentest|pentester|pentesting)\b", re.IGNORECASE
     ),

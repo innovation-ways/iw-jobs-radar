@@ -64,7 +64,7 @@ function createStub() {
         ? null
         : {
             match_evaluation_id: 900 + job.id,
-            policy_version: 'matching-v1',
+            policy_version: 'matching-v1.1',
             fit_score: job.score,
             fit_band: job.score >= 80 ? 'excellent' : 'average',
             recommendation: 'recommended',

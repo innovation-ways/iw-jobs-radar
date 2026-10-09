@@ -125,3 +125,32 @@ def test_an_intent_becomes_stances_rules_pay_and_weights() -> None:
     assert view.can_work_in == frozenset({"pt", "en"}) and view.reject_unspoken_required is True
     assert view.weights["compensation"] == 10 and view.weights["qualifications"] == 0
     assert Decimal(view.weights["role_responsibilities"]) == 25
+
+
+def stored_regions(regions: list[str]) -> dict[str, object]:
+    output = sample_extraction_output()
+    output["remote_regions"] = {
+        "value": regions,
+        "status": "known",
+        "confidence": 0.9,
+        "evidence": "within EU time zones",
+    }
+    return stored(output=output)
+
+
+def test_regions_named_as_countries_are_turned_into_codes_the_engine_understands() -> None:
+    job = job_attributes(stored_regions(["Austria", "Portugal", "EU", "uk"]), "T", "D", "Acme")
+    # Names become ISO codes; groups and codes are left for the engine (ADR-052).
+    assert job.remote_regions == ("AT", "PT", "EU", "uk")
+
+
+def test_a_region_that_is_not_a_country_is_kept_as_written() -> None:
+    job = job_attributes(stored_regions(["EMEA", "Worldwide"]), "T", "D", "Acme")
+    assert job.remote_regions == ("EMEA", "Worldwide")
+
+
+def test_a_job_open_only_to_austria_is_a_mismatch_for_an_owner_in_portugal() -> None:
+    from jobs_radar.domain.regions import regions_intersect
+
+    job = job_attributes(stored_regions(["Austria"]), "T", "D", "Acme")
+    assert regions_intersect(job.remote_regions or (), ("PT",)) is False

@@ -6,6 +6,7 @@ stays ``None`` or empty so the engine treats it as unknown.
 
 from typing import Any
 
+from jobs_radar.adapters.sources.countries import country_code
 from jobs_radar.domain.matching.types import (
     IntentView,
     JobAttributes,
@@ -33,6 +34,20 @@ _QUOTED = (
     "languages_required",
     "visa_sponsorship",
 )
+
+
+def _region_codes(regions: list[str]) -> tuple[str, ...]:
+    """Turn country names ("Austria") into ISO codes; groups (EU), codes and others are kept.
+
+    The model often writes a country by its name, which the matching engine cannot recognise, so
+    a job open only to Austria would count as "regions not recognised" instead of a mismatch
+    (ADR-052).
+    """
+    result: list[str] = []
+    for region in regions:
+        code = country_code(region) if len(region.strip()) > 2 else None
+        result.append(code or region)
+    return tuple(result)
 
 
 def _known[T](attribute: Evidenced[T]) -> T | None:
@@ -74,7 +89,7 @@ def job_attributes(
         company_name=company_name,
         role_families=tuple((r.key, r.confidence) for r in output.role_families),
         work_mode=_known(output.work_mode),
-        remote_regions=tuple(regions) if regions is not None else None,
+        remote_regions=_region_codes(regions) if regions is not None else None,
         locations=locations,
         employment_types=tuple(employment) if employment is not None else None,
         hours=_known(output.hours),

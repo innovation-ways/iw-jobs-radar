@@ -117,7 +117,7 @@ def test_filter_defaults_follow_adr_049() -> None:
     assert filters.max_age_days == 30
     assert filters.max_postings_per_run == 500
     assert filters.search_terms == []
-    assert filters.categories == ["software", "data", "devops", "security"]
+    assert filters.categories == ["software", "data", "devops", "security", "telecom"]
 
 
 def test_filters_round_trip_through_json_for_config_json() -> None:

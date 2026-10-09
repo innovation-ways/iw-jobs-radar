@@ -63,7 +63,7 @@ async def test_an_evaluation_is_persisted_with_every_input_and_all_dimensions(
         w.profile_revision_id,
         w.intent_revision_id,
     )
-    assert evaluation.policy_version == "matching-v1"
+    assert evaluation.policy_version == "matching-v1.1"
     assert evaluation.job_source_hash.startswith("sha256:")
     assert 0 <= evaluation.fit_score <= 100 and evaluation.recommendation in {
         "recommended",

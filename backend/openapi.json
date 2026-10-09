@@ -1775,8 +1775,8 @@
             "type": "integer"
           },
           "policy_version": {
-            "const": "matching-v1",
-            "default": "matching-v1",
+            "const": "matching-v1.1",
+            "default": "matching-v1.1",
             "title": "Policy Version",
             "type": "string"
           },

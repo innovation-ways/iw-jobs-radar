@@ -20,7 +20,7 @@ vi.mock('@/api/client', () => ({
 
 const FILTERS = {
   schema_version: 1,
-  categories: ['software', 'data', 'devops', 'security'],
+  categories: ['software', 'data', 'devops', 'security', 'telecom'],
   search_terms: [] as string[],
   max_age_days: 30,
   max_postings_per_run: 500,
@@ -102,7 +102,7 @@ function entry(key: string, name: string, extra: Record<string, unknown> = {}) {
     delay_note: null,
     min_interval_minutes: 60,
     default_filters: FILTERS,
-    available_categories: ['software', 'data', 'devops', 'security'],
+    available_categories: ['software', 'data', 'devops', 'security', 'telecom'],
     already_added: false,
     ...extra,
   }

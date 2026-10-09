@@ -11,7 +11,7 @@ from pydantic import AfterValidator, Field, StringConstraints
 from jobs_radar.schemas.common import StrictModel
 
 # Technology areas a board entry can be narrowed to; each adapter maps its own tags onto them.
-JOB_BOARD_CATEGORIES = ("software", "data", "devops", "security")
+JOB_BOARD_CATEGORIES = ("software", "data", "devops", "security", "telecom")
 
 CategoryKey = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]*$", max_length=40)]
 # Blank terms are dropped after stripping instead of rejected, so an empty form row is harmless.

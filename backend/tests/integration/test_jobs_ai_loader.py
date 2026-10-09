@@ -4,7 +4,7 @@ import pytest
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from jobs_radar.core.settings import Settings
+from jobs_radar.core.settings import Settings, get_settings
 from jobs_radar.db.models import PrivacySetting, ProviderConnection
 from jobs_radar.domain.enums import LOCAL_OWNER_ID
 from jobs_radar.services.jobs_ai import JobsAiLoader
@@ -26,7 +26,8 @@ async def add(session_factory: async_sessionmaker[AsyncSession], **values: objec
             owner_id=LOCAL_OWNER_ID,
             provider_type="ollama",
             display_name="Local",
-            endpoint_url="http://host.docker.internal:11434",
+            # The loader only accepts the configured local server, which a developer's .env may change.
+            endpoint_url=get_settings().ollama_url,
             model_id="qwen3:8b",
             config_json={"embedding_model": "emb-1"},
             **values,

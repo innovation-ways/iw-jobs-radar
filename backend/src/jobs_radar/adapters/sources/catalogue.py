@@ -121,3 +121,8 @@ def get_entry(catalogue_key: str) -> CatalogueEntry | None:
 def available_entries() -> tuple[CatalogueEntry, ...]:
     """Entries the owner may add now (unfinished adapters are left out)."""
     return tuple(entry for entry in CATALOGUE if entry.available)
+
+
+def require_entry(catalogue_key: str) -> CatalogueEntry:
+    """Return the entry with ``catalogue_key``; raises ``KeyError`` if the catalogue lacks it."""
+    return _BY_KEY[catalogue_key]

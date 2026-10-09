@@ -18,16 +18,15 @@ from jobs_radar.adapters.sources.base import (
     SourceCheckpoint,
     SourceError,
     SourcePosting,
-    source_error_from_fetch,
 )
 from jobs_radar.adapters.sources.html_text import html_to_text
-from jobs_radar.core.http import FetchError, GuardedHttpClient, HttpResponse
+from jobs_radar.adapters.sources.polite_http import PoliteGetter
+from jobs_radar.core.http import GuardedHttpClient, HttpResponse
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
+from jobs_radar.schemas.source_filters import JobBoardFilters
 
 BASE_URL = "https://boards-api.greenhouse.io/v1/boards"
 _TOKEN = re.compile(r"^[A-Za-z0-9_-]{1,100}$")
-_MAX_ATTEMPTS = 3
-_MAX_BACKOFF_SECONDS = 60.0
 
 
 def _invalid(message: str) -> SourceError:
@@ -108,9 +107,12 @@ class GreenhouseAdapter:
         sleep: Any = asyncio.sleep,
         limiter: RateLimiter | None = None,
     ) -> None:
-        self._client = client
-        self._sleep = sleep
-        self._limiter = limiter or RateLimiter()
+        self._getter = PoliteGetter(
+            client,
+            sleep=sleep,
+            limiter=limiter,
+            not_found_message="The board was not found. Check the board token.",
+        )
 
     def endpoint(self, identifier: str) -> str:
         """Return the jobs endpoint stored in the source configuration."""
@@ -123,7 +125,12 @@ class GreenhouseAdapter:
             raise SourceError(SourceErrorClass.CONFIGURATION, msg)
         return identifier
 
-    async def validate(self, identifier: str) -> BoardInfo:
+    async def validate(
+        self,
+        identifier: str,
+        credential: str | None = None,
+        filters: JobBoardFilters | None = None,
+    ) -> BoardInfo:
         """Check the board exists and return its name and number of postings."""
         token = self._token(identifier)
         board = self._json(await self._get(f"{BASE_URL}/{token}", {}, token, per_minute=6))
@@ -165,51 +172,13 @@ class GreenhouseAdapter:
             total if isinstance(total, int) else None,
         )
 
-    # --- HTTP with bounded retries -------------------------------------------------------------
+    # --- HTTP -----------------------------------------------------------------------------------
 
     async def _get(
         self, url: str, headers: dict[str, str], key: str, *, per_minute: int
     ) -> HttpResponse:
-        """GET with rate limiting; retries 429 and 5xx at most ``_MAX_ATTEMPTS`` times in total."""
-        last_class = SourceErrorClass.UNKNOWN
-        last_status = 0
-        for attempt in range(1, _MAX_ATTEMPTS + 1):
-            await self._limiter.wait(key, per_minute)
-            try:
-                response = await self._client.get(url, headers=headers)
-            except FetchError as exc:
-                raise source_error_from_fetch(exc) from exc
-            status = response.status
-            if status in (200, 304):
-                return response
-            if status == 404:
-                msg = "The board was not found. Check the board token."
-                raise SourceError(SourceErrorClass.NOT_FOUND, msg, http_status=status)
-            if status == 429 or status >= 500:
-                last_class = (
-                    SourceErrorClass.RATE_LIMITED
-                    if status == 429
-                    else SourceErrorClass.SERVER_ERROR
-                )
-                last_status = status
-                if attempt < _MAX_ATTEMPTS:
-                    await self._sleep(self._backoff(response, attempt))
-                continue
-            msg = f"The source answered with an unexpected status ({status})."
-            raise SourceError(SourceErrorClass.HTTP_ERROR, msg, http_status=status)
-        msg = (
-            "The source is limiting requests; try again later."
-            if last_class is SourceErrorClass.RATE_LIMITED
-            else "The source reported an error; try again later."
-        )
-        raise SourceError(last_class, msg, http_status=last_status)
-
-    @staticmethod
-    def _backoff(response: HttpResponse, attempt: int) -> float:
-        """Seconds to wait: ``Retry-After`` if the source sent one, else 2, 4, ... (capped)."""
-        header = response.headers.get("retry-after", "")
-        wait = float(header) if header.isdigit() else float(2**attempt)
-        return min(wait, _MAX_BACKOFF_SECONDS)
+        """GET with rate limiting and bounded retries (see :class:`PoliteGetter`)."""
+        return await self._getter.get(url, headers, key, per_minute=per_minute)
 
     # --- payload parsing --------------------------------------------------------------------
 

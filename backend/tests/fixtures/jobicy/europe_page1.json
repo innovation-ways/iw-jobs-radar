@@ -1,0 +1,77 @@
+{
+  "apiVersion": "2.2.19",
+  "friendlyNotice": "Credit Jobicy",
+  "jobCount": 3,
+  "lastUpdate": "2026-10-08T12:00:00+00:00",
+  "nextCursor": "CURSOR2",
+  "hasMore": true,
+  "appliedFilters": {
+    "count": 100,
+    "geo": "europe"
+  },
+  "statusCode": 200,
+  "success": true,
+  "jobs": [
+    {
+      "id": 5001,
+      "url": "https://jobicy.com/jobs/5001-senior-python-developer",
+      "jobSlug": "5001-x",
+      "jobTitle": "Senior Python Developer",
+      "companyName": "Acme Robotics",
+      "companyLogo": "https://jobicy.com/logo.png",
+      "jobIndustry": [
+        "Engineering"
+      ],
+      "jobType": [
+        "Full-Time"
+      ],
+      "jobGeo": "Europe",
+      "jobLevel": "Senior",
+      "jobExcerpt": "Short excerpt.",
+      "jobDescription": "<p>Work on <strong>synthetic</strong> systems.</p>",
+      "pubDate": "2026-10-08T12:00:00+00:00",
+      "salaryMin": 60000,
+      "salaryMax": 80000,
+      "salaryCurrency": "EUR",
+      "salaryPeriod": "yearly"
+    },
+    {
+      "id": 5002,
+      "url": "https://jobicy.com/jobs/5002-account-executive",
+      "jobSlug": "5002-x",
+      "jobTitle": "Account Executive",
+      "companyName": "Hooli",
+      "companyLogo": "https://jobicy.com/logo.png",
+      "jobIndustry": [
+        "Marketing & Sales"
+      ],
+      "jobType": [
+        "Full-Time"
+      ],
+      "jobGeo": "Europe",
+      "jobLevel": "Senior",
+      "jobExcerpt": "Short excerpt.",
+      "jobDescription": "<p>Work on <strong>synthetic</strong> systems.</p>",
+      "pubDate": "2026-10-08T12:00:00+00:00"
+    },
+    {
+      "id": 5003,
+      "url": "https://jobicy.com/jobs/5003-data-analyst",
+      "jobSlug": "5003-x",
+      "jobTitle": "Data Analyst",
+      "companyName": "Initech GmbH",
+      "companyLogo": "https://jobicy.com/logo.png",
+      "jobIndustry": [
+        "Data Science & Analytics"
+      ],
+      "jobType": [
+        "Full-Time"
+      ],
+      "jobGeo": "Germany",
+      "jobLevel": "Senior",
+      "jobExcerpt": "Short excerpt.",
+      "jobDescription": "<p>Work on <strong>synthetic</strong> systems.</p>",
+      "pubDate": "2026-10-07T12:00:00+00:00"
+    }
+  ]
+}

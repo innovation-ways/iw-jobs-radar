@@ -7,12 +7,13 @@ and never decides fit or inbox state; it only fetches, validates and maps.
 import asyncio
 import time
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Literal, Protocol
 
 from jobs_radar.core.http import FetchError
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
+from jobs_radar.schemas.source_filters import JobBoardFilters
 
 
 class SourceError(Exception):
@@ -53,6 +54,10 @@ class SourceCheckpoint:
     url: str
     etag: str | None
     rate_limit_per_minute: int
+    # Job boards only (ADR-049): the decrypted key and the owner's filters. The key is kept out of
+    # ``repr`` so it cannot reach a log line or a traceback.
+    credential: str | None = field(default=None, repr=False)
+    filters: JobBoardFilters | None = None
 
 
 @dataclass(frozen=True)
@@ -61,6 +66,10 @@ class BoardInfo:
 
     name: str
     postings_count: int
+    # Job boards: how many scanned postings pass the filters, for the add-board preview. It is a
+    # lower bound when the scan stopped at the per-run limit.
+    matching_count: int | None = None
+    matching_is_lower_bound: bool = False
 
 
 @dataclass(frozen=True)
@@ -92,6 +101,10 @@ class CollectionResult:
     http_status: int
     duration_ms: int
     declared_total: int | None
+    # Job boards (ADR-049.4/5): postings left out by the filters, and whether the run stopped at
+    # its limit (a truncated run must not close postings).
+    dropped_count: int = 0
+    truncated: bool = False
 
 
 class JobSourceAdapter(Protocol):
@@ -103,7 +116,12 @@ class JobSourceAdapter(Protocol):
         """Return the URL stored in the source configuration for ``identifier``."""
         ...
 
-    async def validate(self, identifier: str) -> BoardInfo:
+    async def validate(
+        self,
+        identifier: str,
+        credential: str | None = None,
+        filters: JobBoardFilters | None = None,
+    ) -> BoardInfo:
         """Check that the board exists and describe it. Raises :class:`SourceError`."""
         ...
 

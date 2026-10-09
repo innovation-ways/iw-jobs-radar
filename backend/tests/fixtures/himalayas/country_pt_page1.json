@@ -1,0 +1,74 @@
+{
+  "comments": "Cursor pagination note",
+  "updatedAt": 1791460800,
+  "offset": 0,
+  "limit": 2,
+  "totalCount": 3,
+  "jobs": [
+    {
+      "title": "Backend Engineer",
+      "excerpt": "Short.",
+      "companyName": "Acme Robotics",
+      "companySlug": "acme-robotics",
+      "companyLogo": "https://cdn.example.test/l.png",
+      "employmentType": "Full Time",
+      "minSalary": 55000,
+      "maxSalary": 75000,
+      "salaryPeriod": "annual",
+      "seniority": [
+        "Senior"
+      ],
+      "currency": "EUR",
+      "locationRestrictions": [
+        "Portugal",
+        "Spain"
+      ],
+      "timezoneRestrictions": [],
+      "categories": [
+        "Backend-Engineer"
+      ],
+      "parentCategories": [
+        "Engineering"
+      ],
+      "description": "<p>Build <em>synthetic</em> things.</p>",
+      "pubDate": 1791460800,
+      "expiryDate": 1796460800,
+      "applicationLink": "https://himalayas.app/companies/acme/jobs/backend-engineer",
+      "guid": "https://himalayas.app/companies/acme/jobs/backend-engineer"
+    },
+    {
+      "title": "Data Scientist",
+      "excerpt": "Short.",
+      "companyName": "Globex Labs",
+      "companySlug": "globex-labs",
+      "companyLogo": "https://cdn.example.test/l.png",
+      "employmentType": "Full Time",
+      "minSalary": null,
+      "maxSalary": null,
+      "salaryPeriod": null,
+      "seniority": [
+        "Senior"
+      ],
+      "currency": null,
+      "locationRestrictions": [
+        {
+          "alpha2": "PT",
+          "name": "Portugal",
+          "slug": "portugal"
+        }
+      ],
+      "timezoneRestrictions": [],
+      "categories": [
+        "Data-Scientist"
+      ],
+      "parentCategories": [
+        "Data Science"
+      ],
+      "description": "<p>Build <em>synthetic</em> things.</p>",
+      "pubDate": 1791374400,
+      "expiryDate": 1796374400,
+      "applicationLink": "https://himalayas.app/companies/globex/jobs/data-scientist",
+      "guid": "https://himalayas.app/companies/globex/jobs/data-scientist"
+    }
+  ]
+}

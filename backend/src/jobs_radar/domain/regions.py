@@ -52,6 +52,11 @@ def _expand(regions: Iterable[str]) -> tuple[frozenset[str] | None, bool]:
     return frozenset(countries), recognised
 
 
+def expand_regions(regions: Iterable[str]) -> tuple[frozenset[str] | None, bool]:
+    """Public form of the expansion: ``(countries, recognised)``; ``None`` countries is WORLD."""
+    return _expand(regions)
+
+
 def regions_intersect(job_regions: Sequence[str], user_regions: Sequence[str]) -> bool | None:
     """Whether remote work in ``job_regions`` is open to someone in ``user_regions``.
 

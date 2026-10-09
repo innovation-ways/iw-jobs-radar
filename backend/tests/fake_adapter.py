@@ -11,6 +11,7 @@ from jobs_radar.adapters.sources.base import (
     SourcePosting,
 )
 from jobs_radar.domain.enums import SourceType
+from jobs_radar.schemas.source_filters import JobBoardFilters
 
 
 def make_posting(
@@ -58,7 +59,12 @@ class FakeAdapter:
     def endpoint(self, identifier: str) -> str:
         return f"https://boards.example.test/v1/boards/{identifier}/jobs"
 
-    async def validate(self, identifier: str) -> BoardInfo:
+    async def validate(
+        self,
+        identifier: str,
+        credential: str | None = None,
+        filters: JobBoardFilters | None = None,
+    ) -> BoardInfo:
         if isinstance(self.board, Exception):
             raise self.board
         return self.board

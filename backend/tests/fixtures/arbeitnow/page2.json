@@ -1,0 +1,30 @@
+{
+  "data": [
+    {
+      "slug": "sre-remote-7",
+      "company_name": "Soylent",
+      "title": "Site Reliability Engineer",
+      "description": "&lt;div&gt;&lt;p&gt;Build and run synthetic services.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Python&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;",
+      "remote": true,
+      "url": "https://www.arbeitnow.com/jobs/companies/sre-remote-7",
+      "tags": [
+        "DevOps"
+      ],
+      "job_types": [
+        "full time"
+      ],
+      "location": "Portugal",
+      "created_at": 1791288000
+    }
+  ],
+  "links": {
+    "first": "x",
+    "last": null,
+    "prev": "x",
+    "next": null
+  },
+  "meta": {
+    "current_page": 2,
+    "per_page": 6
+  }
+}

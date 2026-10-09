@@ -1,0 +1,52 @@
+{
+  "apiVersion": "2.2.19",
+  "jobCount": 2,
+  "lastUpdate": "2026-10-08T12:00:00+00:00",
+  "nextCursor": null,
+  "hasMore": false,
+  "appliedFilters": {
+    "geo": "anywhere"
+  },
+  "statusCode": 200,
+  "success": true,
+  "jobs": [
+    {
+      "id": 6001,
+      "url": "https://jobicy.com/jobs/6001-machine-learning-engineer",
+      "jobSlug": "6001-x",
+      "jobTitle": "Machine Learning Engineer",
+      "companyName": "Globex Labs",
+      "companyLogo": "https://jobicy.com/logo.png",
+      "jobIndustry": [
+        "Data Science & Analytics"
+      ],
+      "jobType": [
+        "Full-Time"
+      ],
+      "jobGeo": "Anywhere",
+      "jobLevel": "Senior",
+      "jobExcerpt": "Short excerpt.",
+      "jobDescription": "<p>Work on <strong>synthetic</strong> systems.</p>",
+      "pubDate": "2026-10-07T12:00:00+00:00"
+    },
+    {
+      "id": 6002,
+      "url": "https://jobicy.com/jobs/6002-staff-security-engineer",
+      "jobSlug": "6002-x",
+      "jobTitle": "Staff Security Engineer",
+      "companyName": "Umbrella AG",
+      "companyLogo": "https://jobicy.com/logo.png",
+      "jobIndustry": [
+        "Cybersecurity"
+      ],
+      "jobType": [
+        "Full-Time"
+      ],
+      "jobGeo": "Anywhere",
+      "jobLevel": "Senior",
+      "jobExcerpt": "Short excerpt.",
+      "jobDescription": "<p>Work on <strong>synthetic</strong> systems.</p>",
+      "pubDate": "2026-08-30T12:00:00+00:00"
+    }
+  ]
+}

@@ -154,3 +154,23 @@ def test_a_source_posting_may_carry_the_company_name() -> None:
     )
     assert posting.company_name is None
     assert SourcePosting.__dataclass_fields__["company_name"].default is None
+
+
+# --- adapter contract ---------------------------------------------------------------------------
+
+
+def test_the_checkpoint_never_shows_the_credential_in_its_repr() -> None:
+    from jobs_radar.adapters.sources.base import SourceCheckpoint
+
+    checkpoint = SourceCheckpoint("x", "https://x.test", None, 6, credential="s3cret-key")
+    assert "s3cret-key" not in repr(checkpoint)
+    assert checkpoint.credential == "s3cret-key"
+
+
+def test_every_available_catalogue_entry_has_an_adapter() -> None:
+    from jobs_radar.adapters.sources.registry import build_source_adapters
+
+    adapters = build_source_adapters()
+    assert {entry.source_type for entry in available_entries()} <= set(adapters)
+    for entry in available_entries():
+        assert adapters[entry.source_type].endpoint(entry.catalogue_key) == entry.endpoint

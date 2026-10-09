@@ -1,0 +1,33 @@
+{
+  "apiVersion": "2.2.19",
+  "jobCount": 1,
+  "lastUpdate": "2026-10-08T12:00:00+00:00",
+  "nextCursor": null,
+  "hasMore": false,
+  "appliedFilters": {
+    "geo": "europe"
+  },
+  "statusCode": 200,
+  "success": true,
+  "jobs": [
+    {
+      "id": 5004,
+      "url": "https://jobicy.com/jobs/5004-cloud-platform-engineer",
+      "jobSlug": "5004-x",
+      "jobTitle": "Cloud Platform Engineer",
+      "companyName": "Soylent",
+      "companyLogo": "https://jobicy.com/logo.png",
+      "jobIndustry": [
+        "DevOps & Infrastructure"
+      ],
+      "jobType": [
+        "Full-Time"
+      ],
+      "jobGeo": "Europe",
+      "jobLevel": "Senior",
+      "jobExcerpt": "Short excerpt.",
+      "jobDescription": "<p>Work on <strong>synthetic</strong> systems.</p>",
+      "pubDate": "2026-10-06T12:00:00+00:00"
+    }
+  ]
+}

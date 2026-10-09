@@ -12,7 +12,8 @@ from jobs_radar.core.errors import (
     InputValidationError,
 )
 from jobs_radar.db.models import Company, SourceConfiguration, SourceRunResult
-from jobs_radar.domain.enums import SourceErrorClass, SourceType
+from jobs_radar.domain.enums import SourceCategory, SourceErrorClass, SourceType
+from jobs_radar.domain.sources import source_category
 from jobs_radar.repositories.companies import CompanyRepository
 from jobs_radar.repositories.jobs import JobRepository
 from jobs_radar.repositories.sources import SourceRepository
@@ -78,6 +79,11 @@ class SourceService:
             DependencyUnavailableError: if the source cannot be reached right now.
         """
         identifier = identifier.strip()
+        if source_category(source_type) is SourceCategory.JOB_BOARD:
+            msg = "Job boards are added from the catalogue, not by identifier."
+            raise InputValidationError(
+                msg, details={"error_class": SourceErrorClass.CONFIGURATION.value}
+            )
         if await self._sources.find(owner_id, source_type, identifier) is not None:
             msg = "This board is already configured."
             raise ConflictError(msg, details={"external_identifier": identifier})

@@ -1,10 +1,13 @@
 """The extract-v1 prompt: what the model is told and given (document 13, section 6)."""
 
 import json
+from collections.abc import Iterator
+from typing import Any
 
 from tests.data import SAMPLE_JOB_DESCRIPTION, SAMPLE_JOB_TITLE
 
 from jobs_radar.domain.enums import EXTRACTION_PROMPT_VERSION
+from jobs_radar.schemas.extraction import ExtractedSkill
 from jobs_radar.services.extraction_prompt import build_prompt
 
 TAXONOMY = {
@@ -91,3 +94,47 @@ def test_hints_are_labelled_as_possibly_wrong() -> None:
 def test_empty_hints_are_omitted_cleanly() -> None:
     built = prompt(hints={})
     assert "Source hints" not in built.request.user
+
+
+# --- the schema sent to the model is bounded, so an answer cannot loop until it is cut off -------------
+
+
+def _walk(node: object) -> Iterator[dict[str, Any]]:
+    """Yield every dict in a JSON schema."""
+    if isinstance(node, dict):
+        yield node
+        for value in node.values():
+            yield from _walk(value)
+    elif isinstance(node, list):
+        for value in node:
+            yield from _walk(value)
+
+
+def _prompt_schema() -> dict[str, Any]:
+    prepared = build_prompt(title="T", description="D", hints={}, taxonomy={}, max_chars=1000)
+    return dict(prepared.request.json_schema)
+
+
+def test_every_list_in_the_schema_has_a_maximum_size() -> None:
+    arrays = [n for n in _walk(_prompt_schema()) if n.get("type") == "array"]
+    assert arrays and all("maxItems" in n for n in arrays)
+
+
+def test_the_prompt_limits_match_the_schema() -> None:
+    props = _prompt_schema()["properties"]
+    assert props["skills"]["maxItems"] == 25  # rule 7 of the prompt says "at most 25"
+    assert props["role_families"]["maxItems"] == 3  # rule 8: one to three families
+
+
+def test_every_quote_in_the_schema_is_at_most_200_characters() -> None:
+    quotes = [n["evidence"] for n in _walk(_prompt_schema()) if isinstance(n.get("evidence"), dict)]
+    assert quotes
+    for quote in quotes:
+        strings = [q for q in (quote.get("anyOf") or [quote]) if q.get("type") == "string"]
+        assert strings and all(s.get("maxLength") == 200 for s in strings)  # rule 2
+
+
+def test_the_validation_model_itself_is_not_tightened() -> None:
+    """Stored extractions must keep validating, so only the schema sent to the model is bounded."""
+    big = {"name": "x", "importance": "must", "evidence": "q" * 500}
+    ExtractedSkill.model_validate(big)

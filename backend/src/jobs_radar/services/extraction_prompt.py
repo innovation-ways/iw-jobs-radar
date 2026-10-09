@@ -8,6 +8,7 @@ quote its evidence verbatim, and to answer with a JSON object that follows the o
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from typing import Any
 
 from jobs_radar.adapters.providers.base import ExtractionRequest
 from jobs_radar.domain.text_match import truncate_text
@@ -46,6 +47,41 @@ SYSTEM_PROMPT = "\n".join(
         "10. Answer with the JSON object only.",
     ]
 )
+
+# Limits written into the schema sent to the model. Without them a small model can fall into a loop
+# (the same list item hundreds of times) until its output budget runs out and the JSON is cut off.
+# They repeat what the prompt already asks for; the validation model itself is not tightened, so
+# stored extractions keep validating.
+_MAX_SKILLS = 25  # rule 7
+_MAX_ROLE_FAMILIES = 3  # rule 8
+_MAX_LIST_ITEMS = 12  # any other list: regions, locations, languages, keys
+_MAX_QUOTE_CHARS = 200  # rule 2
+
+
+def bounded_schema() -> dict[str, Any]:
+    """Return the output schema with a maximum size for every list and every quote."""
+    schema = ExtractionOutput.model_json_schema()
+
+    def bound(node: Any) -> None:
+        if isinstance(node, dict):
+            if node.get("type") == "array":
+                node.setdefault("maxItems", _MAX_LIST_ITEMS)
+            quote = node.get("evidence")
+            if isinstance(quote, dict):
+                for variant in quote.get("anyOf") or [quote]:
+                    if variant.get("type") == "string":
+                        variant["maxLength"] = _MAX_QUOTE_CHARS
+            for value in node.values():
+                bound(value)
+        elif isinstance(node, list):
+            for value in node:
+                bound(value)
+
+    bound(schema)
+    schema["properties"]["skills"]["maxItems"] = _MAX_SKILLS
+    schema["properties"]["role_families"]["maxItems"] = _MAX_ROLE_FAMILIES
+    return schema
+
 
 _REPAIR_NOTE = (
     "Your previous answer was invalid: {problem}\n"
@@ -87,7 +123,7 @@ def build_prompt(
     request = ExtractionRequest(
         system=SYSTEM_PROMPT,
         user="\n\n".join(parts),
-        json_schema=ExtractionOutput.model_json_schema(),
+        json_schema=bounded_schema(),
     )
     return PreparedPrompt(request, used, truncated)
 

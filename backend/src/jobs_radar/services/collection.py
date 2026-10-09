@@ -278,7 +278,9 @@ class CollectionService:
                     # full: postings the filters now reject must go unseen to be closed (ADR-051).
                     etag=None if company_filters is not None else source.etag,
                     rate_limit_per_minute=source.rate_limit_per_minute,
-                    filters=filters,
+                    # Company boards pass their opt-in filters too, so an adapter that must read
+                    # details one by one (SmartRecruiters) can skip what would be dropped.
+                    filters=filters or company_filters,
                     scope=scope,
                     credential=credential,
                 ),

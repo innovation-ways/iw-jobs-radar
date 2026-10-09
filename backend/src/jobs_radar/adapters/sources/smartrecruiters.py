@@ -40,11 +40,18 @@ _TECH_FUNCTIONS = frozenset({"information_technology", "engineering"})
 _SECTIONS = ("jobDescription", "qualifications", "additionalInformation")
 
 
-def _looks_technical(item: dict[str, Any]) -> bool:
+def _looks_technical(item: dict[str, Any], areas: list[str] | None = None) -> bool:
+    """Whether a listed posting is worth reading in detail.
+
+    Without the owner's areas, SmartRecruiters' own function or a technology word in the title
+    is enough; with them, the title must belong to one of the chosen areas, so the detail limit is
+    spent on postings that can pass the filters.
+    """
     function = as_dict(item.get("function"))
-    if function.get("id") in _TECH_FUNCTIONS:
-        return True
-    return bool(categorise([clean(item.get("name")), clean(function.get("label"))]))
+    found = categorise([clean(item.get("name")), clean(function.get("label"))])
+    if areas:
+        return bool(found & set(areas))
+    return function.get("id") in _TECH_FUNCTIONS or bool(found)
 
 
 def _description(detail: dict[str, Any]) -> str:
@@ -145,6 +152,7 @@ class SmartRecruitersAdapter(CompanyBoardAdapter):
         # With the owner's location known (filters on), only the countries they can work in are
         # listed: a large company's postings elsewhere are never even read.
         scope = checkpoint.scope
+        areas = checkpoint.filters.categories if checkpoint.filters else None
         countries: list[str | None] = [None]
         if scope is not None and scope.country_codes and not scope.any_country:
             countries = [code.lower() for code in sorted(scope.country_codes)]
@@ -167,7 +175,7 @@ class SmartRecruitersAdapter(CompanyBoardAdapter):
                     if not posting_id or posting_id in seen:
                         continue
                     seen.add(posting_id)
-                    if _looks_technical(item):
+                    if _looks_technical(item, areas):
                         wanted.append(posting_id)
                     else:
                         dropped += 1

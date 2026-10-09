@@ -210,3 +210,19 @@ async def test_remote_work_from_anywhere_lists_every_country() -> None:
     scope = LocationScope(frozenset({"PT"}), include_worldwide=True, any_country=True)
     await build_ats(SmartRecruitersAdapter).collect(replace(ats_checkpoint("SynthCo"), scope=scope))
     assert all("country" not in call for call in scripted.calls)
+
+
+@respx.mock
+async def test_the_owners_areas_decide_which_details_are_read() -> None:
+    from dataclasses import replace
+
+    from jobs_radar.schemas.source_filters import JobBoardFilters
+
+    serve()
+    # "Senior DevOps Engineer" and "Data Platform Lead" are technical, but only data is wanted:
+    # no detail of the DevOps role (or of the HR and marketing roles) is requested.
+    filters = JobBoardFilters(categories=["data"])
+    checkpoint = replace(ats_checkpoint("SynthCo"), filters=filters)
+    result = await build_ats(SmartRecruitersAdapter).collect(checkpoint)
+    assert [p.external_job_id for p in result.postings] == ["744000154700005"]
+    assert result.truncated is False

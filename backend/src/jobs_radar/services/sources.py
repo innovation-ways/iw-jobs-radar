@@ -125,6 +125,13 @@ class SourceService:
         await self._session.flush()
         return source
 
+    async def added_types(self, owner_id: int) -> set[SourceType]:
+        """Return the source types the owner has already configured."""
+        return {
+            SourceType(source.source_type)
+            for source in await self._sources.list_for_owner(owner_id)
+        }
+
     async def get(self, owner_id: int, source_configuration_id: int) -> SourceConfiguration:
         """Return one of the owner's sources."""
         return await self._sources.get(owner_id, source_configuration_id)

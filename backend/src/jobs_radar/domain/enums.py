@@ -108,11 +108,22 @@ class Stance(StrEnum):
 
 
 class SourceType(StrEnum):
-    """Kind of job source adapter."""
+    """Kind of job source adapter: ATS company boards first, then job boards (ADR-049)."""
 
     GREENHOUSE = "greenhouse"
     LEVER = "lever"
     ASHBY = "ashby"
+    ARBEITNOW = "arbeitnow"
+    JOBICY = "jobicy"
+    HIMALAYAS = "himalayas"
+    ITJOBS_PT = "itjobs_pt"
+
+
+class SourceCategory(StrEnum):
+    """Whether a source is one company's board or a board with the postings of many companies."""
+
+    COMPANY_BOARD = "company_board"
+    JOB_BOARD = "job_board"
 
 
 class RunTrigger(StrEnum):
@@ -156,6 +167,7 @@ class SourceErrorClass(StrEnum):
     BLOCKED_URL = "blocked_url"
     HTTP_ERROR = "http_error"
     CONFIGURATION = "configuration"
+    AUTHENTICATION = "authentication"
     UNKNOWN = "unknown"
 
 

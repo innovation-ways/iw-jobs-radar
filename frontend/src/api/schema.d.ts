@@ -962,6 +962,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/source-catalogue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Source Catalogue
+         * @description List the job boards that can be added, marking those already configured.
+         */
+        get: operations["list_source_catalogue_api_v1_source_catalogue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sources": {
         parameters: {
             query?: never;
@@ -1201,6 +1221,52 @@ export interface components {
             source_name: string;
             /** Website */
             website: string | null;
+        };
+        /**
+         * CatalogueEntryRead
+         * @description A job board the owner can add; the endpoint stays inside the server.
+         */
+        CatalogueEntryRead: {
+            /** Already Added */
+            already_added: boolean;
+            /** Attribution Text */
+            attribution_text: string;
+            /** Available Categories */
+            available_categories: string[];
+            /** Catalogue Key */
+            catalogue_key: string;
+            /** Coverage Note */
+            coverage_note: string;
+            /** Credential Label */
+            credential_label: string | null;
+            default_filters: components["schemas"]["JobBoardFilters"];
+            /** Delay Note */
+            delay_note: string | null;
+            /** Display Name */
+            display_name: string;
+            /** Homepage Url */
+            homepage_url: string;
+            /** Min Interval Minutes */
+            min_interval_minutes: number;
+            /** Requires Credential */
+            requires_credential: boolean;
+            /** Terms Note */
+            terms_note: string;
+            /**
+             * Terms Read On
+             * Format: date
+             */
+            terms_read_on: string;
+            /** Terms Url */
+            terms_url: string;
+        };
+        /**
+         * CatalogueList
+         * @description The job boards that can be added now.
+         */
+        CatalogueList: {
+            /** Items */
+            items: components["schemas"]["CatalogueEntryRead"][];
         };
         /**
          * Certification
@@ -2388,6 +2454,39 @@ export interface components {
             intent: components["schemas"]["IntentRead"];
         };
         /**
+         * JobBoardFilters
+         * @description Which postings of a job board are kept.
+         */
+        JobBoardFilters: {
+            /** Categories */
+            categories?: string[];
+            /** Country Codes */
+            country_codes?: string[];
+            /**
+             * Include Worldwide
+             * @default true
+             */
+            include_worldwide: boolean;
+            /**
+             * Max Age Days
+             * @default 30
+             */
+            max_age_days: number;
+            /**
+             * Max Postings Per Run
+             * @default 500
+             */
+            max_postings_per_run: number;
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /** Search Terms */
+            search_terms?: string[];
+        };
+        /**
          * LanguagePreferences
          * @description Languages the owner can work in.
          */
@@ -3060,6 +3159,12 @@ export interface components {
             years: number;
         };
         /**
+         * SourceCategory
+         * @description Whether a source is one company's board or a board with the postings of many companies.
+         * @enum {string}
+         */
+        SourceCategory: "company_board" | "job_board";
+        /**
          * SourceCreate
          * @description Request to add a board; it is validated against the real source before being saved.
          */
@@ -3113,16 +3218,29 @@ export interface components {
          * @description A configured source with its latest status.
          */
         SourceRead: {
+            /** Attribution Text */
+            attribution_text: string | null;
+            category: components["schemas"]["SourceCategory"];
             /** Company Id */
             company_id: number | null;
             /** Company Name */
             company_name: string | null;
+            /** Coverage Note */
+            coverage_note: string | null;
+            /**
+             * Credential Status
+             * @enum {string}
+             */
+            credential_status: "saved" | "none" | "not_needed";
+            /** Credential Updated At */
+            credential_updated_at: string | null;
             /** Display Name */
             display_name: string;
             /** Enabled */
             enabled: boolean;
             /** External Identifier */
             external_identifier: string;
+            filters: components["schemas"]["JobBoardFilters"] | null;
             last_result: components["schemas"]["SourceResultRead"] | null;
             /** Open Postings */
             open_postings: number;
@@ -3131,6 +3249,8 @@ export interface components {
             /** Source Configuration Id */
             source_configuration_id: number;
             source_type: components["schemas"]["SourceType"];
+            /** Terms Url */
+            terms_url: string | null;
             /** Url */
             url: string;
             /** Version */
@@ -3207,10 +3327,10 @@ export interface components {
         };
         /**
          * SourceType
-         * @description Kind of job source adapter.
+         * @description Kind of job source adapter: ATS company boards first, then job boards (ADR-049).
          * @enum {string}
          */
-        SourceType: "greenhouse" | "lever" | "ashby";
+        SourceType: "greenhouse" | "lever" | "ashby" | "arbeitnow" | "jobicy" | "himalayas" | "itjobs_pt";
         /**
          * SourceUpdate
          * @description Change a source's settings; ``expected_version`` is the version the client last saw.
@@ -5225,6 +5345,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_source_catalogue_api_v1_source_catalogue_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueList"];
                 };
             };
         };

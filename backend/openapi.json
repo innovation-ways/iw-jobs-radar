@@ -212,6 +212,126 @@
         "title": "CandidateRead",
         "type": "object"
       },
+      "CatalogueEntryRead": {
+        "additionalProperties": false,
+        "description": "A job board the owner can add; the endpoint stays inside the server.",
+        "properties": {
+          "already_added": {
+            "title": "Already Added",
+            "type": "boolean"
+          },
+          "attribution_text": {
+            "title": "Attribution Text",
+            "type": "string"
+          },
+          "available_categories": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Available Categories",
+            "type": "array"
+          },
+          "catalogue_key": {
+            "title": "Catalogue Key",
+            "type": "string"
+          },
+          "coverage_note": {
+            "title": "Coverage Note",
+            "type": "string"
+          },
+          "credential_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credential Label"
+          },
+          "default_filters": {
+            "$ref": "#/components/schemas/JobBoardFilters"
+          },
+          "delay_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delay Note"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "homepage_url": {
+            "title": "Homepage Url",
+            "type": "string"
+          },
+          "min_interval_minutes": {
+            "title": "Min Interval Minutes",
+            "type": "integer"
+          },
+          "requires_credential": {
+            "title": "Requires Credential",
+            "type": "boolean"
+          },
+          "terms_note": {
+            "title": "Terms Note",
+            "type": "string"
+          },
+          "terms_read_on": {
+            "format": "date",
+            "title": "Terms Read On",
+            "type": "string"
+          },
+          "terms_url": {
+            "title": "Terms Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "catalogue_key",
+          "display_name",
+          "coverage_note",
+          "homepage_url",
+          "requires_credential",
+          "credential_label",
+          "terms_note",
+          "terms_url",
+          "terms_read_on",
+          "attribution_text",
+          "delay_note",
+          "min_interval_minutes",
+          "default_filters",
+          "available_categories",
+          "already_added"
+        ],
+        "title": "CatalogueEntryRead",
+        "type": "object"
+      },
+      "CatalogueList": {
+        "additionalProperties": false,
+        "description": "The job boards that can be added now.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogueEntryRead"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "CatalogueList",
+        "type": "object"
+      },
       "Certification": {
         "additionalProperties": false,
         "description": "A certification.",
@@ -3189,6 +3309,67 @@
         "title": "IntentSaveResponse",
         "type": "object"
       },
+      "JobBoardFilters": {
+        "additionalProperties": false,
+        "description": "Which postings of a job board are kept.",
+        "properties": {
+          "categories": {
+            "items": {
+              "maxLength": 40,
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Categories",
+            "type": "array"
+          },
+          "country_codes": {
+            "items": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            },
+            "maxItems": 60,
+            "title": "Country Codes",
+            "type": "array"
+          },
+          "include_worldwide": {
+            "default": true,
+            "title": "Include Worldwide",
+            "type": "boolean"
+          },
+          "max_age_days": {
+            "default": 30,
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Max Age Days",
+            "type": "integer"
+          },
+          "max_postings_per_run": {
+            "default": 500,
+            "maximum": 5000.0,
+            "minimum": 1.0,
+            "title": "Max Postings Per Run",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "search_terms": {
+            "items": {
+              "maxLength": 80,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Search Terms",
+            "type": "array"
+          }
+        },
+        "title": "JobBoardFilters",
+        "type": "object"
+      },
       "LanguagePreferences": {
         "additionalProperties": false,
         "description": "Languages the owner can work in.",
@@ -4850,6 +5031,15 @@
         "title": "SkillRead",
         "type": "object"
       },
+      "SourceCategory": {
+        "description": "Whether a source is one company's board or a board with the postings of many companies.",
+        "enum": [
+          "company_board",
+          "job_board"
+        ],
+        "title": "SourceCategory",
+        "type": "string"
+      },
       "SourceCreate": {
         "additionalProperties": false,
         "description": "Request to add a board; it is validated against the real source before being saved.",
@@ -4977,6 +5167,20 @@
         "additionalProperties": false,
         "description": "A configured source with its latest status.",
         "properties": {
+          "attribution_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attribution Text"
+          },
+          "category": {
+            "$ref": "#/components/schemas/SourceCategory"
+          },
           "company_id": {
             "anyOf": [
               {
@@ -4999,6 +5203,38 @@
             ],
             "title": "Company Name"
           },
+          "coverage_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coverage Note"
+          },
+          "credential_status": {
+            "enum": [
+              "saved",
+              "none",
+              "not_needed"
+            ],
+            "title": "Credential Status",
+            "type": "string"
+          },
+          "credential_updated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credential Updated At"
+          },
           "display_name": {
             "title": "Display Name",
             "type": "string"
@@ -5010,6 +5246,16 @@
           "external_identifier": {
             "title": "External Identifier",
             "type": "string"
+          },
+          "filters": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobBoardFilters"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "last_result": {
             "anyOf": [
@@ -5036,6 +5282,17 @@
           "source_type": {
             "$ref": "#/components/schemas/SourceType"
           },
+          "terms_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terms Url"
+          },
           "url": {
             "title": "Url",
             "type": "string"
@@ -5057,7 +5314,14 @@
           "rate_limit_per_minute",
           "version",
           "open_postings",
-          "last_result"
+          "last_result",
+          "category",
+          "coverage_note",
+          "filters",
+          "credential_status",
+          "credential_updated_at",
+          "terms_url",
+          "attribution_text"
         ],
         "title": "SourceRead",
         "type": "object"
@@ -5226,11 +5490,15 @@
         "type": "object"
       },
       "SourceType": {
-        "description": "Kind of job source adapter.",
+        "description": "Kind of job source adapter: ATS company boards first, then job boards (ADR-049).",
         "enum": [
           "greenhouse",
           "lever",
-          "ashby"
+          "ashby",
+          "arbeitnow",
+          "jobicy",
+          "himalayas",
+          "itjobs_pt"
         ],
         "title": "SourceType",
         "type": "string"
@@ -8703,6 +8971,28 @@
         "summary": "Update Schedule",
         "tags": [
           "schedule"
+        ]
+      }
+    },
+    "/api/v1/source-catalogue": {
+      "get": {
+        "description": "List the job boards that can be added, marking those already configured.",
+        "operationId": "list_source_catalogue_api_v1_source_catalogue_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogueList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Source Catalogue",
+        "tags": [
+          "sources"
         ]
       }
     },

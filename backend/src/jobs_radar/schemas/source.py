@@ -1,12 +1,19 @@
 """API contracts for sources and collection runs (document 07). No credential is ever returned."""
 
-from datetime import datetime
-from typing import Annotated
+from datetime import date, datetime
+from typing import Annotated, Literal
 
 from pydantic import Field
 
-from jobs_radar.domain.enums import RunStatus, RunTrigger, SourceOutcome, SourceType
+from jobs_radar.domain.enums import (
+    RunStatus,
+    RunTrigger,
+    SourceCategory,
+    SourceOutcome,
+    SourceType,
+)
 from jobs_radar.schemas.common import StrictModel
+from jobs_radar.schemas.source_filters import JobBoardFilters
 
 BoardIdentifier = Annotated[str, Field(min_length=1, max_length=100)]
 
@@ -61,12 +68,46 @@ class SourceRead(StrictModel):
     version: int
     open_postings: int
     last_result: SourceResultRead | None
+    # Job boards (ADR-049): company boards leave the catalogue-derived fields empty.
+    category: SourceCategory
+    coverage_note: str | None
+    filters: JobBoardFilters | None
+    credential_status: Literal["saved", "none", "not_needed"]
+    credential_updated_at: datetime | None
+    terms_url: str | None
+    attribution_text: str | None
 
 
 class SourceList(StrictModel):
     """All configured sources."""
 
     items: list[SourceRead]
+
+
+class CatalogueEntryRead(StrictModel):
+    """A job board the owner can add; the endpoint stays inside the server."""
+
+    catalogue_key: str
+    display_name: str
+    coverage_note: str
+    homepage_url: str
+    requires_credential: bool
+    credential_label: str | None
+    terms_note: str
+    terms_url: str
+    terms_read_on: date
+    attribution_text: str
+    delay_note: str | None
+    min_interval_minutes: int
+    default_filters: JobBoardFilters
+    available_categories: list[str]
+    already_added: bool
+
+
+class CatalogueList(StrictModel):
+    """The job boards that can be added now."""
+
+    items: list[CatalogueEntryRead]
 
 
 class CollectionRunRead(StrictModel):

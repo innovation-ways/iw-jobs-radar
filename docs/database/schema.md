@@ -676,7 +676,7 @@ Configured job sources with their health-relevant settings.
 | `source_configuration_id` | BIGINT | no | Surrogate primary key of the source. |
 | `owner_id` | BIGINT | no | Owner of the source configuration. |
 | `company_id` | BIGINT | yes | Company the board belongs to. |
-| `source_type` | VARCHAR(20) | no | Adapter kind: greenhouse, lever or ashby. |
+| `source_type` | VARCHAR(20) | no | Adapter kind: an ATS company board or a job board (ADR-049). |
 | `external_identifier` | VARCHAR(200) | no | Board token or company slug on the ATS. |
 | `display_name` | VARCHAR(200) | no | Name shown in the interface. |
 | `url` | TEXT | no | Endpoint URL used to collect the board. |
@@ -691,7 +691,7 @@ Configured job sources with their health-relevant settings.
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
 
 - check `ck_source_configuration_rate_limit_positive`: `rate_limit_per_minute >= 1`
-- check `ck_source_configuration_source_type_valid`: `source_type IN ('greenhouse', 'lever', 'ashby')`
+- check `ck_source_configuration_source_type_valid`: `source_type IN ('greenhouse', 'lever', 'ashby', 'arbeitnow', 'jobicy', 'himalayas', 'itjobs_pt')`
 - foreign key `company_id` → `company.company_id`
 - foreign key `owner_id` → `owner.owner_id`
 - unique `uq_source_configuration_owner_type_identifier` (owner_id, source_type, external_identifier)

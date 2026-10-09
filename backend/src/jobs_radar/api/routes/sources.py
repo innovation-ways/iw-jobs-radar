@@ -5,14 +5,25 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from jobs_radar.adapters.sources.catalogue import available_entries, get_entry
 from jobs_radar.api.deps import (
     get_collection_service,
     get_session,
     get_source_service,
 )
 from jobs_radar.db.models import CollectionRun, SourceRunResult
-from jobs_radar.domain.enums import LOCAL_OWNER_ID, RunStatus, RunTrigger, SourceOutcome, SourceType
+from jobs_radar.domain.enums import (
+    LOCAL_OWNER_ID,
+    RunStatus,
+    RunTrigger,
+    SourceCategory,
+    SourceOutcome,
+    SourceType,
+)
+from jobs_radar.domain.sources import source_category
 from jobs_radar.schemas.source import (
+    CatalogueEntryRead,
+    CatalogueList,
     CollectionRunPage,
     CollectionRunRead,
     SourceCreate,
@@ -21,6 +32,7 @@ from jobs_radar.schemas.source import (
     SourceResultRead,
     SourceUpdate,
 )
+from jobs_radar.schemas.source_filters import JobBoardFilters
 from jobs_radar.services.collection import CollectionService
 from jobs_radar.services.sources import SourceService, SourceStatusRow
 
@@ -48,6 +60,17 @@ def _result(row: SourceRunResult) -> SourceResultRead:
 
 def _source(row: SourceStatusRow) -> SourceRead:
     source = row.source
+    source_type = SourceType(source.source_type)
+    category = source_category(source_type)
+    entry = get_entry(source.external_identifier) if category is SourceCategory.JOB_BOARD else None
+    if entry is None:
+        credential_status = "not_needed"
+    else:
+        credential_status = (
+            "not_needed"
+            if not entry.requires_credential
+            else ("saved" if source.credential_ciphertext else "none")
+        )
     return SourceRead(
         source_configuration_id=source.source_configuration_id,
         source_type=SourceType(source.source_type),
@@ -61,6 +84,17 @@ def _source(row: SourceStatusRow) -> SourceRead:
         version=source.version,
         open_postings=row.open_postings,
         last_result=_result(row.last_result) if row.last_result else None,
+        category=category,
+        coverage_note=entry.coverage_note if entry else None,
+        filters=(
+            JobBoardFilters.model_validate(source.config_json or entry.default_filters.model_dump())
+            if entry
+            else None
+        ),
+        credential_status=credential_status,
+        credential_updated_at=source.credential_updated_at,
+        terms_url=entry.terms_url if entry else None,
+        attribution_text=entry.attribution_text if entry else None,
     )
 
 
@@ -92,6 +126,36 @@ async def list_sources(
     """List configured sources with their latest status."""
     return SourceList(
         items=[_source(row) for row in await service.list_with_status(LOCAL_OWNER_ID)]
+    )
+
+
+@router.get("/source-catalogue", response_model=CatalogueList)
+async def list_source_catalogue(
+    service: Annotated[SourceService, Depends(get_source_service)],
+) -> CatalogueList:
+    """List the job boards that can be added, marking those already configured."""
+    added = await service.added_types(LOCAL_OWNER_ID)
+    return CatalogueList(
+        items=[
+            CatalogueEntryRead(
+                catalogue_key=entry.catalogue_key,
+                display_name=entry.display_name,
+                coverage_note=entry.coverage_note,
+                homepage_url=entry.homepage_url,
+                requires_credential=entry.requires_credential,
+                credential_label=entry.credential_label,
+                terms_note=entry.terms_note,
+                terms_url=entry.terms_url,
+                terms_read_on=entry.terms_read_on,
+                attribution_text=entry.attribution_text,
+                delay_note=entry.delay_note,
+                min_interval_minutes=entry.min_interval_minutes,
+                default_filters=entry.default_filters,
+                available_categories=list(entry.available_categories),
+                already_added=entry.source_type in added,
+            )
+            for entry in available_entries()
+        ]
     )
 
 

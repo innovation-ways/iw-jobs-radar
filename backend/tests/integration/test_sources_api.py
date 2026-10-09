@@ -290,3 +290,45 @@ async def test_a_crashing_run_does_not_break_the_api(
     assert run["status"] == "failed"
     assert "10.0.0.9" not in str(run)
     assert (await client.get("/healthz")).status_code == 200
+
+
+# --- job boards: catalogue and source fields (ADR-049, T9.1) -------------------------------------
+
+
+async def test_the_catalogue_lists_the_available_job_boards_without_secrets(
+    client: httpx.AsyncClient,
+) -> None:
+    response = await client.get("/api/v1/source-catalogue")
+    assert response.status_code == 200
+    items = {item["catalogue_key"]: item for item in response.json()["items"]}
+    assert set(items) == {"arbeitnow", "jobicy", "himalayas"}
+    himalayas = items["himalayas"]
+    assert himalayas["requires_credential"] is False
+    assert himalayas["already_added"] is False
+    assert himalayas["default_filters"]["country_codes"] == ["PT"]
+    assert himalayas["terms_url"].startswith("https://")
+    assert himalayas["available_categories"]
+    assert not {"endpoint", "credential"} & himalayas.keys()
+
+
+async def test_a_company_board_reports_its_category_and_no_filters(
+    client: httpx.AsyncClient, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    use_adapter(app, monkeypatch, FakeAdapter())
+    source = await add_source(client)
+    assert source["category"] == "company_board"
+    assert source["filters"] is None
+    assert source["credential_status"] == "not_needed"
+    assert source["coverage_note"] is None
+    assert source["terms_url"] is None
+    assert source["attribution_text"] is None
+
+
+async def test_a_job_board_type_cannot_be_added_before_its_adapter_exists(
+    client: httpx.AsyncClient,
+) -> None:
+    response = await client.post(
+        "/api/v1/sources", json={"source_type": "himalayas", "external_identifier": "himalayas"}
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["details"]["error_class"] == "configuration"

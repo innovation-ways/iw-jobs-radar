@@ -78,6 +78,8 @@ class SourcePosting:
     departments: tuple[str, ...]
     language: str | None
     raw_payload: dict[str, Any]
+    # Job boards publish many companies' postings, so the posting names its company (ADR-049.6).
+    company_name: str | None = None
 
 
 @dataclass(frozen=True)

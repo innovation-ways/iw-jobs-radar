@@ -18,7 +18,7 @@ function previewText(preview: SourcePreviewRead): string {
   const total = preview.postings_total.toLocaleString('en')
   const matching = preview.postings_matching.toLocaleString('en')
   return preview.matching_is_lower_bound
-    ? `Found at least ${matching} of ${total} postings that match your filters (the check stopped early).`
+    ? `Found at least ${matching} postings that match your filters (the check stopped early, so the real number is higher).`
     : `${matching} of ${total} postings match your filters.`
 }
 

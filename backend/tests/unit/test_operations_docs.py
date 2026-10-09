@@ -25,3 +25,19 @@ def test_the_runbooks_mention_the_commands_they_depend_on() -> None:
     makefile = (ROOT / "Makefile").read_text()
     for target in re.findall(r"`make ([a-z-]+)", runbook):
         assert re.search(rf"^{re.escape(target)}:", makefile, re.M), f"make {target} does not exist"
+
+
+def test_the_runbook_describes_every_job_board_and_its_failure_reasons() -> None:
+    from jobs_radar.adapters.sources.catalogue import CATALOGUE
+
+    runbook = (ROOT / "docs/operations/sources-and-providers-runbook.md").read_text()
+    for entry in CATALOGUE:
+        assert entry.display_name in runbook, f"{entry.display_name} is not in the runbook"
+    for reason in ("authentication", "too_soon", "Profile & intent", "partial"):
+        assert reason in runbook, f"the runbook does not explain {reason!r}"
+
+
+def test_the_limitations_mention_the_job_board_caveats() -> None:
+    text = (ROOT / "docs/operations/known-limitations.md").read_text()
+    assert "job board" in text.lower()
+    assert "ITJobs.pt" in text

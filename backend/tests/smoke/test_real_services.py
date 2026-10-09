@@ -15,11 +15,16 @@ from jobs_radar.adapters.enrichment.base import PublicApi
 from jobs_radar.adapters.enrichment.wikidata import WikidataAdapter
 from jobs_radar.adapters.providers.base import ExtractionRequest, ProviderError
 from jobs_radar.adapters.providers.factory import ProviderSpec, build_provider
+from jobs_radar.adapters.sources.arbeitnow import ArbeitnowAdapter
 from jobs_radar.adapters.sources.base import SourceCheckpoint
 from jobs_radar.adapters.sources.greenhouse import GreenhouseAdapter
+from jobs_radar.adapters.sources.himalayas import HimalayasAdapter
+from jobs_radar.adapters.sources.jobicy import JobicyAdapter
 from jobs_radar.core.http import build_http_client
 from jobs_radar.core.settings import Settings
 from jobs_radar.domain.domains import registered_domain
+from jobs_radar.domain.job_board_rules import LocationScope
+from jobs_radar.schemas.source_filters import JobBoardFilters
 
 pytestmark = pytest.mark.skipif(
     os.environ.get("JOBS_RADAR_SMOKE") != "1",
@@ -44,6 +49,26 @@ async def test_a_real_greenhouse_board_validates_and_lists_jobs() -> None:
     )
     assert len(result.postings) > 0
     assert all(p.title and p.source_url.startswith("https://") for p in result.postings[:20])
+
+
+@pytest.mark.parametrize(
+    ("adapter_class", "key"),
+    [(ArbeitnowAdapter, "arbeitnow"), (JobicyAdapter, "jobicy"), (HimalayasAdapter, "himalayas")],
+)
+async def test_a_real_job_board_returns_postings_with_a_company_and_a_link(
+    adapter_class: type, key: str
+) -> None:
+    adapter = adapter_class(build_http_client())
+    # A small, synthetic scope and a low limit: one polite request or a few, no personal data.
+    scope = LocationScope(frozenset({"PT"}), include_worldwide=True)
+    filters = JobBoardFilters(max_postings_per_run=10, max_age_days=60)
+    result = await adapter.collect(
+        SourceCheckpoint(key, adapter.endpoint(key), None, 6, filters=filters, scope=scope)
+    )
+    assert result.postings, f"{key} returned no posting that passes the filters"
+    for posting in result.postings:
+        assert posting.company_name and posting.title
+        assert posting.source_url.startswith("https://")
 
 
 async def test_real_wikidata_finds_the_company_and_its_website() -> None:

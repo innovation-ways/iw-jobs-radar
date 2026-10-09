@@ -12,6 +12,13 @@
 - Trend history before the first computation is a backfill from today's evaluations.
 - Companies whose boards are only on a job-board host cannot be matched automatically to public
   datasets; confirm the candidate in the dossier.
+- Job boards read only the first postings of a feed, newest first, up to the per-run limit; a very
+  large board (Himalayas) is read country by country, so a first run can take several minutes.
+  Technology areas are matched by keywords in titles and tags, so the filter is loose on purpose.
+- Arbeitnow and Jobicy do not state who may apply: a posting whose place cannot be read is kept
+  and judged later. Jobicy is read through its `europe`, `anywhere` and country slugs only.
+- ITJobs.pt (Portugal) is not in the catalogue yet: its adapter waits for the owner's free API key.
+- A job board posting is not deleted from the list of sources; disable the board instead.
 - Notifications outside the app, other source types (Lever, Ashby), a larger place gazetteer and
   skill taxonomies such as ESCO are not included; see `ai-dev/docs/13` section 12.
 - Licence: the repository carries the GPL-3.0 text it was created with; the project is for the

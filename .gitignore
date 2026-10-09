@@ -148,3 +148,6 @@ frontend/test-results/
 frontend/playwright-report/
 frontend/dist/
 backend/htmlcov/
+
+# Database backups and the credential key (never commit)
+/backups/

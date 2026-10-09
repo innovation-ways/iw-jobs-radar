@@ -14,7 +14,7 @@ PNPM := PATH="$$HOME/.local/bin:$$PATH" pnpm --dir $(FRONTEND)
         test-frontend test-frontend-watch fe-coverage test-e2e \
         lint format format-check typecheck arch-check security license-check docs-check quality \
         fe-lint fe-format fe-format-check fe-typecheck fe-license-check quality-frontend check check-all \
-        security-sast secret-scan docs-schema openapi api-client seed-dev-sources fe-install clean
+        security-sast secret-scan docs-schema openapi api-client seed-dev-sources backup restore-drill backup-list restore fe-install clean
 
 ##@ Run the app
 
@@ -182,6 +182,22 @@ api-client: openapi ## Regenerate the typed frontend API client after an API cha
 
 seed-dev-sources: ## Add the 14 research boards as DISABLED sources to the dev database (no network)
 	cd $(BACKEND) && uv run python -m jobs_radar.tools.seed_dev_sources
+
+##@ Backup and restore
+
+backup: ## Back up the database and the credential key into backups/ (git-ignored)
+	cd $(BACKEND) && uv run python -m jobs_radar.tools.backup backup
+
+restore-drill: ## Prove the latest dump: restore into a scratch database and compare every table
+	cd $(BACKEND) && uv run python -m jobs_radar.tools.backup drill
+
+backup-list: ## List the backups and their migration version
+	cd $(BACKEND) && uv run python -m jobs_radar.tools.backup list
+
+restore: ## Replace the database with a backup: make restore BACKUP=backups/backup-... CONFIRM=yes
+	@test -n "$(BACKUP)" || { echo "usage: make restore BACKUP=backups/backup-YYYYMMDD-HHMMSS CONFIRM=yes"; exit 2; }
+	@test "$(CONFIRM)" = "yes" || { echo "This replaces the current database. Add CONFIRM=yes to proceed."; exit 2; }
+	cd $(BACKEND) && uv run python -m jobs_radar.tools.backup restore ../$(BACKUP) --yes
 
 ##@ Housekeeping
 

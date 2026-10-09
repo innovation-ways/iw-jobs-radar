@@ -373,6 +373,7 @@ usage() {
   echo -e "\n${title}Database${n}"
   echo -e "  ${c}--db-migrate${n}              Run Alembic migrations (api container)"
   echo -e "  ${c}--psql${n}                    Open a psql shell on the database"
+  echo -e "  ${c}--backup${n}  ${c}--restore-drill${n}   Back up the database + key into backups/; prove the latest dump"
   echo -e "\n${title}Frontend${n} (runs outside Docker)"
   echo -e "  ${c}--frontend-start${n}  ${c}--frontend-stop${n}  ${c}--frontend-clean${n}"
   echo -e "\n${title}Tests and quality${n} (same as the make targets; see 'make help')"
@@ -543,6 +544,8 @@ main() {
       show_logs "$svc" "$lines" "$follow" ;;
     --db-migrate)     db_migrate ;;
     --psql)           db_shell ;;
+    --backup)         make backup ;;
+    --restore-drill)  make restore-drill ;;
     --tests)          run_tests "${1:-}" ;;
     --frontend-start) frontend_start ;;
     --frontend-stop)  frontend_stop ;;

@@ -52,6 +52,8 @@ def test_the_script_is_valid_bash() -> None:
         "--urls",
         "--db-migrate",
         "--psql",
+        "--backup",
+        "--restore-drill",
         "--frontend-start",
         "--frontend-stop",
         "--frontend-clean",

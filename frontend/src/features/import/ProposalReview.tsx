@@ -12,15 +12,26 @@ const KINDS: { value: Kind; label: string }[] = [
 ]
 const field = 'rounded-md border border-line-strong bg-surface px-2 py-1 text-sm'
 
+/** Fields with a closed set of values (mirrors the backend schemas), edited with a dropdown. */
+const OPTIONS: Record<string, Record<string, readonly string[]>> = {
+  skills: {
+    level: ['beginner', 'intermediate', 'advanced', 'expert'],
+    kind: ['technology', 'domain_knowledge', 'method'],
+  },
+  languages: { level: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'native'] },
+}
+
 /** Inputs for each key of an object value (or one input for a plain value). */
 function ValueEditor({
   value,
   onChange,
   label,
+  path,
 }: {
   value: unknown
   onChange: (value: unknown) => void
   label: string
+  path: string
 }) {
   if (value === null || typeof value !== 'object') {
     return (
@@ -37,21 +48,41 @@ function ValueEditor({
   const entries = Object.entries(value as Record<string, unknown>)
   return (
     <div className="flex flex-wrap gap-2">
-      {entries.map(([key, current]) => (
-        <label key={key} className="flex flex-col gap-0.5 text-xs text-ink-2">
-          {key}
-          <input
-            aria-label={`${label}: ${key}`}
-            className={field}
-            value={current === null ? '' : String(current)}
-            onChange={(e) => {
-              const raw = e.target.value
-              const next = typeof current === 'number' ? Number(raw) : raw === '' ? null : raw
-              onChange({ ...(value as Record<string, unknown>), [key]: next })
-            }}
-          />
-        </label>
-      ))}
+      {entries.map(([key, current]) => {
+        const options = OPTIONS[path]?.[key]
+        return (
+          <label key={key} className="flex flex-col gap-0.5 text-xs text-ink-2">
+            {key}
+            {options ? (
+              <select
+                aria-label={`${label}: ${key}`}
+                className={field}
+                value={String(current ?? '')}
+                onChange={(e) =>
+                  onChange({ ...(value as Record<string, unknown>), [key]: e.target.value })
+                }
+              >
+                {/* Keep an unexpected current value selectable instead of silently changing it. */}
+                {!options.includes(String(current)) && <option>{String(current ?? '')}</option>}
+                {options.map((option) => (
+                  <option key={option}>{option}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                aria-label={`${label}: ${key}`}
+                className={field}
+                value={current === null ? '' : String(current)}
+                onChange={(e) => {
+                  const raw = e.target.value
+                  const next = typeof current === 'number' ? Number(raw) : raw === '' ? null : raw
+                  onChange({ ...(value as Record<string, unknown>), [key]: next })
+                }}
+              />
+            )}
+          </label>
+        )
+      })}
     </div>
   )
 }
@@ -72,6 +103,13 @@ export function ProposalReview({ items, applying, revisionNumber, onApply }: Pro
   const [choice, setChoice] = useState<Record<number, Kind>>({})
   const [edits, setEdits] = useState<Record<number, unknown>>({})
   const decided = open.filter((i) => choice[i.proposal_item_id]).length
+
+  /** Mark every item that has no decision yet as accepted; explicit choices are kept. */
+  function acceptAll() {
+    const next = { ...choice }
+    for (const i of open) next[i.proposal_item_id] ??= 'accept'
+    setChoice(next)
+  }
 
   function apply() {
     const decisions: Decision[] = open
@@ -100,9 +138,19 @@ export function ProposalReview({ items, applying, revisionNumber, onApply }: Pro
             Nothing becomes part of your profile until you accept or edit it.
           </p>
         </div>
-        <span className="rounded bg-surface-2 px-2 py-0.5 text-xs">
-          {decided} of {open.length} decided
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded bg-surface-2 px-2 py-0.5 text-xs">
+            {decided} of {open.length} decided
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={decided === open.length || applying}
+            onClick={acceptAll}
+          >
+            Accept all undecided
+          </Button>
+        </div>
       </div>
       <ul>
         {open.map((item) => {
@@ -133,7 +181,10 @@ export function ProposalReview({ items, applying, revisionNumber, onApply }: Pro
                 {KINDS.map((kind) => (
                   <label
                     key={kind.value}
-                    className={`cursor-pointer rounded-md border px-2.5 py-1 text-sm ${
+                    // `relative` anchors the visually hidden radio: without a positioned ancestor it
+                    // is placed outside the scrolling <main>, and focusing it scrolls the whole
+                    // document, which cuts the page off halfway.
+                    className={`relative cursor-pointer rounded-md border px-2.5 py-1 text-sm ${
                       choice[id] === kind.value
                         ? 'border-brand bg-brand-soft text-brand-text'
                         : 'border-line-strong'
@@ -154,6 +205,7 @@ export function ProposalReview({ items, applying, revisionNumber, onApply }: Pro
                 <div className="mt-2">
                   <ValueEditor
                     label={label}
+                    path={item.path}
                     value={edits[id] ?? item.value}
                     onChange={(value) => setEdits({ ...edits, [id]: value })}
                   />

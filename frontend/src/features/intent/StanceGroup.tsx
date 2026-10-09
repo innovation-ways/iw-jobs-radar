@@ -65,7 +65,8 @@ export function StanceGroup({ label, terms, value, onChange, allowNoOpinion = fa
                   <label
                     key={option.value}
                     className={cn(
-                      'cursor-pointer border-r border-line-strong px-2.5 py-1 text-xs font-medium last:border-r-0 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-brand',
+                      // `relative` keeps the hidden radio inside the scrolling area (see ProposalReview).
+                      'relative cursor-pointer border-r border-line-strong px-2.5 py-1 text-xs font-medium last:border-r-0 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-brand',
                       current === option.value
                         ? 'bg-brand-soft text-brand-text'
                         : 'text-ink-2 hover:bg-surface-2',

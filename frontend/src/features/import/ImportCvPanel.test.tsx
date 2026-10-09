@@ -265,6 +265,27 @@ describe('Import CV', () => {
     expect(await screen.findByText(/revision 4 was created/i)).toBeInTheDocument()
   })
 
+  it('edits a skill level with a dropdown of the allowed values', async () => {
+    const user = userEvent.setup()
+    post.mockResolvedValue({ data: proposal })
+    renderPanel()
+    await screen.findByLabelText('Choose a CV file')
+    await chooseFile(user)
+    await user.click(await screen.findByRole('button', { name: 'Generate proposals' }))
+    await user.click(
+      within(await screen.findByRole('radiogroup', { name: /Skill/ })).getByLabelText('Edit'),
+    )
+    const level = screen.getByLabelText(/Skill: Python.*: level/)
+    expect(level.tagName).toBe('SELECT')
+    expect(
+      within(level)
+        .getAllByRole('option')
+        .map((o) => o.textContent),
+    ).toEqual(['beginner', 'intermediate', 'advanced', 'expert'])
+    await user.selectOptions(level, 'advanced')
+    expect(level).toHaveValue('advanced')
+  })
+
   it('does not allow applying before something is decided', async () => {
     const user = userEvent.setup()
     post.mockResolvedValue({ data: proposal })
@@ -273,5 +294,57 @@ describe('Import CV', () => {
     await chooseFile(user)
     await user.click(await screen.findByRole('button', { name: 'Generate proposals' }))
     expect(await screen.findByRole('button', { name: /apply review/i })).toBeDisabled()
+  })
+
+  it('keeps the hidden decision radios inside their label so focusing one never scrolls the page', async () => {
+    const user = userEvent.setup()
+    post.mockResolvedValue({ data: proposal })
+    renderPanel()
+    await screen.findByLabelText('Choose a CV file')
+    await chooseFile(user)
+    await user.click(await screen.findByRole('button', { name: 'Generate proposals' }))
+    const headline = await screen.findByRole('radiogroup', { name: /Headline/ })
+    // An absolutely positioned radio without a positioned ancestor lands outside the scrolling
+    // <main>, so focusing it scrolls the whole document and cuts the page in half.
+    expect(within(headline).getByLabelText('Accept').closest('label')).toHaveClass('relative')
+  })
+
+  it('accepts every undecided item at once and keeps explicit choices', async () => {
+    const user = userEvent.setup()
+    post.mockImplementation((path: string) =>
+      Promise.resolve({
+        data: path.includes('proposals')
+          ? proposal
+          : {
+              created: true,
+              profile: { career_profile_id: 7, current_revision: { revision_number: 4 } },
+              proposal: { ...proposal, status: 'completed' },
+            },
+      }),
+    )
+    renderPanel()
+    await screen.findByLabelText('Choose a CV file')
+    await chooseFile(user)
+    await user.click(await screen.findByRole('button', { name: 'Generate proposals' }))
+    const skill = await screen.findByRole('radiogroup', { name: /Skill/ })
+    await user.click(within(skill).getByLabelText('Reject'))
+    await user.click(screen.getByRole('button', { name: 'Accept all undecided' }))
+    expect(screen.getByText('2 of 2 decided')).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('radiogroup', { name: /Headline/ })).getByLabelText('Accept'),
+    ).toBeChecked()
+    expect(within(skill).getByLabelText('Reject')).toBeChecked()
+    await user.click(screen.getByRole('button', { name: /apply review/i }))
+    expect(post).toHaveBeenLastCalledWith(
+      '/api/v1/profiles/{career_profile_id}/reviews',
+      expect.objectContaining({
+        body: expect.objectContaining({
+          decisions: [
+            { proposal_item_id: 11, decision: 'accept' },
+            { proposal_item_id: 12, decision: 'reject' },
+          ],
+        }),
+      }),
+    )
   })
 })

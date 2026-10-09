@@ -63,11 +63,12 @@ def get_adapters(request: Request) -> Mapping[SourceType, JobSourceAdapter]:
 
 
 def get_source_service(
+    request: Request,
     session: Annotated[AsyncSession, Depends(get_session)],
     adapters: Annotated[Mapping[SourceType, JobSourceAdapter], Depends(get_adapters)],
 ) -> SourceService:
-    """Build the source service on the request's session."""
-    return SourceService(session, adapters)
+    """Build the source service on the request's session (with the credential box, if any)."""
+    return SourceService(session, adapters, box=build_credential_box(request.app.state.settings))
 
 
 def get_location_scope_service(
@@ -79,7 +80,11 @@ def get_location_scope_service(
 
 def get_collection_service(request: Request) -> CollectionService:
     """Build the collection service; it opens its own short sessions per step."""
-    return CollectionService(request.app.state.session_factory, get_adapters(request))
+    return CollectionService(
+        request.app.state.session_factory,
+        get_adapters(request),
+        box=build_credential_box(request.app.state.settings),
+    )
 
 
 def get_profile_service(session: Annotated[AsyncSession, Depends(get_session)]) -> ProfileService:

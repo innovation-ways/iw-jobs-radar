@@ -2,12 +2,13 @@
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.adapters.sources.base import BoardInfo, JobSourceAdapter, SourceError
-from jobs_radar.adapters.sources.catalogue import get_entry
+from jobs_radar.adapters.sources.catalogue import CatalogueEntry, get_entry
+from jobs_radar.core.crypto import CredentialBox
 from jobs_radar.core.errors import (
     ConflictError,
     DependencyUnavailableError,
@@ -20,9 +21,15 @@ from jobs_radar.repositories.companies import CompanyRepository
 from jobs_radar.repositories.jobs import JobRepository
 from jobs_radar.repositories.runs import RunRepository
 from jobs_radar.repositories.sources import SourceRepository
+from jobs_radar.schemas.source_filters import JobBoardFilters
+from jobs_radar.services.location_scope import LocationScopeService
 
 # Failures caused by what the owner typed; every other class means the source itself is unavailable.
-_INPUT_ERRORS = {SourceErrorClass.NOT_FOUND, SourceErrorClass.CONFIGURATION}
+_INPUT_ERRORS = {
+    SourceErrorClass.NOT_FOUND,
+    SourceErrorClass.CONFIGURATION,
+    SourceErrorClass.AUTHENTICATION,
+}
 
 
 @dataclass(frozen=True)
@@ -50,10 +57,15 @@ class SourceService:
     """Use cases around source configuration. The caller owns the transaction."""
 
     def __init__(
-        self, session: AsyncSession, adapters: Mapping[SourceType, JobSourceAdapter]
+        self,
+        session: AsyncSession,
+        adapters: Mapping[SourceType, JobSourceAdapter],
+        *,
+        box: CredentialBox | None = None,
     ) -> None:
         self._session = session
         self._adapters = adapters
+        self._box = box
         self._sources = SourceRepository(session)
 
     def _adapter(self, source_type: SourceType) -> JobSourceAdapter:
@@ -73,7 +85,14 @@ class SourceService:
             raise translate_source_error(error) from error
 
     async def add(
-        self, *, owner_id: int, source_type: SourceType, identifier: str, enabled: bool = True
+        self,
+        *,
+        owner_id: int,
+        source_type: SourceType,
+        identifier: str,
+        enabled: bool = True,
+        credential: str | None = None,
+        filters: JobBoardFilters | None = None,
     ) -> SourceConfiguration:
         """Validate a board and create its source (and company when new).
 
@@ -84,7 +103,16 @@ class SourceService:
         """
         identifier = identifier.strip()
         if source_category(source_type) is SourceCategory.JOB_BOARD:
-            msg = "Job boards are added from the catalogue, not by identifier."
+            return await self.add_job_board(
+                owner_id=owner_id,
+                catalogue_key=identifier,
+                source_type=source_type,
+                credential=credential,
+                filters=filters,
+                enabled=enabled,
+            )
+        if credential is not None or filters is not None:
+            msg = "A company board takes neither a credential nor filters."
             raise InputValidationError(
                 msg, details={"error_class": SourceErrorClass.CONFIGURATION.value}
             )
@@ -103,6 +131,161 @@ class SourceService:
             enabled=enabled,
         )
 
+    # --- job boards (ADR-049) ------------------------------------------------------------------
+
+    def _entry(self, catalogue_key: str, source_type: SourceType | None = None) -> CatalogueEntry:
+        """Return the available catalogue entry, or refuse (422) an unknown or unfinished one."""
+        entry = get_entry(catalogue_key)
+        if (
+            entry is None
+            or not entry.available
+            or (source_type is not None and entry.source_type is not source_type)
+        ):
+            msg = "This job board is not available."
+            raise InputValidationError(
+                msg, details={"error_class": SourceErrorClass.CONFIGURATION.value}
+            )
+        return entry
+
+    @staticmethod
+    def _credential_rule(entry: CatalogueEntry, credential: str | None) -> str | None:
+        """Check that a key is given exactly when the board needs one; return it stripped."""
+        key = credential.strip() if credential else None
+        if entry.requires_credential and not key:
+            msg = f"{entry.display_name} needs a key."
+            raise InputValidationError(
+                msg, details={"error_class": SourceErrorClass.AUTHENTICATION.value}
+            )
+        if not entry.requires_credential and key:
+            msg = f"{entry.display_name} does not take a key."
+            raise InputValidationError(
+                msg, details={"error_class": SourceErrorClass.CONFIGURATION.value}
+            )
+        return key
+
+    async def _check_board(
+        self,
+        owner_id: int,
+        entry: CatalogueEntry,
+        credential: str | None,
+        filters: JobBoardFilters,
+    ) -> BoardInfo:
+        """Ask the board with the owner's location scope; nothing is saved."""
+        scope = await LocationScopeService(self._session).for_owner(owner_id)
+        if scope.is_empty:
+            msg = "Set your base location and remote regions in Profile & intent first."
+            raise InputValidationError(
+                msg, details={"error_class": SourceErrorClass.CONFIGURATION.value}
+            )
+        try:
+            return await self._adapter(entry.source_type).validate(
+                entry.catalogue_key, credential, filters, scope
+            )
+        except SourceError as error:
+            raise translate_source_error(error) from error
+
+    async def preview(
+        self,
+        owner_id: int,
+        catalogue_key: str,
+        *,
+        credential: str | None,
+        filters: JobBoardFilters | None,
+    ) -> tuple[CatalogueEntry, BoardInfo]:
+        """Count the postings that would be kept, without saving anything."""
+        entry = self._entry(catalogue_key)
+        key = self._credential_rule(entry, credential)
+        info = await self._check_board(owner_id, entry, key, filters or entry.default_filters)
+        return entry, info
+
+    async def add_job_board(
+        self,
+        *,
+        owner_id: int,
+        catalogue_key: str,
+        source_type: SourceType,
+        credential: str | None,
+        filters: JobBoardFilters | None,
+        enabled: bool,
+    ) -> SourceConfiguration:
+        """Check a catalogue board (and its key) against the real service, then save it.
+
+        Raises:
+            ConflictError: the board is already configured.
+            InputValidationError: unknown board, missing or unneeded key, refused key, no location.
+            DependencyUnavailableError: the board cannot be reached, or credentials cannot be
+                stored because the credential key is not configured.
+        """
+        entry = self._entry(catalogue_key, source_type)
+        if await self._sources.find(owner_id, source_type, entry.catalogue_key) is not None:
+            msg = "This job board is already configured."
+            raise ConflictError(msg, details={"external_identifier": entry.catalogue_key})
+        key = self._credential_rule(entry, credential)
+        chosen = filters or entry.default_filters
+        ciphertext = self._encrypt(key) if key else None
+        await self._check_board(owner_id, entry, key, chosen)
+        source = await self._sources.create(
+            owner_id=owner_id,
+            company_id=None,
+            source_type=source_type,
+            external_identifier=entry.catalogue_key,
+            display_name=entry.display_name,
+            url=entry.endpoint,
+            enabled=enabled,
+            rate_limit_per_minute=entry.rate_limit_per_minute,
+            config_json=chosen.model_dump(mode="json"),
+        )
+        if ciphertext is not None:
+            source.credential_ciphertext = ciphertext
+            source.credential_updated_at = datetime.now(UTC)
+            await self._session.flush()
+        return source
+
+    def _encrypt(self, secret: str) -> bytes:
+        if self._box is None:
+            msg = "JOBS_RADAR_CREDENTIAL_KEY is not configured, so credentials cannot be stored."
+            raise DependencyUnavailableError(msg)
+        return self._box.encrypt(secret)
+
+    async def set_credential(
+        self, owner_id: int, source_configuration_id: int, secret: str
+    ) -> SourceConfiguration:
+        """Check a replacement key against the service, then store it encrypted (write-only)."""
+        source = await self._sources.get(owner_id, source_configuration_id, for_update=True)
+        entry = self._board_entry(source)
+        if entry is None or not entry.requires_credential:
+            msg = "This source does not take a credential."
+            raise InputValidationError(
+                msg, details={"error_class": SourceErrorClass.CONFIGURATION.value}
+            )
+        key = self._credential_rule(entry, secret)
+        ciphertext = self._encrypt(key or "")
+        filters = JobBoardFilters.model_validate(source.config_json or {})
+        await self._check_board(owner_id, entry, key, filters)
+        source.credential_ciphertext = ciphertext
+        source.credential_updated_at = datetime.now(UTC)
+        source.version += 1
+        await self._session.flush()
+        return source
+
+    async def clear_credential(
+        self, owner_id: int, source_configuration_id: int
+    ) -> SourceConfiguration:
+        """Delete the stored key; without it the board cannot be collected, so it is disabled."""
+        source = await self._sources.get(owner_id, source_configuration_id, for_update=True)
+        source.credential_ciphertext = None
+        source.credential_updated_at = None
+        source.enabled = False
+        source.version += 1
+        await self._session.flush()
+        return source
+
+    @staticmethod
+    def _board_entry(source: SourceConfiguration) -> CatalogueEntry | None:
+        if source_category(SourceType(source.source_type)) is not SourceCategory.JOB_BOARD:
+            return None
+        return get_entry(source.external_identifier)
+
     async def update(
         self,
         owner_id: int,
@@ -112,6 +295,7 @@ class SourceService:
         enabled: bool | None = None,
         rate_limit_per_minute: int | None = None,
         display_name: str | None = None,
+        filters: JobBoardFilters | None = None,
     ) -> SourceConfiguration:
         """Change a source's settings, checking the version the caller saw.
 
@@ -125,6 +309,13 @@ class SourceService:
             raise ConflictError(
                 msg, details={"expected": expected_version, "actual": source.version}
             )
+        if filters is not None:
+            if self._board_entry(source) is None:
+                msg = "Filters apply to job boards only."
+                raise InputValidationError(
+                    msg, details={"error_class": SourceErrorClass.CONFIGURATION.value}
+                )
+            source.config_json = filters.model_dump(mode="json")
         if enabled is not None:
             source.enabled = enabled
         if rate_limit_per_minute is not None:

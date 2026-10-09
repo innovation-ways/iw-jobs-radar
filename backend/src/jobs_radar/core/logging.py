@@ -1,6 +1,7 @@
 """Structured JSON logging with secret redaction and request ids (ADR-036)."""
 
 import logging
+import re
 import sys
 from collections.abc import Mapping, MutableMapping
 from contextvars import ContextVar, Token
@@ -38,7 +39,17 @@ def _is_sensitive(key: str) -> bool:
     return any(part in lowered for part in _SENSITIVE_PARTS)
 
 
+# A key or token travelling in a query string ("...?api_key=abc&page=2") is masked wherever a URL
+# or a message ends up in a log value (ADR-049.3).
+_QUERY_SECRET = re.compile(
+    r"([?&](?:api[_-]?key|apikey|key|token|access[_-]?token|auth|password|secret)=)[^&\s\"']+",
+    re.IGNORECASE,
+)
+
+
 def _redact(value: Any) -> Any:
+    if isinstance(value, str):
+        return _QUERY_SECRET.sub(rf"\1{REDACTED}", value)
     if isinstance(value, Mapping):
         return {k: REDACTED if _is_sensitive(str(k)) else _redact(v) for k, v in value.items()}
     if isinstance(value, list | tuple):

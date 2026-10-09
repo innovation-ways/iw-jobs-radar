@@ -325,16 +325,6 @@ async def test_a_company_board_reports_its_category_and_no_filters(
     assert source["attribution_text"] is None
 
 
-async def test_a_job_board_type_cannot_be_added_before_its_adapter_exists(
-    client: httpx.AsyncClient,
-) -> None:
-    response = await client.post(
-        "/api/v1/sources", json={"source_type": "himalayas", "external_identifier": "himalayas"}
-    )
-    assert response.status_code == 422
-    assert response.json()["error"]["details"]["error_class"] == "configuration"
-
-
 async def test_the_source_scope_is_empty_without_an_enabled_intent(
     client: httpx.AsyncClient, session_factory: async_sessionmaker[AsyncSession]
 ) -> None:

@@ -22,6 +22,7 @@ from jobs_radar.domain.enums import (
     SourceType,
 )
 from jobs_radar.domain.sources import source_category
+from jobs_radar.schemas.ai_settings import CredentialWrite
 from jobs_radar.schemas.source import (
     CatalogueEntryRead,
     CatalogueList,
@@ -29,6 +30,8 @@ from jobs_radar.schemas.source import (
     CollectionRunRead,
     SourceCreate,
     SourceList,
+    SourcePreviewRead,
+    SourcePreviewRequest,
     SourceRead,
     SourceResultRead,
     SourceScopeRead,
@@ -190,9 +193,53 @@ async def create_source(
         source_type=body.source_type,
         identifier=body.external_identifier,
         enabled=body.enabled,
+        credential=body.credential,
+        filters=body.filters,
     )
     await session.commit()
     return await _one(service, source.source_configuration_id)
+
+
+@router.post("/sources/preview", response_model=SourcePreviewRead)
+async def preview_source(
+    body: SourcePreviewRequest,
+    service: Annotated[SourceService, Depends(get_source_service)],
+) -> SourcePreviewRead:
+    """Count how many postings of a catalogue job board would be kept; nothing is saved."""
+    entry, info = await service.preview(
+        LOCAL_OWNER_ID, body.catalogue_key, credential=body.credential, filters=body.filters
+    )
+    return SourcePreviewRead(
+        display_name=entry.display_name,
+        postings_total=info.postings_count,
+        postings_matching=info.matching_count or 0,
+        matching_is_lower_bound=info.matching_is_lower_bound,
+    )
+
+
+@router.put("/sources/{source_configuration_id}/credential", response_model=SourceRead)
+async def write_source_credential(
+    source_configuration_id: int,
+    body: CredentialWrite,
+    service: Annotated[SourceService, Depends(get_source_service)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SourceRead:
+    """Check and store a job board's key (write-only: only its status is ever returned)."""
+    await service.set_credential(LOCAL_OWNER_ID, source_configuration_id, body.secret)
+    await session.commit()
+    return await _one(service, source_configuration_id)
+
+
+@router.delete("/sources/{source_configuration_id}/credential", response_model=SourceRead)
+async def delete_source_credential(
+    source_configuration_id: int,
+    service: Annotated[SourceService, Depends(get_source_service)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SourceRead:
+    """Delete a job board's stored key; the board is disabled because it cannot run without it."""
+    await service.clear_credential(LOCAL_OWNER_ID, source_configuration_id)
+    await session.commit()
+    return await _one(service, source_configuration_id)
 
 
 @router.put("/sources/{source_configuration_id}", response_model=SourceRead)
@@ -209,6 +256,7 @@ async def update_source(
         expected_version=body.expected_version,
         enabled=body.enabled,
         rate_limit_per_minute=body.rate_limit_per_minute,
+        filters=body.filters,
     )
     await session.commit()
     return await _one(service, source_configuration_id)

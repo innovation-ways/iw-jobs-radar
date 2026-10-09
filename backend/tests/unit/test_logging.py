@@ -2,6 +2,7 @@
 
 import json
 
+import pytest
 import structlog
 
 from jobs_radar.core.logging import (
@@ -63,3 +64,19 @@ def test_redaction_covers_every_secret_and_content_key_used_by_later_tasks() -> 
     ]
     result = redact_secrets(None, "info", {"event": "x", **dict.fromkeys(keys, "v")})
     assert {key: result[key] for key in keys} == dict.fromkeys(keys, "[REDACTED]")
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "GET https://api.example.test/job/list.json?api_key=s3cretvalue&page=2",
+        "https://api.example.test/x?page=1&key=s3cretvalue",
+        "https://api.example.test/x?token=s3cretvalue",
+    ],
+)
+def test_secrets_in_query_strings_are_masked_inside_log_values(text: str) -> None:
+    from jobs_radar.core.logging import redact_secrets
+
+    event = redact_secrets(None, "info", {"event": "fetch", "detail": text})
+    assert "s3cretvalue" not in str(event)
+    assert "page" in str(event) or "token" in str(event)

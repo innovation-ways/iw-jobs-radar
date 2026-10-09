@@ -19,11 +19,35 @@ BoardIdentifier = Annotated[str, Field(min_length=1, max_length=100)]
 
 
 class SourceCreate(StrictModel):
-    """Request to add a board; it is validated against the real source before being saved."""
+    """Request to add a source; it is validated against the real source before being saved.
+
+    A company board is added by its token. A job board is added from the catalogue: its
+    ``source_type`` and ``external_identifier`` are the catalogue key, a board that needs a key
+    takes it in ``credential`` (write-only), and ``filters`` narrow what is kept.
+    """
 
     source_type: SourceType
     external_identifier: BoardIdentifier
     enabled: bool = True
+    credential: str | None = Field(default=None, min_length=1, max_length=500, repr=False)
+    filters: JobBoardFilters | None = None
+
+
+class SourcePreviewRequest(StrictModel):
+    """Ask how many postings of a catalogue board would be kept, without saving anything."""
+
+    catalogue_key: BoardIdentifier
+    credential: str | None = Field(default=None, min_length=1, max_length=500, repr=False)
+    filters: JobBoardFilters | None = None
+
+
+class SourcePreviewRead(StrictModel):
+    """What a preview found; the match count is a lower bound when the scan stopped early."""
+
+    display_name: str
+    postings_total: int
+    postings_matching: int
+    matching_is_lower_bound: bool
 
 
 class SourceUpdate(StrictModel):
@@ -32,6 +56,7 @@ class SourceUpdate(StrictModel):
     expected_version: Annotated[int, Field(ge=1)]
     enabled: bool | None = None
     rate_limit_per_minute: Annotated[int, Field(ge=1, le=60)] | None = None
+    filters: JobBoardFilters | None = None
 
 
 class SourceResultRead(StrictModel):

@@ -19,6 +19,7 @@ from jobs_radar.core.logging import configure_logging
 from jobs_radar.core.settings import Settings, get_settings
 from jobs_radar.db.session import build_engine, build_session_factory
 from jobs_radar.domain.enums import LOCAL_OWNER_ID
+from jobs_radar.services.ai_settings import build_credential_box
 from jobs_radar.services.collection import CollectionService
 from jobs_radar.services.dedup import DedupRunner
 from jobs_radar.services.evaluation import EvaluationRunner
@@ -171,7 +172,9 @@ async def main() -> None:
             jobs_ai=JobsAiLoader(settings, session_factory),
             trends=TrendRunner(session_factory),
             inbox=InboxRunner(session_factory, LOCAL_OWNER_ID),
-            collection=CollectionService(session_factory, build_source_adapters()),
+            collection=CollectionService(
+                session_factory, build_source_adapters(), box=build_credential_box(settings)
+            ),
             schedule=ScheduleRunner(session_factory),
             lock=lock,
         ).run(stop)

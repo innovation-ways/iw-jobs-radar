@@ -13,6 +13,7 @@ from tests.fake_adapter import FakeAdapter, listing, make_posting
 
 from jobs_radar.adapters.sources.base import SourceCheckpoint
 from jobs_radar.adapters.sources.catalogue import require_entry
+from jobs_radar.core.crypto import CredentialBox
 from jobs_radar.core.errors import ConflictError
 from jobs_radar.db.models import (
     CollectionRun,
@@ -304,3 +305,84 @@ async def test_the_source_list_shows_when_the_next_run_is_allowed(
         r for r in rows if r.source.source_configuration_id == source.source_configuration_id
     )
     assert row.next_run_allowed_at == T0 + timedelta(minutes=360)
+
+
+# --- the key ----------------------------------------------------------------------------------------
+
+
+def key_box() -> CredentialBox:
+    from cryptography.fernet import Fernet
+    from pydantic import SecretStr
+
+    return CredentialBox(SecretStr(Fernet.generate_key().decode()))
+
+
+async def keyed_board(
+    session: AsyncSession, box: CredentialBox | None, key: str | None
+) -> SourceConfiguration:
+    entry = require_entry("itjobs_pt")
+    source = SourceConfiguration(
+        owner_id=LOCAL_OWNER_ID,
+        company_id=None,
+        source_type=SourceType.ITJOBS_PT.value,
+        external_identifier=entry.catalogue_key,
+        display_name=entry.display_name,
+        url=entry.endpoint,
+        config_json={},
+        credential_ciphertext=box.encrypt(key) if box and key else None,
+    )
+    session.add(source)
+    await session.flush()
+    return source
+
+
+def build_keyed(
+    session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+    adapter: FakeAdapter,
+    clock: Clock,
+    box: CredentialBox | None,
+) -> CollectionService:
+    service = build(session, monkeypatch, adapter, clock)
+    return CollectionService(
+        service._session_factory,
+        {SourceType.ITJOBS_PT: adapter},
+        clock=clock,
+        box=box,
+    )
+
+
+async def test_the_stored_key_is_decrypted_only_into_the_checkpoint(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch, clock: Clock
+) -> None:
+    seen: list[SourceCheckpoint] = []
+
+    def provider(checkpoint: SourceCheckpoint) -> object:
+        seen.append(checkpoint)
+        return listing(make_posting("1", company_name="Acme Robotics"))
+
+    box = key_box()
+    source = await keyed_board(db_session, box, "the-itjobs-key")
+    await run(
+        build_keyed(db_session, monkeypatch, FakeAdapter(provider=provider), clock, box), source
+    )
+    assert seen[0].credential == "the-itjobs-key"
+    assert "the-itjobs-key" not in repr(seen[0])
+    result = await last_result(db_session, source)
+    assert result.outcome == SourceOutcome.SUCCESS.value
+    assert "the-itjobs-key" not in str(result.error_message)
+
+
+@pytest.mark.parametrize("problem", ["no_key", "no_box", "wrong_box"])
+async def test_a_key_that_cannot_be_used_fails_the_board_before_any_request(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch, clock: Clock, problem: str
+) -> None:
+    box = key_box()
+    source = await keyed_board(db_session, box, None if problem == "no_key" else "the-itjobs-key")
+    used_box = {"no_key": box, "no_box": None, "wrong_box": key_box()}[problem]
+    adapter = FakeAdapter(provider=lambda checkpoint: pytest.fail("no request expected"))
+    await run(build_keyed(db_session, monkeypatch, adapter, clock, used_box), source)
+    result = await last_result(db_session, source)
+    assert result.outcome == SourceOutcome.FAILED.value
+    assert result.error_class == SourceErrorClass.CONFIGURATION.value
+    assert "the-itjobs-key" not in str(result.error_message)

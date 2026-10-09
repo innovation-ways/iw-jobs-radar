@@ -1026,6 +1026,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sources/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview Source
+         * @description Count how many postings of a catalogue job board would be kept; nothing is saved.
+         */
+        post: operations["preview_source_api_v1_sources_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sources/{source_configuration_id}": {
         parameters: {
             query?: never;
@@ -1041,6 +1061,30 @@ export interface paths {
         put: operations["update_source_api_v1_sources__source_configuration_id__put"];
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sources/{source_configuration_id}/credential": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Write Source Credential
+         * @description Check and store a job board's key (write-only: only its status is ever returned).
+         */
+        put: operations["write_source_credential_api_v1_sources__source_configuration_id__credential_put"];
+        post?: never;
+        /**
+         * Delete Source Credential
+         * @description Delete a job board's stored key; the board is disabled because it cannot run without it.
+         */
+        delete: operations["delete_source_credential_api_v1_sources__source_configuration_id__credential_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3179,9 +3223,15 @@ export interface components {
         SourceCategory: "company_board" | "job_board";
         /**
          * SourceCreate
-         * @description Request to add a board; it is validated against the real source before being saved.
+         * @description Request to add a source; it is validated against the real source before being saved.
+         *
+         *     A company board is added by its token. A job board is added from the catalogue: its
+         *     ``source_type`` and ``external_identifier`` are the catalogue key, a board that needs a key
+         *     takes it in ``credential`` (write-only), and ``filters`` narrow what is kept.
          */
         SourceCreate: {
+            /** Credential */
+            credential?: string | null;
             /**
              * Enabled
              * @default true
@@ -3189,6 +3239,7 @@ export interface components {
             enabled: boolean;
             /** External Identifier */
             external_identifier: string;
+            filters?: components["schemas"]["JobBoardFilters"] | null;
             source_type: components["schemas"]["SourceType"];
         };
         /**
@@ -3226,6 +3277,31 @@ export interface components {
          * @enum {string}
          */
         SourceOutcome: "success" | "not_modified" | "partial" | "failed" | "skipped";
+        /**
+         * SourcePreviewRead
+         * @description What a preview found; the match count is a lower bound when the scan stopped early.
+         */
+        SourcePreviewRead: {
+            /** Display Name */
+            display_name: string;
+            /** Matching Is Lower Bound */
+            matching_is_lower_bound: boolean;
+            /** Postings Matching */
+            postings_matching: number;
+            /** Postings Total */
+            postings_total: number;
+        };
+        /**
+         * SourcePreviewRequest
+         * @description Ask how many postings of a catalogue board would be kept, without saving anything.
+         */
+        SourcePreviewRequest: {
+            /** Catalogue Key */
+            catalogue_key: string;
+            /** Credential */
+            credential?: string | null;
+            filters?: components["schemas"]["JobBoardFilters"] | null;
+        };
         /**
          * SourceRead
          * @description A configured source with its latest status.
@@ -3371,6 +3447,7 @@ export interface components {
             enabled?: boolean | null;
             /** Expected Version */
             expected_version: number;
+            filters?: components["schemas"]["JobBoardFilters"] | null;
             /** Rate Limit Per Minute */
             rate_limit_per_minute?: number | null;
         };
@@ -5473,6 +5550,39 @@ export interface operations {
             };
         };
     };
+    preview_source_api_v1_sources_preview_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourcePreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourcePreviewRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     update_source_api_v1_sources__source_configuration_id__put: {
         parameters: {
             query?: never;
@@ -5487,6 +5597,72 @@ export interface operations {
                 "application/json": components["schemas"]["SourceUpdate"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    write_source_credential_api_v1_sources__source_configuration_id__credential_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_configuration_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredentialWrite"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_source_credential_api_v1_sources__source_configuration_id__credential_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_configuration_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

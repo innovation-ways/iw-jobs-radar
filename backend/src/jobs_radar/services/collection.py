@@ -19,7 +19,8 @@ from jobs_radar.adapters.sources.base import (
     SourceCheckpoint,
     SourceError,
 )
-from jobs_radar.adapters.sources.catalogue import get_entry
+from jobs_radar.adapters.sources.catalogue import CatalogueEntry, get_entry
+from jobs_radar.core.crypto import CredentialBox, CredentialKeyError
 from jobs_radar.core.errors import ConflictError, InputValidationError, NotFoundError
 from jobs_radar.db.models import CollectionRun, SourceConfiguration, SourceRunResult
 from jobs_radar.domain.enums import (
@@ -67,6 +68,7 @@ class _SourceView:
     checkpoint: SourceCheckpoint
     is_job_board: bool = False
     next_allowed_at: datetime | None = None
+    credential_problem: str | None = None  # why the stored key cannot be used, if it cannot
 
 
 @dataclass
@@ -87,10 +89,12 @@ class CollectionService:
         adapters: Mapping[SourceType, JobSourceAdapter],
         *,
         clock: Clock = _utc_now,
+        box: CredentialBox | None = None,
     ) -> None:
         self._session_factory = session_factory
         self._adapters = adapters
         self._clock = clock
+        self._box = box
 
     # --- requesting and finishing runs ---------------------------------------------------------
 
@@ -242,7 +246,7 @@ class CollectionService:
                 if source_category(source_type) is SourceCategory.JOB_BOARD
                 else None
             )
-            filters = scope = next_allowed = None
+            filters = scope = next_allowed = credential = problem = None
             if entry is not None:
                 # The countries are never typed into a source: they come from the profile and the
                 # enabled intents (ADR-049.11).
@@ -256,6 +260,7 @@ class CollectionService:
                     source.source_configuration_id
                 )
                 next_allowed = next_run_allowed_at(last, entry.min_interval_minutes)
+                credential, problem = self._credential_for(entry, source)
             return _SourceView(
                 source_configuration_id=source.source_configuration_id,
                 source_type=source_type,
@@ -267,10 +272,27 @@ class CollectionService:
                     rate_limit_per_minute=source.rate_limit_per_minute,
                     filters=filters,
                     scope=scope,
+                    credential=credential,
                 ),
                 is_job_board=entry is not None,
                 next_allowed_at=next_allowed,
+                credential_problem=problem,
             )
+
+    def _credential_for(
+        self, entry: CatalogueEntry, source: SourceConfiguration
+    ) -> tuple[str | None, str | None]:
+        """Return the decrypted key for a board that needs one, or why it cannot be used."""
+        if not entry.requires_credential:
+            return None, None
+        if not source.credential_ciphertext:
+            return None, f"No key is saved for {entry.display_name}. Add one in the Sources screen."
+        if self._box is None:
+            return None, "JOBS_RADAR_CREDENTIAL_KEY is not configured, so the key cannot be read."
+        try:
+            return self._box.decrypt(source.credential_ciphertext), None
+        except CredentialKeyError:
+            return None, "The saved key cannot be read with the current credential key."
 
     async def _process_source(
         self, collection_run_id: int, source_configuration_id: int
@@ -287,6 +309,8 @@ class CollectionService:
         if view.is_job_board and (scope is None or scope.is_empty):
             msg = "Set your base location and remote regions in Profile & intent first."
             failure = (SourceErrorClass.CONFIGURATION, msg, None)
+        elif view.credential_problem is not None:
+            failure = (SourceErrorClass.CONFIGURATION, view.credential_problem, None)
         elif adapter is None:
             failure = (SourceErrorClass.CONFIGURATION, "This source type is not supported.", None)
         else:

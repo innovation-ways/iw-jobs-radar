@@ -1,6 +1,7 @@
 """Data access for configured sources and their status (ADR-012)."""
 
 from collections.abc import Sequence
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,13 +21,14 @@ class SourceRepository:
         self,
         *,
         owner_id: int,
-        company_id: int,
+        company_id: int | None,
         source_type: SourceType,
         external_identifier: str,
         display_name: str,
         url: str,
         enabled: bool,
         rate_limit_per_minute: int = 6,
+        config_json: dict[str, Any] | None = None,
     ) -> SourceConfiguration:
         """Create a source; server-generated columns are loaded before returning."""
         source = SourceConfiguration(
@@ -38,7 +40,7 @@ class SourceRepository:
             url=url,
             enabled=enabled,
             rate_limit_per_minute=rate_limit_per_minute,
-            config_json={},
+            config_json=config_json or {},
         )
         self._session.add(source)
         await self._session.flush()

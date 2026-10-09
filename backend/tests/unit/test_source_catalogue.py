@@ -172,3 +172,13 @@ def test_every_available_catalogue_entry_has_an_adapter() -> None:
     assert {entry.source_type for entry in available_entries()} <= set(adapters)
     for entry in available_entries():
         assert adapters[entry.source_type].endpoint(entry.catalogue_key) == entry.endpoint
+
+
+def test_a_credential_in_a_request_never_shows_in_its_repr() -> None:
+    from jobs_radar.schemas.source import SourceCreate, SourcePreviewRequest
+
+    created = SourceCreate(
+        source_type=SourceType.ITJOBS_PT, external_identifier="itjobs_pt", credential="k3y-secret"
+    )
+    preview = SourcePreviewRequest(catalogue_key="itjobs_pt", credential="k3y-secret")
+    assert "k3y-secret" not in repr(created) and "k3y-secret" not in repr(preview)

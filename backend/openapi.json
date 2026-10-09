@@ -5028,8 +5028,21 @@
       },
       "SourceCreate": {
         "additionalProperties": false,
-        "description": "Request to add a board; it is validated against the real source before being saved.",
+        "description": "Request to add a source; it is validated against the real source before being saved.\n\nA company board is added by its token. A job board is added from the catalogue: its\n``source_type`` and ``external_identifier`` are the catalogue key, a board that needs a key\ntakes it in ``credential`` (write-only), and ``filters`` narrow what is kept.",
         "properties": {
+          "credential": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credential"
+          },
           "enabled": {
             "default": true,
             "title": "Enabled",
@@ -5040,6 +5053,16 @@
             "minLength": 1,
             "title": "External Identifier",
             "type": "string"
+          },
+          "filters": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobBoardFilters"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "source_type": {
             "$ref": "#/components/schemas/SourceType"
@@ -5148,6 +5171,76 @@
         ],
         "title": "SourceOutcome",
         "type": "string"
+      },
+      "SourcePreviewRead": {
+        "additionalProperties": false,
+        "description": "What a preview found; the match count is a lower bound when the scan stopped early.",
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "matching_is_lower_bound": {
+            "title": "Matching Is Lower Bound",
+            "type": "boolean"
+          },
+          "postings_matching": {
+            "title": "Postings Matching",
+            "type": "integer"
+          },
+          "postings_total": {
+            "title": "Postings Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "display_name",
+          "postings_total",
+          "postings_matching",
+          "matching_is_lower_bound"
+        ],
+        "title": "SourcePreviewRead",
+        "type": "object"
+      },
+      "SourcePreviewRequest": {
+        "additionalProperties": false,
+        "description": "Ask how many postings of a catalogue board would be kept, without saving anything.",
+        "properties": {
+          "catalogue_key": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Catalogue Key",
+            "type": "string"
+          },
+          "credential": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credential"
+          },
+          "filters": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobBoardFilters"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "catalogue_key"
+        ],
+        "title": "SourcePreviewRequest",
+        "type": "object"
       },
       "SourceRead": {
         "additionalProperties": false,
@@ -5559,6 +5652,16 @@
             "minimum": 1.0,
             "title": "Expected Version",
             "type": "integer"
+          },
+          "filters": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobBoardFilters"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "rate_limit_per_minute": {
             "anyOf": [
@@ -9117,6 +9220,48 @@
         ]
       }
     },
+    "/api/v1/sources/preview": {
+      "post": {
+        "description": "Count how many postings of a catalogue job board would be kept; nothing is saved.",
+        "operationId": "preview_source_api_v1_sources_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourcePreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcePreviewRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Source",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
     "/api/v1/sources/{source_configuration_id}": {
       "put": {
         "description": "Change the enabled flag or rate limit of a source.",
@@ -9165,6 +9310,100 @@
           }
         },
         "summary": "Update Source",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/sources/{source_configuration_id}/credential": {
+      "delete": {
+        "description": "Delete a job board's stored key; the board is disabled because it cannot run without it.",
+        "operationId": "delete_source_credential_api_v1_sources__source_configuration_id__credential_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_configuration_id",
+            "required": true,
+            "schema": {
+              "title": "Source Configuration Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Source Credential",
+        "tags": [
+          "sources"
+        ]
+      },
+      "put": {
+        "description": "Check and store a job board's key (write-only: only its status is ever returned).",
+        "operationId": "write_source_credential_api_v1_sources__source_configuration_id__credential_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_configuration_id",
+            "required": true,
+            "schema": {
+              "title": "Source Configuration Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CredentialWrite"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Write Source Credential",
         "tags": [
           "sources"
         ]

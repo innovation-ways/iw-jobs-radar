@@ -89,12 +89,12 @@ Himalayas settings
             [ Save filters ]   Applies from the next run. Postings already kept are not closed by a new filter.
   Key       Credential: saved (updated 2026-10-09)   [ Replace… ] [ Remove key ]      ← only for boards that need a key
   Source    Himalayas · data refreshed every 24 h · next run allowed after 07:31 · Terms ↗ · Link back required
-  Danger    [ Delete this board ]  (asks to confirm; collected postings stay in the inbox history)
+  Note      A board is switched off with Disable; removing a source is not offered (its postings stay in the inbox history).
 ```
 
 - Saving filters uses `PUT /api/v1/sources/{source_configuration_id}` with `expected_version` (409 on a stale version, as for enable/disable).
 - Replace/Remove key reuse the write-only pattern of the AI connection card: placeholder `•••••• (replace)`, "Credential: saved | not set", never echoed.
-- Delete uses an inline "Are you sure?" confirmation (two buttons), not `window.confirm`.
+- There is no delete in this version: a source with collected postings is kept and disabled instead.
 
 ## 5. Status, errors and rate rules in words
 
@@ -120,11 +120,10 @@ Himalayas settings
 | Method and path | Purpose |
 |---|---|
 | `GET /api/v1/source-catalogue` | Catalogue entries: `catalogue_key`, `display_name`, `coverage_note`, `requires_credential`, `credential_label`, `terms_note`, `terms_url`, `terms_read_on`, `default_filters`, `available_categories`, `already_added` |
-| `POST /api/v1/sources/preview` | Body: `catalogue_key`, `credential` (optional, write-only), `filters`. Returns `{postings_total, postings_matching}` or a classified error; saves nothing |
-| `POST /api/v1/sources` | Existing endpoint extended: `source_type` + `external_identifier` as today for company boards; for job boards `catalogue_key`, `credential`, `filters`, `enabled` |
+| `POST /api/v1/sources/preview` | Body: `catalogue_key`, `credential` (optional, write-only), `filters`. Returns `{display_name, postings_total, postings_matching, matching_is_lower_bound}` or a classified error (`authentication`, `configuration`, `timeout` ...); saves nothing |
+| `POST /api/v1/sources` | Existing endpoint extended: `source_type` + `external_identifier` as today for company boards; for job boards both equal the catalogue key, plus optional `credential` and `filters` |
 | `PUT /api/v1/sources/{source_configuration_id}` | Existing; adds `filters` |
 | `PUT` / `DELETE /api/v1/sources/{source_configuration_id}/credential` | Write or remove the key; `SourceRead` returns only `credential_status` (`saved`, `none`, `not_needed`) and `credential_updated_at` |
-| `DELETE /api/v1/sources/{source_configuration_id}` | Remove a board (job boards; company boards keep the current behaviour unless already supported) |
 | `GET /api/v1/source-scope` | Read-only `{configured, country_codes, include_worldwide, any_country}` derived from the profile and the enabled intents |
 | `SourceRead` additions | `category` (`company_board` or `job_board`), `coverage_note`, `filters`, `credential_status`, `next_run_allowed_at`, `terms_url`, `attribution_text`, `next_run_allowed_at` (and `dropped_count` on run results) |
 

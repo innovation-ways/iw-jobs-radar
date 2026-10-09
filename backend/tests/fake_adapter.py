@@ -58,6 +58,10 @@ class FakeAdapter:
         self.board = board or BoardInfo(name="Synthetic Co", postings_count=1)
         self.provider = provider
         self.checkpoints: list[SourceCheckpoint] = []
+        # Every ``validate`` call as (identifier, credential, filters, scope), for assertions.
+        self.validations: list[
+            tuple[str, str | None, JobBoardFilters | None, LocationScope | None]
+        ] = []
 
     def endpoint(self, identifier: str) -> str:
         return f"https://boards.example.test/v1/boards/{identifier}/jobs"
@@ -69,6 +73,7 @@ class FakeAdapter:
         filters: JobBoardFilters | None = None,
         scope: LocationScope | None = None,
     ) -> BoardInfo:
+        self.validations.append((identifier, credential, filters, scope))
         if isinstance(self.board, Exception):
             raise self.board
         return self.board

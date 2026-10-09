@@ -13,6 +13,9 @@ search intent with an explainable deterministic rule set, and keeps a personal i
 make help                         # every command: tests, quality gates, ...
 ```
 
+Operations (configuration, backup and restore runbook, sources and providers, known limitations):
+`docs/operations/`.
+
 Design and decisions live in `ai-dev/docs/` (start with `00 - Implementation Pack Index.md`);
 the build plan is `ai-dev/docs/14 - Implementation Guide.md`. Working rules and commands for
 contributors and AI agents are in `CLAUDE.md`.

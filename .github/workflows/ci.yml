@@ -1,0 +1,35 @@
+# Minimal CI (ADR-019 deferred it; added at release hardening, T8). It runs the same local gates as
+# `make check`: lint, types, architecture, security (bandit), licences, column docs, unit and
+# integration tests (PostgreSQL via testcontainers) and the frontend gates and unit tests.
+# It never runs the end-to-end tests, the semgrep / gitleaks / audit scans (they need the network
+# and Docker images; run `make check-all` locally) or the opt-in smoke tests.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Enable pnpm through corepack
+        run: corepack enable
+      - name: Install dependencies
+        run: make install
+      - name: Quality gates and tests
+        run: make check

@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router'
 import { AppShell } from '@/components/AppShell'
+import { About } from '@/pages/About'
 import { AiPrivacy } from '@/pages/AiPrivacy'
 import { Companies } from '@/pages/Companies'
 import { Inbox } from '@/pages/Inbox'
@@ -24,6 +25,7 @@ export function AppRoutes() {
         <Route path="/settings" element={<AiPrivacy />} />
         <Route path="/companies" element={<Companies />} />
         <Route path="/trends" element={<Trends />} />
+        <Route path="/about" element={<About />} />
         {ALL_NAV.filter(
           (item) =>
             ![

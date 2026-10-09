@@ -70,5 +70,6 @@ export const ALL_NAV: NavItem[] = [...MAIN_NAV, ...SETUP_NAV]
 
 /** The title of the page at `pathname`; unknown paths get a not-found title. */
 export function titleFor(pathname: string): string {
+  if (pathname === '/about') return 'About & credits'
   return ALL_NAV.find((item) => item.path === pathname)?.label ?? 'Page not found'
 }

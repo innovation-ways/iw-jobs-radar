@@ -91,6 +91,7 @@ const schedule = {
   run_time_local: '07:30',
   timezone: 'Europe/Lisbon',
   enabled: false,
+  company_recency_days: 30,
   version: 1,
   next_run_at: null,
   next_run_local: null,
@@ -185,7 +186,7 @@ describe('Sources screen', () => {
     expect(await within(card).findByLabelText('Run time')).toHaveValue('07:30')
     expect(within(card).getByLabelText('Time zone')).toHaveValue('Europe/Lisbon')
     expect(within(card).getByLabelText('Run every day')).not.toBeChecked()
-    expect(within(card).getByText(/off/i)).toBeInTheDocument()
+    expect(within(card).getByText(/scheduled runs are off/i)).toBeInTheDocument()
     expect(within(card).getByRole('button', { name: 'Save schedule' })).toBeDisabled()
 
     await user.click(within(card).getByLabelText('Run every day'))
@@ -204,10 +205,32 @@ describe('Sources screen', () => {
         run_time_local: '07:30',
         timezone: 'Europe/Lisbon',
         enabled: true,
+        company_recency_days: 30,
         expected_version: 1,
       },
     })
     expect(await within(card).findByText(/2026-10-09 07:30/)).toBeInTheDocument()
+  })
+
+  it('changes how many days of offers the company views count', async () => {
+    const user = userEvent.setup()
+    renderSources()
+    const card = (await screen.findByRole('heading', { name: 'Daily schedule' })).closest(
+      'section',
+    )!
+    const days = await within(card).findByLabelText(/offers first seen in the last/i)
+    expect(days).toHaveValue(30)
+    await user.clear(days)
+    await user.type(days, '0')
+    expect(within(card).getByText(/whole number from 1 to 365/i)).toBeInTheDocument()
+    expect(within(card).getByRole('button', { name: 'Save schedule' })).toBeDisabled()
+    await user.clear(days)
+    await user.type(days, '14')
+    put.mockResolvedValue({ data: { ...schedule, company_recency_days: 14, version: 2 } })
+    await user.click(within(card).getByRole('button', { name: 'Save schedule' }))
+    expect(put).toHaveBeenCalledWith('/api/v1/settings/schedule', {
+      body: expect.objectContaining({ company_recency_days: 14, expected_version: 1 }),
+    })
   })
 
   it('reports a rejected schedule', async () => {

@@ -29,6 +29,7 @@ def schedule_read(view: ScheduleView) -> ScheduleRead:
         run_time_local=setting.run_time_local.strftime("%H:%M"),
         timezone=setting.timezone,
         enabled=setting.enabled,
+        company_recency_days=setting.company_recency_days,
         version=setting.version,
         next_run_at=view.next_run_at,
         next_run_local=local,
@@ -51,6 +52,7 @@ async def update_schedule(body: ScheduleUpdate, service: Service, session: Sessi
         run_time_local=body.run_time_local,
         timezone=body.timezone,
         enabled=body.enabled,
+        company_recency_days=body.company_recency_days,
         expected_version=body.expected_version,
     )
     await session.commit()

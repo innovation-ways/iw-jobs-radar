@@ -16,6 +16,7 @@ async def test_the_schedule_can_be_read_and_changed_with_the_version_the_owner_s
         "run_time_local",
         "timezone",
         "enabled",
+        "company_recency_days",
         "version",
         "next_run_at",
         "next_run_local",
@@ -49,6 +50,30 @@ async def test_the_schedule_can_be_read_and_changed_with_the_version_the_owner_s
         },
     )
     assert off.json()["next_run_at"] is None and off.json()["next_run_local"] is None
+
+
+async def test_the_company_recency_limit_defaults_to_30_and_keeps_its_value_when_omitted(
+    client: httpx.AsyncClient,
+) -> None:
+    current = (await client.get(URL)).json()
+    assert current["company_recency_days"] == 30
+    base = {"run_time_local": "07:30", "timezone": "UTC", "enabled": False}
+    changed = await client.put(
+        URL, json={**base, "company_recency_days": 14, "expected_version": current["version"]}
+    )
+    assert changed.json()["company_recency_days"] == 14
+    kept = await client.put(URL, json={**base, "expected_version": changed.json()["version"]})
+    assert kept.json()["company_recency_days"] == 14  # omitted keeps the stored value
+    for bad in (0, 366):
+        response = await client.put(
+            URL,
+            json={**base, "company_recency_days": bad, "expected_version": kept.json()["version"]},
+        )
+        assert response.status_code == 422
+    reset = await client.put(
+        URL, json={**base, "company_recency_days": 30, "expected_version": kept.json()["version"]}
+    )
+    assert reset.json()["company_recency_days"] == 30
 
 
 async def test_a_stale_version_is_409_and_bad_input_is_422(client: httpx.AsyncClient) -> None:

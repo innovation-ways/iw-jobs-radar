@@ -6,7 +6,7 @@ from jobs_radar.schemas.common import StrictModel
 
 
 class CompanySummary(StrictModel):
-    """A company with its offer counts."""
+    """A company with its counted offers (open, recent and not ignored; ADR-053)."""
 
     company_id: int
     name: str
@@ -14,12 +14,10 @@ class CompanySummary(StrictModel):
     careers_url: str | None
     employer_type: str | None
     open_offers: int
-    new_offers_7d: int
-    new_offers_15d: int
-    new_offers_30d: int
-    relevant_new_offers_7d: int
-    relevant_new_offers_15d: int
-    relevant_new_offers_30d: int
+    recommended_offers: int
+    best_fit_score: int | None
+    pending_candidates: int
+    is_followed: bool
 
 
 class CompanyList(StrictModel):
@@ -27,10 +25,10 @@ class CompanyList(StrictModel):
 
     items: list[CompanySummary]
     total: int
-    window: int
-    sort: Literal["new", "relevant", "open", "name"]
+    sort: Literal["fit", "name"]
     search_intent_id: int | None
     relevance_min_score: int
+    recency_days: int
 
 
 class CompanyFollowState(StrictModel):

@@ -66,6 +66,7 @@ class ScheduleService:
         timezone: str,
         enabled: bool,
         expected_version: int,
+        company_recency_days: int | None = None,
     ) -> ScheduleView:
         """Change the schedule, checking the version the owner saw.
 
@@ -86,6 +87,8 @@ class ScheduleService:
         setting.run_time_local = run_time_local.replace(second=0, microsecond=0)
         setting.timezone = timezone
         setting.enabled = enabled
+        if company_recency_days is not None:
+            setting.company_recency_days = company_recency_days
         setting.version += 1
         setting.updated_at = self._clock()
         await self._session.flush()

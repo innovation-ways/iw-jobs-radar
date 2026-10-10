@@ -646,6 +646,10 @@
             ],
             "title": "Homepage Url"
           },
+          "is_followed": {
+            "title": "Is Followed",
+            "type": "boolean"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -677,6 +681,7 @@
           "employer_type",
           "enriched_at",
           "stale",
+          "is_followed",
           "facts",
           "candidates",
           "offers",
@@ -718,6 +723,10 @@
             "title": "Items",
             "type": "array"
           },
+          "recency_days": {
+            "title": "Recency Days",
+            "type": "integer"
+          },
           "relevance_min_score": {
             "title": "Relevance Min Score",
             "type": "integer"
@@ -735,9 +744,7 @@
           },
           "sort": {
             "enum": [
-              "new",
-              "relevant",
-              "open",
+              "fit",
               "name"
             ],
             "title": "Sort",
@@ -746,27 +753,34 @@
           "total": {
             "title": "Total",
             "type": "integer"
-          },
-          "window": {
-            "title": "Window",
-            "type": "integer"
           }
         },
         "required": [
           "items",
           "total",
-          "window",
           "sort",
           "search_intent_id",
-          "relevance_min_score"
+          "relevance_min_score",
+          "recency_days"
         ],
         "title": "CompanyList",
         "type": "object"
       },
       "CompanySummary": {
         "additionalProperties": false,
-        "description": "A company with its offer counts.",
+        "description": "A company with its counted offers (open, recent and not ignored; ADR-053).",
         "properties": {
+          "best_fit_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Fit Score"
+          },
           "careers_url": {
             "anyOf": [
               {
@@ -804,36 +818,24 @@
             ],
             "title": "Homepage Url"
           },
+          "is_followed": {
+            "title": "Is Followed",
+            "type": "boolean"
+          },
           "name": {
             "title": "Name",
             "type": "string"
-          },
-          "new_offers_15d": {
-            "title": "New Offers 15D",
-            "type": "integer"
-          },
-          "new_offers_30d": {
-            "title": "New Offers 30D",
-            "type": "integer"
-          },
-          "new_offers_7d": {
-            "title": "New Offers 7D",
-            "type": "integer"
           },
           "open_offers": {
             "title": "Open Offers",
             "type": "integer"
           },
-          "relevant_new_offers_15d": {
-            "title": "Relevant New Offers 15D",
+          "pending_candidates": {
+            "title": "Pending Candidates",
             "type": "integer"
           },
-          "relevant_new_offers_30d": {
-            "title": "Relevant New Offers 30D",
-            "type": "integer"
-          },
-          "relevant_new_offers_7d": {
-            "title": "Relevant New Offers 7D",
+          "recommended_offers": {
+            "title": "Recommended Offers",
             "type": "integer"
           }
         },
@@ -844,12 +846,10 @@
           "careers_url",
           "employer_type",
           "open_offers",
-          "new_offers_7d",
-          "new_offers_15d",
-          "new_offers_30d",
-          "relevant_new_offers_7d",
-          "relevant_new_offers_15d",
-          "relevant_new_offers_30d"
+          "recommended_offers",
+          "best_fit_score",
+          "pending_candidates",
+          "is_followed"
         ],
         "title": "CompanySummary",
         "type": "object"
@@ -3482,6 +3482,24 @@
             "title": "First Seen At",
             "type": "string"
           },
+          "fit_band": {
+            "anyOf": [
+              {
+                "enum": [
+                  "excellent",
+                  "strong",
+                  "average",
+                  "low",
+                  "not_recommended"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fit Band"
+          },
           "fit_score": {
             "anyOf": [
               {
@@ -3492,6 +3510,10 @@
               }
             ],
             "title": "Fit Score"
+          },
+          "is_shortlisted": {
+            "title": "Is Shortlisted",
+            "type": "boolean"
           },
           "job_opportunity_id": {
             "title": "Job Opportunity Id",
@@ -3512,6 +3534,17 @@
             "title": "Source Url",
             "type": "string"
           },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State"
+          },
           "title": {
             "title": "Title",
             "type": "string"
@@ -3524,7 +3557,10 @@
           "first_seen_at",
           "closed",
           "fit_score",
-          "recommendation"
+          "recommendation",
+          "fit_band",
+          "state",
+          "is_shortlisted"
         ],
         "title": "OfferRead",
         "type": "object"
@@ -4805,6 +4841,10 @@
         "additionalProperties": false,
         "description": "The schedule and when it runs next (both ``null`` while disabled).",
         "properties": {
+          "company_recency_days": {
+            "title": "Company Recency Days",
+            "type": "integer"
+          },
           "enabled": {
             "title": "Enabled",
             "type": "boolean"
@@ -4849,6 +4889,7 @@
           "run_time_local",
           "timezone",
           "enabled",
+          "company_recency_days",
           "version",
           "next_run_at",
           "next_run_local"
@@ -4860,6 +4901,19 @@
         "additionalProperties": false,
         "description": "Change the schedule; ``expected_version`` is the version the client last saw.",
         "properties": {
+          "company_recency_days": {
+            "anyOf": [
+              {
+                "maximum": 365.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Recency Days"
+          },
           "enabled": {
             "title": "Enabled",
             "type": "boolean"
@@ -6385,7 +6439,7 @@
     },
     "/api/v1/companies": {
       "get": {
-        "description": "List companies with new offers in the last 7, 15 or 30 days and the relevant subset.",
+        "description": "List companies: followed first, then by the best fit of their counted offers.",
         "operationId": "list_companies_api_v1_companies_get",
         "parameters": [
           {
@@ -6407,24 +6461,12 @@
           },
           {
             "in": "query",
-            "name": "window",
-            "required": false,
-            "schema": {
-              "default": 15,
-              "title": "Window",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "query",
             "name": "sort",
             "required": false,
             "schema": {
-              "default": "new",
+              "default": "fit",
               "enum": [
-                "new",
-                "relevant",
-                "open",
+                "fit",
                 "name"
               ],
               "title": "Sort",
@@ -6462,11 +6504,41 @@
           },
           {
             "in": "query",
-            "name": "relevant_only",
+            "name": "followed_only",
             "required": false,
             "schema": {
               "default": false,
-              "title": "Relevant Only",
+              "title": "Followed Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "open_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Open Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "recommended_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Recommended Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pending_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Pending Only",
               "type": "boolean"
             }
           },
@@ -6524,7 +6596,7 @@
     },
     "/api/v1/companies/{company_id}": {
       "get": {
-        "description": "Return the dossier: sourced facts, pending candidates, offers and the hiring series.",
+        "description": "Return the dossier: sourced facts, pending candidates, offers and the hiring series.\n\nOffers older than the owner's recency limit are left out unless ``include_older`` is set.",
         "operationId": "get_company_api_v1_companies__company_id__get",
         "parameters": [
           {
@@ -6551,6 +6623,16 @@
                 }
               ],
               "title": "Search Intent Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_older",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Older",
+              "type": "boolean"
             }
           }
         ],

@@ -6,30 +6,40 @@ import type { components } from '@/api/schema'
 type Schemas = components['schemas']
 export type CompanySummary = Schemas['CompanySummary']
 export type Dossier = Schemas['CompanyDossierRead']
-export type WindowDays = 7 | 15 | 30
+export type Offer = Schemas['OfferRead']
 
 interface ListParams {
   q: string
-  window: WindowDays
-  relevantOnly: boolean
+  followedOnly: boolean
+  openOnly: boolean
+  recommendedOnly: boolean
+  pendingOnly: boolean
   limit: number
 }
 
-/** The company list for a window; kept on screen while the next page of results loads. */
-export function useCompanies({ q, window, relevantOnly, limit }: ListParams) {
+/** The company list: followed first, then by the best fit of the counted offers. */
+export function useCompanies({
+  q,
+  followedOnly,
+  openOnly,
+  recommendedOnly,
+  pendingOnly,
+  limit,
+}: ListParams) {
   return useQuery({
-    queryKey: ['companies', q, window, relevantOnly, limit],
+    queryKey: ['companies', q, followedOnly, openOnly, recommendedOnly, pendingOnly, limit],
     placeholderData: keepPreviousData,
     queryFn: () =>
       unwrap(
         api.GET('/api/v1/companies', {
           params: {
             query: {
-              window,
-              sort: 'new',
               limit,
               ...(q ? { q } : {}),
-              ...(relevantOnly ? { relevant_only: true } : {}),
+              ...(followedOnly ? { followed_only: true } : {}),
+              ...(openOnly ? { open_only: true } : {}),
+              ...(recommendedOnly ? { recommended_only: true } : {}),
+              ...(pendingOnly ? { pending_only: true } : {}),
             },
           },
         }),
@@ -37,17 +47,39 @@ export function useCompanies({ q, window, relevantOnly, limit }: ListParams) {
   })
 }
 
-const dossierKey = (id: number) => ['dossier', id] as const
+/** Follow or unfollow a company; the list and the dossier refresh afterwards. */
+export function useFollow() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ companyId, follow }: { companyId: number; follow: boolean }) => {
+      const params = { params: { path: { company_id: companyId } } }
+      return follow
+        ? unwrap(api.PUT('/api/v1/companies/{company_id}/follow', params))
+        : unwrap(api.DELETE('/api/v1/companies/{company_id}/follow', params))
+    },
+    onSuccess: (_state, { companyId }) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['companies'] }),
+        queryClient.invalidateQueries({ queryKey: ['dossier', companyId] }),
+      ]),
+  })
+}
 
-/** One company's dossier. */
-export function useDossier(companyId: number | null) {
+const dossierKey = (id: number, includeOlder = false) => ['dossier', id, includeOlder] as const
+
+/** One company's dossier; `includeOlder` adds the offers beyond the recency limit. */
+export function useDossier(companyId: number | null, includeOlder = false) {
   return useQuery({
-    queryKey: dossierKey(companyId ?? 0),
+    queryKey: dossierKey(companyId ?? 0, includeOlder),
     enabled: companyId !== null,
+    placeholderData: keepPreviousData,
     queryFn: () =>
       unwrap(
         api.GET('/api/v1/companies/{company_id}', {
-          params: { path: { company_id: companyId! } },
+          params: {
+            path: { company_id: companyId! },
+            query: includeOlder ? { include_older: true } : {},
+          },
         }),
       ),
   })
@@ -58,8 +90,12 @@ export function useDossierActions(companyId: number) {
   const queryClient = useQueryClient()
   const path = { params: { path: { company_id: companyId } } }
   const store = (dossier: Dossier) => {
+    // The action returns the dossier without older offers; other variants are refetched.
     queryClient.setQueryData(dossierKey(companyId), dossier)
-    return queryClient.invalidateQueries({ queryKey: ['companies'] })
+    return Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['dossier', companyId] }),
+      queryClient.invalidateQueries({ queryKey: ['companies'] }),
+    ])
   }
   const enrich = useMutation({
     mutationFn: () => unwrap(api.POST('/api/v1/companies/{company_id}/enrich', path)),

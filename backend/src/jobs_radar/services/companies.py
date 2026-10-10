@@ -23,6 +23,7 @@ from jobs_radar.repositories.company_list import (
     OfferRow,
     Sort,
 )
+from jobs_radar.repositories.schedule import ScheduleRepository
 
 Clock = Callable[[], datetime]
 # Default minimum fit for an offer to count as relevant (document 13, section 11.2).
@@ -66,6 +67,7 @@ class Dossier:
     hiring: list[HiringWeek]
     boards: list[SourceConfiguration]
     stale: bool
+    is_followed: bool
 
 
 def _utc_now() -> datetime:
@@ -80,6 +82,7 @@ class CompanyService:
         self._queries = CompanyListQueries(session)
         self._dossier = CompanyDossierQueries(session)
         self._follows = CompanyFollowRepository(session)
+        self._schedule = ScheduleRepository(session)
         self._clock = clock
 
     async def list_companies(
@@ -87,24 +90,32 @@ class CompanyService:
         owner_id: int,
         *,
         q: str | None = None,
-        window: int = 15,
-        sort: Sort = "new",
+        sort: Sort = "fit",
         search_intent_id: int | None = None,
         relevance_min_score: int = DEFAULT_RELEVANCE_MIN_SCORE,
-        relevant_only: bool = False,
+        followed_only: bool = False,
+        open_only: bool = False,
+        recommended_only: bool = False,
+        pending_only: bool = False,
         limit: int = 50,
         offset: int = 0,
     ) -> CompanyPage:
-        """Return companies with new-offer counts for the window (7, 15 or 30 days)."""
-        del owner_id  # companies are shared reference data in V1; kept for the per-owner future
+        """Return companies with counted offers; followed ones come first (ADR-053).
+
+        Only open offers first seen within the owner's recency limit and not ignored are counted.
+        """
         return await self._queries.page(
+            owner_id=owner_id,
             now=self._clock(),
+            recency_days=await self._schedule.company_recency_days(owner_id),
             search=q,
             search_intent_id=search_intent_id,
             relevance_min_score=relevance_min_score,
-            window=window,
             sort=sort,
-            relevant_only=relevant_only,
+            followed_only=followed_only,
+            open_only=open_only,
+            recommended_only=recommended_only,
+            pending_only=pending_only,
             limit=limit,
             offset=offset,
         )
@@ -124,10 +135,17 @@ class CompanyService:
             await self._follows.unfollow(owner_id, company_id)
 
     async def dossier(
-        self, owner_id: int, company_id: int, *, search_intent_id: int | None
+        self,
+        owner_id: int,
+        company_id: int,
+        *,
+        search_intent_id: int | None,
+        include_older: bool = False,
     ) -> Dossier:
-        """Return the company with its current facts, candidates, offers and hiring series."""
-        del owner_id
+        """Return the company with its current facts, candidates, offers and hiring series.
+
+        Offers first seen before the owner's recency limit are left out unless ``include_older``.
+        """
         company = await self._session.get(Company, company_id)
         if company is None:
             msg = f"Company {company_id} does not exist."
@@ -173,7 +191,16 @@ class CompanyService:
                 for f in facts
             ],
             candidates=list(candidates),
-            offers=await self._dossier.offers(company_id, search_intent_id, OFFER_LIMIT),
+            offers=await self._dossier.offers(
+                owner_id,
+                company_id,
+                search_intent_id,
+                OFFER_LIMIT,
+                not_before=None
+                if include_older
+                else now - timedelta(days=await self._schedule.company_recency_days(owner_id)),
+            ),
+            is_followed=await self._dossier.is_followed(owner_id, company_id),
             hiring=self._hiring(await self._dossier.lifespans(company_id), now),
             boards=list(boards),
             stale=company.enriched_at is None or now - company.enriched_at > REFRESH_AFTER,

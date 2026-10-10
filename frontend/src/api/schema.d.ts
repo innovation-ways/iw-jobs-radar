@@ -37,7 +37,7 @@ export interface paths {
         };
         /**
          * List Companies
-         * @description List companies with new offers in the last 7, 15 or 30 days and the relevant subset.
+         * @description List companies: followed first, then by the best fit of their counted offers.
          */
         get: operations["list_companies_api_v1_companies_get"];
         put?: never;
@@ -58,6 +58,8 @@ export interface paths {
         /**
          * Get Company
          * @description Return the dossier: sourced facts, pending candidates, offers and the hiring series.
+         *
+         *     Offers older than the owner's recency limit are left out unless ``include_older`` is set.
          */
         get: operations["get_company_api_v1_companies__company_id__get"];
         put?: never;
@@ -1462,6 +1464,8 @@ export interface components {
             hiring: components["schemas"]["HiringWeekRead"][];
             /** Homepage Url */
             homepage_url: string | null;
+            /** Is Followed */
+            is_followed: boolean;
             /** Name */
             name: string;
             /** Offers */
@@ -1488,6 +1492,8 @@ export interface components {
         CompanyList: {
             /** Items */
             items: components["schemas"]["CompanySummary"][];
+            /** Recency Days */
+            recency_days: number;
             /** Relevance Min Score */
             relevance_min_score: number;
             /** Search Intent Id */
@@ -1496,17 +1502,17 @@ export interface components {
              * Sort
              * @enum {string}
              */
-            sort: "new" | "relevant" | "open" | "name";
+            sort: "fit" | "name";
             /** Total */
             total: number;
-            /** Window */
-            window: number;
         };
         /**
          * CompanySummary
-         * @description A company with its offer counts.
+         * @description A company with its counted offers (open, recent and not ignored; ADR-053).
          */
         CompanySummary: {
+            /** Best Fit Score */
+            best_fit_score: number | null;
             /** Careers Url */
             careers_url: string | null;
             /** Company Id */
@@ -1515,22 +1521,16 @@ export interface components {
             employer_type: string | null;
             /** Homepage Url */
             homepage_url: string | null;
+            /** Is Followed */
+            is_followed: boolean;
             /** Name */
             name: string;
-            /** New Offers 15D */
-            new_offers_15d: number;
-            /** New Offers 30D */
-            new_offers_30d: number;
-            /** New Offers 7D */
-            new_offers_7d: number;
             /** Open Offers */
             open_offers: number;
-            /** Relevant New Offers 15D */
-            relevant_new_offers_15d: number;
-            /** Relevant New Offers 30D */
-            relevant_new_offers_30d: number;
-            /** Relevant New Offers 7D */
-            relevant_new_offers_7d: number;
+            /** Pending Candidates */
+            pending_candidates: number;
+            /** Recommended Offers */
+            recommended_offers: number;
         };
         /**
          * Compensation
@@ -2636,14 +2636,20 @@ export interface components {
              * Format: date-time
              */
             first_seen_at: string;
+            /** Fit Band */
+            fit_band: ("excellent" | "strong" | "average" | "low" | "not_recommended") | null;
             /** Fit Score */
             fit_score: number | null;
+            /** Is Shortlisted */
+            is_shortlisted: boolean;
             /** Job Opportunity Id */
             job_opportunity_id: number;
             /** Recommendation */
             recommendation: string | null;
             /** Source Url */
             source_url: string;
+            /** State */
+            state: string | null;
             /** Title */
             title: string;
         };
@@ -3156,6 +3162,8 @@ export interface components {
          * @description The schedule and when it runs next (both ``null`` while disabled).
          */
         ScheduleRead: {
+            /** Company Recency Days */
+            company_recency_days: number;
             /** Enabled */
             enabled: boolean;
             /** Next Run At */
@@ -3174,6 +3182,8 @@ export interface components {
          * @description Change the schedule; ``expected_version`` is the version the client last saw.
          */
         ScheduleUpdate: {
+            /** Company Recency Days */
+            company_recency_days?: number | null;
             /** Enabled */
             enabled: boolean;
             /** Expected Version */
@@ -3801,11 +3811,13 @@ export interface operations {
         parameters: {
             query?: {
                 q?: string | null;
-                window?: number;
-                sort?: "new" | "relevant" | "open" | "name";
+                sort?: "fit" | "name";
                 search_intent_id?: number | null;
                 relevance_min_score?: number;
-                relevant_only?: boolean;
+                followed_only?: boolean;
+                open_only?: boolean;
+                recommended_only?: boolean;
+                pending_only?: boolean;
                 limit?: number;
                 offset?: number;
             };
@@ -3839,6 +3851,7 @@ export interface operations {
         parameters: {
             query?: {
                 search_intent_id?: number | null;
+                include_older?: boolean;
             };
             header?: never;
             path: {

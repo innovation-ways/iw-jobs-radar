@@ -1,36 +1,40 @@
-"""The company list with new-offer counts per window (document 13, section 9).
+"""The company list with counted offers, best fit and follow state (document 13 s.9, ADR-053).
 
-For every company: open offers, opportunities first seen in the last 7, 15 and 30 days, and the
-subset that is *relevant*: the latest evaluation of the opportunity's primary posting under the
-chosen intent has a fit at or above the threshold and is not ``not_recommended``. Everything is
-computed in one grouped query so the list scales with the number of companies, not offers.
+For every company: the *counted* offers (open, first seen within the recency limit and not ignored
+by the owner), how many of them are recommended, the best fit among them, whether the owner follows
+the company and how many identification candidates wait for a decision. A recommended offer is one
+whose latest evaluation of the primary posting under the chosen intent has a fit at or above the
+threshold and is not ``not_recommended``. Everything is computed in one grouped query so the list
+scales with the number of companies, not offers.
 """
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Literal
 
-from sqlalchemy import Select, and_, func, literal, or_, select
+from sqlalchemy import Select, and_, exists, func, literal, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
 from jobs_radar.db.models import (
     Company,
     CompanyAlias,
+    CompanyEnrichmentCandidate,
+    CompanyFollow,
     IntentRevision,
+    JobInboxItem,
     JobOpportunity,
     JobSnapshot,
     MatchEvaluation,
 )
-from jobs_radar.domain.enums import Recommendation
+from jobs_radar.domain.enums import InboxState, Recommendation
 
-WINDOWS = (7, 15, 30)
-Sort = Literal["new", "relevant", "open", "name"]
+Sort = Literal["fit", "name"]
 
 
 @dataclass(frozen=True)
 class CompanyRow:
-    """One company with its offer counts."""
+    """One company with its counted offers."""
 
     company_id: int
     name: str
@@ -38,12 +42,10 @@ class CompanyRow:
     careers_url: str | None
     employer_type: str | None
     open_offers: int
-    new_offers_7d: int
-    new_offers_15d: int
-    new_offers_30d: int
-    relevant_new_offers_7d: int
-    relevant_new_offers_15d: int
-    relevant_new_offers_30d: int
+    recommended_offers: int
+    best_fit_score: int | None
+    pending_candidates: int
+    is_followed: bool
 
 
 @dataclass(frozen=True)
@@ -58,6 +60,47 @@ def _escape_like(text: str) -> str:
     return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
+def latest_evaluation_join(search_intent_id: int | None) -> tuple[Any, Any]:
+    """Return ``(evaluation alias, ON clause)`` for the latest evaluation under an intent.
+
+    Without an intent the clause is false, so no offer has a fit.
+    """
+    evaluation = aliased(MatchEvaluation)
+    if search_intent_id is None:
+        return evaluation, literal(False)
+    newer_snapshot = aliased(JobSnapshot)
+    newer_evaluation = aliased(MatchEvaluation)
+    latest_snapshot = (
+        select(func.max(newer_snapshot.job_snapshot_id))
+        .where(newer_snapshot.job_posting_id == JobOpportunity.primary_job_posting_id)
+        .correlate(JobOpportunity)
+        .scalar_subquery()
+    )
+    latest_evaluation = (
+        select(func.max(newer_evaluation.match_evaluation_id))
+        .join(
+            IntentRevision,
+            IntentRevision.intent_revision_id == newer_evaluation.intent_revision_id,
+        )
+        .where(
+            newer_evaluation.job_snapshot_id == latest_snapshot,
+            IntentRevision.search_intent_id == search_intent_id,
+        )
+        .correlate(JobOpportunity)
+        .scalar_subquery()
+    )
+    return evaluation, evaluation.match_evaluation_id == latest_evaluation
+
+
+def ignored_by(owner_id: int) -> Any:
+    """Condition: the owner ignored the (correlated) opportunity."""
+    return exists().where(
+        JobInboxItem.owner_id == owner_id,
+        JobInboxItem.job_opportunity_id == JobOpportunity.job_opportunity_id,
+        JobInboxItem.state == InboxState.IGNORED.value,
+    )
+
+
 class CompanyListQueries:
     """Reads the company list."""
 
@@ -67,71 +110,55 @@ class CompanyListQueries:
     def _stats(
         self,
         *,
+        owner_id: int,
         now: datetime,
+        recency_days: int,
         search: str | None,
         search_intent_id: int | None,
         relevance_min_score: int,
     ) -> Select[Any]:
-        evaluation = aliased(MatchEvaluation)
-        newer_snapshot = aliased(JobSnapshot)
-        newer_evaluation = aliased(MatchEvaluation)
-        if search_intent_id is None:
-            relevant: Any = literal(False)
-            on_evaluation: Any = literal(False)
-        else:
-            latest_snapshot = (
-                select(func.max(newer_snapshot.job_snapshot_id))
-                .where(newer_snapshot.job_posting_id == JobOpportunity.primary_job_posting_id)
-                .correlate(JobOpportunity)
-                .scalar_subquery()
-            )
-            latest_evaluation = (
-                select(func.max(newer_evaluation.match_evaluation_id))
-                .join(
-                    IntentRevision,
-                    IntentRevision.intent_revision_id == newer_evaluation.intent_revision_id,
-                )
-                .where(
-                    newer_evaluation.job_snapshot_id == latest_snapshot,
-                    IntentRevision.search_intent_id == search_intent_id,
-                )
-                .correlate(JobOpportunity)
-                .scalar_subquery()
-            )
-            on_evaluation = evaluation.match_evaluation_id == latest_evaluation
-            relevant = and_(
-                evaluation.fit_score >= relevance_min_score,
-                evaluation.recommendation != Recommendation.NOT_RECOMMENDED.value,
-            )
-
-        columns: list[Any] = [
-            Company.company_id,
-            Company.canonical_name.label("name"),
-            Company.homepage_url,
-            Company.careers_url,
-            Company.employer_type,
-            func.count(JobOpportunity.job_opportunity_id)
-            .filter(JobOpportunity.closed_at.is_(None))
-            .label("open_offers"),
-        ]
-        for days in WINDOWS:
-            recent = JobOpportunity.first_seen_at >= now - timedelta(days=days)
-            columns.append(
-                func.count(JobOpportunity.job_opportunity_id)
-                .filter(recent)
-                .label(f"new_offers_{days}d")
-            )
-        for days in WINDOWS:
-            recent = JobOpportunity.first_seen_at >= now - timedelta(days=days)
-            columns.append(
-                func.count(JobOpportunity.job_opportunity_id)
-                .filter(and_(recent, relevant))
-                .label(f"relevant_new_offers_{days}d")
-            )
+        evaluation, on_evaluation = latest_evaluation_join(search_intent_id)
+        recommended: Any = and_(
+            evaluation.fit_score >= relevance_min_score,
+            evaluation.recommendation != Recommendation.NOT_RECOMMENDED.value,
+        )
+        # Old, closed and ignored offers are left out of the join so that the company stays in the
+        # list with zero counted offers (a followed company must not disappear).
+        counted = and_(
+            JobOpportunity.company_id == Company.company_id,
+            JobOpportunity.closed_at.is_(None),
+            JobOpportunity.first_seen_at >= now - timedelta(days=recency_days),
+            ~ignored_by(owner_id),
+        )
         statement = (
-            select(*columns)
+            select(
+                Company.company_id,
+                Company.canonical_name.label("name"),
+                Company.homepage_url,
+                Company.careers_url,
+                Company.employer_type,
+                func.count(JobOpportunity.job_opportunity_id).label("open_offers"),
+                func.count(JobOpportunity.job_opportunity_id)
+                .filter(recommended)
+                .label("recommended_offers"),
+                func.max(evaluation.fit_score).label("best_fit_score"),
+                select(func.count())
+                .where(
+                    CompanyEnrichmentCandidate.company_id == Company.company_id,
+                    CompanyEnrichmentCandidate.status == "pending",
+                )
+                .correlate(Company)
+                .scalar_subquery()
+                .label("pending_candidates"),
+                exists()
+                .where(
+                    CompanyFollow.owner_id == owner_id,
+                    CompanyFollow.company_id == Company.company_id,
+                )
+                .label("is_followed"),
+            )
             .select_from(Company)
-            .outerjoin(JobOpportunity, JobOpportunity.company_id == Company.company_id)
+            .outerjoin(JobOpportunity, counted)
             .outerjoin(evaluation, on_evaluation)
             .group_by(Company.company_id)
         )
@@ -153,35 +180,47 @@ class CompanyListQueries:
     async def page(
         self,
         *,
+        owner_id: int,
         now: datetime,
+        recency_days: int,
         search: str | None,
         search_intent_id: int | None,
         relevance_min_score: int,
-        window: int,
         sort: Sort,
-        relevant_only: bool,
+        followed_only: bool,
+        open_only: bool,
+        recommended_only: bool,
+        pending_only: bool,
         limit: int,
         offset: int,
     ) -> CompanyPage:
-        """Return one page of companies and the total that match."""
+        """Return one page of companies and the total that match.
+
+        ``open_only`` keeps companies with counted offers *and* the followed ones: following is a
+        promise to keep watching, so it never hides a company.
+        """
         stats = self._stats(
+            owner_id=owner_id,
             now=now,
+            recency_days=recency_days,
             search=search,
             search_intent_id=search_intent_id,
             relevance_min_score=relevance_min_score,
         ).subquery()
-        relevant_column = stats.c[f"relevant_new_offers_{window}d"]
-        new_column = stats.c[f"new_offers_{window}d"]
         filtered = select(stats)
-        if relevant_only:
-            filtered = filtered.where(relevant_column > 0)
+        if followed_only:
+            filtered = filtered.where(stats.c.is_followed)
+        if open_only:
+            filtered = filtered.where(or_(stats.c.open_offers > 0, stats.c.is_followed))
+        if recommended_only:
+            filtered = filtered.where(stats.c.recommended_offers > 0)
+        if pending_only:
+            filtered = filtered.where(stats.c.pending_candidates > 0)
         orders: dict[str, list[Any]] = {
-            "new": [new_column.desc(), stats.c.name],
-            "relevant": [relevant_column.desc(), new_column.desc(), stats.c.name],
-            "open": [stats.c.open_offers.desc(), stats.c.name],
-            "name": [stats.c.name],
+            "fit": [stats.c.best_fit_score.desc().nulls_last(), stats.c.open_offers.desc()],
+            "name": [],
         }
-        order = orders[sort]
+        order = [stats.c.is_followed.desc(), *orders[sort], stats.c.name]
         total = int(
             (
                 await self._session.execute(select(func.count()).select_from(filtered.subquery()))
@@ -200,7 +239,7 @@ class CompanyListQueries:
 
 @dataclass(frozen=True)
 class OfferRow:
-    """One opportunity of a company with its latest fit under the intent."""
+    """One opportunity of a company with its latest fit under the intent and the owner's state."""
 
     job_opportunity_id: int
     title: str
@@ -209,6 +248,8 @@ class OfferRow:
     closed_at: datetime | None
     fit_score: int | None
     recommendation: str | None
+    state: str | None
+    is_shortlisted: bool
 
     @property
     def closed(self) -> bool:
@@ -222,39 +263,33 @@ class CompanyDossierQueries:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
+    async def is_followed(self, owner_id: int, company_id: int) -> bool:
+        """Whether the owner follows the company."""
+        found = await self._session.execute(
+            select(CompanyFollow.company_follow_id).where(
+                CompanyFollow.owner_id == owner_id, CompanyFollow.company_id == company_id
+            )
+        )
+        return found.first() is not None
+
     async def offers(
-        self, company_id: int, search_intent_id: int | None, limit: int
+        self,
+        owner_id: int,
+        company_id: int,
+        search_intent_id: int | None,
+        limit: int,
+        *,
+        not_before: datetime | None,
     ) -> list[OfferRow]:
-        """Return the company's opportunities, newest first, with the latest fit (if any)."""
+        """Return the company's opportunities: best fit first, then newest.
+
+        ``not_before`` leaves out opportunities first seen earlier than that time (``None`` keeps
+        all). Each row carries the owner's inbox state so the screen can dim ignored offers.
+        """
         from jobs_radar.db.models import JobPosting  # local: keeps the module header small
 
-        evaluation = aliased(MatchEvaluation)
-        newer_snapshot = aliased(JobSnapshot)
-        newer_evaluation = aliased(MatchEvaluation)
-        if search_intent_id is None:
-            on_evaluation: Any = literal(False)
-        else:
-            latest_snapshot = (
-                select(func.max(newer_snapshot.job_snapshot_id))
-                .where(newer_snapshot.job_posting_id == JobOpportunity.primary_job_posting_id)
-                .correlate(JobOpportunity)
-                .scalar_subquery()
-            )
-            latest_evaluation = (
-                select(func.max(newer_evaluation.match_evaluation_id))
-                .join(
-                    IntentRevision,
-                    IntentRevision.intent_revision_id == newer_evaluation.intent_revision_id,
-                )
-                .where(
-                    newer_evaluation.job_snapshot_id == latest_snapshot,
-                    IntentRevision.search_intent_id == search_intent_id,
-                )
-                .correlate(JobOpportunity)
-                .scalar_subquery()
-            )
-            on_evaluation = evaluation.match_evaluation_id == latest_evaluation
-        rows = await self._session.execute(
+        evaluation, on_evaluation = latest_evaluation_join(search_intent_id)
+        statement = (
             select(
                 JobOpportunity.job_opportunity_id,
                 JobPosting.title,
@@ -263,13 +298,29 @@ class CompanyDossierQueries:
                 JobOpportunity.closed_at,
                 evaluation.fit_score,
                 evaluation.recommendation,
+                JobInboxItem.state,
+                func.coalesce(JobInboxItem.is_shortlisted, False),
             )
             .select_from(JobOpportunity)
             .join(JobPosting, JobPosting.job_posting_id == JobOpportunity.primary_job_posting_id)
             .outerjoin(evaluation, on_evaluation)
+            .outerjoin(
+                JobInboxItem,
+                and_(
+                    JobInboxItem.job_opportunity_id == JobOpportunity.job_opportunity_id,
+                    JobInboxItem.owner_id == owner_id,
+                ),
+            )
             .where(JobOpportunity.company_id == company_id)
-            .order_by(JobOpportunity.first_seen_at.desc(), JobOpportunity.job_opportunity_id.desc())
-            .limit(limit)
+        )
+        if not_before is not None:
+            statement = statement.where(JobOpportunity.first_seen_at >= not_before)
+        rows = await self._session.execute(
+            statement.order_by(
+                evaluation.fit_score.desc().nulls_last(),
+                JobOpportunity.first_seen_at.desc(),
+                JobOpportunity.job_opportunity_id.desc(),
+            ).limit(limit)
         )
         return [OfferRow(*row) for row in rows.all()]
 

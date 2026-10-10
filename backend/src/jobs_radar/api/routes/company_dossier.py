@@ -1,6 +1,6 @@
 """Company dossier endpoints (document 07)."""
 
-from typing import Annotated
+from typing import Annotated, cast
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +13,7 @@ from jobs_radar.api.deps import (
     get_session,
 )
 from jobs_radar.domain.enums import LOCAL_OWNER_ID
+from jobs_radar.domain.matching.engine import band_of
 from jobs_radar.schemas.company_dossier import (
     BoardRead,
     CandidateRead,
@@ -21,6 +22,7 @@ from jobs_radar.schemas.company_dossier import (
     HiringWeekRead,
     OfferRead,
 )
+from jobs_radar.schemas.evaluation import FitBand
 from jobs_radar.services.companies import CompanyService, Dossier
 from jobs_radar.services.company_summary import CompanySummaryService
 from jobs_radar.services.enrichment import EnrichmentService
@@ -50,6 +52,7 @@ def dossier_read(dossier: Dossier, warnings: list[str] | None = None) -> Company
         employer_type=company.employer_type,
         enriched_at=company.enriched_at,
         stale=dossier.stale,
+        is_followed=dossier.is_followed,
         facts=[
             FactRead(
                 fact_key=f.fact_key,
@@ -76,6 +79,13 @@ def dossier_read(dossier: Dossier, warnings: list[str] | None = None) -> Company
                 closed=o.closed,
                 fit_score=o.fit_score,
                 recommendation=o.recommendation,
+                fit_band=None
+                if o.fit_score is None
+                else cast(
+                    FitBand, band_of(o.fit_score, gated=o.recommendation == "not_recommended")
+                ),
+                state=o.state,
+                is_shortlisted=o.is_shortlisted,
             )
             for o in dossier.offers
         ],
@@ -99,10 +109,18 @@ async def get_company(
     service: Companies,
     default_intent: DefaultIntent,
     search_intent_id: Annotated[int | None, Query(ge=1)] = None,
+    include_older: bool = False,
 ) -> CompanyDossierRead:
-    """Return the dossier: sourced facts, pending candidates, offers and the hiring series."""
+    """Return the dossier: sourced facts, pending candidates, offers and the hiring series.
+
+    Offers older than the owner's recency limit are left out unless ``include_older`` is set.
+    """
     intent = search_intent_id if search_intent_id is not None else default_intent
-    return dossier_read(await service.dossier(LOCAL_OWNER_ID, company_id, search_intent_id=intent))
+    return dossier_read(
+        await service.dossier(
+            LOCAL_OWNER_ID, company_id, search_intent_id=intent, include_older=include_older
+        )
+    )
 
 
 @router.post("/companies/{company_id}/enrich", response_model=CompanyDossierRead)

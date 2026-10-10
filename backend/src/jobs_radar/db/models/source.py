@@ -74,7 +74,12 @@ class ScheduleSetting(TimestampMixin, Base):
     """The owner's daily collection schedule; the worker reads it without a restart (ADR-017)."""
 
     __tablename__ = "schedule_setting"
-    __table_args__ = {"comment": "Daily collection time and time zone, one row per owner."}
+    __table_args__ = (
+        CheckConstraint(
+            "company_recency_days BETWEEN 1 AND 365", name="company_recency_days_in_range"
+        ),
+        {"comment": "Daily collection time, time zone and company view limits, one row per owner."},
+    )
 
     schedule_setting_id: Mapped[int] = pk_column("Surrogate primary key of the setting.")
     owner_id: Mapped[int] = fk_column("owner.owner_id", "Owner of the schedule.", unique=True)
@@ -85,6 +90,11 @@ class ScheduleSetting(TimestampMixin, Base):
         "IANA time zone name, for example Europe/Lisbon.", length=64
     )
     enabled: Mapped[bool] = bool_column("Whether the daily run is active.", default=True)
+    company_recency_days: Mapped[int] = int_column(
+        "Offers first seen earlier than this many days ago are left out of the company views "
+        "(ADR-053).",
+        default=30,
+    )
     version: Mapped[int] = version_column()
 
 

@@ -16,7 +16,7 @@ from tests.factories import (
 )
 
 from jobs_radar.core.errors import NotFoundError
-from jobs_radar.db.models import CompanyEnrichmentCandidate, CompanyFact
+from jobs_radar.db.models import CompanyEnrichmentCandidate, CompanyFact, JobInboxItem
 from jobs_radar.domain.enums import Recommendation
 from jobs_radar.services.companies import CompanyService
 
@@ -107,11 +107,15 @@ async def test_offers_and_the_weekly_hiring_series(db_session: AsyncSession) -> 
                 recommendation=Recommendation.RECOMMENDED,
             )
     await db_session.flush()
-    dossier = await CompanyService(db_session, clock=lambda: NOW).dossier(
-        1, company.company_id, search_intent_id=intent.search_intent_id
+    service = CompanyService(db_session, clock=lambda: NOW)
+    recent = await service.dossier(1, company.company_id, search_intent_id=intent.search_intent_id)
+    # Job 40 is older than the 30-day limit: left out unless asked for.
+    assert [o.title for o in recent.offers] == ["Job 9", "Job 2", "Job 10"]  # best fit, then newest
+    dossier = await service.dossier(
+        1, company.company_id, search_intent_id=intent.search_intent_id, include_older=True
     )
     titles = [o.title for o in dossier.offers]
-    assert titles == ["Job 2", "Job 9", "Job 10", "Job 40"]  # newest first
+    assert titles == ["Job 9", "Job 2", "Job 10", "Job 40"]
     by_title = {o.title: o for o in dossier.offers}
     assert by_title["Job 9"].fit_score == 80 and by_title["Job 2"].fit_score is None
     assert by_title["Job 40"].closed is True and by_title["Job 2"].closed is False
@@ -126,6 +130,28 @@ async def test_offers_and_the_weekly_hiring_series(db_session: AsyncSession) -> 
     assert weeks["2032-05-03"].new_offers == 1  # Job 40
     assert weeks["2032-06-14"].open_offers == 3  # Job 40 closed on May 27
     assert weeks["2032-05-03"].open_offers == 1 and weeks["2032-03-29"].open_offers == 0
+
+
+async def test_offers_carry_the_inbox_state_and_the_follow_flag(db_session: AsyncSession) -> None:
+    company = await make_company(db_session, "State Co")
+    source = await make_source(db_session, company)
+    posting, _ = await make_posting(db_session, source, first_seen_at=NOW - timedelta(days=1))
+    opportunity = await make_opportunity(db_session, posting)
+    db_session.add(
+        JobInboxItem(
+            owner_id=1,
+            job_opportunity_id=opportunity.job_opportunity_id,
+            state="ignored",
+            is_shortlisted=True,
+        )
+    )
+    await db_session.flush()
+    service = CompanyService(db_session, clock=lambda: NOW)
+    before = await service.dossier(1, company.company_id, search_intent_id=None)
+    assert (before.offers[0].state, before.offers[0].is_shortlisted) == ("ignored", True)
+    assert before.is_followed is False
+    await service.set_followed(1, company.company_id, followed=True)
+    assert (await service.dossier(1, company.company_id, search_intent_id=None)).is_followed
 
 
 async def test_an_unknown_company_is_404(db_session: AsyncSession) -> None:

@@ -7,8 +7,15 @@ import { Companies } from './Companies'
 
 const get = vi.fn()
 const post = vi.fn()
+const put = vi.fn()
+const del = vi.fn()
 vi.mock('@/api/client', () => ({
-  api: { GET: (...a: unknown[]) => get(...a), POST: (...a: unknown[]) => post(...a) },
+  api: {
+    GET: (...a: unknown[]) => get(...a),
+    POST: (...a: unknown[]) => post(...a),
+    PUT: (...a: unknown[]) => put(...a),
+    DELETE: (...a: unknown[]) => del(...a),
+  },
 }))
 
 function company(id: number, name: string, overrides: Record<string, unknown> = {}) {
@@ -19,12 +26,10 @@ function company(id: number, name: string, overrides: Record<string, unknown> = 
     careers_url: null,
     employer_type: null,
     open_offers: 5,
-    new_offers_7d: 1,
-    new_offers_15d: 3,
-    new_offers_30d: 4,
-    relevant_new_offers_7d: 0,
-    relevant_new_offers_15d: 2,
-    relevant_new_offers_30d: 2,
+    recommended_offers: 2,
+    best_fit_score: 82,
+    pending_candidates: 0,
+    is_followed: false,
     ...overrides,
   }
 }
@@ -38,6 +43,7 @@ function dossier(overrides: Record<string, unknown> = {}) {
     employer_type: null,
     enriched_at: '2026-10-08T09:00:00Z',
     stale: false,
+    is_followed: false,
     facts: [
       {
         fact_key: 'industry',
@@ -83,6 +89,9 @@ function dossier(overrides: Record<string, unknown> = {}) {
         closed: false,
         fit_score: 82,
         recommendation: 'recommended',
+        fit_band: 'excellent',
+        state: 'unread',
+        is_shortlisted: true,
       },
       {
         job_opportunity_id: 8,
@@ -92,6 +101,21 @@ function dossier(overrides: Record<string, unknown> = {}) {
         closed: true,
         fit_score: null,
         recommendation: null,
+        fit_band: null,
+        state: null,
+        is_shortlisted: false,
+      },
+      {
+        job_opportunity_id: 7,
+        title: 'Ignored role',
+        source_url: 'https://jobs.example.test/7',
+        first_seen_at: '2026-10-06T09:00:00Z',
+        closed: false,
+        fit_score: 58,
+        recommendation: 'recommended',
+        fit_band: 'average',
+        state: 'ignored',
+        is_shortlisted: false,
       },
     ],
     hiring: Array.from({ length: 12 }, (_, i) => ({
@@ -130,9 +154,11 @@ describe('Companies screen', () => {
   beforeEach(() => {
     get.mockReset()
     post.mockReset()
+    put.mockReset()
+    del.mockReset()
     list = [
-      company(1, 'Northwind Labs'),
-      company(2, 'Contoso', { new_offers_15d: 0, relevant_new_offers_15d: 0 }),
+      company(1, 'Northwind Labs', { is_followed: true }),
+      company(2, 'Contoso', { open_offers: 0, recommended_offers: 0, best_fit_score: null }),
     ]
     detail = dossier()
     get.mockImplementation((path: string) => {
@@ -141,10 +167,10 @@ describe('Companies screen', () => {
           data: {
             items: list,
             total: list.length,
-            window: 15,
-            sort: 'new',
+            sort: 'fit',
             search_intent_id: 1,
             relevance_min_score: 45,
+            recency_days: 30,
           },
         })
       if (path === '/api/v1/companies/{company_id}') return Promise.resolve({ data: detail })
@@ -152,28 +178,64 @@ describe('Companies screen', () => {
     })
   })
 
-  it('lists companies with new offers for the chosen window', async () => {
+  it('lists followed companies first with their counted offers and best fit', async () => {
     renderPage()
     const northwind = await screen.findByRole('option', { name: /Northwind Labs/ })
-    expect(within(northwind).getByText('3 new')).toBeInTheDocument()
-    expect(within(northwind).getByText('2 relevant')).toBeInTheDocument()
+    expect(within(northwind).getByText(/5 open/)).toBeInTheDocument()
+    expect(within(northwind).getByText(/2 recommended/)).toBeInTheDocument()
+    expect(within(northwind).getByLabelText('Best fit 82')).toBeInTheDocument()
+    expect(screen.getByText('Followed')).toBeInTheDocument()
+    expect(screen.getByText('All companies')).toBeInTheDocument()
+    const contoso = screen.getByRole('option', { name: /Contoso/ })
+    expect(within(contoso).getByText('No open offers')).toBeInTheDocument()
+    expect(screen.getByText(/last 30 days/)).toBeInTheDocument()
+    // "With open offers" is on by default; nothing else is.
     expect(get).toHaveBeenCalledWith(
       '/api/v1/companies',
-      expect.objectContaining({
-        params: { query: expect.objectContaining({ window: 15, sort: 'new', limit: 50 }) },
-      }),
+      expect.objectContaining({ params: { query: { limit: 50, open_only: true } } }),
     )
   })
 
-  it('changes the window and the relevant-only filter, and searches', async () => {
+  it('narrows the list with the filters and the search box', async () => {
     const user = userEvent.setup()
     renderPage()
     await screen.findByRole('option', { name: /Northwind Labs/ })
-    await user.click(screen.getByRole('button', { name: '30 d' }))
-    await user.click(screen.getByLabelText(/only offers relevant/i))
+    await user.click(screen.getByRole('button', { name: 'With open offers' })) // turn off
+    await user.click(screen.getByRole('button', { name: '★ Followed' }))
+    await user.click(screen.getByRole('button', { name: 'Recommended' }))
+    await user.click(screen.getByRole('button', { name: 'Needs identification' }))
     await user.type(screen.getByRole('searchbox', { name: 'Search companies' }), 'north')
     const last = get.mock.calls.filter(([p]) => p === '/api/v1/companies').at(-1)![1]
-    expect(last.params.query).toMatchObject({ window: 30, relevant_only: true, q: 'north' })
+    expect(last.params.query).toEqual({
+      limit: 50,
+      q: 'north',
+      followed_only: true,
+      recommended_only: true,
+      pending_only: true,
+    })
+  })
+
+  it('follows and unfollows a company from the list without opening it', async () => {
+    const user = userEvent.setup()
+    put.mockResolvedValue({ data: { company_id: 2, is_followed: true } })
+    del.mockResolvedValue({ data: { company_id: 1, is_followed: false } })
+    renderPage()
+    await user.click(await screen.findByRole('button', { name: 'Follow Contoso' }))
+    expect(put).toHaveBeenCalledWith('/api/v1/companies/{company_id}/follow', {
+      params: { path: { company_id: 2 } },
+    })
+    await user.click(screen.getByRole('button', { name: 'Unfollow Northwind Labs' }))
+    expect(del).toHaveBeenCalledWith('/api/v1/companies/{company_id}/follow', {
+      params: { path: { company_id: 1 } },
+    })
+    expect(get.mock.calls.some(([p]) => p === '/api/v1/companies/{company_id}')).toBe(false)
+  })
+
+  it('shows the pending identification on a row', async () => {
+    list = [company(3, 'Harbor Data', { pending_candidates: 3 })]
+    renderPage()
+    const row = await screen.findByRole('option', { name: /Harbor Data/ })
+    expect(within(row).getByText('Identify')).toBeInTheDocument()
   })
 
   it('shows the dossier of the selected company with sourced facts and labels', async () => {
@@ -193,14 +255,52 @@ describe('Companies screen', () => {
       'href',
       'https://jobs.example.test/9',
     )
-    expect(within(panel).getByText('Fit 82')).toBeInTheDocument()
-    expect(within(panel).getByText('Closed')).toBeInTheDocument()
     expect(within(panel).getByRole('img', { name: /weekly new offers/i })).toBeInTheDocument()
+  })
+
+  it('shows offers like the inbox and filters them; ignored ones stay, dimmed', async () => {
+    const user = userEvent.setup()
+    renderPage('/companies?company=1')
+    const panel = await screen.findByRole('region', { name: 'Northwind Labs' })
+    const offers = within(panel)
+      .getByRole('heading', { name: /^Offers/ })
+      .closest('section')!
+    expect(within(offers).getByText('82')).toBeInTheDocument()
+    expect(within(offers).getByText('Excellent')).toBeInTheDocument()
+    expect(within(offers).getByLabelText('Shortlisted')).toBeInTheDocument()
+    expect(within(offers).getByText('NEW')).toBeInTheDocument()
+    expect(within(offers).getByText('ignored')).toBeInTheDocument()
+    expect(within(offers).queryByText('Old role')).not.toBeInTheDocument() // closed: hidden by default
+    await user.click(within(offers).getByRole('button', { name: 'Hide ignored' }))
+    expect(within(offers).queryByText('Ignored role')).not.toBeInTheDocument()
+    await user.click(within(offers).getByRole('button', { name: 'Closed' }))
+    expect(within(offers).getByText('Old role')).toBeInTheDocument()
+    expect(within(offers).getByText('Pending')).toBeInTheDocument()
+    await user.click(within(offers).getByRole('button', { name: 'Recommended' }))
+    expect(within(offers).queryByText('Old role')).not.toBeInTheDocument()
+  })
+
+  it('asks for older offers on request and follows from the dossier', async () => {
+    const user = userEvent.setup()
+    put.mockResolvedValue({ data: { company_id: 1, is_followed: true } })
+    detail = dossier({ is_followed: false })
+    renderPage('/companies?company=1')
+    const panel = await screen.findByRole('region', { name: 'Northwind Labs' })
+    await user.click(within(panel).getByRole('button', { name: /older than 30 days/i }))
+    const last = get.mock.calls.filter(([p]) => p === '/api/v1/companies/{company_id}').at(-1)![1]
+    expect(last.params.query).toEqual({ include_older: true })
+    await user.click(within(panel).getByRole('button', { name: 'Follow Northwind Labs' }))
+    expect(put).toHaveBeenCalledWith('/api/v1/companies/{company_id}/follow', {
+      params: { path: { company_id: 1 } },
+    })
   })
 
   it('looks a stale company up in the public sources once, by itself', async () => {
     detail = dossier({ stale: true, enriched_at: null, facts: [] })
-    post.mockResolvedValue({ data: dossier() })
+    post.mockImplementation(() => {
+      detail = dossier() // the server now knows the facts
+      return Promise.resolve({ data: detail })
+    })
     renderPage('/companies?company=1')
     expect(await screen.findByText('software industry')).toBeInTheDocument()
     expect(post).toHaveBeenCalledTimes(1)
@@ -263,9 +363,12 @@ describe('Companies screen', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/local model/i)
   })
 
-  it('says so when there is no company yet', async () => {
+  it('says so when no company has open offers and when there is no company yet', async () => {
+    const user = userEvent.setup()
     list = []
     renderPage()
+    expect(await screen.findByText(/no company has open offers/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'With open offers' })) // turn off
     expect(await screen.findByText(/no companies yet/i)).toBeInTheDocument()
   })
 })

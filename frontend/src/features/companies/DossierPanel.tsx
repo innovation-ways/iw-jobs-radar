@@ -1,8 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { formatAge, formatDateTime } from '@/lib/format'
+import { FollowStar } from './CompanyList'
 import { HiringChart } from './HiringChart'
-import { useDossier, useDossierActions, type Dossier } from './queries'
+import { OfferList } from './OfferList'
+import { useDossier, useDossierActions, useFollow, type Dossier } from './queries'
 
 const FACT_LABELS: Record<string, string> = {
   homepage: 'Website',
@@ -85,8 +87,16 @@ function Fact({ fact }: { fact: Dossier['facts'][number] }) {
  * entities to confirm, offers with their fit, and the hiring activity. A dossier that was never
  * looked up (or is older than 30 days) is refreshed once, automatically, when it is opened.
  */
-export function DossierPanel({ companyId }: { companyId: number }) {
-  const { data, isPending, isError } = useDossier(companyId)
+export function DossierPanel({
+  companyId,
+  recencyDays = 30,
+}: {
+  companyId: number
+  recencyDays?: number
+}) {
+  const [includeOlder, setIncludeOlder] = useState(false)
+  const { data, isPending, isError } = useDossier(companyId, includeOlder)
+  const follow = useFollow()
   const { enrich, summarise, decide } = useDossierActions(companyId)
   const attempted = useRef(new Set<number>())
 
@@ -110,25 +120,34 @@ export function DossierPanel({ companyId }: { companyId: number }) {
   return (
     <section aria-label={data.name} className="flex flex-col gap-4 p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">{data.name}</h2>
-          <p className="mt-1 text-sm text-ink-2">
-            {data.homepage_url ? (
-              <a
-                className="underline"
-                href={data.homepage_url}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                {host}
-              </a>
-            ) : (
-              'Website not known yet'
-            )}
-            {data.enriched_at && (
-              <span className="ml-2 text-ink-3">checked {formatAge(data.enriched_at)} ago</span>
-            )}
-          </p>
+        <div className="flex items-start gap-2">
+          <FollowStar
+            size="lg"
+            name={data.name}
+            followed={data.is_followed}
+            disabled={follow.isPending}
+            onToggle={() => follow.mutate({ companyId, follow: !data.is_followed })}
+          />
+          <div>
+            <h2 className="text-lg font-semibold">{data.name}</h2>
+            <p className="mt-1 text-sm text-ink-2">
+              {data.homepage_url ? (
+                <a
+                  className="underline"
+                  href={data.homepage_url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                >
+                  {host}
+                </a>
+              ) : (
+                'Website not known yet'
+              )}
+              {data.enriched_at && (
+                <span className="ml-2 text-ink-3">checked {formatAge(data.enriched_at)} ago</span>
+              )}
+            </p>
+          </div>
         </div>
         <div className="flex gap-2">
           <Button
@@ -262,38 +281,12 @@ export function DossierPanel({ companyId }: { companyId: number }) {
         <HiringChart weeks={data.hiring} />
       </section>
 
-      <section aria-labelledby="offers" className="rounded-lg border border-line bg-surface p-4">
-        <h3 id="offers" className="mb-1 text-sm font-semibold">
-          Offers ({data.offers.length})
-        </h3>
-        {data.offers.length === 0 ? (
-          <p className="text-sm text-ink-2">No offers collected yet.</p>
-        ) : (
-          <ul className="text-sm">
-            {data.offers.map((o) => (
-              <li
-                key={o.job_opportunity_id}
-                className="flex flex-wrap items-center justify-between gap-2 border-t border-line py-1.5 first:border-t-0"
-              >
-                <a
-                  className="font-medium underline"
-                  href={o.source_url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                >
-                  {o.title}
-                </a>
-                <span className="text-xs text-ink-3">
-                  <span>{o.fit_score !== null ? `Fit ${o.fit_score}` : 'Not evaluated'}</span>
-                  {' · '}
-                  {formatAge(o.first_seen_at)} ago
-                  {o.closed && <span className="ml-1 rounded bg-surface-2 px-1">Closed</span>}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <OfferList
+        offers={data.offers}
+        recencyDays={recencyDays}
+        includeOlder={includeOlder}
+        onOlderChange={setIncludeOlder}
+      />
 
       {data.boards.length > 0 && (
         <p className="text-xs text-ink-3">

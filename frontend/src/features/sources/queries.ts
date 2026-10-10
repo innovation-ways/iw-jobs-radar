@@ -239,6 +239,7 @@ export function useSaveSchedule() {
       run_time_local: string
       timezone: string
       enabled: boolean
+      company_recency_days: number
       expected_version: number
     }) => unwrap(api.PUT('/api/v1/settings/schedule', { body: change })),
     // Refresh even on failure: a version conflict means the form shows a stale schedule.

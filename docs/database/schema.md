@@ -550,7 +550,7 @@ AI provider connections; at most one in use for CV import and one for jobs.
 
 ## schedule_setting
 
-Daily collection time and time zone, one row per owner.
+Daily collection time, time zone and company view limits, one row per owner.
 
 | Column | Type | Nullable | Description |
 |---|---|---|---|
@@ -559,10 +559,12 @@ Daily collection time and time zone, one row per owner.
 | `run_time_local` | TIME | no | Local wall-clock time of the daily run. |
 | `timezone` | VARCHAR(64) | no | IANA time zone name, for example Europe/Lisbon. |
 | `enabled` | BOOLEAN | no | Whether the daily run is active. |
+| `company_recency_days` | INTEGER | no | Offers first seen earlier than this many days ago are left out of the company views (ADR-053). |
 | `version` | INTEGER | no | Optimistic-concurrency counter, incremented on every change of the row. |
 | `updated_at` | DATETIME | no | UTC timestamp of the last modification of the row. |
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
 
+- check `ck_schedule_setting_company_recency_days_in_range`: `company_recency_days BETWEEN 1 AND 365`
 - foreign key `owner_id` → `owner.owner_id`
 - unique `uq_schedule_setting_owner_id` (owner_id)
 

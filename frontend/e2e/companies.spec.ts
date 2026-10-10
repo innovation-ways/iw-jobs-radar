@@ -11,12 +11,10 @@ const COMPANY = {
   careers_url: null,
   employer_type: null,
   open_offers: 4,
-  new_offers_7d: 1,
-  new_offers_15d: 2,
-  new_offers_30d: 3,
-  relevant_new_offers_7d: 1,
-  relevant_new_offers_15d: 2,
-  relevant_new_offers_30d: 2,
+  recommended_offers: 2,
+  best_fit_score: 82,
+  pending_candidates: 0,
+  is_followed: false,
 }
 
 const DOSSIER = {
@@ -27,6 +25,7 @@ const DOSSIER = {
   employer_type: null,
   enriched_at: '2026-10-08T09:00:00Z',
   stale: false,
+  is_followed: false,
   facts: [
     {
       fact_key: 'industry',
@@ -89,10 +88,10 @@ test('the company list opens a dossier with sourced facts', async ({ page }) => 
       return json(route, {
         items: [COMPANY],
         total: 1,
-        window: 15,
-        sort: 'new',
+        sort: 'fit',
         search_intent_id: 1,
         relevance_min_score: 45,
+        recency_days: 30,
       })
     if (path === '/api/v1/companies/1') return json(route, DOSSIER)
     return json(route, { error: { code: 'not_found', message: 'unexpected', details: {} } }, 404)

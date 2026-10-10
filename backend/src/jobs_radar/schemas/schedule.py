@@ -13,6 +13,9 @@ class ScheduleUpdate(StrictModel):
     run_time_local: time
     timezone: IanaTimezone
     enabled: bool
+    # How old an offer may be (days since first seen) to count in the company views (ADR-053);
+    # omitted keeps the stored value.
+    company_recency_days: int | None = Field(default=None, ge=1, le=365)
     expected_version: int = Field(ge=1)
 
 
@@ -22,6 +25,7 @@ class ScheduleRead(StrictModel):
     run_time_local: str
     timezone: str
     enabled: bool
+    company_recency_days: int
     version: int
     next_run_at: datetime | None
     next_run_local: str | None

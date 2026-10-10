@@ -10,8 +10,14 @@ function Form({ schedule }: { schedule: ScheduleRead }) {
   const [time, setTime] = useState(schedule.run_time_local)
   const [zone, setZone] = useState(schedule.timezone)
   const [enabled, setEnabled] = useState(schedule.enabled)
+  const [recency, setRecency] = useState(String(schedule.company_recency_days))
+  const days = Number(recency)
+  const validDays = Number.isInteger(days) && days >= 1 && days <= 365
   const dirty =
-    time !== schedule.run_time_local || zone !== schedule.timezone || enabled !== schedule.enabled
+    time !== schedule.run_time_local ||
+    zone !== schedule.timezone ||
+    enabled !== schedule.enabled ||
+    (validDays && days !== schedule.company_recency_days)
   const shown = save.data ?? schedule
 
   return (
@@ -23,6 +29,7 @@ function Form({ schedule }: { schedule: ScheduleRead }) {
           run_time_local: time,
           timezone: zone,
           enabled,
+          company_recency_days: validDays ? days : schedule.company_recency_days,
           expected_version: schedule.version,
         })
       }}
@@ -60,6 +67,19 @@ function Form({ schedule }: { schedule: ScheduleRead }) {
           </datalist>
         </label>
       </div>
+      <label className="flex flex-col gap-1">
+        Company views: count offers first seen in the last (days)
+        <input
+          type="number"
+          min={1}
+          max={365}
+          value={recency}
+          onChange={(event) => setRecency(event.target.value)}
+          aria-invalid={!validDays}
+          className="w-28 rounded-md border border-line bg-surface px-2 py-1.5"
+        />
+        {!validDays && <span className="text-bad">Enter a whole number from 1 to 365.</span>}
+      </label>
       <p className="text-ink-2">
         {shown.enabled && shown.next_run_local
           ? `Next run: ${shown.next_run_local} (${shown.timezone})`
@@ -71,7 +91,7 @@ function Form({ schedule }: { schedule: ScheduleRead }) {
         </p>
       )}
       <div>
-        <Button type="submit" size="sm" disabled={!dirty || save.isPending}>
+        <Button type="submit" size="sm" disabled={!dirty || !validDays || save.isPending}>
           Save schedule
         </Button>
       </div>

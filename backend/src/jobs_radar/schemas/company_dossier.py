@@ -4,6 +4,7 @@ from datetime import date, datetime
 from typing import Any, Literal
 
 from jobs_radar.schemas.common import StrictModel
+from jobs_radar.schemas.evaluation import FitBand
 
 
 class FactRead(StrictModel):
@@ -41,6 +42,9 @@ class OfferRead(StrictModel):
     closed: bool
     fit_score: int | None
     recommendation: str | None
+    fit_band: FitBand | None
+    state: str | None
+    is_shortlisted: bool
 
 
 class HiringWeekRead(StrictModel):
@@ -70,6 +74,7 @@ class CompanyDossierRead(StrictModel):
     employer_type: str | None
     enriched_at: datetime | None
     stale: bool
+    is_followed: bool
     facts: list[FactRead]
     candidates: list[CandidateRead]
     offers: list[OfferRead]

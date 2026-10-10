@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { formatAge, formatDateTime } from '@/lib/format'
+import { AnalysisCard, WebsiteForm } from './CompanyAnalysis'
 import { FollowStar } from './CompanyList'
 import { HiringChart } from './HiringChart'
 import { OfferList } from './OfferList'
@@ -18,7 +19,8 @@ const FACT_LABELS: Record<string, string> = {
   stage: 'Stage',
   ai_summary: 'Summary',
 }
-const HIDDEN = new Set(['homepage'])
+// The cited analysis has its own card below, so it is not repeated as a plain fact.
+const HIDDEN = new Set(['homepage', 'ai_dossier'])
 
 /**
  * Public page of a candidate entity, so the owner can compare look-alike candidates.
@@ -97,7 +99,8 @@ export function DossierPanel({
   const [includeOlder, setIncludeOlder] = useState(false)
   const { data, isPending, isError } = useDossier(companyId, includeOlder)
   const follow = useFollow()
-  const { enrich, summarise, decide } = useDossierActions(companyId)
+  const { enrich, summarise, analyse, setWebsite, decide } = useDossierActions(companyId)
+  const [editingWebsite, setEditingWebsite] = useState(false)
   const attempted = useRef(new Set<number>())
 
   useEffect(() => {
@@ -114,7 +117,8 @@ export function DossierPanel({
         Could not load this company.
       </p>
     )
-  const failure = [enrich, summarise, decide].find((m) => m.isError)?.error
+  const failure = [enrich, summarise, analyse, setWebsite, decide].find((m) => m.isError)?.error
+  const dossier = data.facts.find((f) => f.fact_key === 'ai_dossier')
   const host = data.homepage_url ? new URL(data.homepage_url).hostname.replace(/^www\./, '') : null
 
   return (
@@ -143,6 +147,13 @@ export function DossierPanel({
               ) : (
                 'Website not known yet'
               )}
+              <button
+                type="button"
+                className="ml-2 text-xs underline"
+                onClick={() => setEditingWebsite((v) => !v)}
+              >
+                {data.homepage_url ? 'Change' : 'Add website'}
+              </button>
               {data.enriched_at && (
                 <span className="ml-2 text-ink-3">checked {formatAge(data.enriched_at)} ago</span>
               )}
@@ -160,6 +171,14 @@ export function DossierPanel({
           </Button>
           <Button
             size="sm"
+            disabled={analyse.isPending || !data.homepage_url}
+            title={data.homepage_url ? undefined : 'Add the company website first'}
+            onClick={() => analyse.mutate()}
+          >
+            Analyse website
+          </Button>
+          <Button
+            size="sm"
             variant="outline"
             disabled={summarise.isPending}
             onClick={() => summarise.mutate()}
@@ -168,6 +187,18 @@ export function DossierPanel({
           </Button>
         </div>
       </div>
+      {(editingWebsite || !data.homepage_url) && (
+        <WebsiteForm
+          pending={setWebsite.isPending}
+          onSubmit={(url) => setWebsite.mutate(url, { onSuccess: () => setEditingWebsite(false) })}
+        />
+      )}
+      {analyse.isPending && (
+        <p role="status" className="text-sm text-ink-3">
+          Reading the company website and writing the analysis with the local model. This can take a
+          few minutes…
+        </p>
+      )}
       {enrich.isPending && (
         <p role="status" className="text-sm text-ink-3">
           Looking up public sources…
@@ -260,8 +291,8 @@ export function DossierPanel({
         </h3>
         {data.facts.filter((f) => !HIDDEN.has(f.fact_key)).length === 0 ? (
           <p className="text-sm text-ink-2">
-            Nothing is known beyond the job board yet. Facts appear when a public dataset is
-            matched.
+            Nothing is known beyond the job board yet. Add the company website, then update from
+            public sources, or confirm one of the candidates above.
           </p>
         ) : (
           <ul className="text-sm">
@@ -271,6 +302,24 @@ export function DossierPanel({
                 <Fact key={f.fact_key} fact={f} />
               ))}
           </ul>
+        )}
+      </section>
+
+      <section aria-labelledby="analysis" className="rounded-lg border border-line bg-surface p-4">
+        <h3 id="analysis" className="mb-2 text-sm font-semibold">
+          Company analysis
+        </h3>
+        {dossier ? (
+          <AnalysisCard
+            value={dossier.value}
+            model={dossier.source_name}
+            retrievedAt={dossier.retrieved_at}
+          />
+        ) : (
+          <p className="text-sm text-ink-2">
+            Not analysed yet. “Analyse website” reads a few public pages of the company site and
+            writes a cited summary with the local model.
+          </p>
         )}
       </section>
 

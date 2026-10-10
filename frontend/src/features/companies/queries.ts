@@ -105,6 +105,15 @@ export function useDossierActions(companyId: number) {
     mutationFn: () => unwrap(api.POST('/api/v1/companies/{company_id}/summary', path)),
     onSuccess: store,
   })
+  const analyse = useMutation({
+    mutationFn: () => unwrap(api.POST('/api/v1/companies/{company_id}/analyse', path)),
+    onSuccess: store,
+  })
+  const setWebsite = useMutation({
+    mutationFn: (url: string) =>
+      unwrap(api.PUT('/api/v1/companies/{company_id}/website', { ...path, body: { url } })),
+    onSuccess: store,
+  })
   const decide = useMutation({
     mutationFn: (input: { candidateId: number; decision: 'confirm' | 'reject' }) => {
       const params = {
@@ -128,5 +137,5 @@ export function useDossierActions(companyId: number) {
     },
     onSuccess: store,
   })
-  return { enrich, summarise, decide }
+  return { enrich, summarise, analyse, setWebsite, decide }
 }

@@ -229,6 +229,11 @@ describe('Companies screen', () => {
       'section',
     )!
     expect(within(card).getByText('Northwind Traders')).toBeInTheDocument()
+    // The owner can open the Wikidata entry to tell look-alike candidates apart.
+    const link = within(card).getByRole('link', { name: /wikidata.*northwind traders/i })
+    expect(link).toHaveAttribute('href', 'https://www.wikidata.org/wiki/Q99')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
     await user.click(within(card).getByRole('button', { name: 'Yes, this is it' }))
     expect(post).toHaveBeenCalledWith(
       '/api/v1/companies/{company_id}/candidates/{company_enrichment_candidate_id}/confirm',

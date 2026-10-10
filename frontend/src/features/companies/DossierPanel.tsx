@@ -18,6 +18,17 @@ const FACT_LABELS: Record<string, string> = {
 }
 const HIDDEN = new Set(['homepage'])
 
+/**
+ * Public page of a candidate entity, so the owner can compare look-alike candidates.
+ * Only Wikidata is linked today; other datasets return null (no link shown).
+ */
+function candidateUrl(sourceName: string, externalId: string): string | null {
+  // The identifier is encoded because it comes from an external dataset.
+  return sourceName === 'wikidata'
+    ? `https://www.wikidata.org/wiki/${encodeURIComponent(externalId)}`
+    : null
+}
+
 function factText(value: unknown): string {
   if (Array.isArray(value)) return value.join(', ')
   if (value !== null && typeof value === 'object') {
@@ -179,6 +190,17 @@ export function DossierPanel({ companyId }: { companyId: number }) {
                     {c.description && ` · ${c.description}`}
                     {c.website && ` · ${c.website}`}
                   </div>
+                  {candidateUrl(c.source_name, c.external_id) && (
+                    <a
+                      href={candidateUrl(c.source_name, c.external_id)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`View on Wikidata: ${c.label}`}
+                      className="text-xs underline"
+                    >
+                      View on Wikidata ↗
+                    </a>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button

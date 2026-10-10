@@ -46,7 +46,9 @@ SYSTEM_PROMPT = "\n".join(
         f"Give statements, each with one of these topics: {', '.join(TOPICS)}.",
         'Every statement needs a "quote": an exact quote copied verbatim from the page named in '
         '"page_url". A statement without a verbatim quote is discarded.',
-        "Cover remote or hybrid policy and any presence in Portugal when the pages say it.",
+        "Cover remote or hybrid policy and any presence in Portugal only when the pages say it. "
+        "Never write a statement that something is missing or not mentioned: put that in "
+        '"open_questions" instead.',
         'List in "open_questions" what the pages do not answer. Answer with a JSON object '
         '{"statements": [{"topic", "text", "quote", "page_url"}], "open_questions": [""]}.',
     ]

@@ -14,7 +14,6 @@ from urllib.robotparser import RobotFileParser
 
 from bs4 import BeautifulSoup
 
-from jobs_radar.adapters.sources.html_text import html_to_text
 from jobs_radar.core.http import FetchError, GuardedHttpClient
 from jobs_radar.domain.domains import registered_domain
 
@@ -26,6 +25,13 @@ _KEYWORDS = (
 # The characters kept from one page: enough for the model, small enough for a local context window.
 PAGE_TEXT_LIMIT = 6000
 _MAX_PAGE_BYTES = 1_500_000
+# Page furniture that says nothing about the company; dropped before the text is cut to size.
+_NOISE_TAGS = (
+    "script", "style", "noscript", "template", "svg", "iframe", "nav", "header", "footer",
+    "aside", "form", "button", "select",
+)  # fmt: skip
+# A line shorter than this is a menu entry or a label, not a sentence.
+_MIN_WORDS = 3
 
 
 @dataclass(frozen=True)
@@ -34,6 +40,26 @@ class WebPage:
 
     url: str
     text: str
+
+
+def page_text(html: str) -> str:
+    """Return the readable text of a page: main content only, one line per block, no menus.
+
+    Navigation, headers, footers, forms and scripts are removed, ``<main>`` is preferred when the
+    page has one, and lines of fewer than three words (menu entries, labels) are dropped.
+    """
+    if not html.strip():
+        return ""
+    soup = BeautifulSoup(html, "lxml")
+    for tag in soup.find_all(_NOISE_TAGS):
+        tag.decompose()
+    root = soup.find("main") or soup.body or soup
+    lines: list[str] = []
+    for raw in root.get_text("\n").splitlines():
+        line = " ".join(raw.split())
+        if len(line.split()) >= _MIN_WORDS and (not lines or lines[-1] != line):
+            lines.append(line)
+    return "\n".join(lines)
 
 
 def select_page_links(home_url: str, html: str, *, limit: int) -> list[str]:
@@ -115,10 +141,10 @@ class WebsiteReader:
         home = await self._page(home_url, domain)
         if home is None:
             return []
-        pages = [WebPage(home_url, html_to_text(home[1])[:PAGE_TEXT_LIMIT])]
+        pages = [WebPage(home_url, page_text(home[1])[:PAGE_TEXT_LIMIT])]
         links = select_page_links(home_url, home[1], limit=self._max_pages - 1)
         for link in links:
             page = await self._page(link, domain)
             if page is not None:
-                pages.append(WebPage(link, html_to_text(page[1])[:PAGE_TEXT_LIMIT]))
+                pages.append(WebPage(link, page_text(page[1])[:PAGE_TEXT_LIMIT]))
         return [p for p in pages if p.text]

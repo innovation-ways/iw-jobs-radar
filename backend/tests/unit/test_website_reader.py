@@ -3,7 +3,7 @@
 import pytest
 import respx
 
-from jobs_radar.adapters.enrichment.website import WebsiteReader, select_page_links
+from jobs_radar.adapters.enrichment.website import WebsiteReader, page_text, select_page_links
 from jobs_radar.core.http import GuardedHttpClient
 from jobs_radar.core.url_guard import UrlGuard
 
@@ -80,7 +80,9 @@ async def test_reads_home_and_linked_pages_and_obeys_robots() -> None:
 async def test_a_page_that_redirects_off_the_domain_is_dropped() -> None:
     with respx.mock(assert_all_called=False) as mock:
         mock.get("https://www.northwind.example/robots.txt").respond(404)
-        mock.get(SITE).respond(200, html='<a href="/about">About</a>')
+        mock.get(SITE).respond(
+            200, html='<p>Northwind builds billing software.</p><a href="/about">About</a>'
+        )
         mock.get("https://www.northwind.example/about").respond(
             302, headers={"location": "https://other.example/about"}
         )
@@ -95,3 +97,30 @@ async def test_unreachable_home_returns_nothing() -> None:
         mock.get("https://www.northwind.example/robots.txt").respond(404)
         mock.get(SITE).respond(503)
         assert await reader().read(SITE) == []
+
+
+PAGE = """<html><head><title>Northwind | Home</title><style>.x{}</style></head><body>
+<header><a href="/">Logo</a><nav><a href="/p">Products</a></nav></header>
+<iframe src="https://tracker.example"></iframe>
+<main><h1>Billing for telecoms</h1><p>Northwind builds billing software for telecom operators
+across Europe and has teams working remotely.</p><ul><li>Fast</li></ul>
+<form><p>Thank you for signing up for our newsletter, we will be in touch.</p></form></main>
+<footer><p>Cookie settings and legal notices apply to every page of this website.</p></footer>
+</body></html>"""
+
+
+def test_page_text_keeps_the_main_content_without_menus_forms_and_footers() -> None:
+    text = page_text(PAGE)
+    assert "Northwind builds billing software for telecom operators" in text
+    assert "Billing for telecoms" in text
+    for noise in ("Products", "Logo", "newsletter", "Cookie settings", "tracker.example", ".x{}"):
+        assert noise not in text
+
+
+def test_page_text_drops_short_menu_like_lines_but_keeps_sentences() -> None:
+    html = "<body><div><p>Back</p><p>-</p><p>Products</p><p>We pay every employee on time.</p></div></body>"
+    assert page_text(html) == "We pay every employee on time."
+
+
+def test_page_text_of_an_empty_page_is_empty() -> None:
+    assert page_text("") == ""

@@ -687,6 +687,26 @@
         "title": "CompanyDossierRead",
         "type": "object"
       },
+      "CompanyFollowState": {
+        "additionalProperties": false,
+        "description": "Whether the owner follows a company (ADR-053).",
+        "properties": {
+          "company_id": {
+            "title": "Company Id",
+            "type": "integer"
+          },
+          "is_followed": {
+            "title": "Is Followed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "company_id",
+          "is_followed"
+        ],
+        "title": "CompanyFollowState",
+        "type": "object"
+      },
       "CompanyList": {
         "additionalProperties": false,
         "description": "A page of the company list.",
@@ -6704,6 +6724,90 @@
           }
         },
         "summary": "Enrich Company",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
+    "/api/v1/companies/{company_id}/follow": {
+      "delete": {
+        "description": "Stop following a company (idempotent).",
+        "operationId": "unfollow_company_api_v1_companies__company_id__follow_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "title": "Company Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyFollowState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unfollow Company",
+        "tags": [
+          "companies"
+        ]
+      },
+      "put": {
+        "description": "Follow a company (idempotent).",
+        "operationId": "follow_company_api_v1_companies__company_id__follow_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "title": "Company Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyFollowState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Follow Company",
         "tags": [
           "companies"
         ]

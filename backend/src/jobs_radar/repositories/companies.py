@@ -1,9 +1,10 @@
 """Data access for companies (document 13, section 9)."""
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jobs_radar.db.models import Company, CompanyAlias
+from jobs_radar.db.models import Company, CompanyAlias, CompanyFollow
 
 
 def normalise_company_name(name: str) -> str:
@@ -42,3 +43,26 @@ class CompanyRepository:
         await self._session.flush()
         await self._session.refresh(company)
         return company
+
+
+class CompanyFollowRepository:
+    """Reads and changes which companies an owner follows (ADR-053)."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def follow(self, owner_id: int, company_id: int) -> None:
+        """Follow the company; following twice is a no-op."""
+        await self._session.execute(
+            insert(CompanyFollow)
+            .values(owner_id=owner_id, company_id=company_id)
+            .on_conflict_do_nothing(constraint="uq_company_follow_owner_id_company_id")
+        )
+
+    async def unfollow(self, owner_id: int, company_id: int) -> None:
+        """Stop following the company; the row is really deleted (no soft delete)."""
+        await self._session.execute(
+            delete(CompanyFollow).where(
+                CompanyFollow.owner_id == owner_id, CompanyFollow.company_id == company_id
+            )
+        )

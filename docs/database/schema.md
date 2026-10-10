@@ -141,6 +141,21 @@ Facts about companies, each with provenance.
 - check `ck_company_fact_origin_valid`: `origin IN ('source', 'public_dataset', 'ai_inference', 'user')`
 - foreign key `company_id` → `company.company_id`
 
+## company_follow
+
+Companies an owner follows; unfollowing deletes the row.
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `company_follow_id` | BIGINT | no | Surrogate primary key of the follow. |
+| `owner_id` | BIGINT | no | Owner who follows. |
+| `company_id` | BIGINT | no | Company that is followed. |
+| `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
+
+- foreign key `company_id` → `company.company_id`
+- foreign key `owner_id` → `owner.owner_id`
+- unique `uq_company_follow_owner_id_company_id` (owner_id, company_id)
+
 ## document
 
 Metadata of uploaded documents; original bytes are never persisted.

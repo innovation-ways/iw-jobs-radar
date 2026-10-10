@@ -3,11 +3,12 @@
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from jobs_radar.api.deps import get_company_service, get_inbox_default_intent
+from jobs_radar.api.deps import get_company_service, get_inbox_default_intent, get_session
 from jobs_radar.core.errors import InputValidationError
 from jobs_radar.domain.enums import LOCAL_OWNER_ID
-from jobs_radar.schemas.company import CompanyList, CompanySummary
+from jobs_radar.schemas.company import CompanyFollowState, CompanyList, CompanySummary
 from jobs_radar.services.companies import DEFAULT_RELEVANCE_MIN_SCORE, CompanyService
 
 router = APIRouter(tags=["companies"])
@@ -50,3 +51,27 @@ async def list_companies(
         search_intent_id=intent_id,
         relevance_min_score=relevance_min_score,
     )
+
+
+@router.put("/companies/{company_id}/follow", response_model=CompanyFollowState)
+async def follow_company(
+    company_id: int,
+    service: Annotated[CompanyService, Depends(get_company_service)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> CompanyFollowState:
+    """Follow a company (idempotent)."""
+    await service.set_followed(LOCAL_OWNER_ID, company_id, followed=True)
+    await session.commit()
+    return CompanyFollowState(company_id=company_id, is_followed=True)
+
+
+@router.delete("/companies/{company_id}/follow", response_model=CompanyFollowState)
+async def unfollow_company(
+    company_id: int,
+    service: Annotated[CompanyService, Depends(get_company_service)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> CompanyFollowState:
+    """Stop following a company (idempotent)."""
+    await service.set_followed(LOCAL_OWNER_ID, company_id, followed=False)
+    await session.commit()
+    return CompanyFollowState(company_id=company_id, is_followed=False)

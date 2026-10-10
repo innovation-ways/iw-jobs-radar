@@ -128,6 +128,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{company_id}/follow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Follow Company
+         * @description Follow a company (idempotent).
+         */
+        put: operations["follow_company_api_v1_companies__company_id__follow_put"];
+        post?: never;
+        /**
+         * Unfollow Company
+         * @description Stop following a company (idempotent).
+         */
+        delete: operations["unfollow_company_api_v1_companies__company_id__follow_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{company_id}/summary": {
         parameters: {
             query?: never;
@@ -1446,6 +1470,16 @@ export interface components {
             stale: boolean;
             /** Warnings */
             warnings: string[];
+        };
+        /**
+         * CompanyFollowState
+         * @description Whether the owner follows a company (ADR-053).
+         */
+        CompanyFollowState: {
+            /** Company Id */
+            company_id: number;
+            /** Is Followed */
+            is_followed: boolean;
         };
         /**
          * CompanyList
@@ -3916,6 +3950,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompanyDossierRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    follow_company_api_v1_companies__company_id__follow_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyFollowState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unfollow_company_api_v1_companies__company_id__follow_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyFollowState"];
                 };
             };
             /** @description Validation Error */

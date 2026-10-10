@@ -15,6 +15,7 @@ from jobs_radar.db.models import (
     CompanyFact,
     SourceConfiguration,
 )
+from jobs_radar.repositories.companies import CompanyFollowRepository
 from jobs_radar.repositories.company_list import (
     CompanyDossierQueries,
     CompanyListQueries,
@@ -78,6 +79,7 @@ class CompanyService:
         self._session = session
         self._queries = CompanyListQueries(session)
         self._dossier = CompanyDossierQueries(session)
+        self._follows = CompanyFollowRepository(session)
         self._clock = clock
 
     async def list_companies(
@@ -106,6 +108,20 @@ class CompanyService:
             limit=limit,
             offset=offset,
         )
+
+    async def set_followed(self, owner_id: int, company_id: int, *, followed: bool) -> None:
+        """Follow or unfollow a company; repeating the same call changes nothing.
+
+        Raises:
+            NotFoundError: the company does not exist.
+        """
+        if await self._session.get(Company, company_id) is None:
+            msg = f"Company {company_id} does not exist."
+            raise NotFoundError(msg)
+        if followed:
+            await self._follows.follow(owner_id, company_id)
+        else:
+            await self._follows.unfollow(owner_id, company_id)
 
     async def dossier(
         self, owner_id: int, company_id: int, *, search_intent_id: int | None

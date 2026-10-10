@@ -31,3 +31,10 @@ class CompanyList(StrictModel):
     sort: Literal["new", "relevant", "open", "name"]
     search_intent_id: int | None
     relevance_min_score: int
+
+
+class CompanyFollowState(StrictModel):
+    """Whether the owner follows a company (ADR-053)."""
+
+    company_id: int
+    is_followed: bool

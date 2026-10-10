@@ -141,3 +141,19 @@ class CompanyEnrichmentCandidate(CreatedAtMixin, Base):
     decided_at: Mapped[datetime | None] = timestamp_column(
         "UTC time of the decision.", nullable=True
     )
+
+
+class CompanyFollow(CreatedAtMixin, Base):
+    """The owner follows a company: personal state, not a company fact (ADR-053)."""
+
+    __tablename__ = "company_follow"
+    __table_args__ = (
+        UniqueConstraint("owner_id", "company_id", name="uq_company_follow_owner_id_company_id"),
+        {"comment": "Companies an owner follows; unfollowing deletes the row."},
+    )
+
+    company_follow_id: Mapped[int] = pk_column("Surrogate primary key of the follow.")
+    owner_id: Mapped[int] = fk_column("owner.owner_id", "Owner who follows.", index=False)
+    company_id: Mapped[int] = fk_column(
+        "company.company_id", "Company that is followed.", ondelete="CASCADE"
+    )

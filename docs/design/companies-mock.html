@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jobs Radar — Companies mock-up</title>
+<!--
+  Static design mock-up for the reworked Companies screen (not the real application).
+  All data is synthetic. Proposal: follow (star) companies, a filterable company list,
+  inbox-style offers inside a company, and Wikidata links on identification candidates.
+  Same visual tokens as frontend-mock.html. Interactive bits: star, filters, search, company selection, theme.
+-->
+<style>
+:root {
+  --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radius: 8px;
+  --bg: #fbfbfc; --surface: #ffffff; --surface-2: #f3f4f6; --surface-3: #eaecf0;
+  --border: #e4e6eb; --border-strong: #cfd3da;
+  --text: #15171c; --text-2: #565c69; --text-3: #7a808d;
+  --good: #146c36; --good-bg: #e6f4ec; --caution: #8a4b0a; --caution-bg: #fdf1dc;
+  --bad: #a61b1b; --bad-bg: #fbe8e8; --neutral-band: #4b5160; --neutral-bg: #eceef2;
+  --accent: #4f46e5; --accent-soft: #eceafd; --accent-text: #3730a3; --on-accent: #fff;
+  --star: #b7791f;
+}
+html[data-theme="dark"] {
+  --bg: #0d0e11; --surface: #14161a; --surface-2: #1b1e23; --surface-3: #242830;
+  --border: #272a31; --border-strong: #363a44;
+  --text: #ecedf0; --text-2: #a5aab5; --text-3: #7d838f;
+  --good: #8cc9a4; --good-bg: #172a20; --caution: #d9b36a; --caution-bg: #2a2212;
+  --bad: #e9a0a0; --bad-bg: #2c1919; --neutral-band: #a9aeb8; --neutral-bg: #242830;
+  --accent: #8b87f5; --accent-soft: #232146; --accent-text: #c7c4ff; --on-accent: #0d0e11;
+  --star: #e5b84c;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; cursor: pointer; }
+a { color: var(--accent-text); text-decoration: none; } a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--text-2); } .faint { color: var(--text-3); }
+.ico { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+
+.app { display: grid; grid-template-columns: 200px 1fr; height: 100vh; }
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; }
+.brand { padding: 6px 10px 14px; font-weight: 650; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 6px; color: var(--text-2); }
+.nav-item[aria-current="page"] { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+.main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 10px 20px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.topbar h1 { font-size: 15px; margin: 0; font-weight: 650; flex: 1; }
+
+.btn { border: 1px solid var(--border-strong); background: var(--surface); padding: 4px 11px; border-radius: 7px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { background: var(--surface-2); }
+.btn.sm { padding: 2px 9px; font-size: 12px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--text-2); white-space: nowrap; }
+.chip.accent { background: var(--accent-soft); color: var(--accent-text); }
+.filter { border: 1px solid var(--border-strong); background: var(--surface); border-radius: 999px; padding: 2px 10px; font-size: 12px; color: var(--text-2); }
+.filter[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+.tag-source { font-size: 11px; padding: 0 6px; border-radius: 4px; border: 1px solid var(--border-strong); color: var(--text-2); white-space: nowrap; }
+.tag-ai { font-size: 11px; padding: 0 6px; border-radius: 4px; border: 1px dashed var(--accent); color: var(--accent-text); }
+
+/* fit */
+.fit { display: inline-flex; align-items: center; gap: 8px; }
+.meter { width: 48px; height: 6px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
+.meter > span { display: block; height: 100%; }
+.band { font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 6px; white-space: nowrap; }
+.b-strong { background: var(--good-bg); color: var(--good); }
+.b-partial { background: var(--caution-bg); color: var(--caution); }
+.b-low { background: var(--neutral-bg); color: var(--neutral-band); }
+.b-notrec { background: var(--bad-bg); color: var(--bad); }
+.b-none { background: var(--surface-2); color: var(--text-3); border: 1px dashed var(--border-strong); }
+.fill-good { background: var(--good); } .fill-caution { background: var(--caution); } .fill-neutral { background: var(--neutral-band); } .fill-bad { background: var(--bad); }
+.score { font-weight: 650; min-width: 2.6ch; text-align: right; }
+
+/* star */
+.star { border: 0; background: transparent; padding: 2px; border-radius: 4px; color: var(--text-3); display: grid; place-items: center; }
+.star:hover { color: var(--star); background: var(--surface-2); }
+.star[aria-pressed="true"] { color: var(--star); }
+.star[aria-pressed="true"] .ico { fill: currentColor; }
+
+/* master-detail */
+.cols { display: grid; grid-template-columns: 400px 1fr; flex: 1; min-height: 0; }
+.list-col { display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--border); background: var(--surface); }
+.list-head { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--border); }
+.search { display: flex; align-items: center; gap: 8px; border: 1px solid var(--border-strong); border-radius: 7px; padding: 4px 10px; background: var(--bg); }
+.search input { border: 0; background: transparent; outline: none; color: var(--text); flex: 1; font: inherit; }
+.filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.list-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-3); }
+.list { overflow-y: auto; flex: 1; }
+.group-label { position: sticky; top: 0; background: var(--surface-2); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); padding: 4px 12px; border-bottom: 1px solid var(--border); }
+.co { display: grid; grid-template-columns: 24px 1fr auto; gap: 8px; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.co:hover { background: var(--surface-2); }
+.co[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.co .name { font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.co .sub { font-size: 12px; color: var(--text-2); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.co.dim .name { font-weight: 500; color: var(--text-2); }
+.newdot { font-size: 11px; font-weight: 650; color: var(--accent-text); background: var(--accent-soft); border-radius: 99px; padding: 0 7px; }
+.more { padding: 10px 12px; text-align: center; font-size: 12px; color: var(--text-3); }
+
+.detail { overflow-y: auto; padding: 18px 24px 40px; }
+.detail-inner { max-width: 900px; display: flex; flex-direction: column; gap: 16px; }
+.dh { display: flex; align-items: flex-start; gap: 10px; }
+.dh h2 { margin: 0; font-size: 20px; letter-spacing: -.015em; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.card h3 { margin: 0; font-size: 13px; font-weight: 650; }
+.card-h { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.card-b { padding: 12px 14px; }
+.facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 12px; }
+.facts b { display: block; font-size: 11px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: .05em; }
+
+/* candidates */
+.cand { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--border); align-items: center; }
+.cand:last-child { border-bottom: 0; }
+.cand .t { font-weight: 600; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.cand .d { font-size: 12px; color: var(--text-2); }
+.ext { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
+
+/* offers (inbox-style) */
+.offers-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+.offer { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+.offer:last-child { border-bottom: 0; }
+.offer:hover { background: var(--surface-2); }
+.offer .t { font-weight: 600; }
+.offer .s { font-size: 12px; color: var(--text-2); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.offer .state { font-size: 12px; color: var(--text-2); display: inline-flex; gap: 5px; align-items: center; }
+.offer.closed { opacity: .6; }
+.note { font-size: 12px; color: var(--text-3); padding: 8px 14px; }
+.annot { position: fixed; right: 14px; bottom: 14px; max-width: 300px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: 8px; padding: 10px 12px; font-size: 12px; color: var(--text-2); box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+.annot b { color: var(--text); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 .9-1 1.7M12 17h.01"/></symbol>
+</svg>
+
+<div class="app">
+  <nav class="sidebar" aria-label="Main">
+    <div class="brand">Jobs Radar</div>
+    <a class="nav-item" href="#">Inbox</a>
+    <a class="nav-item" href="#">Profile</a>
+    <a class="nav-item" href="#">Sources</a>
+    <a class="nav-item" href="#" aria-current="page">Companies</a>
+    <a class="nav-item" href="#">Trends</a>
+  </nav>
+
+  <div class="main">
+    <header class="topbar">
+      <h1>Companies</h1>
+      <button class="btn sm" id="theme" type="button">Dark / light</button>
+    </header>
+
+    <div class="cols">
+      <!-- ================= LIST ================= -->
+      <section class="list-col" aria-label="Company list">
+        <div class="list-head">
+          <label class="search"><svg class="ico"><use href="#i-search"/></svg>
+            <input id="q" type="search" placeholder="Search 312 companies…" aria-label="Search companies"></label>
+          <div class="filters" role="group" aria-label="Filters">
+            <button class="filter" aria-pressed="false" data-f="followed">★ Followed <span class="num">4</span></button>
+            <button class="filter" aria-pressed="true" data-f="open">With open offers <span class="num">187</span></button>
+            <button class="filter" aria-pressed="false" data-f="rec">Recommended <span class="num">23</span></button>
+            <button class="filter" aria-pressed="false" data-f="pending">Needs identification <span class="num">9</span></button>
+          </div>
+          <div class="list-meta"><span>187 shown · 125 hidden (no open offers)</span>
+            <span>Sort: <b style="color:var(--text-2)">Best fit ▾</b></span></div>
+        </div>
+
+        <div class="list" id="list">
+          <div class="group-label">Followed</div>
+          <div class="co" role="option" aria-selected="true" data-id="acme" data-g="followed open rec">
+            <button class="star" aria-pressed="true" aria-label="Unfollow Acme Robotics"><svg class="ico"><use href="#i-star"/></svg></button>
+            <div><div class="name">Acme Robotics <span class="newdot">3 new</span></div>
+              <div class="sub"><span>5 open</span><span>·</span><span>2 recommended</span></div></div>
+            <span class="fit"><span class="meter"><span class="fill-good" style="width:86%"></span></span><span class="score num">86</span></span>
+          </div>
+          <div class="co" role="option" aria-selected="false" data-id="nordwind" data-g="followed open rec">
+            <button class="star" aria-pressed="true" aria-label="Unfollow Nordwind Labs"><svg class="ico"><use href="#i-star"/></svg></button>
+            <div><div class="name">Nordwind Labs</div>
+              <div class="sub"><span>2 open</span><span>·</span><span>1 recommended</span></div></div>
+            <span class="fit"><span class="meter"><span class="fill-good" style="width:74%"></span></span><span class="score num">74</span></span>
+          </div>
+          <div class="co dim" role="option" aria-selected="false" data-id="lumen" data-g="followed">
+            <button class="star" aria-pressed="true" aria-label="Unfollow Lumen Grid"><svg class="ico"><use href="#i-star"/></svg></button>
+            <div><div class="name">Lumen Grid</div>
+              <div class="sub"><span>No open offers</span><span>·</span><span class="faint">last seen 12 days ago</span></div></div>
+            <span class="faint">—</span>
+          </div>
+          <div class="co dim" role="option" aria-selected="false" data-id="orbit" data-g="followed open">
+            <button class="star" aria-pressed="true" aria-label="Unfollow Orbit Pay"><svg class="ico"><use href="#i-star"/></svg></button>
+            <div><div class="name">Orbit Pay</div>
+              <div class="sub"><span>1 open</span><span>·</span><span>not evaluated</span></div></div>
+            <span class="band b-none">Not evaluated</span>
+          </div>
+
+          <div class="group-label">All companies</div>
+          <div class="co" role="option" aria-selected="false" data-id="vela" data-g="open rec">
+            <button class="star" aria-pressed="false" aria-label="Follow Vela Systems"><svg class="ico"><use href="#i-star"/></svg></button>
+            <div><div class="name">Vela Systems</div>
+              <div class="sub"><span>3 open</span><span>·</span><span>1 recommended</span></div></div>
+            <span class="fit"><span class="meter"><span class="fill-good" style="width:81%"></span></span><span class="score num">81</span></span>
+          </div>
+          <div class="co" role="option" aria-selected="false" data-id="harbor" data-g="open pending">
+            <button class="star" aria-pressed="false" aria-label="Follow Harbor Data"><svg class="ico"><use href="#i-star"/></svg></button>
+            <div><div class="name">Harbor Data <span class="chip"><svg class="ico" style="width:12px;height:12px"><use href="#i-help"/></svg>Identify</span></div>
+              <div class="sub"><span>1 open</span><span>·</span><span>3 candidates</span></div></div>
+            <span class="fit"><span class="meter"><span class="fill-caution" style="width:58%"></span></span><span class="score num">58</span></span>
+          </div>
+          <div class="co" role="option" aria-selected="false" data-id="quartz" data-g="open">
+            <button class="star" aria-pressed="false" aria-label="Follow Quartz Media"><svg class="ico"><use href="#i-star"/></svg></button>
+            <div><div class="name">Quartz Media</div>
+              <div class="sub"><span>2 open</span><span>·</span><span>0 recommended</span></div></div>
+            <span class="fit"><span class="meter"><span class="fill-neutral" style="width:34%"></span></span><span class="score num">34</span></span>
+          </div>
+          <div class="more">… 182 more · scroll loads the next 50</div>
+        </div>
+      </section>
+
+      <!-- ================= DETAIL ================= -->
+      <section class="detail" aria-label="Company detail">
+        <div class="detail-inner" id="detail-acme">
+          <div class="dh">
+            <button class="star" id="dstar" aria-pressed="true" aria-label="Unfollow Acme Robotics" style="margin-top:4px"><svg class="ico" style="width:22px;height:22px"><use href="#i-star"/></svg></button>
+            <div style="flex:1">
+              <h2>Acme Robotics</h2>
+              <div class="muted">Industrial robotics · Lisbon, PT · 201–500 employees</div>
+            </div>
+            <span class="chip accent"><svg class="ico" style="width:12px;height:12px"><use href="#i-check"/></svg>Identified</span>
+          </div>
+
+          <div class="card"><div class="card-b facts">
+            <div><b>Website</b><a href="#">acme-robotics.example</a></div>
+            <div><b>Wikidata</b><a class="ext" href="#">Q1234567 <svg class="ico" style="width:12px;height:12px"><use href="#i-ext"/></svg></a></div>
+            <div><b>Open offers</b>5 (2 recommended)</div>
+            <div><b>Seen in</b><span class="tag-source">Greenhouse</span> <span class="tag-source">Himalayas</span></div>
+          </div></div>
+
+          <div class="card">
+            <div class="card-h"><h3>Offers</h3><span class="faint num" style="font-size:12px">5 open · 4 closed</span></div>
+            <div class="offers-bar" role="group" aria-label="Offer filters">
+              <button class="filter" aria-pressed="true">Open</button>
+              <button class="filter" aria-pressed="false">Recommended</button>
+              <button class="filter" aria-pressed="false">Hide ignored</button>
+              <button class="filter" aria-pressed="false">Closed</button>
+              <span style="flex:1"></span><span class="faint" style="font-size:12px">Sort: Best fit ▾</span>
+            </div>
+            <div class="offer">
+              <span class="fit"><span class="meter"><span class="fill-good" style="width:86%"></span></span><span class="score num">86</span></span>
+              <div><div class="t">Senior Backend Engineer</div>
+                <div class="s"><span class="band b-strong">Strong fit</span><span>Remote · EU</span><span class="tag-source">Greenhouse</span><span>2 days ago</span></div></div>
+              <span class="state"><b style="color:var(--accent-text)">● New</b> · ★ Shortlisted</span>
+            </div>
+            <div class="offer">
+              <span class="fit"><span class="meter"><span class="fill-good" style="width:79%"></span></span><span class="score num">79</span></span>
+              <div><div class="t">Staff Platform Engineer</div>
+                <div class="s"><span class="band b-strong">Strong fit</span><span>Hybrid · Lisbon</span><span class="tag-source">Greenhouse</span><span>5 days ago</span></div></div>
+              <span class="state"><b style="color:var(--accent-text)">● Updated</b></span>
+            </div>
+            <div class="offer">
+              <span class="fit"><span class="meter"><span class="fill-caution" style="width:55%"></span></span><span class="score num">55</span></span>
+              <div><div class="t">Robotics Software Engineer</div>
+                <div class="s"><span class="band b-partial">Partial fit</span><span>On-site · Porto</span><span class="tag-source">Greenhouse</span><span>9 days ago</span></div></div>
+              <span class="state">Read</span>
+            </div>
+            <div class="offer">
+              <span class="fit"><span class="band b-notrec">Not recommended</span></span>
+              <div><div class="t">Embedded Firmware Engineer</div>
+                <div class="s"><span>On-site · Munich</span><span class="faint">Rejected: work arrangement</span><span class="tag-source">Himalayas</span></div></div>
+              <span class="state">Ignored</span>
+            </div>
+            <div class="offer">
+              <span class="band b-none">Not evaluated</span>
+              <div><div class="t">QA Automation Engineer</div>
+                <div class="s"><span>Remote</span><span class="tag-source">Greenhouse</span><span>1 day ago</span></div></div>
+              <span class="state"><b style="color:var(--accent-text)">● New</b></span>
+            </div>
+            <div class="note">Rows open the same detail panel as the Inbox; keys j/k move, s shortlists, x ignores.</div>
+          </div>
+        </div>
+
+        <!-- Identification state (shown for Harbor Data) -->
+        <div class="detail-inner" id="detail-harbor" hidden>
+          <div class="dh">
+            <button class="star" aria-pressed="false" aria-label="Follow Harbor Data" style="margin-top:4px"><svg class="ico" style="width:22px;height:22px"><use href="#i-star"/></svg></button>
+            <div style="flex:1"><h2>Harbor Data</h2><div class="muted">Not identified yet · seen in Lever</div></div>
+            <span class="chip"><svg class="ico" style="width:12px;height:12px"><use href="#i-help"/></svg>Needs identification</span>
+          </div>
+          <div class="card">
+            <div class="card-h"><h3>Is this the company?</h3><span class="faint" style="font-size:12px">Open the Wikidata page to compare before choosing</span></div>
+            <div class="cand">
+              <div><div class="t">Harbor Data Ltd <span class="chip">Q98765432</span></div>
+                <div class="d">Software company · Dublin, IE · website harbordata.example · founded 2016</div>
+                <a class="ext" href="#">View on Wikidata <svg class="ico" style="width:12px;height:12px"><use href="#i-ext"/></svg></a></div>
+              <button class="btn sm">This one</button>
+            </div>
+            <div class="cand">
+              <div><div class="t">Harbor Data Systems GmbH <span class="chip">Q55512300</span></div>
+                <div class="d">Data analytics · Hamburg, DE · no website on record</div>
+                <a class="ext" href="#">View on Wikidata <svg class="ico" style="width:12px;height:12px"><use href="#i-ext"/></svg></a></div>
+              <button class="btn sm">This one</button>
+            </div>
+            <div class="cand">
+              <div><div class="t">Harbour Data Inc. <span class="chip">Q71200045</span></div>
+                <div class="d">Logistics software · Vancouver, CA · website harbourdata.example</div>
+                <a class="ext" href="#">View on Wikidata <svg class="ico" style="width:12px;height:12px"><use href="#i-ext"/></svg></a></div>
+              <button class="btn sm">This one</button>
+            </div>
+            <div class="cand"><span class="muted">None of these is the company</span><button class="btn sm">Not listed</button></div>
+          </div>
+          <div class="card">
+            <div class="card-h"><h3>Offers</h3><span class="faint num" style="font-size:12px">1 open</span></div>
+            <div class="offer">
+              <span class="fit"><span class="meter"><span class="fill-caution" style="width:58%"></span></span><span class="score num">58</span></span>
+              <div><div class="t">Data Platform Engineer</div>
+                <div class="s"><span class="band b-partial">Partial fit</span><span>Remote · EU</span><span class="tag-source">Lever</span></div></div>
+              <span class="state">Read</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<aside class="annot" aria-label="Mock-up notes">
+  <b>Mock notes.</b> Click a star to follow/unfollow, click filters, click <i>Harbor Data</i> to see the Wikidata links on each candidate. Followed companies stay pinned on top even with no open offers.
+</aside>
+
+<script>
+// Mock-only behaviour: theme toggle, star toggle, filter chips, search and company selection.
+const root = document.documentElement;
+document.getElementById('theme').onclick = () => { root.dataset.theme = root.dataset.theme === 'dark' ? 'light' : 'dark'; };
+
+document.querySelectorAll('.star').forEach(b => b.addEventListener('click', e => {
+  e.stopPropagation();
+  b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+}));
+document.querySelectorAll('.filter').forEach(b => b.addEventListener('click', () => {
+  b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true');
+  if (b.dataset.f) applyFilters();
+}));
+document.getElementById('q').addEventListener('input', applyFilters);
+
+function applyFilters() {
+  const active = [...document.querySelectorAll('.filter[data-f][aria-pressed="true"]')].map(b => b.dataset.f);
+  const q = document.getElementById('q').value.toLowerCase();
+  document.querySelectorAll('.co').forEach(c => {
+    const okF = active.every(f => c.dataset.g.split(' ').includes(f));
+    const okQ = c.querySelector('.name').textContent.toLowerCase().includes(q);
+    c.hidden = !(okF && okQ);
+  });
+}
+applyFilters();
+
+document.querySelectorAll('.co').forEach(c => c.addEventListener('click', () => {
+  document.querySelectorAll('.co').forEach(x => x.setAttribute('aria-selected', 'false'));
+  c.setAttribute('aria-selected', 'true');
+  // Only two synthetic detail panes exist: Harbor Data (identification) and Acme (everything else).
+  const harbor = c.dataset.id === 'harbor';
+  document.getElementById('detail-harbor').hidden = !harbor;
+  document.getElementById('detail-acme').hidden = harbor;
+}));
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import pytest
 import respx
 
 from jobs_radar.adapters.enrichment.website import (
+    MAX_PAGE_BYTES,
     WebsiteReader,
     WebsiteUnreadableError,
     page_text,
@@ -146,3 +147,24 @@ def test_page_text_drops_short_menu_like_lines_but_keeps_sentences() -> None:
 
 def test_page_text_of_an_empty_page_is_empty() -> None:
     assert page_text("") == ""
+
+
+@pytest.mark.asyncio
+async def test_a_large_but_allowed_home_page_is_read() -> None:
+    filler = "<p>" + "Northwind builds billing software. " * 70_000 + "</p>"  # about 2.4 MB
+    assert 2_000_000 < len(filler) < MAX_PAGE_BYTES
+    with respx.mock(assert_all_called=False) as mock:
+        mock.get("https://www.northwind.example/robots.txt").respond(404)
+        mock.get(SITE).respond(200, html=filler)
+        pages = await reader().read(SITE)
+    assert [p.url for p in pages] == [SITE]
+
+
+@pytest.mark.asyncio
+async def test_a_home_page_over_the_limit_is_reported_as_too_large() -> None:
+    with respx.mock(assert_all_called=False) as mock:
+        mock.get("https://www.northwind.example/robots.txt").respond(404)
+        mock.get(SITE).respond(200, html="x" * (MAX_PAGE_BYTES + 1))
+        with pytest.raises(WebsiteUnreadableError) as caught:
+            await reader().read(SITE)
+    assert caught.value.reason == "too_large"

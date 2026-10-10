@@ -24,7 +24,8 @@ _KEYWORDS = (
 )  # fmt: skip
 # The characters kept from one page: enough for the model, small enough for a local context window.
 PAGE_TEXT_LIMIT = 6000
-_MAX_PAGE_BYTES = 1_500_000
+# Heavy single-page sites ship megabytes of markup; this is also the HTTP client's body limit.
+MAX_PAGE_BYTES = 3_000_000
 # Page furniture that says nothing about the company; dropped before the text is cut to size.
 _NOISE_TAGS = (
     "script", "style", "noscript", "template", "svg", "iframe", "nav", "header", "footer",
@@ -35,7 +36,9 @@ _MIN_WORDS = 3
 
 
 class WebsiteUnreadableError(Exception):
-    """The home page could not be read. ``reason`` is ``refused``, ``robots`` or ``unavailable``.
+    """The home page could not be read.
+
+    ``reason`` is ``refused``, ``robots``, ``too_large`` or ``unavailable``.
 
     A site that answers 401, 403 or 429 refuses automated access: that is respected, never worked
     around. ``status`` is the HTTP status when there was one.
@@ -145,14 +148,17 @@ class WebsiteReader:
             response = await self._client.get(url)
         except FetchError as error:
             if home:
-                raise WebsiteUnreadableError("unavailable", error.http_status) from error
+                reason = "too_large" if error.error_class == "too_large" else "unavailable"
+                raise WebsiteUnreadableError(reason, error.http_status) from error
             return None
         content_type = response.headers.get("content-type", "text/html")
+        if response.status == 200 and len(response.body) > MAX_PAGE_BYTES and home:
+            raise WebsiteUnreadableError("too_large", response.status)
         if (
             response.status != 200
             or registered_domain(response.url) != domain
             or "html" not in content_type
-            or len(response.body) > _MAX_PAGE_BYTES
+            or len(response.body) > MAX_PAGE_BYTES
         ):
             if home:
                 refused = response.status in {401, 403, 429}

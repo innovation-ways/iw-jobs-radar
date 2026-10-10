@@ -177,6 +177,8 @@ class CompanyAnalysisService:
                 f"The company website refused automated access (HTTP {error.status}). "
                 "It is not read around; try a different address or skip this company."
             )
+        elif error.reason == "too_large":
+            message = "The company website's home page is too large to read."
         elif error.reason == "robots":
             message = "The company website asks robots not to read its pages (robots.txt)."
         else:

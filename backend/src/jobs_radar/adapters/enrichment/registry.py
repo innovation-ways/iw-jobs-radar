@@ -4,7 +4,7 @@ from jobs_radar import __version__
 from jobs_radar.adapters.enrichment.base import PublicApi
 from jobs_radar.adapters.enrichment.github import GitHubAdapter
 from jobs_radar.adapters.enrichment.gleif import GleifAdapter
-from jobs_radar.adapters.enrichment.website import WebsiteReader
+from jobs_radar.adapters.enrichment.website import MAX_PAGE_BYTES, WebsiteReader
 from jobs_radar.adapters.enrichment.wikidata import WikidataAdapter
 from jobs_radar.adapters.enrichment.wikipedia import WikipediaAdapter
 from jobs_radar.core.http import GuardedHttpClient
@@ -34,6 +34,6 @@ def build_website_reader() -> WebsiteReader:
         guard=UrlGuard(),
         user_agent=f"JobsRadar/{__version__} (personal job-market radar; local use)",
         total_timeout=20.0,
-        max_bytes=2_000_000,
+        max_bytes=MAX_PAGE_BYTES,
     )
     return WebsiteReader(client, max_pages=8, min_interval=1.0)

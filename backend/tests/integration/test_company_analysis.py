@@ -251,3 +251,15 @@ async def test_a_site_that_refuses_automated_access_is_named_as_such(
     with pytest.raises(DependencyUnavailableError) as robots:
         await service.analyse(1, company_id)
     assert robots.value.details["error_class"] == "site_robots"
+
+
+async def test_a_page_that_is_too_large_is_named_as_such(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    service, world = await setup(db_session, settings)
+    company_id = await company(db_session)
+    world.unreadable = WebsiteUnreadableError("too_large", 200)
+    with pytest.raises(DependencyUnavailableError) as caught:
+        await service.analyse(1, company_id)
+    assert caught.value.details["error_class"] == "site_too_large"
+    assert "too large" in caught.value.message and "HTTP" not in caught.value.message

@@ -14,7 +14,7 @@ from typing import Any, Protocol
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jobs_radar.adapters.enrichment.website import WebPage
+from jobs_radar.adapters.enrichment.website import WebPage, WebsiteUnreadableError
 from jobs_radar.adapters.providers.base import ExtractionRequest, ProviderError
 from jobs_radar.core.errors import DependencyUnavailableError, InputValidationError, NotFoundError
 from jobs_radar.db.models import Company, CompanyFact
@@ -120,7 +120,10 @@ class CompanyAnalysisService:
             raise InputValidationError(msg)
         connection, provider = target
 
-        pages = await self._reader.read(company.homepage_url)
+        try:
+            pages = await self._reader.read(company.homepage_url)
+        except WebsiteUnreadableError as error:
+            raise self._unreadable(error) from error
         if not pages:
             raise DependencyUnavailableError(
                 "The company website could not be read.",
@@ -165,6 +168,23 @@ class CompanyAnalysisService:
         await self._session.flush()
         await self._session.refresh(fact)
         return fact
+
+    @staticmethod
+    def _unreadable(error: WebsiteUnreadableError) -> DependencyUnavailableError:
+        """Explain why the site was not read, so the owner knows whether to try again."""
+        if error.reason == "refused":
+            message = (
+                f"The company website refused automated access (HTTP {error.status}). "
+                "It is not read around; try a different address or skip this company."
+            )
+        elif error.reason == "robots":
+            message = "The company website asks robots not to read its pages (robots.txt)."
+        else:
+            status = f" (HTTP {error.status})" if error.status else ""
+            message = f"The company website could not be reached{status}. Try again later."
+        return DependencyUnavailableError(
+            message, details={"error_class": f"site_{error.reason}", "status": error.status}
+        )
 
     @staticmethod
     def _verified(answer: str, pages: list[WebPage]) -> dict[str, Any]:

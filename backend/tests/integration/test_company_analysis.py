@@ -10,7 +10,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from tests.factories import make_company
 
-from jobs_radar.adapters.enrichment.website import WebPage
+from jobs_radar.adapters.enrichment.website import WebPage, WebsiteUnreadableError
 from jobs_radar.adapters.providers.base import ExtractionRequest, ProviderError, ProviderOutput
 from jobs_radar.adapters.providers.factory import ProviderSpec
 from jobs_radar.core.crypto import CredentialBox
@@ -55,6 +55,7 @@ class World:
         self.requests: list[tuple[ProviderSpec, ExtractionRequest]] = []
         self.error: ProviderError | None = None
         self.visited: list[str] = []
+        self.unreadable: WebsiteUnreadableError | None = None
         self.pages = [
             WebPage(HOME, "Northwind builds billing software for telecom operators."),
             WebPage(ABOUT, "Founded in 2015. We are remote-first with a hub in Lisbon."),
@@ -73,6 +74,8 @@ class World:
 
     async def read(self, home_url: str) -> list[WebPage]:
         self.visited.append(home_url)
+        if self.unreadable:
+            raise self.unreadable
         return self.pages
 
 
@@ -231,3 +234,20 @@ async def test_an_unknown_company_is_404(db_session: AsyncSession, settings: Set
     service, _ = await setup(db_session, settings)
     with pytest.raises(NotFoundError):
         await service.analyse(1, 999_999)
+
+
+async def test_a_site_that_refuses_automated_access_is_named_as_such(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    service, world = await setup(db_session, settings)
+    company_id = await company(db_session)
+    world.unreadable = WebsiteUnreadableError("refused", 403)
+    with pytest.raises(DependencyUnavailableError) as caught:
+        await service.analyse(1, company_id)
+    assert caught.value.details["error_class"] == "site_refused"
+    assert "refused" in caught.value.message and "403" in caught.value.message
+    assert world.requests == []
+    world.unreadable = WebsiteUnreadableError("robots", None)
+    with pytest.raises(DependencyUnavailableError) as robots:
+        await service.analyse(1, company_id)
+    assert robots.value.details["error_class"] == "site_robots"

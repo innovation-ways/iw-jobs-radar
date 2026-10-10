@@ -3,7 +3,12 @@
 import pytest
 import respx
 
-from jobs_radar.adapters.enrichment.website import WebsiteReader, page_text, select_page_links
+from jobs_radar.adapters.enrichment.website import (
+    WebsiteReader,
+    WebsiteUnreadableError,
+    page_text,
+    select_page_links,
+)
 from jobs_radar.core.http import GuardedHttpClient
 from jobs_radar.core.url_guard import UrlGuard
 
@@ -92,11 +97,28 @@ async def test_a_page_that_redirects_off_the_domain_is_dropped() -> None:
 
 
 @pytest.mark.asyncio
-async def test_unreachable_home_returns_nothing() -> None:
+@pytest.mark.parametrize(
+    ("status", "reason"),
+    [(403, "refused"), (429, "refused"), (503, "unavailable"), (404, "unavailable")],
+)
+async def test_an_unreadable_home_says_why(status: int, reason: str) -> None:
     with respx.mock(assert_all_called=False) as mock:
         mock.get("https://www.northwind.example/robots.txt").respond(404)
-        mock.get(SITE).respond(503)
-        assert await reader().read(SITE) == []
+        mock.get(SITE).respond(status)
+        with pytest.raises(WebsiteUnreadableError) as caught:
+            await reader().read(SITE)
+    assert (caught.value.reason, caught.value.status) == (reason, status)
+
+
+@pytest.mark.asyncio
+async def test_a_home_disallowed_by_robots_is_reported_as_such() -> None:
+    with respx.mock(assert_all_called=False) as mock:
+        mock.get("https://www.northwind.example/robots.txt").respond(
+            200, text="User-agent: *\nDisallow: /\n"
+        )
+        with pytest.raises(WebsiteUnreadableError) as caught:
+            await reader().read(SITE)
+    assert caught.value.reason == "robots"
 
 
 PAGE = """<html><head><title>Northwind | Home</title><style>.x{}</style></head><body>

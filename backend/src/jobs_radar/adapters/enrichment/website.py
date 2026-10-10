@@ -34,6 +34,19 @@ _NOISE_TAGS = (
 _MIN_WORDS = 3
 
 
+class WebsiteUnreadableError(Exception):
+    """The home page could not be read. ``reason`` is ``refused``, ``robots`` or ``unavailable``.
+
+    A site that answers 401, 403 or 429 refuses automated access: that is respected, never worked
+    around. ``status`` is the HTTP status when there was one.
+    """
+
+    def __init__(self, reason: str, status: int | None) -> None:
+        super().__init__(reason)
+        self.reason = reason
+        self.status = status
+
+
 @dataclass(frozen=True)
 class WebPage:
     """One page of the company website, reduced to text."""
@@ -116,14 +129,23 @@ class WebsiteReader:
         parser = self._robots[origin]
         return parser is None or parser.can_fetch("*", url)
 
-    async def _page(self, url: str, domain: str | None) -> tuple[str, str] | None:
-        """Return ``(final_url, html)`` of a readable HTML page on ``domain``, else ``None``."""
+    async def _page(
+        self, url: str, domain: str | None, *, home: bool = False
+    ) -> tuple[str, str] | None:
+        """Return ``(final_url, html)`` of a readable HTML page on ``domain``, else ``None``.
+
+        For the home page the reason is raised as :class:`WebsiteUnreadableError` instead.
+        """
         if not await self._allowed(url):
+            if home:
+                raise WebsiteUnreadableError("robots", None)
             return None
         await self._sleep(self._min_interval)
         try:
             response = await self._client.get(url)
-        except FetchError:
+        except FetchError as error:
+            if home:
+                raise WebsiteUnreadableError("unavailable", error.http_status) from error
             return None
         content_type = response.headers.get("content-type", "text/html")
         if (
@@ -132,14 +154,23 @@ class WebsiteReader:
             or "html" not in content_type
             or len(response.body) > _MAX_PAGE_BYTES
         ):
+            if home:
+                refused = response.status in {401, 403, 429}
+                raise WebsiteUnreadableError(
+                    "refused" if refused else "unavailable", response.status
+                )
             return None
         return response.url, response.body.decode("utf-8", "replace")
 
     async def read(self, home_url: str) -> list[WebPage]:
-        """Read the home page and the pages it links to; an unreadable home gives ``[]``."""
+        """Read the home page and the pages it links to.
+
+        Raises:
+            WebsiteUnreadableError: the home page could not be read (the reason says why).
+        """
         domain = registered_domain(home_url)
-        home = await self._page(home_url, domain)
-        if home is None:
+        home = await self._page(home_url, domain, home=True)
+        if home is None:  # pragma: no cover - a home page either returns or raises
             return []
         pages = [WebPage(home_url, page_text(home[1])[:PAGE_TEXT_LIMIT])]
         links = select_page_links(home_url, home[1], limit=self._max_pages - 1)

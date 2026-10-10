@@ -859,6 +859,23 @@
         "title": "CompanySummary",
         "type": "object"
       },
+      "CompanyWebsiteSet": {
+        "additionalProperties": false,
+        "description": "The company's own website, typed by the owner (ADR-054).",
+        "properties": {
+          "url": {
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "CompanyWebsiteSet",
+        "type": "object"
+      },
       "Compensation": {
         "additionalProperties": false,
         "description": "Pay expectations per engagement form.",
@@ -6669,6 +6686,49 @@
         ]
       }
     },
+    "/api/v1/companies/{company_id}/analyse": {
+      "post": {
+        "description": "Read the company's website and write a cited dossier with the local model (AI inference).",
+        "operationId": "analyse_company_api_v1_companies__company_id__analyse_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "title": "Company Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDossierRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Analyse Company",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
     "/api/v1/companies/{company_id}/candidates/{company_enrichment_candidate_id}/confirm": {
       "post": {
         "description": "Say that a candidate entity is this company; its facts are stored.",
@@ -6938,6 +6998,59 @@
           }
         },
         "summary": "Write Summary",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
+    "/api/v1/companies/{company_id}/website": {
+      "put": {
+        "description": "Record the company's own website; public datasets then match on its domain.",
+        "operationId": "set_website_api_v1_companies__company_id__website_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "title": "Company Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanyWebsiteSet"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDossierRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Website",
         "tags": [
           "companies"
         ]

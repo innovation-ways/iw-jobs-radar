@@ -70,6 +70,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{company_id}/analyse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Analyse Company
+         * @description Read the company's website and write a cited dossier with the local model (AI inference).
+         */
+        post: operations["analyse_company_api_v1_companies__company_id__analyse_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{company_id}/candidates/{company_enrichment_candidate_id}/confirm": {
         parameters: {
             query?: never;
@@ -168,6 +188,26 @@ export interface paths {
          * @description Write the AI summary (labelled AI inference) with the local job-analysis model.
          */
         post: operations["write_summary_api_v1_companies__company_id__summary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/website": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Website
+         * @description Record the company's own website; public datasets then match on its domain.
+         */
+        put: operations["set_website_api_v1_companies__company_id__website_put"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1533,6 +1573,14 @@ export interface components {
             pending_candidates: number;
             /** Recommended Offers */
             recommended_offers: number;
+        };
+        /**
+         * CompanyWebsiteSet
+         * @description The company's own website, typed by the owner (ADR-054).
+         */
+        CompanyWebsiteSet: {
+            /** Url */
+            url: string;
         };
         /**
          * Compensation
@@ -3883,6 +3931,37 @@ export interface operations {
             };
         };
     };
+    analyse_company_api_v1_companies__company_id__analyse_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyDossierRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     confirm_candidate_api_v1_companies__company_id__candidates__company_enrichment_candidate_id__confirm_post: {
         parameters: {
             query?: never;
@@ -4050,6 +4129,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyDossierRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_website_api_v1_companies__company_id__website_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyWebsiteSet"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

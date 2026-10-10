@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.api.deps import (
+    get_company_analysis_service,
     get_company_service,
     get_company_summary_service,
     get_enrichment_service,
@@ -14,6 +15,7 @@ from jobs_radar.api.deps import (
 )
 from jobs_radar.domain.enums import LOCAL_OWNER_ID
 from jobs_radar.domain.matching.engine import band_of
+from jobs_radar.schemas.company import CompanyWebsiteSet
 from jobs_radar.schemas.company_dossier import (
     BoardRead,
     CandidateRead,
@@ -24,6 +26,7 @@ from jobs_radar.schemas.company_dossier import (
 )
 from jobs_radar.schemas.evaluation import FitBand
 from jobs_radar.services.companies import CompanyService, Dossier
+from jobs_radar.services.company_analysis import CompanyAnalysisService
 from jobs_radar.services.company_summary import CompanySummaryService
 from jobs_radar.services.enrichment import EnrichmentService
 
@@ -191,6 +194,38 @@ async def write_summary(
 ) -> CompanyDossierRead:
     """Write the AI summary (labelled AI inference) with the local job-analysis model."""
     await summaries.generate(LOCAL_OWNER_ID, company_id)
+    await session.commit()
+    return dossier_read(
+        await service.dossier(LOCAL_OWNER_ID, company_id, search_intent_id=default_intent)
+    )
+
+
+@router.put("/companies/{company_id}/website", response_model=CompanyDossierRead)
+async def set_website(
+    company_id: int,
+    body: CompanyWebsiteSet,
+    service: Companies,
+    default_intent: DefaultIntent,
+    session: Session,
+) -> CompanyDossierRead:
+    """Record the company's own website; public datasets then match on its domain."""
+    await service.set_website(company_id, body.url)
+    await session.commit()
+    return dossier_read(
+        await service.dossier(LOCAL_OWNER_ID, company_id, search_intent_id=default_intent)
+    )
+
+
+@router.post("/companies/{company_id}/analyse", response_model=CompanyDossierRead)
+async def analyse_company(
+    company_id: int,
+    analysis: Annotated[CompanyAnalysisService, Depends(get_company_analysis_service)],
+    service: Companies,
+    default_intent: DefaultIntent,
+    session: Session,
+) -> CompanyDossierRead:
+    """Read the company's website and write a cited dossier with the local model (AI inference)."""
+    await analysis.analyse(LOCAL_OWNER_ID, company_id)
     await session.commit()
     return dossier_read(
         await service.dossier(LOCAL_OWNER_ID, company_id, search_intent_id=default_intent)

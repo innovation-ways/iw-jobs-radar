@@ -2,6 +2,8 @@
 
 from typing import Literal
 
+from pydantic import Field
+
 from jobs_radar.schemas.common import StrictModel
 
 
@@ -36,3 +38,9 @@ class CompanyFollowState(StrictModel):
 
     company_id: int
     is_followed: bool
+
+
+class CompanyWebsiteSet(StrictModel):
+    """The company's own website, typed by the owner (ADR-054)."""
+
+    url: str = Field(min_length=1, max_length=300)

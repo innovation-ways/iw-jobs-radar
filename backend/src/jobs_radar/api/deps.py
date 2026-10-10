@@ -6,7 +6,7 @@ from typing import Annotated
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jobs_radar.adapters.enrichment.registry import build_enrichment_adapters
+from jobs_radar.adapters.enrichment.registry import build_enrichment_adapters, build_website_reader
 from jobs_radar.adapters.sources.base import JobSourceAdapter
 from jobs_radar.core.settings import Settings
 from jobs_radar.domain.enums import LOCAL_OWNER_ID, SourceType
@@ -14,6 +14,7 @@ from jobs_radar.repositories.inbox import InboxQueries
 from jobs_radar.services.ai_settings import AiSettingsService, build_credential_box
 from jobs_radar.services.collection import CollectionService
 from jobs_radar.services.companies import CompanyService
+from jobs_radar.services.company_analysis import CompanyAnalysisService, SiteReader
 from jobs_radar.services.company_summary import CompanySummaryService
 from jobs_radar.services.dedup import DedupService
 from jobs_radar.services.document_store import DocumentTextStore
@@ -220,6 +221,18 @@ def get_company_summary_service(
 ) -> CompanySummaryService:
     """Build the AI company-summary service (local model only)."""
     return CompanySummaryService(session, ai)
+
+
+def get_company_analysis_service(
+    request: Request,
+    session: Annotated[AsyncSession, Depends(get_session)],
+    ai: Annotated[AiSettingsService, Depends(get_ai_settings_service)],
+) -> CompanyAnalysisService:
+    """Build the deep company analysis (local model); tests may replace the site reader."""
+    reader: SiteReader | None = getattr(request.app.state, "site_reader", None)
+    if reader is None:
+        reader = build_website_reader()
+    return CompanyAnalysisService(session, ai, reader=reader)
 
 
 def get_trend_service(session: Annotated[AsyncSession, Depends(get_session)]) -> TrendService:

@@ -4,17 +4,19 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
+from urllib.parse import urlsplit
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jobs_radar.core.errors import NotFoundError
+from jobs_radar.core.errors import InputValidationError, NotFoundError
 from jobs_radar.db.models import (
     Company,
     CompanyEnrichmentCandidate,
     CompanyFact,
     SourceConfiguration,
 )
+from jobs_radar.domain.domains import is_job_board_host, registered_domain
 from jobs_radar.repositories.companies import CompanyFollowRepository
 from jobs_radar.repositories.company_list import (
     CompanyDossierQueries,
@@ -134,6 +136,33 @@ class CompanyService:
             await self._follows.follow(owner_id, company_id)
         else:
             await self._follows.unfollow(owner_id, company_id)
+
+    async def set_website(self, company_id: int, url: str) -> None:
+        """Record the company's website typed by the owner, reduced to ``https://host/``.
+
+        Raises:
+            NotFoundError: the company does not exist.
+            InputValidationError: not a public website address, or a job-board address.
+        """
+        company = await self._session.get(Company, company_id)
+        if company is None:
+            msg = f"Company {company_id} does not exist."
+            raise NotFoundError(msg)
+        text = url.strip()
+        if "://" not in text:
+            text = f"https://{text}"
+        parts = urlsplit(text)
+        # IP addresses and bare hosts have no registered domain; a job board says nothing about
+        # the company. HTTP is upgraded: the reader only fetches HTTPS-capable public sites.
+        host_ok = parts.scheme in {"http", "https"} and " " not in text
+        if not host_ok or not parts.hostname or registered_domain(text) is None:
+            msg = "Enter the company's own website address, for example https://example.com."
+            raise InputValidationError(msg)
+        if is_job_board_host(text):
+            msg = "That is a job board, not the company's own website."
+            raise InputValidationError(msg)
+        company.homepage_url = f"https://{parts.hostname}/"
+        await self._session.flush()
 
     async def dossier(
         self,

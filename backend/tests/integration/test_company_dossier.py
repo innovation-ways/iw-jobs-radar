@@ -154,6 +154,23 @@ async def test_offers_carry_the_inbox_state_and_the_follow_flag(db_session: Asyn
     assert (await service.dossier(1, company.company_id, search_intent_id=None)).is_followed
 
 
+async def test_the_dossier_says_when_it_shows_only_the_best_offers(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("jobs_radar.services.companies.OFFER_LIMIT", 2)
+    company = await make_company(db_session, "Many Offers Co")
+    source = await make_source(db_session, company)
+    for age in (1, 2, 3):
+        posting, _ = await make_posting(db_session, source, first_seen_at=NOW - timedelta(days=age))
+        await make_opportunity(db_session, posting)
+    service = CompanyService(db_session, clock=lambda: NOW)
+    dossier = await service.dossier(1, company.company_id, search_intent_id=None)
+    assert len(dossier.offers) == 2 and dossier.offers_truncated is True
+    monkeypatch.setattr("jobs_radar.services.companies.OFFER_LIMIT", 3)
+    dossier = await service.dossier(1, company.company_id, search_intent_id=None)
+    assert len(dossier.offers) == 3 and dossier.offers_truncated is False
+
+
 async def test_an_unknown_company_is_404(db_session: AsyncSession) -> None:
     with pytest.raises(NotFoundError):
         await CompanyService(db_session, clock=lambda: NOW).dossier(

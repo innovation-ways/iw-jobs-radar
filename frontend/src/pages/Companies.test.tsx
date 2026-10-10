@@ -44,6 +44,7 @@ function dossier(overrides: Record<string, unknown> = {}) {
     enriched_at: '2026-10-08T09:00:00Z',
     stale: false,
     is_followed: false,
+    offers_truncated: false,
     facts: [
       {
         fact_key: 'industry',
@@ -278,6 +279,12 @@ describe('Companies screen', () => {
     expect(within(offers).getByText('Pending')).toBeInTheDocument()
     await user.click(within(offers).getByRole('button', { name: 'Recommended' }))
     expect(within(offers).queryByText('Old role')).not.toBeInTheDocument()
+  })
+
+  it('says when only the best offers are shown', async () => {
+    detail = dossier({ offers_truncated: true })
+    renderPage('/companies?company=1')
+    expect(await screen.findByText(/showing the 3 best-fitting offers/i)).toBeInTheDocument()
   })
 
   it('asks for older offers on request and follows from the dossier', async () => {

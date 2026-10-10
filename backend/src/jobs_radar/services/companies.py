@@ -68,6 +68,7 @@ class Dossier:
     boards: list[SourceConfiguration]
     stale: bool
     is_followed: bool
+    offers_truncated: bool
 
 
 def _utc_now() -> datetime:
@@ -175,6 +176,16 @@ class CompanyService:
                 .order_by(SourceConfiguration.source_configuration_id)
             )
         ).scalars()
+        # One more than the limit tells whether the list was cut.
+        offers = await self._dossier.offers(
+            owner_id,
+            company_id,
+            search_intent_id,
+            OFFER_LIMIT + 1,
+            not_before=None
+            if include_older
+            else now - timedelta(days=await self._schedule.company_recency_days(owner_id)),
+        )
         return Dossier(
             company=company,
             facts=[
@@ -191,15 +202,8 @@ class CompanyService:
                 for f in facts
             ],
             candidates=list(candidates),
-            offers=await self._dossier.offers(
-                owner_id,
-                company_id,
-                search_intent_id,
-                OFFER_LIMIT,
-                not_before=None
-                if include_older
-                else now - timedelta(days=await self._schedule.company_recency_days(owner_id)),
-            ),
+            offers=offers[:OFFER_LIMIT],
+            offers_truncated=len(offers) > OFFER_LIMIT,
             is_followed=await self._dossier.is_followed(owner_id, company_id),
             hiring=self._hiring(await self._dossier.lifespans(company_id), now),
             boards=list(boards),

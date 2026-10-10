@@ -78,6 +78,7 @@ class CompanyDossierRead(StrictModel):
     facts: list[FactRead]
     candidates: list[CandidateRead]
     offers: list[OfferRead]
+    offers_truncated: bool
     hiring: list[HiringWeekRead]
     boards: list[BoardRead]
     warnings: list[str]

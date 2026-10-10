@@ -75,9 +75,12 @@ export function OfferList({
   offers,
   recencyDays,
   includeOlder,
+  truncated,
   onOlderChange,
 }: {
   offers: Offer[]
+  /** The server cut the list: only the best-fitting offers are here. */
+  truncated: boolean
   recencyDays: number
   includeOlder: boolean
   onOlderChange: (value: boolean) => void
@@ -117,6 +120,11 @@ export function OfferList({
         {chip('hideIgnored', 'Hide ignored')}
         {chip('older', `Older than ${recencyDays} days`)}
       </div>
+      {truncated && (
+        <p className="mb-2 text-xs text-ink-3">
+          Showing the {offers.length} best-fitting offers of this company.
+        </p>
+      )}
       {shown.length === 0 ? (
         <p className="text-sm text-ink-2">
           {offers.length === 0

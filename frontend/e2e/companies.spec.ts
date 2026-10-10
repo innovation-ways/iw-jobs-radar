@@ -26,6 +26,7 @@ const DOSSIER = {
   enriched_at: '2026-10-08T09:00:00Z',
   stale: false,
   is_followed: false,
+  offers_truncated: false,
   facts: [
     {
       fact_key: 'industry',

@@ -1470,6 +1470,8 @@ export interface components {
             name: string;
             /** Offers */
             offers: components["schemas"]["OfferRead"][];
+            /** Offers Truncated */
+            offers_truncated: boolean;
             /** Stale */
             stale: boolean;
             /** Warnings */

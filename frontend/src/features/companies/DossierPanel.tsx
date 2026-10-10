@@ -285,6 +285,7 @@ export function DossierPanel({
         offers={data.offers}
         recencyDays={recencyDays}
         includeOlder={includeOlder}
+        truncated={data.offers_truncated}
         onOlderChange={setIncludeOlder}
       />
 

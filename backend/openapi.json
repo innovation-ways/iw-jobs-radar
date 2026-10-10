@@ -661,6 +661,10 @@
             "title": "Offers",
             "type": "array"
           },
+          "offers_truncated": {
+            "title": "Offers Truncated",
+            "type": "boolean"
+          },
           "stale": {
             "title": "Stale",
             "type": "boolean"
@@ -685,6 +689,7 @@
           "facts",
           "candidates",
           "offers",
+          "offers_truncated",
           "hiring",
           "boards",
           "warnings"

@@ -17,7 +17,7 @@ from jobs_radar.db.columns import (
     pk_column,
     text_column,
 )
-from jobs_radar.domain.enums import MatchQuality, Recommendation, ScoreStatus
+from jobs_radar.domain.enums import DirectionLevel, MatchQuality, Recommendation, ScoreStatus
 
 
 class MatchEvaluation(CreatedAtMixin, Base):
@@ -31,6 +31,7 @@ class MatchEvaluation(CreatedAtMixin, Base):
             "profile_revision_id",
             "intent_revision_id",
             "policy_version",
+            "direction_basis",
             name="uq_match_evaluation_inputs",
         ),
         enum_check("recommendation", Recommendation),
@@ -60,6 +61,11 @@ class MatchEvaluation(CreatedAtMixin, Base):
     fit_score: Mapped[int] = int_column("Final score from 0 to 100.")
     recommendation: Mapped[str] = text_column(
         "recommended or not_recommended (a hard gate fired).", length=20
+    )
+    direction_basis: Mapped[str] = text_column(
+        "none, or the hash of the direction judgements the score used (ADR-057).",
+        length=71,
+        default="none",
     )
     gates_json: Mapped[Any] = json_column("Fired gates with reasons and evidence.")
     weights_json: Mapped[Any] = json_column("Weights that applied to the evaluation.")
@@ -107,3 +113,45 @@ class ScoreDimension(CreatedAtMixin, Base):
         "Evidence: job quote, profile fact or option compared."
     )
     explanation: Mapped[str] = text_column("One-sentence explanation shown to the owner.")
+
+
+class DirectionJudgement(CreatedAtMixin, Base):
+    """How well one job snapshot fits one career direction, as judged by a model (append-only)."""
+
+    __tablename__ = "direction_judgement"
+    __table_args__ = (
+        UniqueConstraint(
+            "job_snapshot_id",
+            "direction_hash",
+            "provider",
+            "model",
+            "prompt_version",
+            name="uq_direction_judgement_inputs",
+        ),
+        enum_check("level", DirectionLevel),
+        {"comment": "Model judgements of a job against the owner's career directions (ADR-057)."},
+    )
+
+    direction_judgement_id: Mapped[int] = pk_column("Surrogate primary key of the judgement.")
+    job_snapshot_id: Mapped[int] = fk_column(
+        "job_snapshot.job_snapshot_id", "Snapshot that was judged.", ondelete="CASCADE"
+    )
+    direction_hash: Mapped[str] = text_column(
+        "SHA-256 of the direction text that was judged, so a changed text is judged again.",
+        length=71,
+    )
+    direction_label: Mapped[str] = text_column(
+        "Label of the direction when it was judged, shown as the winning direction.", length=60
+    )
+    provider: Mapped[str] = text_column("AI provider kind.", length=50)
+    model: Mapped[str] = text_column("AI model identifier.", length=100)
+    prompt_version: Mapped[str] = text_column(
+        "Prompt template version, for example direction-v1.", length=50
+    )
+    level: Mapped[str] = text_column("strong, partial, weak, none or unknown.", length=20)
+    job_quote: Mapped[str | None] = text_column(
+        "Verbatim quote from the posting that supports the level.", nullable=True
+    )
+    direction_quote: Mapped[str | None] = text_column(
+        "Verbatim quote from the direction text that the posting matches.", nullable=True
+    )

@@ -360,3 +360,79 @@ async def test_the_privacy_policy_is_versioned(
     assert changed.redact_contact_details is False and changed.version == seen + 1
     with pytest.raises(ConflictError):
         await svc.update_privacy(LOCAL_OWNER_ID, redact_contact_details=True, expected_version=seen)
+
+
+# --- a model for career directions only (ADR-057) ------------------------------------------------
+
+
+async def local_jobs_connection(ai: AiSettingsService) -> int:
+    row = await ai.create_connection(
+        LOCAL_OWNER_ID,
+        provider_type="ollama",
+        display_name="L",
+        endpoint_url=None,
+        model_id="qwen3:8b",
+    )
+    await ai.activate_for_jobs(LOCAL_OWNER_ID, row.provider_connection_id)
+    return row.provider_connection_id
+
+
+async def test_the_direction_model_defaults_to_the_job_model(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    probe = Probe()
+    ai = service(db_session, settings.model_copy(update={"allow_local_providers": True}), probe)
+    await local_jobs_connection(ai)
+    target = await ai.direction_target(LOCAL_OWNER_ID)
+    assert target is not None
+    assert probe.specs[-1].model == "qwen3:8b"
+    assert connection_view_of(await ai.jobs_target(LOCAL_OWNER_ID)).direction_model is None
+
+
+def connection_view_of(target):  # type: ignore[no-untyped-def]
+    from jobs_radar.services.ai_settings import connection_view
+
+    assert target is not None
+    return connection_view(target[0])
+
+
+async def test_a_direction_model_is_used_for_directions_only(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    probe = Probe()
+    ai = service(db_session, settings.model_copy(update={"allow_local_providers": True}), probe)
+    connection_id = await local_jobs_connection(ai)
+    row = await ai._connection(LOCAL_OWNER_ID, connection_id)
+    await ai.update_connection(
+        LOCAL_OWNER_ID, connection_id, expected_version=row.version, direction_model=" qwen3.6:27b "
+    )
+    await ai.direction_target(LOCAL_OWNER_ID)
+    assert probe.specs[-1].model == "qwen3.6:27b"
+    await ai.jobs_target(LOCAL_OWNER_ID)
+    assert probe.specs[-1].model == "qwen3:8b"  # extraction keeps the job model
+    view = connection_view_of(await ai.jobs_target(LOCAL_OWNER_ID))
+    assert view.direction_model == "qwen3.6:27b" and view.model_id == "qwen3:8b"
+
+
+async def test_a_blank_direction_model_goes_back_to_the_job_model(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    probe = Probe()
+    ai = service(db_session, settings.model_copy(update={"allow_local_providers": True}), probe)
+    connection_id = await local_jobs_connection(ai)
+    row = await ai._connection(LOCAL_OWNER_ID, connection_id)
+    await ai.update_connection(
+        LOCAL_OWNER_ID, connection_id, expected_version=row.version, direction_model="big-model"
+    )
+    await ai.update_connection(
+        LOCAL_OWNER_ID, connection_id, expected_version=row.version, direction_model="  "
+    )
+    await ai.direction_target(LOCAL_OWNER_ID)
+    assert probe.specs[-1].model == "qwen3:8b"
+
+
+async def test_without_a_jobs_connection_there_is_no_direction_target(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    ai = service(db_session, settings.model_copy(update={"allow_local_providers": True}))
+    assert await ai.direction_target(LOCAL_OWNER_ID) is None

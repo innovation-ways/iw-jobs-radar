@@ -54,11 +54,13 @@ class EvaluationRepository:
         gates: list[dict[str, Any]],
         weights: dict[str, int],
         dimensions: Sequence[dict[str, Any]],
+        direction_basis: str = "none",
     ) -> tuple[MatchEvaluation, list[ScoreDimension], bool]:
         """Store an evaluation and its dimensions, or return the one that already exists.
 
-        The inputs are unique, so scoring the same snapshot, extraction and revisions twice
-        returns the first result (evaluations are immutable). The last item says if it is new.
+        The inputs are unique, so scoring the same snapshot, extraction, revisions and direction
+        judgements twice returns the first result (evaluations are immutable). The last item says
+        if it is new.
         """
         statement = (
             insert(MatchEvaluation)
@@ -71,6 +73,7 @@ class EvaluationRepository:
                 job_source_hash=job_source_hash,
                 fit_score=fit_score,
                 recommendation=recommendation,
+                direction_basis=direction_basis,
                 gates_json=gates,
                 weights_json=weights,
             )
@@ -87,6 +90,7 @@ class EvaluationRepository:
                         MatchEvaluation.profile_revision_id == profile_revision_id,
                         MatchEvaluation.intent_revision_id == intent_revision_id,
                         MatchEvaluation.policy_version == policy_version,
+                        MatchEvaluation.direction_basis == direction_basis,
                     )
                 )
             ).scalar_one()

@@ -46,6 +46,7 @@ def test_the_default_weights_give_82_excellent() -> None:
         "company_profile": Decimal("7.0"),
         "benefits_flexibility": Decimal("0.0"),
         "qualifications": Decimal("0.0"),
+        "career_direction": Decimal("0.0"),  # not assessed: left out, the score is unchanged
     }
     assert result.fit_score == 82
     assert (result.band, result.recommendation, result.gates) == ("excellent", "recommended", ())
@@ -62,7 +63,7 @@ def test_raising_the_compensation_weight_to_30_gives_68() -> None:
 
 
 def test_the_policy_version_is_recorded() -> None:
-    assert run().policy_version == "matching-v1.1"
+    assert run().policy_version == "matching-v1.3"
 
 
 def test_a_job_with_nothing_known_scores_zero_and_is_still_recommended() -> None:

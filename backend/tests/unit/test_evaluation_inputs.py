@@ -154,3 +154,59 @@ def test_a_job_open_only_to_austria_is_a_mismatch_for_an_owner_in_portugal() -> 
 
     job = job_attributes(stored_regions(["Austria"]), "T", "D", "Acme")
     assert regions_intersect(job.remote_regions or (), ("PT",)) is False
+
+
+# --- the source's own remote place limits the regions the model reports (ADR-056) --------------
+
+
+def narrowed(regions: list[str] | None, places: list[str]) -> tuple[str, ...] | None:
+    """Regions of a job whose model answer is ``regions`` and whose source says ``places``."""
+    attributes = stored_regions(regions) if regions is not None else stored()
+    if regions is None:
+        output = sample_extraction_output()
+        output["remote_regions"] = {
+            "value": None,
+            "status": "unknown",
+            "confidence": 0.0,
+            "evidence": None,
+        }
+        attributes = stored(output=output)
+    job = job_attributes(attributes, "t", "d", "Acme", source_places=places)
+    return job.remote_regions
+
+
+def test_a_remote_place_in_one_country_narrows_a_worldwide_answer() -> None:
+    assert narrowed(["WORLD"], ["India (Remote)"]) == ("IN",)
+
+
+def test_an_answer_that_shares_nothing_with_the_source_becomes_the_sources_countries() -> None:
+    # The model said EU from a sentence about business hours, the source says Remote US: no region
+    # of the owner's is left, so the gate applies.
+    assert narrowed(["EU"], ["Remote US", "Remote"]) == ("US",)
+
+
+def test_only_the_shared_countries_are_kept() -> None:
+    assert narrowed(["EU", "UK"], ["Remote - Germany", "Remote - India"]) == ("DE",)
+
+
+def test_an_answer_inside_the_source_limit_is_left_as_the_model_wrote_it() -> None:
+    assert narrowed(["EU"], ["Remote, Europe"]) == ("EU",)
+
+
+def test_a_source_that_limits_nothing_changes_nothing() -> None:
+    assert narrowed(["WORLD"], ["Seattle", "Remote"]) == ("WORLD",)
+    assert narrowed(["EU"], []) == ("EU",)
+
+
+def test_regions_the_model_did_not_state_stay_unknown() -> None:
+    assert narrowed(None, ["India (Remote)"]) is None
+
+
+def test_the_quote_says_the_source_limited_the_regions() -> None:
+    job = job_attributes(
+        stored_regions(["WORLD"]), "t", "d", "Acme", source_places=["India (Remote)"]
+    )
+    assert "within EU time zones" in job.evidence["remote_regions"]
+    assert "India (Remote)" in job.evidence["remote_regions"]
+    unchanged = job_attributes(stored_regions(["EU"]), "t", "d", "Acme", source_places=[])
+    assert unchanged.evidence["remote_regions"] == "within EU time zones"

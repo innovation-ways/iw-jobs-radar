@@ -22,6 +22,7 @@ from jobs_radar.domain.enums import LOCAL_OWNER_ID
 from jobs_radar.services.ai_settings import build_credential_box
 from jobs_radar.services.collection import CollectionService
 from jobs_radar.services.dedup import DedupRunner
+from jobs_radar.services.direction_service import DirectionRunner
 from jobs_radar.services.evaluation import EvaluationRunner
 from jobs_radar.services.extraction_queue import ExtractionQueue
 from jobs_radar.services.heartbeat import HeartbeatService
@@ -47,6 +48,7 @@ class Worker:
         name: str = "worker",
         extraction: ExtractionQueue | None = None,
         evaluation: EvaluationRunner | None = None,
+        directions: DirectionRunner | None = None,
         dedup: DedupRunner | None = None,
         inbox: InboxRunner | None = None,
         collection: CollectionService | None = None,
@@ -59,6 +61,7 @@ class Worker:
         self._heartbeat = HeartbeatService(session_factory, name)
         self._extraction = extraction
         self._evaluation = evaluation
+        self._directions = directions
         self._dedup = dedup
         self._inbox = inbox
         self._collection = collection
@@ -98,11 +101,13 @@ class Worker:
             if written:
                 logger.info("trends_computed", rows=written)
         extraction, evaluation, dedup = self._extraction, self._evaluation, self._dedup
+        directions = self._directions
         if self._jobs_ai is not None:
             # The database decides (AI & privacy screen); None means No AI for jobs.
             setup = await self._jobs_ai.load()
             extraction = setup.extraction if setup else None
             evaluation = setup.evaluation if setup else None
+            directions = setup.directions if setup else None
             dedup = setup.dedup if setup else self._dedup
         if dedup is not None:
             # Grouping listings needs no AI, so it runs whether or not extraction is enabled.
@@ -113,12 +118,25 @@ class Worker:
             surfaced = await self._inbox.run()
             if surfaced:
                 logger.info("inbox_items_created", created=surfaced)
+        queued = 0
+        summary = None
         if extraction is not None:
             queued = await extraction.enqueue_missing()
             summary = await extraction.run_batch(
                 budget_seconds=float(self._settings.worker_heartbeat_max_age_seconds) / 2,
                 heartbeat=self._beat,
             )
+        if directions is not None:
+            # Judging needs the job's extraction, so it follows the extraction batch and comes
+            # before scoring (a job is then scored once, with its judgements); a model that is
+            # down only ends this step.
+            judged = await directions.run(
+                budget_seconds=float(self._settings.worker_heartbeat_max_age_seconds) / 2,
+                heartbeat=self._beat,
+            )
+            if judged:
+                logger.info("directions_judged", jobs=judged)
+        if extraction is not None and summary is not None:
             scored = (
                 await evaluation.run(
                     budget_seconds=float(self._settings.worker_heartbeat_max_age_seconds) / 2,

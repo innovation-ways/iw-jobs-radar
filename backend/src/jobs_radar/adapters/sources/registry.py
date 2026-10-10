@@ -3,6 +3,7 @@
 from jobs_radar.adapters.sources.arbeitnow import ArbeitnowAdapter
 from jobs_radar.adapters.sources.ashby import AshbyAdapter
 from jobs_radar.adapters.sources.base import JobSourceAdapter
+from jobs_radar.adapters.sources.eightfold import EightfoldAdapter
 from jobs_radar.adapters.sources.greenhouse import GreenhouseAdapter
 from jobs_radar.adapters.sources.himalayas import HimalayasAdapter
 from jobs_radar.adapters.sources.itjobs import ItJobsAdapter
@@ -14,7 +15,7 @@ from jobs_radar.domain.enums import SourceType
 
 
 def build_source_adapters() -> dict[SourceType, JobSourceAdapter]:
-    """Create the adapters: four company-board ATS and the job boards (ADR-049, ADR-050).
+    """Create the adapters: five company-board systems and the job boards (ADR-049, 050, 055).
 
     ITJobs.pt needs the owner's key and is unverified against the live service (T9.6).
     """
@@ -24,6 +25,7 @@ def build_source_adapters() -> dict[SourceType, JobSourceAdapter]:
         SourceType.LEVER: LeverAdapter(client),
         SourceType.ASHBY: AshbyAdapter(client),
         SourceType.SMARTRECRUITERS: SmartRecruitersAdapter(client),
+        SourceType.EIGHTFOLD: EightfoldAdapter(client),
         SourceType.ARBEITNOW: ArbeitnowAdapter(client),
         SourceType.JOBICY: JobicyAdapter(client),
         SourceType.HIMALAYAS: HimalayasAdapter(client),

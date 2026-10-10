@@ -172,3 +172,71 @@ async def test_the_worker_groups_postings_into_opportunities_even_without_ai(
         )
     ).scalar_one()
     assert link.state == "auto"
+
+
+async def test_the_worker_judges_new_jobs_against_the_owners_directions(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import select
+    from tests.factories import session_factory_for
+    from tests.fake_provider import FakeProvider
+    from tests.integration.test_direction_evaluation import BILLING
+    from tests.integration.test_direction_service import GOOD, new_job, ready
+
+    from jobs_radar.db.models import DirectionJudgement
+    from jobs_radar.services.direction_service import DirectionRunner
+
+    w = await ready(db_session, ("Billing SME", BILLING, True))
+    _, snapshot = await new_job(db_session, w, datetime.now(UTC) + timedelta(hours=1))
+    provider = FakeProvider(responder=lambda request: GOOD)
+    runner = DirectionRunner(
+        session_factory_for(db_session, monkeypatch), provider, max_chars=12000
+    )
+    await Worker(settings, session_factory, name="w-test", directions=runner).run_once()
+    judged = (
+        (
+            await db_session.execute(
+                select(DirectionJudgement).where(
+                    DirectionJudgement.job_snapshot_id == snapshot.job_snapshot_id
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    assert [row.level for row in judged] == ["strong"]
+
+
+async def test_a_model_that_is_down_never_stops_the_worker_iteration(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from datetime import UTC, datetime, timedelta
+
+    from tests.factories import session_factory_for
+    from tests.fake_provider import FakeProvider
+    from tests.integration.test_direction_evaluation import BILLING
+    from tests.integration.test_direction_service import new_job, ready
+
+    from jobs_radar.adapters.providers.base import ProviderError
+    from jobs_radar.domain.enums import ProviderErrorClass
+    from jobs_radar.services.direction_service import DirectionRunner
+
+    w = await ready(db_session, ("Billing SME", BILLING, True))
+    await new_job(db_session, w, datetime.now(UTC) + timedelta(hours=1))
+    provider = FakeProvider(
+        responder=lambda request: ProviderError(ProviderErrorClass.UNAVAILABLE, "down")
+    )
+    runner = DirectionRunner(
+        session_factory_for(db_session, monkeypatch), provider, max_chars=12000
+    )
+    worker = Worker(settings, session_factory, name="w-test", directions=runner)
+    await worker.run_once()  # must not raise
+    assert worker.beats >= 1

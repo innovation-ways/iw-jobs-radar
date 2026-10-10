@@ -30,13 +30,23 @@ from jobs_radar.domain.matching.types import (
 from jobs_radar.domain.regions import regions_intersect
 
 # matching-v1.1 (ADR-052): same rules as matching-v1; the input mapping now reads country names.
-POLICY_VERSION = "matching-v1.1"
+# matching-v1.2 (ADR-056): same rules; the input mapping limits the model's remote regions to what
+# the source's own remote places allow.
+# matching-v1.3 (ADR-057): the career-direction dimension (the best judged direction counts).
+POLICY_VERSION = "matching-v1.3"
 
 ZERO, HALF, ONE = Fraction(0), Fraction(1, 2), Fraction(1)
 _STANCE = {"preferred": ONE, "acceptable": HALF, "rejected": ZERO}
 _CONFIDENCE_FLOOR = 0.6
 _UNVERIFIED_REMOTE_FACTOR = Fraction(4, 5)  # eligibility not stated: a risk, not a mismatch
 _MUST, _NICE = 2, 1
+# Strength of each judged career-direction level (ADR-057); "unknown" is handled separately.
+_DIRECTION_STRENGTH = {
+    "strong": ONE,
+    "partial": HALF,
+    "weak": Fraction(1, 5),
+    "none": ZERO,
+}
 _HOURS_PER_DAY = 8
 _EDUCATION_RANK = {
     "secondary": 1,
@@ -382,6 +392,26 @@ def _qualifications(job: JobAttributes, profile: ProfileView) -> _Raw:
     return _Raw("mismatch", ZERO, evidence, "Your education is below the requirement.")
 
 
+def _direction(job: JobAttributes) -> _Raw:
+    """Score the best judged career direction; the choice is made here, never by the model."""
+    if not job.directions:
+        return _unknown("The job was not assessed against your career directions.")
+    known = [j for j in job.directions if j.level in _DIRECTION_STRENGTH]
+    if not known:
+        return _unknown("No career direction could be judged for this job.")
+    best = max(known, key=lambda j: _DIRECTION_STRENGTH[j.level])
+    evidence = {
+        "direction": best.label,
+        "level": best.level,
+        "job_quote": best.job_quote,
+        "direction_quote": best.direction_quote,
+        "judged": {j.label: j.level for j in job.directions},
+    }
+    return _scored(
+        _DIRECTION_STRENGTH[best.level], evidence, f"Best fit among your directions: {best.label}."
+    )
+
+
 # --- gates that do not belong to one dimension ---------------------------------------------
 
 
@@ -462,6 +492,8 @@ def evaluate(
         ValueError: if every weight is 0, because nothing could be scored.
     """
     weights = {key: intent.weights.get(key, 0) for key in DIMENSION_KEYS}
+    if not job.directions:
+        weights["career_direction"] = 0  # not assessed: left out instead of counting as 0
     total = sum(weights.values())
     if total <= 0:
         msg = "at least one weight must be above 0"
@@ -497,6 +529,7 @@ def evaluate(
         ),
         "benefits_flexibility": _benefits(job, intent),
         "qualifications": _qualifications(job, profile),
+        "career_direction": _direction(job),
     }
     gates.extend(_extra_gates(job, intent))
 

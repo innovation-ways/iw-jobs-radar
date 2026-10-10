@@ -87,3 +87,55 @@ describe('profileProblem', () => {
     expect(profileProblem(form)).toMatch(/language/i)
   })
 })
+
+describe('career directions (ADR-057)', () => {
+  const valid = () => formFromProfile(makeProfile())
+  const direction = (label: string, text = 'I look for telecom billing roles.') => ({
+    label,
+    text,
+    enabled: true,
+  })
+
+  it('a profile without directions gives an empty list', () => {
+    expect(valid().directions).toEqual([])
+    expect(blankProfileForm().directions).toEqual([])
+  })
+
+  it('carries the saved directions into the form, enabled or not', () => {
+    const profile = makeProfile()
+    profile.current_revision!.facts.directions = [
+      direction('Billing SME'),
+      { ...direction('AI engineer', 'Moving into AI.'), enabled: false },
+    ]
+    expect(formFromProfile(profile).directions).toEqual([
+      direction('Billing SME'),
+      { ...direction('AI engineer', 'Moving into AI.'), enabled: false },
+    ])
+  })
+
+  it('accepts up to five directions with distinct labels', () => {
+    const form = valid()
+    form.directions = ['A', 'B', 'C', 'D', 'E'].map((label) => direction(label))
+    expect(profileProblem(form)).toBeNull()
+    form.directions.push(direction('F'))
+    expect(profileProblem(form)).toMatch(/at most 5/i)
+  })
+
+  it('needs a label and a text for every direction', () => {
+    const noLabel = valid()
+    noLabel.directions = [direction(' ')]
+    expect(profileProblem(noLabel)).toMatch(/label/i)
+    const noText = valid()
+    noText.directions = [direction('Billing SME', '  ')]
+    expect(profileProblem(noText)).toMatch(/text/i)
+  })
+
+  it('refuses a text longer than 1,000 characters and repeated labels', () => {
+    const long = valid()
+    long.directions = [direction('Billing SME', 'x'.repeat(1001))]
+    expect(profileProblem(long)).toMatch(/1,000/)
+    const twice = valid()
+    twice.directions = [direction('Billing SME'), direction('  billing  sme ', 'Another text.')]
+    expect(profileProblem(twice)).toMatch(/twice/i)
+  })
+})

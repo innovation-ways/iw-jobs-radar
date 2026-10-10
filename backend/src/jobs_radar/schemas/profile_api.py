@@ -7,13 +7,15 @@ The service resolves skill names to canonical skills and adds provenance, produc
 from datetime import datetime
 from typing import Annotated, Self
 
-from pydantic import Field, StringConstraints, model_validator
+from pydantic import AfterValidator, Field, StringConstraints, model_validator
 
+from jobs_radar.domain.directions import MAX_DIRECTIONS
 from jobs_radar.domain.enums import SkillKind, Visibility
 from jobs_radar.domain.skills import normalise_skill_name
 from jobs_radar.schemas.common import StrictModel, YearMonth
 from jobs_radar.schemas.profile import (
     BaseLocation,
+    CareerDirection,
     Certification,
     Education,
     Experience,
@@ -22,6 +24,7 @@ from jobs_radar.schemas.profile import (
     Provenance,
     ShortText,
     SkillLevel,
+    unique_labels,
 )
 
 SkillName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
@@ -79,6 +82,9 @@ class ProfileInput(StrictModel):
     experience: list[ExperienceInput] = Field(default_factory=list)
     education: list[EducationInput] = Field(default_factory=list)
     certifications: list[CertificationInput] = Field(default_factory=list)
+    directions: Annotated[list[CareerDirection], AfterValidator(unique_labels)] = Field(
+        default_factory=list, max_length=MAX_DIRECTIONS
+    )
     privacy: ProfilePrivacy = ProfilePrivacy()
 
     @model_validator(mode="after")
@@ -138,6 +144,8 @@ class ProfileFactsRead(StrictModel):
     experience: list[Experience]
     education: list[Education]
     certifications: list[Certification]
+    # Revisions saved before ADR-057 have none; the stored facts always default to an empty list.
+    directions: list[CareerDirection] = Field(default_factory=list)
 
 
 class ProfileRevisionSummary(StrictModel):

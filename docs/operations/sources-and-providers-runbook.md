@@ -5,13 +5,20 @@
 - A source is one company's job board. Add it by identifier and choose the board type; the board is
   validated against the public API before it is saved. Types: Greenhouse (the token of
   `boards.greenhouse.io/<token>`), Lever (`jobs.lever.co/<identifier>`), Ashby
-  (`jobs.ashbyhq.com/<identifier>`) and SmartRecruiters (`jobs.smartrecruiters.com/<identifier>`).
+  (`jobs.ashbyhq.com/<identifier>`), SmartRecruiters (`jobs.smartrecruiters.com/<identifier>`) and
+  Eightfold careers sites (ADR-055), added by the address of the careers site, for example
+  `jobs.amdocs.com`.
 - Lever and Ashby do not publish the company name: a name is guessed from the identifier, and you
   can type the real one when adding (it cannot be edited afterwards).
 - SmartRecruiters lists postings without text, so it reads the details of technical postings only,
   at most 200 per run; a company with more is `partial` (it never closes postings) and a company
   with no open postings is refused as not found. Its default pace is 30 requests a minute. With
   filters on, only your countries are listed, so the 200 details go to postings that can pass.
+- Eightfold (Amdocs, Vodafone, Ericsson, ...) uses the careers site's own public JSON API, which is
+  not documented and may change; it lists ten postings a page, newest first, and reads the details
+  of at most 200 postings per run (`partial` beyond, which never closes postings). Without filters it
+  reads every listed posting up to that limit; with filters only the postings whose title fits a
+  chosen area, and only your countries plus the site's remote postings are listed (Eightfold's remote work is limited to the posting's own country). Its default pace is 30 requests a minute.
 - **Filters on a company board** are off by default (every posting is kept). For a large company
   open **Filters** on its row and tick *Keep only postings that match my areas and location*: only
   postings in the chosen technology areas, remote work open to your countries, or on-site work
@@ -96,3 +103,11 @@ limit.
 Wikidata and a local model; set
 `JOBS_RADAR_SMOKE_API_URL` and `JOBS_RADAR_SMOKE_API_KEY` to include a cloud provider. They send
 no personal data and are never part of the default test run.
+
+## Career directions (ADR-057)
+
+- Write what you are looking for in the Profile screen (**Career directions**, up to 5 texts in English, "+" to add). Saving creates a normal profile revision. They never leave the machine: only the local model reads them.
+- In the search intent, give the optional **Career direction** dimension a weight (it is 0 by default). The best fit among your enabled directions counts.
+- The worker judges only jobs first seen after you saved the first direction. An older job is judged from its detail ("Assess this job"). Nothing is judged in bulk.
+- Try it on a sample before raising the weight: `cd backend && uv run python -m jobs_radar.tools.direction_sample --ids 12,40,77 --what-if career_direction=15,role_responsibilities=10 [--model qwen3.6:27b]` judges those jobs and prints the score before, now and with the what-if weights (never stored).
+- In **AI & privacy**, a local connection has an optional **Model for career directions**: a larger local model can judge directions while the smaller one keeps reading jobs. Empty = the job model. On the 30-job sample of 2026-10-10 `qwen3:8b` over-rated unrelated jobs and left an AI-engineer posting unjudged; `qwen3.6:27b` took about 2 s per judgement and separated the cases cleanly.

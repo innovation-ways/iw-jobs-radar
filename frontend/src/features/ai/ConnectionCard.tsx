@@ -13,6 +13,7 @@ export function ConnectionCard({ connection }: { connection: Connection }) {
   const actions = useAiActions()
   const [secret, setSecret] = useState('')
   const [model, setModel] = useState(connection.model_id ?? '')
+  const [directionModel, setDirectionModel] = useState(connection.direction_model ?? '')
   const remote = connection.processing_location === 'remote'
   const test = actions.testConnection.data
   const saved = connection.credential_status === 'saved'
@@ -96,6 +97,41 @@ export function ConnectionCard({ connection }: { connection: Connection }) {
           Test connection
         </Button>
       </div>
+
+      {!remote && (
+        <div className="mt-3 flex flex-wrap items-end gap-2.5">
+          <label className="flex flex-col gap-1 text-xs text-ink-2">
+            Model for career directions
+            <input
+              className={field}
+              value={directionModel}
+              placeholder="same as the model above"
+              onChange={(e) => setDirectionModel(e.target.value)}
+            />
+          </label>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={
+              directionModel === (connection.direction_model ?? '') ||
+              actions.updateConnection.isPending
+            }
+            onClick={() =>
+              actions.updateConnection.mutate({
+                id: connection.provider_connection_id,
+                expected_version: connection.version,
+                direction_model: directionModel,
+              })
+            }
+          >
+            Save directions model
+          </Button>
+          <p className="basis-full text-xs text-ink-3">
+            Optional. A larger local model judges how well a job fits your career directions; the
+            smaller one above keeps reading the jobs. Leave empty to use the same model.
+          </p>
+        </div>
+      )}
 
       {remote && (
         <form

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { formatAge, formatDateTime } from '@/lib/format'
 import { bandOf, NOT_EVALUATED, TONE_CLASSES } from './bands'
+import { AssessDirections } from './AssessDirections'
 import { DimensionList } from './DimensionList'
 import type { InboxDetail } from './queries'
 import type { OwnerAction } from './undo'
@@ -176,6 +177,7 @@ export function JobDetail({ detail, busy, onAction, onOpenOriginal, onLinkDecisi
             </span>
           </h3>
           <DimensionList dimensions={detail.dimensions} />
+          <AssessDirections jobPostingId={detail.job_posting_id} dimensions={detail.dimensions} />
           <p className="mt-2 text-xs text-ink-3">
             Unknown facts add nothing to the score. Policy {evaluation.policy_version}.
           </p>

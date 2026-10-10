@@ -9,7 +9,7 @@ endpoints, and never returned, logged or shown again. Endpoints are validated ag
 """
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from typing import Literal
 
@@ -52,6 +52,8 @@ class ConnectionView:
     is_active: bool
     use_for_jobs: bool
     version: int
+    # Optional local model used for career directions only (ADR-057); None = the job model.
+    direction_model: str | None = None
 
 
 @dataclass(frozen=True)
@@ -76,6 +78,12 @@ class ConnectionTest:
     models: list[str]
 
 
+def _direction_model(connection: ProviderConnection) -> str | None:
+    """Return the model chosen for career directions on this connection, if any."""
+    value = (connection.config_json or {}).get("direction_model")
+    return value if isinstance(value, str) and value else None
+
+
 def connection_view(connection: ProviderConnection) -> ConnectionView:
     """Map a connection to the safe view (credential status only)."""
     return ConnectionView(
@@ -90,6 +98,7 @@ def connection_view(connection: ProviderConnection) -> ConnectionView:
         is_active=connection.is_active,
         use_for_jobs=connection.use_for_jobs,
         version=connection.version,
+        direction_model=_direction_model(connection),
     )
 
 
@@ -227,8 +236,12 @@ class AiSettingsService:
         display_name: str | None = None,
         endpoint_url: str | None = None,
         model_id: str | None = None,
+        direction_model: str | None = None,
     ) -> ProviderConnection:
-        """Change the non-secret metadata, checking the version the owner saw."""
+        """Change the non-secret metadata, checking the version the owner saw.
+
+        ``direction_model`` is the local model used for career directions only; blank clears it.
+        """
         connection = await self._connection(owner_id, provider_connection_id)
         self._check_version(connection.version, expected_version, "connection")
         if endpoint_url is not None:
@@ -239,6 +252,13 @@ class AiSettingsService:
             connection.display_name = display_name.strip()
         if model_id is not None:
             connection.model_id = model_id.strip() or None
+        if direction_model is not None:
+            config = dict(connection.config_json or {})
+            if direction_model.strip():
+                config["direction_model"] = direction_model.strip()
+            else:
+                config.pop("direction_model", None)
+            connection.config_json = config  # a new dict, so the change is saved
         self._touch(connection)
         await self._session.flush()
         return connection
@@ -350,6 +370,25 @@ class AiSettingsService:
         if connection is None:
             return None
         return connection, self._build(self.spec_for(connection))
+
+    async def direction_target(
+        self, owner_id: int
+    ) -> tuple[ProviderConnection, ChatProvider] | None:
+        """Return the job-analysis connection with the model chosen for career directions.
+
+        The model is the connection's ``direction_model`` when set, otherwise the job model; the
+        server and the local-only rule are the connection's own (ADR-046).
+        """
+        connection = next(
+            (c for c in await self._repository.list(owner_id) if c.use_for_jobs), None
+        )
+        if connection is None:
+            return None
+        spec = self.spec_for(connection)
+        chosen = _direction_model(connection)
+        if chosen:
+            spec = replace(spec, model=chosen)
+        return connection, self._build(spec)
 
     async def redaction_enabled(self, owner_id: int) -> bool:
         """Whether contact details are removed before a remote call."""

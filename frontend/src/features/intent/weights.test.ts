@@ -10,9 +10,10 @@ import {
 } from './weights'
 
 describe('weight dimensions', () => {
-  it('lists the 8 active dimensions summing to 100 and 2 optional ones at 0', () => {
+  it('lists the 8 active dimensions summing to 100 and 3 optional ones at 0', () => {
     expect(DIMENSIONS).toHaveLength(8)
-    expect(OPTIONAL_DIMENSIONS).toHaveLength(2)
+    expect(OPTIONAL_DIMENSIONS).toHaveLength(3)
+    expect(OPTIONAL_DIMENSIONS.map((d) => d.key)).toContain('career_direction')
     const active = DIMENSIONS.reduce((sum, d) => sum + DEFAULT_WEIGHTS[d.key], 0)
     expect(active).toBe(100)
     for (const dimension of OPTIONAL_DIMENSIONS) expect(DEFAULT_WEIGHTS[dimension.key]).toBe(0)
@@ -69,6 +70,7 @@ describe('worked example of document 13 section 7', () => {
     company_profile: 1,
     benefits_flexibility: null,
     qualifications: null,
+    career_direction: null,
   }
 
   it('scores 82 with the default weights', () => {

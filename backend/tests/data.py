@@ -54,6 +54,7 @@ def sample_profile_facts() -> dict[str, Any]:
         "certifications": [
             {"name": "Example Certification", "year": 2022, "provenance": {"origin": "manual"}}
         ],
+        "directions": [],
     }
 
 
@@ -137,6 +138,7 @@ def sample_intent() -> dict[str, Any]:
             "company_profile": 7,
             "benefits_flexibility": 0,
             "qualifications": 0,
+            "career_direction": 0,
         },
         "alert_threshold": 65,
     }

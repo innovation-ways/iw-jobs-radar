@@ -23,6 +23,7 @@ COMPANY_BOARDS = {
     SourceType.LEVER,
     SourceType.ASHBY,
     SourceType.SMARTRECRUITERS,
+    SourceType.EIGHTFOLD,
 }
 
 
@@ -218,3 +219,15 @@ def test_smartrecruiters_is_a_company_board_and_the_ats_boards_have_adapters() -
     assert default_rate_limit(SourceType.SMARTRECRUITERS) > default_rate_limit(
         SourceType.GREENHOUSE
     )
+
+
+def test_eightfold_is_a_company_board_with_an_adapter_and_a_faster_pace() -> None:
+    from jobs_radar.adapters.sources.registry import build_source_adapters
+    from jobs_radar.domain.dedup import EMPLOYER_SOURCES
+    from jobs_radar.domain.sources import default_rate_limit
+
+    assert source_category(SourceType.EIGHTFOLD) is SourceCategory.COMPANY_BOARD
+    assert SourceType.EIGHTFOLD in build_source_adapters()
+    assert "eightfold" in EMPLOYER_SOURCES
+    # One request per posting detail, like SmartRecruiters.
+    assert default_rate_limit(SourceType.EIGHTFOLD) > default_rate_limit(SourceType.GREENHOUSE)

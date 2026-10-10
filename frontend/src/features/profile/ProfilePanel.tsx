@@ -8,6 +8,7 @@ import { api } from '@/api/client'
 import { unwrap } from '@/api/errors'
 import { downloadJson } from '@/lib/download'
 import { useDraft } from '@/lib/useDraft'
+import { DirectionsEditor } from './DirectionsEditor'
 import { formFromProfile, profileProblem, type ProfileForm } from './form'
 import { useProfileActions, type ProfileRead } from './queries'
 
@@ -27,8 +28,8 @@ function replaceAt<T>(items: T[], index: number, patch: Partial<T>): T[] {
 const numberOf = (text: string) => Number(text.replace(/[^\d.]/g, '')) || 0
 
 /**
- * Edits the career profile: summary, languages, skills and experience. Education and
- * certifications are kept as they are. Saving creates the next immutable revision.
+ * Edits the career profile: summary, career directions, languages, skills and experience.
+ * Education and certifications are kept as they are. Saving creates the next immutable revision.
  */
 export function ProfilePanel({ profile, onDirtyChange }: Props) {
   const revision = profile.current_revision
@@ -162,6 +163,11 @@ export function ProfilePanel({ profile, onDirtyChange }: Props) {
             </ul>
           </div>
         </Card>
+
+        <DirectionsEditor
+          directions={draft.directions}
+          onChange={(directions) => set({ directions })}
+        />
 
         <Card
           title="Skills"

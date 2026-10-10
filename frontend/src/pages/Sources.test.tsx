@@ -372,6 +372,23 @@ describe('Sources screen', () => {
       expect(screen.getByLabelText(/company identifier/i)).toBeInTheDocument()
     })
 
+    it('adds an Eightfold careers site by its address', async () => {
+      post.mockResolvedValue({ data: source(), response: { status: 201 } })
+      renderSources()
+      await screen.findByText('Acme Robotics')
+      await userEvent.selectOptions(screen.getByLabelText(/board type/i), 'eightfold')
+      expect(screen.queryByLabelText(/company name/i)).not.toBeInTheDocument()
+      await userEvent.type(screen.getByLabelText(/careers site address/i), ' jobs.synthco.example ')
+      await userEvent.click(screen.getByRole('button', { name: /validate & add/i }))
+      expect(post).toHaveBeenCalledWith('/api/v1/sources', {
+        body: {
+          source_type: 'eightfold',
+          external_identifier: 'jobs.synthco.example',
+          enabled: true,
+        },
+      })
+    })
+
     it('sends no company name when it was left empty', async () => {
       post.mockResolvedValue({ data: source(), response: { status: 201 } })
       renderSources()

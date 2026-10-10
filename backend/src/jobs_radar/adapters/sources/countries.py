@@ -25,6 +25,7 @@ _ALIASES = {
     "türkiye": "TR",
     "holland": "NL",
     "the netherlands": "NL",
+    "netherlands": "NL",
     "south korea": "KR",
     "russia": "RU",
 }

@@ -16,7 +16,7 @@ class EvaluationRequest(StrictModel):
 
     profile_revision_id: int
     intent_revision_id: int
-    policy_version: Literal["matching-v1.1"] = "matching-v1.1"
+    policy_version: Literal["matching-v1.3"] = "matching-v1.3"
 
 
 class GateRead(StrictModel):

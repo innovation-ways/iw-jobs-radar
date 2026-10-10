@@ -63,17 +63,17 @@ async def test_an_evaluation_is_persisted_with_every_input_and_all_dimensions(
         w.profile_revision_id,
         w.intent_revision_id,
     )
-    assert evaluation.policy_version == "matching-v1.1"
+    assert evaluation.policy_version == "matching-v1.3"
     assert evaluation.job_source_hash.startswith("sha256:")
     assert 0 <= evaluation.fit_score <= 100 and evaluation.recommendation in {
         "recommended",
         "not_recommended",
     }
     assert evaluation.weights_json["role_responsibilities"] == 25
-    assert len(record.dimensions) == 10
+    assert len(record.dimensions) == 11
     assert (
         await count(db_session, ScoreDimension, match_evaluation_id=evaluation.match_evaluation_id)
-        == 10
+        == 11
     )
     by_key = {d.dimension_key: d for d in record.dimensions}
     assert (
@@ -81,6 +81,25 @@ async def test_an_evaluation_is_persisted_with_every_input_and_all_dimensions(
     )  # remote within EU, remote preferred
     assert by_key["qualifications"].excluded is True
     assert by_key["compensation"].status == "unknown" and by_key["compensation"].strength == 0
+
+
+async def test_a_source_place_limited_to_another_country_stops_a_remote_job_from_matching(
+    db_session: AsyncSession,
+) -> None:
+    # The model reported EU, but the board's own location says the job is remote in India (ADR-056).
+    w = await world(db_session, locations=["India (Remote)"])
+    record = await EvaluationService(db_session, provider=None).evaluate(
+        LOCAL_OWNER_ID,
+        job_snapshot_id=w.snapshot_id,
+        job_extraction_id=w.extraction_id,
+        profile_revision_id=w.profile_revision_id,
+        intent_revision_id=w.intent_revision_id,
+        judge=False,
+    )
+    assert record.evaluation.recommendation == "not_recommended"
+    assert any(gate["code"] == "G2" for gate in record.evaluation.gates_json)
+    by_key = {d.dimension_key: d for d in record.dimensions}
+    assert by_key["work_arrangement_location"].status == "mismatch"
 
 
 async def test_evaluating_twice_returns_the_same_evaluation(db_session: AsyncSession) -> None:
@@ -340,7 +359,7 @@ async def test_get_returns_a_persisted_evaluation_and_hides_other_owners(
         )
     ).scalar_one()
     record = await service.get(LOCAL_OWNER_ID, evaluation.match_evaluation_id)
-    assert len(record.dimensions) == 10
+    assert len(record.dimensions) == 11
     with pytest.raises(NotFoundError):
         await service.get(LOCAL_OWNER_ID, 987654321)
 

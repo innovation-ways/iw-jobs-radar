@@ -19,6 +19,7 @@ from jobs_radar.core.settings import Settings
 from jobs_radar.db.models import ProviderConnection
 from jobs_radar.domain.enums import LOCAL_OWNER_ID
 from jobs_radar.services.dedup import DedupRunner
+from jobs_radar.services.direction_service import DirectionRunner
 from jobs_radar.services.evaluation import EvaluationRunner
 from jobs_radar.services.extraction_queue import ExtractionQueue
 
@@ -29,9 +30,12 @@ class JobsAi:
 
     extraction: ExtractionQueue
     evaluation: EvaluationRunner
+    directions: DirectionRunner
     dedup: DedupRunner
     model: str
     embedding_model: str
+    # The local model that judges career directions (the job model unless another is chosen).
+    direction_model: str = ""
 
 
 class JobsAiLoader:
@@ -42,7 +46,7 @@ class JobsAiLoader:
     ) -> None:
         self._settings = settings
         self._session_factory = session_factory
-        self._key: tuple[int, int, str, str, str] | None = None
+        self._key: tuple[int, int, str, str, str, str] | None = None
         self._current: JobsAi | None = None
 
     async def load(self) -> JobsAi | None:
@@ -62,22 +66,35 @@ class JobsAiLoader:
         embedding = str(
             (connection.config_json or {}).get("embedding_model") or self._settings.embedding_model
         )
+        direction_model = str(
+            (connection.config_json or {}).get("direction_model") or connection.model_id
+        )
         key = (
             connection.provider_connection_id,
             connection.version,
             connection.endpoint_url,
             connection.model_id,
             embedding,
+            direction_model,
         )
         if key != self._key or self._current is None:
             self._current = self._build(
-                connection, embedding, connection.endpoint_url, connection.model_id
+                connection,
+                embedding,
+                connection.endpoint_url,
+                connection.model_id,
+                direction_model,
             )
             self._key = key
         return self._current
 
     def _build(
-        self, connection: ProviderConnection, embedding_model: str, endpoint: str, model: str
+        self,
+        connection: ProviderConnection,
+        embedding_model: str,
+        endpoint: str,
+        model: str,
+        direction_model: str,
     ) -> JobsAi:
         # A local connection may only use the host the deployment configured (ADR-035).
         host = urlsplit(self._settings.ollama_url).hostname
@@ -86,13 +103,24 @@ class JobsAiLoader:
         if urlsplit(endpoint).hostname != host:
             msg = "The local connection does not match the configured local server."
             raise ValueError(msg)
+        direction_provider = (
+            provider
+            if direction_model == model
+            else build_provider(ProviderSpec("ollama", endpoint, direction_model), self._settings)
+        )
         embedder = build_ollama_embedder(self._settings, model=embedding_model)
         return JobsAi(
             extraction=ExtractionQueue(
                 self._session_factory, provider, max_chars=self._settings.extraction_max_chars
             ),
             evaluation=EvaluationRunner(self._session_factory, provider),
+            directions=DirectionRunner(
+                self._session_factory,
+                direction_provider,
+                max_chars=self._settings.extraction_max_chars,
+            ),
             dedup=DedupRunner(self._session_factory, embedder),
             model=model,
             embedding_model=embedding_model,
+            direction_model=direction_model,
         )

@@ -13,8 +13,15 @@ export interface ProfileForm {
   experience: Schemas['ExperienceInput'][]
   education: Schemas['EducationInput'][]
   certifications: Schemas['CertificationInput'][]
+  /** Goals in the owner's own words, judged against every new job (ADR-057). */
+  directions: Schemas['CareerDirection'][]
   privacy: Schemas['ProfilePrivacy']
 }
+
+/** Limits of a career direction (the server enforces the same, ADR-057). */
+export const MAX_DIRECTIONS = 5
+export const MAX_DIRECTION_TEXT = 1000
+export const MAX_DIRECTION_LABEL = 60
 
 /** The empty form for a profile that has no revision yet (invalid until completed). */
 export function blankProfileForm(): ProfileForm {
@@ -27,6 +34,7 @@ export function blankProfileForm(): ProfileForm {
     experience: [],
     education: [],
     certifications: [],
+    directions: [],
     privacy: { schema_version: 1, redact_contact_details: true, allow_cloud_processing: false },
   }
 }
@@ -58,6 +66,11 @@ export function formFromProfile(profile: ProfileRead): ProfileForm {
     })),
     education: facts.education.map((e) => ({ level: e.level, field: e.field })),
     certifications: facts.certifications.map((c) => ({ name: c.name, year: c.year ?? null })),
+    directions: (facts.directions ?? []).map((d) => ({
+      label: d.label,
+      text: d.text,
+      enabled: d.enabled,
+    })),
     privacy: revision.privacy,
   }
 }
@@ -105,6 +118,22 @@ export function profileProblem(form: ProfileForm): string | null {
       return `Role "${role.title}": add a start month.`
     if (role.end && role.end < role.start)
       return `Role "${role.title}": the end must not be before the start.`
+  }
+  if (form.directions.length > MAX_DIRECTIONS)
+    return `Add at most ${MAX_DIRECTIONS} career directions.`
+  const labels = new Set<string>()
+  for (const direction of form.directions) {
+    const label = direction.label.trim()
+    if (!label) return 'Each career direction needs a label.'
+    if (label.length > MAX_DIRECTION_LABEL)
+      return `A direction label is at most ${MAX_DIRECTION_LABEL} characters.`
+    if (!direction.text.trim())
+      return `Direction "${label}": write the text of what you are looking for.`
+    if (direction.text.trim().length > MAX_DIRECTION_TEXT)
+      return `Direction "${label}": the text is at most 1,000 characters.`
+    const key = normalise(label)
+    if (labels.has(key)) return `The direction "${label}" appears twice.`
+    labels.add(key)
   }
   return null
 }

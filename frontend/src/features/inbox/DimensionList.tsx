@@ -19,10 +19,12 @@ const STATUS_BADGE = {
   unknown: 'border border-dashed border-line-strong bg-band-bg text-band',
 } as const
 
-function quoteOf(dimension: Dimension): string | null {
-  const quote = dimension.evidence.job_quote
-  return typeof quote === 'string' && quote ? quote : null
+function textOf(dimension: Dimension, key: string): string | null {
+  const value = dimension.evidence[key]
+  return typeof value === 'string' && value ? value : null
 }
+
+const quoteOf = (dimension: Dimension) => textOf(dimension, 'job_quote')
 
 /**
  * "Why this score": one row per dimension with its points. Hover or focus a row to see the
@@ -36,6 +38,9 @@ export function DimensionList({ dimensions }: { dimensions: Dimension[] }) {
         const label = LABELS.get(dimension.dimension_key) ?? dimension.dimension_key
         const { symbol } = signalIcon(dimension)
         const quote = quoteOf(dimension)
+        // Career direction: the model's best-fitting direction, with the owner's own words.
+        const direction = textOf(dimension, 'direction')
+        const directionQuote = textOf(dimension, 'direction_quote')
         const opensUp = index >= active.length - 3
         return (
           <li
@@ -62,6 +67,9 @@ export function DimensionList({ dimensions }: { dimensions: Dimension[] }) {
                     <span> · {dimension.quality}</span>
                   )}
                 </span>
+                {direction && (
+                  <span className="block text-xs font-normal text-ink-2">Fits: {direction}</span>
+                )}
               </div>
             </div>
             <div className="text-right font-semibold tabular-nums">
@@ -83,6 +91,16 @@ export function DimensionList({ dimensions }: { dimensions: Dimension[] }) {
               <blockquote className="mb-2.5 border-l-[3px] border-brand pl-2.5 text-[13px]">
                 {quote ? `“${quote}”` : 'Not stated in the posting.'}
               </blockquote>
+              {directionQuote && (
+                <>
+                  <h4 className="mb-1 text-[11px] font-semibold tracking-wider text-ink-3 uppercase">
+                    Your words
+                  </h4>
+                  <blockquote className="mb-2.5 border-l-[3px] border-line-strong pl-2.5 text-[13px]">
+                    {`“${directionQuote}”`}
+                  </blockquote>
+                </>
+              )}
               <h4 className="mb-1 text-[11px] font-semibold tracking-wider text-ink-3 uppercase">
                 Compared with your profile and intent
               </h4>

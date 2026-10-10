@@ -89,6 +89,35 @@ describe('ProfilePanel', () => {
     expect(JSON.stringify(options.body)).not.toContain('provenance')
   })
 
+  it('shows the career directions right after the summary, before the skills', () => {
+    renderPanel()
+    const titles = screen
+      .getAllByRole('heading', { level: 2 })
+      .map((heading) => heading.textContent)
+    const order = ['Summary', 'Career directions', 'Skills', 'Experience']
+    expect(titles.filter((title) => order.includes(title ?? ''))).toEqual(order)
+  })
+
+  it('saves a career direction typed by the owner with the profile', async () => {
+    put.mockResolvedValue(saved())
+    renderPanel()
+    await userEvent.click(screen.getByRole('button', { name: /add a direction/i }))
+    await userEvent.type(screen.getByLabelText(/direction label/i), 'Billing SME')
+    await userEvent.type(screen.getByLabelText(/direction text/i), 'Telecom billing roles.')
+    await userEvent.click(screen.getByRole('button', { name: /save revision/i }))
+    expect(put.mock.calls[0][1].body.directions).toEqual([
+      { label: 'Billing SME', text: 'Telecom billing roles.', enabled: true },
+    ])
+  })
+
+  it('does not save a direction without text and says why', async () => {
+    renderPanel()
+    await userEvent.click(screen.getByRole('button', { name: /add a direction/i }))
+    await userEvent.type(screen.getByLabelText(/direction label/i), 'Billing SME')
+    expect(screen.getByRole('button', { name: /save revision/i })).toBeDisabled()
+    expect(screen.getByText(/text of what you are looking for/i)).toBeInTheDocument()
+  })
+
   it('adds, edits and removes skills', async () => {
     put.mockResolvedValue(saved())
     renderPanel()

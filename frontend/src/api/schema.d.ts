@@ -514,6 +514,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/jobs/{job_posting_id}/assess-directions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assess Directions
+         * @description Judge a job against every enabled direction with the local model and score it again.
+         *
+         *     Older jobs are never judged in bulk; this is how one of them is assessed on demand.
+         */
+        post: operations["assess_directions_api_v1_jobs__job_posting_id__assess_directions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/jobs/{job_posting_id}/evaluations": {
         parameters: {
             query?: never;
@@ -1305,6 +1327,16 @@ export interface components {
             privacy: components["schemas"]["PrivacyRead"];
         };
         /**
+         * AssessResponse
+         * @description What assessing one job did: judgements made and new evaluations stored.
+         */
+        AssessResponse: {
+            /** Evaluated */
+            evaluated: number;
+            /** Judged */
+            judged: number;
+        };
+        /**
          * BaseLocation
          * @description Anchor for hybrid and on-site distance rules.
          */
@@ -1351,6 +1383,21 @@ export interface components {
             source_name: string;
             /** Website */
             website: string | null;
+        };
+        /**
+         * CareerDirection
+         * @description One goal the owner wrote in their own words, judged against every new job (ADR-057).
+         */
+        CareerDirection: {
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /** Label */
+            label: string;
+            /** Text */
+            text: string;
         };
         /**
          * CatalogueEntryRead
@@ -1624,6 +1671,8 @@ export interface components {
             credential_status: "saved" | "none";
             /** Credential Updated At */
             credential_updated_at: string | null;
+            /** Direction Model */
+            direction_model?: string | null;
             /** Display Name */
             display_name: string;
             /** Endpoint Url */
@@ -1676,6 +1725,8 @@ export interface components {
          * @description Change non-secret metadata with the version the client saw.
          */
         ConnectionUpdate: {
+            /** Direction Model */
+            direction_model?: string | null;
             /** Display Name */
             display_name?: string | null;
             /** Endpoint Url */
@@ -1958,10 +2009,10 @@ export interface components {
             intent_revision_id: number;
             /**
              * Policy Version
-             * @default matching-v1.1
+             * @default matching-v1.3
              * @constant
              */
-            policy_version: "matching-v1.1";
+            policy_version: "matching-v1.3";
             /** Profile Revision Id */
             profile_revision_id: number;
         };
@@ -2403,6 +2454,7 @@ export interface components {
             /**
              * @default {
              *       "benefits_flexibility": 0,
+             *       "career_direction": 0,
              *       "company_profile": 7,
              *       "compensation": 10,
              *       "domain_sector": 10,
@@ -2463,6 +2515,7 @@ export interface components {
             /**
              * @default {
              *       "benefits_flexibility": 0,
+             *       "career_direction": 0,
              *       "company_profile": 7,
              *       "compensation": 10,
              *       "domain_sector": 10,
@@ -2578,6 +2631,7 @@ export interface components {
             /**
              * @default {
              *       "benefits_flexibility": 0,
+             *       "career_direction": 0,
              *       "company_profile": 7,
              *       "compensation": 10,
              *       "domain_sector": 10,
@@ -2867,6 +2921,8 @@ export interface components {
             base_location: components["schemas"]["BaseLocation"];
             /** Certifications */
             certifications: components["schemas"]["Certification"][];
+            /** Directions */
+            directions?: components["schemas"]["CareerDirection"][];
             /** Education */
             education: components["schemas"]["Education"][];
             /** Experience */
@@ -2980,6 +3036,8 @@ export interface components {
             certifications?: components["schemas"]["CertificationInput"][];
             /** Change Summary */
             change_summary?: string | null;
+            /** Directions */
+            directions?: components["schemas"]["CareerDirection"][];
             /** Education */
             education?: components["schemas"]["EducationInput"][];
             /** Expected Current Revision */
@@ -3545,7 +3603,7 @@ export interface components {
          * @description Kind of job source adapter: ATS company boards first, then job boards (ADR-049).
          * @enum {string}
          */
-        SourceType: "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "arbeitnow" | "jobicy" | "himalayas" | "itjobs_pt";
+        SourceType: "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "eightfold" | "arbeitnow" | "jobicy" | "himalayas" | "itjobs_pt";
         /**
          * SourceUpdate
          * @description Change a source's settings; ``expected_version`` is the version the client last saw.
@@ -3721,7 +3779,7 @@ export interface components {
         };
         /**
          * Weights
-         * @description One relative weight per dimension. The two optional dimensions default to 0 (excluded).
+         * @description One relative weight per dimension. The optional dimensions default to 0 (excluded).
          */
         Weights: {
             /**
@@ -3729,6 +3787,11 @@ export interface components {
              * @default 0
              */
             benefits_flexibility: number;
+            /**
+             * Career Direction
+             * @default 0
+             */
+            career_direction: number;
             /**
              * Company Profile
              * @default 7
@@ -4670,6 +4733,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IntentSaveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assess_directions_api_v1_jobs__job_posting_id__assess_directions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_posting_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssessResponse"];
                 };
             };
             /** @description Validation Error */

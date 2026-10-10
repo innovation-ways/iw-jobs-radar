@@ -415,3 +415,23 @@ async def test_a_smartrecruiters_board_gets_a_faster_default_pace(
     )
     assert response.status_code == 201
     assert response.json()["rate_limit_per_minute"] == 30
+
+
+async def test_an_eightfold_board_is_added_by_its_careers_address(
+    client: httpx.AsyncClient, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        app.state, "adapters", {SourceType.EIGHTFOLD: FakeAdapter(board=BoardInfo("Synthco", 25))}
+    )
+    response = await client.post(
+        "/api/v1/sources",
+        json={
+            "source_type": "eightfold",
+            "external_identifier": unique("jobs.synthco") + ".example",
+        },
+    )
+    assert response.status_code == 201
+    body = response.json()
+    assert body["category"] == "company_board"
+    assert body["rate_limit_per_minute"] == 30
+    assert body["company_name"] == "Synthco"

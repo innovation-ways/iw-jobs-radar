@@ -107,6 +107,16 @@ class Stance(StrEnum):
     REJECTED = "rejected"
 
 
+class DirectionLevel(StrEnum):
+    """How well a job fits one career direction, as judged by the local model (ADR-057)."""
+
+    STRONG = "strong"
+    PARTIAL = "partial"
+    WEAK = "weak"
+    NONE = "none"
+    UNKNOWN = "unknown"
+
+
 class SourceType(StrEnum):
     """Kind of job source adapter: ATS company boards first, then job boards (ADR-049)."""
 
@@ -114,6 +124,7 @@ class SourceType(StrEnum):
     LEVER = "lever"
     ASHBY = "ashby"
     SMARTRECRUITERS = "smartrecruiters"
+    EIGHTFOLD = "eightfold"
     ARBEITNOW = "arbeitnow"
     JOBICY = "jobicy"
     HIMALAYAS = "himalayas"
@@ -315,6 +326,7 @@ class TrendTermKind(StrEnum):
 MATCHING_POLICY_VERSION = "matching-v1"
 DEDUP_POLICY_VERSION = "dedup-v1"
 EXTRACTION_PROMPT_VERSION = "extract-v1"
+DIRECTION_PROMPT_VERSION = "direction-v1"
 
 # The single owner of V1: there is no authentication (ADR-009), but ``owner_id`` is kept everywhere.
 LOCAL_OWNER_ID = 1

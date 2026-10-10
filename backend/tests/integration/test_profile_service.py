@@ -216,3 +216,59 @@ async def test_unknown_profile_is_not_found(db_session: AsyncSession) -> None:
         await service.get(LOCAL_OWNER_ID, 987654321)
     with pytest.raises(NotFoundError):
         await service.save(LOCAL_OWNER_ID, 987654321, data(), expected_current_revision=None)
+
+
+# --- career directions (ADR-057) ----------------------------------------------------------------
+
+DIRECTIONS = [
+    {
+        "label": "Billing SME",
+        "text": "I work as a billing SME and want telecom roles.",
+        "enabled": True,
+    },
+    {"label": "AI engineer", "text": "Moving from software into AI, backed by my OSS work."},
+]
+
+
+async def test_directions_are_saved_in_the_revision_and_a_repeat_creates_no_revision(
+    db_session: AsyncSession,
+) -> None:
+    service = ProfileService(db_session)
+    pid = (await service.create(LOCAL_OWNER_ID, unique("P"))).profile.career_profile_id
+    first = await service.save(
+        LOCAL_OWNER_ID, pid, data(directions=DIRECTIONS), expected_current_revision=None
+    )
+    stored = first.view.revision.facts_json["directions"]
+    assert [(d["label"], d["enabled"]) for d in stored] == [
+        ("Billing SME", True),
+        ("AI engineer", True),
+    ]
+    again = await service.save(
+        LOCAL_OWNER_ID, pid, data(directions=DIRECTIONS), expected_current_revision=1
+    )
+    assert again.created is False and await revision_count(db_session, pid) == 1
+
+
+async def test_editing_or_disabling_a_direction_creates_the_next_revision(
+    db_session: AsyncSession,
+) -> None:
+    service = ProfileService(db_session)
+    pid = (await service.create(LOCAL_OWNER_ID, unique("P"))).profile.career_profile_id
+    await service.save(
+        LOCAL_OWNER_ID, pid, data(directions=DIRECTIONS), expected_current_revision=None
+    )
+    disabled = [DIRECTIONS[0], {**DIRECTIONS[1], "enabled": False}]
+    second = await service.save(
+        LOCAL_OWNER_ID, pid, data(directions=disabled), expected_current_revision=1
+    )
+    assert second.created is True
+    assert [d["enabled"] for d in second.view.revision.facts_json["directions"]] == [True, False]
+
+
+async def test_a_revision_made_before_directions_existed_reads_as_having_none(
+    db_session: AsyncSession,
+) -> None:
+    service = ProfileService(db_session)
+    pid = (await service.create(LOCAL_OWNER_ID, unique("P"))).profile.career_profile_id
+    saved = await service.save(LOCAL_OWNER_ID, pid, data(), expected_current_revision=None)
+    assert saved.view.revision.facts_json["directions"] == []

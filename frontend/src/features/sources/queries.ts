@@ -52,7 +52,7 @@ export function useSourcesData() {
 }
 
 /** The company boards (one company per source) an owner can add by identifier. */
-export type CompanyBoardType = 'greenhouse' | 'lever' | 'ashby' | 'smartrecruiters'
+export type CompanyBoardType = 'greenhouse' | 'lever' | 'ashby' | 'smartrecruiters' | 'eightfold'
 
 /** What the owner types to add a company board. */
 export interface CompanyBoardDraft {

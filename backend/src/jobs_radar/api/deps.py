@@ -17,6 +17,7 @@ from jobs_radar.services.companies import CompanyService
 from jobs_radar.services.company_analysis import CompanyAnalysisService, SiteReader
 from jobs_radar.services.company_summary import CompanySummaryService
 from jobs_radar.services.dedup import DedupService
+from jobs_radar.services.direction_assess import DirectionAssessService
 from jobs_radar.services.document_store import DocumentTextStore
 from jobs_radar.services.documents import DocumentService
 from jobs_radar.services.enrichment import EnrichmentAdapters, EnrichmentService
@@ -238,3 +239,13 @@ def get_company_analysis_service(
 def get_trend_service(session: Annotated[AsyncSession, Depends(get_session)]) -> TrendService:
     """Build the trends service on the request's session."""
     return TrendService(session)
+
+
+def get_direction_assess_service(
+    request: Request,
+    session: Annotated[AsyncSession, Depends(get_session)],
+    ai: Annotated[AiSettingsService, Depends(get_ai_settings_service)],
+) -> DirectionAssessService:
+    """Build the service that assesses one job against the owner's career directions."""
+    settings: Settings = request.app.state.settings
+    return DirectionAssessService(session, ai, max_chars=settings.extraction_max_chars)

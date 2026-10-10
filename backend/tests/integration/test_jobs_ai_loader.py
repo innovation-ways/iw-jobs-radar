@@ -20,7 +20,11 @@ async def clean(session_factory: async_sessionmaker[AsyncSession]) -> None:
         await session.commit()
 
 
-async def add(session_factory: async_sessionmaker[AsyncSession], **values: object) -> int:
+async def add(
+    session_factory: async_sessionmaker[AsyncSession],
+    config: dict[str, object] | None = None,
+    **values: object,
+) -> int:
     async with session_factory() as session:
         row = ProviderConnection(
             owner_id=LOCAL_OWNER_ID,
@@ -29,7 +33,7 @@ async def add(session_factory: async_sessionmaker[AsyncSession], **values: objec
             # The loader only accepts the configured local server, which a developer's .env may change.
             endpoint_url=get_settings().ollama_url,
             model_id="qwen3:8b",
-            config_json={"embedding_model": "emb-1"},
+            config_json={"embedding_model": "emb-1", **(config or {})},
             **values,
         )
         session.add(row)
@@ -82,3 +86,31 @@ async def test_switching_job_analysis_off_in_the_gui_takes_effect_without_a_rest
         row.use_for_jobs = False
         await session.commit()
     assert await loader.load() is None
+
+
+async def test_career_directions_use_the_job_model_unless_another_is_chosen(
+    settings: Settings, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    await add(session_factory, use_for_jobs=True)
+    default = await JobsAiLoader(settings, session_factory).load()
+    assert default is not None and default.direction_model == "qwen3:8b"
+
+
+async def test_a_direction_model_is_used_for_directions_and_the_job_model_for_the_rest(
+    settings: Settings, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    connection_id = await add(
+        session_factory, config={"direction_model": "big-model"}, use_for_jobs=True
+    )
+    loader = JobsAiLoader(settings, session_factory)
+    first = await loader.load()
+    assert first is not None
+    assert (first.model, first.direction_model) == ("qwen3:8b", "big-model")
+    async with session_factory() as session:
+        row = await session.get(ProviderConnection, connection_id)
+        assert row is not None
+        row.config_json = {"embedding_model": "emb-1", "direction_model": "bigger"}
+        row.version += 1
+        await session.commit()
+    changed = await loader.load()
+    assert changed is not None and changed.direction_model == "bigger"

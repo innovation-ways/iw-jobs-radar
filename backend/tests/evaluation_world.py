@@ -46,8 +46,12 @@ async def world(
     *,
     extracted_by: tuple[str, str] | None = None,
     with_extraction: bool = True,
+    locations: list[str] | None = None,
 ) -> World:
-    """Build the world; ``extracted_by`` is the ``(provider, model)`` that extracted the job."""
+    """Build the world; ``extracted_by`` is the ``(provider, model)`` that extracted the job.
+
+    ``locations`` are the board's own places for the job (the sample job's when omitted).
+    """
     await session.execute(
         update(JobPosting).where(JobPosting.closed_at.is_(None)).values(closed_at=NOW)
     )
@@ -80,7 +84,11 @@ async def world(
 
     source = await make_source(session, await make_company(session, "Acme Evaluation"))
     w.posting, snapshot = await make_posting(
-        session, source, title=SAMPLE_JOB_TITLE, description=SAMPLE_JOB_DESCRIPTION
+        session,
+        source,
+        title=SAMPLE_JOB_TITLE,
+        description=SAMPLE_JOB_DESCRIPTION,
+        locations=locations,
     )
     w.snapshot_id = snapshot.job_snapshot_id
     resolved = await SkillCanonicaliser(session).canonicalise(

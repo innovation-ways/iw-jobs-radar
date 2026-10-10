@@ -6,9 +6,10 @@ rewritten. The score is a pure function of stored data; the model is used only t
 pairs that have never been judged, and re-scoring after a weight change needs no model at all.
 """
 
+import hashlib
 from collections.abc import Awaitable, Callable
 from contextlib import AbstractAsyncContextManager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -29,8 +30,12 @@ from jobs_radar.db.models import (
     ScoreDimension,
     SearchIntent,
 )
-from jobs_radar.domain.enums import EXTRACTION_PROMPT_VERSION
+from jobs_radar.domain.directions import direction_hash
+from jobs_radar.domain.enums import DIRECTION_PROMPT_VERSION, EXTRACTION_PROMPT_VERSION
 from jobs_radar.domain.matching.engine import POLICY_VERSION, evaluate
+from jobs_radar.domain.matching.types import DirectionJudgement as DirectionResult
+from jobs_radar.domain.matching.types import Evaluation
+from jobs_radar.repositories.directions import DirectionRepository
 from jobs_radar.repositories.evaluations import EvaluationRepository
 from jobs_radar.repositories.skills import SkillRepository
 from jobs_radar.schemas.intent import IntentDefinition
@@ -47,6 +52,22 @@ def _place_names(attributes: dict[str, Any], snapshot: JobSnapshot) -> list[str]
         return [str(place) for place in locations["value"]]
     work = snapshot.normalised_json.get("work_arrangement", {})
     return [loc["raw"] for loc in work.get("locations", []) if loc.get("raw")]
+
+
+def _source_places(snapshot: JobSnapshot) -> list[str]:
+    """Return the board's own locations (they may limit the remote regions, ADR-056)."""
+    work = snapshot.normalised_json.get("work_arrangement", {})
+    return [loc["raw"] for loc in work.get("locations", []) if loc.get("raw")]
+
+
+@dataclass(frozen=True)
+class _Scored:
+    """The engine's result with what it was computed from."""
+
+    result: Evaluation
+    definition: IntentDefinition
+    basis: str
+    snapshot: JobSnapshot
 
 
 @dataclass(frozen=True)
@@ -73,6 +94,7 @@ class EvaluationService:
         self._session = session
         self._provider = provider
         self._evaluations = EvaluationRepository(session)
+        self._directions_repo = DirectionRepository(session)
         self._skills = SkillRepository(session)
 
     async def _relations(
@@ -92,6 +114,34 @@ class EvaluationService:
                 found = await self._skills.cached_relations(skill_id, sorted(profile_skills))
             relations.update({(skill_id, other): relation for other, relation in found.items()})
         return relations
+
+    async def _directions(
+        self, profile_revision: ProfileRevision, job_snapshot_id: int
+    ) -> tuple[tuple[DirectionResult, ...] | None, str]:
+        """Return the stored judgements of the profile's enabled directions and their basis.
+
+        ``None`` means the job was not assessed (no judgement exists for any enabled direction),
+        which leaves the dimension out. The basis names exactly the judgements that were used, so
+        a later judgement gives a new evaluation instead of rewriting this one.
+        """
+        facts = ProfileFacts.model_validate(profile_revision.facts_json)
+        enabled = {direction_hash(d.text): d.label for d in facts.directions if d.enabled}
+        found = await self._directions_repo.latest(
+            job_snapshot_id, enabled.keys(), DIRECTION_PROMPT_VERSION
+        )
+        if not found:
+            return None, "none"
+        judgements = tuple(
+            DirectionResult(
+                label=enabled[text_hash],
+                level=row.level,  # type: ignore[arg-type]  # a CHECK constraint limits the values
+                job_quote=row.job_quote,
+                direction_quote=row.direction_quote,
+            )
+            for text_hash, row in found.items()
+        )
+        ids = ",".join(str(row.direction_judgement_id) for row in found.values())
+        return judgements, f"sha256:{hashlib.sha256(ids.encode()).hexdigest()}"
 
     async def _owned_revisions(
         self, owner_id: int, profile_revision_id: int, intent_revision_id: int
@@ -126,7 +176,7 @@ class EvaluationService:
             raise NotFoundError(msg)
         return profile, intent
 
-    async def evaluate(
+    async def _score(
         self,
         owner_id: int,
         *,
@@ -135,16 +185,11 @@ class EvaluationService:
         profile_revision_id: int,
         intent_revision_id: int,
         judge: bool,
-    ) -> EvaluationRecord:
-        """Score one extracted snapshot under exact profile and intent revisions.
+        weights: dict[str, int] | None = None,
+    ) -> _Scored:
+        """Compute the score of one snapshot without storing anything.
 
-        Args:
-            judge: allow the model to judge skill pairs that were never judged. Without it (or
-                without a provider) only cached judgements are used.
-
-        Raises:
-            NotFoundError: unknown snapshot, or a revision that is not the owner's.
-            ConflictError: the extraction did not succeed (the job is "not evaluated").
+        ``weights`` replaces some of the intent's weights (a what-if, never stored).
         """
         profile_revision, intent_revision = await self._owned_revisions(
             owner_id, profile_revision_id, intent_revision_id
@@ -165,18 +210,61 @@ class EvaluationService:
         # to extractions that were stored earlier.
         attributes = dict(extraction.attributes_json)
         attributes["locations_resolved"] = resolve_all(_place_names(attributes, snapshot))
+        directions, basis = await self._directions(profile_revision, job_snapshot_id)
         job = job_attributes(
             attributes,
             snapshot.normalised_json["title"],
             snapshot.normalised_json["description_text"],
             company.canonical_name if company else "",
+            source_places=_source_places(snapshot),
         )
         profile = profile_view(ProfileFacts.model_validate(profile_revision.facts_json))
+        job = replace(job, directions=directions)
         definition = IntentDefinition.model_validate(intent_revision.intent_json)
+        if weights:
+            definition = definition.model_copy(
+                update={"weights": definition.weights.model_copy(update=weights)}
+            )
         relations = await self._relations(
             [skill.skill_id for skill in job.skills], set(profile.skill_levels), judge=judge
         )
         result = evaluate(job, profile, intent_view(definition), relations)
+        return _Scored(result, definition, basis, snapshot)
+
+    async def evaluate(
+        self,
+        owner_id: int,
+        *,
+        job_snapshot_id: int,
+        job_extraction_id: int,
+        profile_revision_id: int,
+        intent_revision_id: int,
+        judge: bool,
+    ) -> EvaluationRecord:
+        """Score one extracted snapshot under exact profile and intent revisions.
+
+        Args:
+            judge: allow the model to judge skill pairs that were never judged. Without it (or
+                without a provider) only cached judgements are used.
+
+        Raises:
+            NotFoundError: unknown snapshot, or a revision that is not the owner's.
+            ConflictError: the extraction did not succeed (the job is "not evaluated").
+        """
+        scored = await self._score(
+            owner_id,
+            job_snapshot_id=job_snapshot_id,
+            job_extraction_id=job_extraction_id,
+            profile_revision_id=profile_revision_id,
+            intent_revision_id=intent_revision_id,
+            judge=judge,
+        )
+        result, definition, basis, snapshot = (
+            scored.result,
+            scored.definition,
+            scored.basis,
+            scored.snapshot,
+        )
 
         evaluation, dimensions, created = await self._evaluations.add(
             job_snapshot_id=job_snapshot_id,
@@ -192,6 +280,7 @@ class EvaluationService:
                 for g in result.gates
             ],
             weights=definition.weights.model_dump(),
+            direction_basis=basis,
             dimensions=[
                 {
                     "dimension_key": d.key,
@@ -209,6 +298,31 @@ class EvaluationService:
             ],
         )
         return EvaluationRecord(evaluation, dimensions, created)
+
+    async def preview(
+        self,
+        owner_id: int,
+        *,
+        job_snapshot_id: int,
+        job_extraction_id: int,
+        profile_revision_id: int,
+        intent_revision_id: int,
+        weights: dict[str, int] | None = None,
+    ) -> Evaluation:
+        """Score a snapshot like :meth:`evaluate` but store nothing, optionally with other weights.
+
+        Used to show what a weight would do before the owner changes it (no model call).
+        """
+        scored = await self._score(
+            owner_id,
+            job_snapshot_id=job_snapshot_id,
+            job_extraction_id=job_extraction_id,
+            profile_revision_id=profile_revision_id,
+            intent_revision_id=intent_revision_id,
+            judge=False,
+            weights=weights,
+        )
+        return scored.result
 
     async def evaluate_posting(
         self,

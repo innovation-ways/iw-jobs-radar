@@ -18,6 +18,7 @@ from jobs_radar.adapters.providers.factory import ProviderSpec, build_provider
 from jobs_radar.adapters.sources.arbeitnow import ArbeitnowAdapter
 from jobs_radar.adapters.sources.ashby import AshbyAdapter
 from jobs_radar.adapters.sources.base import SourceCheckpoint
+from jobs_radar.adapters.sources.eightfold import EightfoldAdapter
 from jobs_radar.adapters.sources.greenhouse import GreenhouseAdapter
 from jobs_radar.adapters.sources.himalayas import HimalayasAdapter
 from jobs_radar.adapters.sources.jobicy import JobicyAdapter
@@ -76,15 +77,20 @@ async def test_a_real_job_board_returns_postings_with_a_company_and_a_link(
 
 @pytest.mark.parametrize(
     ("adapter_class", "identifier"),
-    [(LeverAdapter, "spotify"), (AshbyAdapter, "ashby"), (SmartRecruitersAdapter, "BoschGroup")],
+    [
+        (LeverAdapter, "spotify"),
+        (AshbyAdapter, "ashby"),
+        (SmartRecruitersAdapter, "BoschGroup"),
+        (EightfoldAdapter, "jobs.amdocs.com"),
+    ],
 )
 async def test_a_real_company_board_validates_and_lists_postings(
     adapter_class: type, identifier: str
 ) -> None:
-    # SmartRecruiters needs one request per posting, so only three details are read here.
+    # SmartRecruiters and Eightfold need one request per posting, so only three details are read.
     adapter = (
         adapter_class(build_http_client(), max_details=3)
-        if adapter_class is SmartRecruitersAdapter
+        if adapter_class in (SmartRecruitersAdapter, EightfoldAdapter)
         else adapter_class(build_http_client())
     )
     info = await adapter.validate(identifier)

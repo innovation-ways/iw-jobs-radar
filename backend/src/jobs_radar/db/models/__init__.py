@@ -8,7 +8,7 @@ from jobs_radar.db.models.company import (
     CompanyFact,
     CompanyFollow,
 )
-from jobs_radar.db.models.evaluation import MatchEvaluation, ScoreDimension
+from jobs_radar.db.models.evaluation import DirectionJudgement, MatchEvaluation, ScoreDimension
 from jobs_radar.db.models.inbox import InboxEvent, JobInboxItem
 from jobs_radar.db.models.intent import IntentRevision, SearchIntent
 from jobs_radar.db.models.job import (
@@ -49,6 +49,7 @@ __all__ = [
     "CompanyEnrichmentCandidate",
     "CompanyFact",
     "CompanyFollow",
+    "DirectionJudgement",
     "Document",
     "Evidence",
     "InboxEvent",

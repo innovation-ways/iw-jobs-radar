@@ -35,10 +35,16 @@ const KINDS: Record<CompanyBoardType, BoardKind> = {
     hint: 'The identifier is the last part of the address jobs.smartrecruiters.com/<identifier>.',
     asksName: false,
   },
+  eightfold: {
+    label: 'Eightfold careers site',
+    idLabel: 'Careers site address',
+    hint: 'The address of the careers site without https://, for example jobs.amdocs.com.',
+    asksName: false,
+  },
 }
 
 /**
- * Adds a company board by its identifier on one of the supported applicant tracking systems. The
+ * Adds a company board by its identifier on one of the supported applicant tracking systems (an Eightfold careers site is added by its address). The
  * API checks the identifier against the real board before saving, so a typo is reported here
  * instead of becoming a broken source. Lever and Ashby publish no company name, so the owner can
  * type it; otherwise a name is guessed from the identifier.

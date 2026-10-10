@@ -44,7 +44,7 @@ class SourceConfiguration(TimestampMixin, Base):
         "company.company_id", "Company the board belongs to.", nullable=True
     )
     source_type: Mapped[str] = text_column(
-        "Adapter kind: an ATS company board or a job board (ADR-049, ADR-050).", length=20
+        "Adapter kind: an ATS company board or a job board (ADR-049, ADR-050, ADR-055).", length=20
     )
     external_identifier: Mapped[str] = text_column(
         "Board token or company slug on the ATS.", length=200

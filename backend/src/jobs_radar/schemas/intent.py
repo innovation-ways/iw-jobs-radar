@@ -175,7 +175,7 @@ Weight = Annotated[int, Field(ge=0, le=40)]
 
 
 class Weights(StrictModel):
-    """One relative weight per dimension. The two optional dimensions default to 0 (excluded)."""
+    """One relative weight per dimension. The optional dimensions default to 0 (excluded)."""
 
     role_responsibilities: Weight = 25
     skills_technology: Weight = 15
@@ -187,6 +187,8 @@ class Weights(StrictModel):
     company_profile: Weight = 7
     benefits_flexibility: Weight = 0
     qualifications: Weight = 0
+    # Optional like the two above; 0 leaves the career directions out of the score (ADR-057).
+    career_direction: Weight = 0
 
     @model_validator(mode="after")
     def _at_least_one_weight(self) -> Self:

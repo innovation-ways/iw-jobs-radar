@@ -156,6 +156,28 @@ Companies an owner follows; unfollowing deletes the row.
 - foreign key `owner_id` → `owner.owner_id`
 - unique `uq_company_follow_owner_id_company_id` (owner_id, company_id)
 
+## direction_judgement
+
+Model judgements of a job against the owner's career directions (ADR-057).
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `direction_judgement_id` | BIGINT | no | Surrogate primary key of the judgement. |
+| `job_snapshot_id` | BIGINT | no | Snapshot that was judged. |
+| `direction_hash` | VARCHAR(71) | no | SHA-256 of the direction text that was judged, so a changed text is judged again. |
+| `direction_label` | VARCHAR(60) | no | Label of the direction when it was judged, shown as the winning direction. |
+| `provider` | VARCHAR(50) | no | AI provider kind. |
+| `model` | VARCHAR(100) | no | AI model identifier. |
+| `prompt_version` | VARCHAR(50) | no | Prompt template version, for example direction-v1. |
+| `level` | VARCHAR(20) | no | strong, partial, weak, none or unknown. |
+| `job_quote` | TEXT | yes | Verbatim quote from the posting that supports the level. |
+| `direction_quote` | TEXT | yes | Verbatim quote from the direction text that the posting matches. |
+| `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
+
+- check `ck_direction_judgement_level_valid`: `level IN ('strong', 'partial', 'weak', 'none', 'unknown')`
+- foreign key `job_snapshot_id` → `job_snapshot.job_snapshot_id`
+- unique `uq_direction_judgement_inputs` (job_snapshot_id, direction_hash, provider, model, prompt_version)
+
 ## document
 
 Metadata of uploaded documents; original bytes are never persisted.
@@ -417,6 +439,7 @@ Immutable, reproducible evaluations (append-only).
 | `job_source_hash` | VARCHAR(71) | no | Content hash of the scored snapshot, for traceability. |
 | `fit_score` | INTEGER | no | Final score from 0 to 100. |
 | `recommendation` | VARCHAR(20) | no | recommended or not_recommended (a hard gate fired). |
+| `direction_basis` | VARCHAR(71) | no | none, or the hash of the direction judgements the score used (ADR-057). |
 | `gates_json` | JSONB | no | Fired gates with reasons and evidence. |
 | `weights_json` | JSONB | no | Weights that applied to the evaluation. |
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
@@ -427,7 +450,7 @@ Immutable, reproducible evaluations (append-only).
 - foreign key `job_extraction_id` → `job_extraction.job_extraction_id`
 - foreign key `job_snapshot_id` → `job_snapshot.job_snapshot_id`
 - foreign key `profile_revision_id` → `profile_revision.profile_revision_id`
-- unique `uq_match_evaluation_inputs` (job_snapshot_id, job_extraction_id, profile_revision_id, intent_revision_id, policy_version)
+- unique `uq_match_evaluation_inputs` (job_snapshot_id, job_extraction_id, profile_revision_id, intent_revision_id, policy_version, direction_basis)
 
 ## owner
 
@@ -693,7 +716,7 @@ Configured job sources with their health-relevant settings.
 | `source_configuration_id` | BIGINT | no | Surrogate primary key of the source. |
 | `owner_id` | BIGINT | no | Owner of the source configuration. |
 | `company_id` | BIGINT | yes | Company the board belongs to. |
-| `source_type` | VARCHAR(20) | no | Adapter kind: an ATS company board or a job board (ADR-049, ADR-050). |
+| `source_type` | VARCHAR(20) | no | Adapter kind: an ATS company board or a job board (ADR-049, ADR-050, ADR-055). |
 | `external_identifier` | VARCHAR(200) | no | Board token or company slug on the ATS. |
 | `display_name` | VARCHAR(200) | no | Name shown in the interface. |
 | `url` | TEXT | no | Endpoint URL used to collect the board. |
@@ -708,7 +731,7 @@ Configured job sources with their health-relevant settings.
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
 
 - check `ck_source_configuration_rate_limit_positive`: `rate_limit_per_minute >= 1`
-- check `ck_source_configuration_source_type_valid`: `source_type IN ('greenhouse', 'lever', 'ashby', 'smartrecruiters', 'arbeitnow', 'jobicy', 'himalayas', 'itjobs_pt')`
+- check `ck_source_configuration_source_type_valid`: `source_type IN ('greenhouse', 'lever', 'ashby', 'smartrecruiters', 'eightfold', 'arbeitnow', 'jobicy', 'himalayas', 'itjobs_pt')`
 - foreign key `company_id` → `company.company_id`
 - foreign key `owner_id` → `owner.owner_id`
 - unique `uq_source_configuration_owner_type_identifier` (owner_id, source_type, external_identifier)

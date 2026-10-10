@@ -74,6 +74,26 @@
         "title": "AiSettingsRead",
         "type": "object"
       },
+      "AssessResponse": {
+        "additionalProperties": false,
+        "description": "What assessing one job did: judgements made and new evaluations stored.",
+        "properties": {
+          "evaluated": {
+            "title": "Evaluated",
+            "type": "integer"
+          },
+          "judged": {
+            "title": "Judged",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "judged",
+          "evaluated"
+        ],
+        "title": "AssessResponse",
+        "type": "object"
+      },
       "BaseLocation": {
         "additionalProperties": false,
         "description": "Anchor for hybrid and on-site distance rules.",
@@ -210,6 +230,35 @@
           "website"
         ],
         "title": "CandidateRead",
+        "type": "object"
+      },
+      "CareerDirection": {
+        "additionalProperties": false,
+        "description": "One goal the owner wrote in their own words, judged against every new job (ADR-057).",
+        "properties": {
+          "enabled": {
+            "default": true,
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "label": {
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "text"
+        ],
+        "title": "CareerDirection",
         "type": "object"
       },
       "CatalogueEntryRead": {
@@ -985,6 +1034,17 @@
             ],
             "title": "Credential Updated At"
           },
+          "direction_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction Model"
+          },
           "display_name": {
             "title": "Display Name",
             "type": "string"
@@ -1126,6 +1186,18 @@
         "additionalProperties": false,
         "description": "Change non-secret metadata with the version the client saw.",
         "properties": {
+          "direction_model": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction Model"
+          },
           "display_name": {
             "anyOf": [
               {
@@ -1817,8 +1889,8 @@
             "type": "integer"
           },
           "policy_version": {
-            "const": "matching-v1.1",
-            "default": "matching-v1.1",
+            "const": "matching-v1.3",
+            "default": "matching-v1.3",
             "title": "Policy Version",
             "type": "string"
           },
@@ -2976,6 +3048,7 @@
             "$ref": "#/components/schemas/Weights",
             "default": {
               "benefits_flexibility": 0,
+              "career_direction": 0,
               "company_profile": 7,
               "compensation": 10,
               "domain_sector": 10,
@@ -3071,6 +3144,7 @@
             "$ref": "#/components/schemas/Weights",
             "default": {
               "benefits_flexibility": 0,
+              "career_direction": 0,
               "company_profile": 7,
               "compensation": 10,
               "domain_sector": 10,
@@ -3307,6 +3381,7 @@
             "$ref": "#/components/schemas/Weights",
             "default": {
               "benefits_flexibility": 0,
+              "career_direction": 0,
               "company_profile": 7,
               "compensation": 10,
               "domain_sector": 10,
@@ -3947,6 +4022,13 @@
             "title": "Certifications",
             "type": "array"
           },
+          "directions": {
+            "items": {
+              "$ref": "#/components/schemas/CareerDirection"
+            },
+            "title": "Directions",
+            "type": "array"
+          },
           "education": {
             "items": {
               "$ref": "#/components/schemas/Education"
@@ -4211,6 +4293,14 @@
               }
             ],
             "title": "Change Summary"
+          },
+          "directions": {
+            "items": {
+              "$ref": "#/components/schemas/CareerDirection"
+            },
+            "maxItems": 5,
+            "title": "Directions",
+            "type": "array"
           },
           "education": {
             "items": {
@@ -5763,6 +5853,7 @@
           "lever",
           "ashby",
           "smartrecruiters",
+          "eightfold",
           "arbeitnow",
           "jobicy",
           "himalayas",
@@ -6241,13 +6332,20 @@
       },
       "Weights": {
         "additionalProperties": false,
-        "description": "One relative weight per dimension. The two optional dimensions default to 0 (excluded).",
+        "description": "One relative weight per dimension. The optional dimensions default to 0 (excluded).",
         "properties": {
           "benefits_flexibility": {
             "default": 0,
             "maximum": 40.0,
             "minimum": 0.0,
             "title": "Benefits Flexibility",
+            "type": "integer"
+          },
+          "career_direction": {
+            "default": 0,
+            "maximum": 40.0,
+            "minimum": 0.0,
+            "title": "Career Direction",
             "type": "integer"
           },
           "company_profile": {
@@ -8023,6 +8121,49 @@
         "summary": "Restore Intent Revision",
         "tags": [
           "intents"
+        ]
+      }
+    },
+    "/api/v1/jobs/{job_posting_id}/assess-directions": {
+      "post": {
+        "description": "Judge a job against every enabled direction with the local model and score it again.\n\nOlder jobs are never judged in bulk; this is how one of them is assessed on demand.",
+        "operationId": "assess_directions_api_v1_jobs__job_posting_id__assess_directions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_posting_id",
+            "required": true,
+            "schema": {
+              "title": "Job Posting Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Assess Directions",
+        "tags": [
+          "directions"
         ]
       }
     },

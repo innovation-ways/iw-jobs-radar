@@ -17,7 +17,15 @@ describe('WeightsPanel', () => {
     expect(compensation).toHaveAttribute('max', '40')
     const row = compensation.closest('[data-dimension]') as HTMLElement
     expect(within(row).getByText('10% of score')).toBeInTheDocument()
-    expect(screen.getAllByRole('slider')).toHaveLength(10)
+    expect(screen.getAllByRole('slider')).toHaveLength(11)
+  })
+
+  it('offers the career direction as an optional criterion that is off by default', () => {
+    renderPanel()
+    const slider = screen.getByRole('slider', { name: 'Career direction weight' })
+    expect(slider).toHaveValue('0')
+    const row = slider.closest('[data-dimension]') as HTMLElement
+    expect(row).toHaveAttribute('data-excluded', 'true')
   })
 
   it('separates the optional criteria, which are off by default', () => {

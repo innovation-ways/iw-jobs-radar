@@ -5,7 +5,13 @@ from datetime import datetime, timedelta
 from jobs_radar.domain.enums import SourceCategory, SourceType
 
 _COMPANY_BOARDS = frozenset(
-    {SourceType.GREENHOUSE, SourceType.LEVER, SourceType.ASHBY, SourceType.SMARTRECRUITERS}
+    {
+        SourceType.GREENHOUSE,
+        SourceType.LEVER,
+        SourceType.ASHBY,
+        SourceType.SMARTRECRUITERS,
+        SourceType.EIGHTFOLD,
+    }
 )
 
 
@@ -21,8 +27,9 @@ def source_category(source_type: SourceType) -> SourceCategory:
 
 
 _DEFAULT_RATE = 6
-# SmartRecruiters needs one request per posting detail, so it is allowed a faster pace.
-_RATE_OVERRIDES = {SourceType.SMARTRECRUITERS: 30}
+# SmartRecruiters and Eightfold need one request per posting detail, so they are allowed a faster
+# pace.
+_RATE_OVERRIDES = {SourceType.SMARTRECRUITERS: 30, SourceType.EIGHTFOLD: 30}
 
 
 def default_rate_limit(source_type: SourceType) -> int:

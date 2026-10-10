@@ -13,6 +13,8 @@ from typing import Any, Literal
 Stance = Literal["preferred", "acceptable", "rejected"]
 Status = Literal["match", "mismatch", "unknown"]
 Quality = Literal["strong", "partial", "weak"]
+# How well a job fits one of the owner's career directions, as judged by the local model (ADR-057).
+DirectionLevel = Literal["strong", "partial", "weak", "none", "unknown"]
 
 # Intent groups that carry stances (the keys of ``IntentView.stances``).
 GROUPS = (
@@ -34,6 +36,7 @@ DIMENSION_KEYS = (
     "company_profile",
     "benefits_flexibility",
     "qualifications",
+    "career_direction",
 )
 
 
@@ -67,6 +70,16 @@ class JobSkill:
 
 
 @dataclass(frozen=True)
+class DirectionJudgement:
+    """The stored judgement of one career direction against a job (ADR-057)."""
+
+    label: str
+    level: DirectionLevel
+    job_quote: str | None = None
+    direction_quote: str | None = None
+
+
+@dataclass(frozen=True)
 class JobAttributes:
     """What the extraction established about a job. Missing information is ``None`` or empty."""
 
@@ -90,6 +103,9 @@ class JobAttributes:
     visa_sponsorship: bool | None = None
     # Verbatim quotes from the posting, by attribute name (used in the evidence of each result).
     evidence: Mapping[str, str] = field(default_factory=dict)
+    # One judgement per enabled career direction; ``None`` means the job was not assessed, which
+    # leaves the dimension out (an assessed but unclear job is ``unknown`` and counts as 0).
+    directions: tuple[DirectionJudgement, ...] | None = None
 
 
 @dataclass(frozen=True)

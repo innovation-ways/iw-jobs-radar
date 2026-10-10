@@ -26,6 +26,8 @@ class ConnectionUpdate(StrictModel):
     display_name: str | None = Field(default=None, min_length=1, max_length=120)
     endpoint_url: str | None = Field(default=None, max_length=500)
     model_id: str | None = Field(default=None, max_length=120)
+    # A local model for career directions only; blank goes back to the job model (ADR-057).
+    direction_model: str | None = Field(default=None, max_length=120)
 
 
 class CredentialWrite(StrictModel):
@@ -48,6 +50,7 @@ class ConnectionRead(StrictModel):
     is_active: bool
     use_for_jobs: bool
     version: int
+    direction_model: str | None = None
 
 
 class PrivacyRead(StrictModel):

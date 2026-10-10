@@ -4,6 +4,7 @@ These functions only translate; they decide nothing. Anything the extraction did
 stays ``None`` or empty so the engine treats it as unknown.
 """
 
+from collections.abc import Sequence
 from typing import Any
 
 from jobs_radar.adapters.sources.countries import country_code
@@ -16,9 +17,11 @@ from jobs_radar.domain.matching.types import (
     PayExpectation,
     ProfileView,
 )
+from jobs_radar.domain.regions import expand_regions
 from jobs_radar.schemas.extraction import Evidenced, ExtractionOutput
 from jobs_radar.schemas.intent import IntentDefinition
 from jobs_radar.schemas.profile import ProfileFacts
+from jobs_radar.services.remote_places import source_remote_countries
 
 _QUOTED = (
     "work_mode",
@@ -50,14 +53,38 @@ def _region_codes(regions: list[str]) -> tuple[str, ...]:
     return tuple(result)
 
 
+def _narrowed_regions(regions: tuple[str, ...], allowed: frozenset[str]) -> tuple[str, ...]:
+    """Limit the model's regions to the countries the source allows (ADR-056).
+
+    Regions the model wrote that are inside the limit are kept as written; otherwise the shared
+    countries are used, and when nothing is shared the source's own countries replace them, so the
+    engine sees a recognised region that does not include the owner's (gate G2).
+    """
+    countries, recognised = expand_regions(regions)
+    if not recognised:
+        return regions  # not understood: stays a risk, as before
+    if countries is not None and countries <= allowed:
+        return regions
+    shared = allowed if countries is None else countries & allowed
+    return tuple(sorted(shared or allowed))
+
+
 def _known[T](attribute: Evidenced[T]) -> T | None:
     return attribute.value if attribute.status == "known" else None
 
 
 def job_attributes(
-    attributes: dict[str, Any], title: str, description: str, company_name: str
+    attributes: dict[str, Any],
+    title: str,
+    description: str,
+    company_name: str,
+    source_places: Sequence[str] = (),
 ) -> JobAttributes:
-    """Map a stored extraction (``job_extraction.attributes_json``) to :class:`JobAttributes`."""
+    """Map a stored extraction (``job_extraction.attributes_json``) to :class:`JobAttributes`.
+
+    ``source_places`` are the board's own locations; when they are all remote places bound to
+    countries they limit the regions the model reported (ADR-056).
+    """
     output = ExtractionOutput.model_validate(attributes["output"])
     languages = _known(output.languages_required)
     compensation = _known(output.compensation)
@@ -80,6 +107,15 @@ def job_attributes(
         for item in attributes.get("locations_resolved", [])
     )
     regions = _known(output.remote_regions)
+    region_codes = _region_codes(regions) if regions is not None else None
+    allowed = source_remote_countries(source_places)
+    if region_codes is not None and allowed is not None:
+        limited = _narrowed_regions(region_codes, allowed)
+        if limited != region_codes:
+            region_codes = limited
+            quote = evidence.get("remote_regions")
+            note = f"limited by the source location: {', '.join(source_places)}"
+            evidence["remote_regions"] = f"{quote} ({note})" if quote else note
     employment = _known(output.employment_types)
     seniority = _known(output.seniority_levels)
     benefits = _known(output.benefits_mentioned)
@@ -89,7 +125,7 @@ def job_attributes(
         company_name=company_name,
         role_families=tuple((r.key, r.confidence) for r in output.role_families),
         work_mode=_known(output.work_mode),
-        remote_regions=_region_codes(regions) if regions is not None else None,
+        remote_regions=region_codes,
         locations=locations,
         employment_types=tuple(employment) if employment is not None else None,
         hours=_known(output.hours),

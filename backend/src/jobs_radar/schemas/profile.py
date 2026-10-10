@@ -3,8 +3,9 @@
 from datetime import datetime
 from typing import Annotated, Literal, Self
 
-from pydantic import Field, StringConstraints, model_validator
+from pydantic import AfterValidator, Field, StringConstraints, model_validator
 
+from jobs_radar.domain.directions import MAX_DIRECTIONS, MAX_LABEL_CHARS, MAX_TEXT_CHARS
 from jobs_radar.domain.enums import EvidenceOrigin
 from jobs_radar.schemas.common import (
     CountryCode,
@@ -91,6 +92,27 @@ class Certification(StrictModel):
     provenance: Provenance
 
 
+class CareerDirection(StrictModel):
+    """One goal the owner wrote in their own words, judged against every new job (ADR-057)."""
+
+    label: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_LABEL_CHARS)
+    ]
+    text: Annotated[
+        str, StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_TEXT_CHARS)
+    ]
+    enabled: bool = True
+
+
+def unique_labels(directions: list[CareerDirection]) -> list[CareerDirection]:
+    """Refuse two directions whose labels differ only in case or spacing."""
+    labels = [" ".join(item.label.split()).casefold() for item in directions]
+    if len(labels) != len(set(labels)):
+        msg = "duplicate label in directions"
+        raise ValueError(msg)
+    return directions
+
+
 class ProfileFacts(StrictModel):
     """The canonical facts stored in each immutable profile revision."""
 
@@ -103,6 +125,10 @@ class ProfileFacts(StrictModel):
     experience: list[Experience] = Field(default_factory=list)
     education: list[Education] = Field(default_factory=list)
     certifications: list[Certification] = Field(default_factory=list)
+    # Typed by the owner only; a CV import never creates or changes them (ADR-057).
+    directions: Annotated[list[CareerDirection], AfterValidator(unique_labels)] = Field(
+        default_factory=list, max_length=MAX_DIRECTIONS
+    )
 
     @model_validator(mode="after")
     def _skills_are_unique(self) -> Self:

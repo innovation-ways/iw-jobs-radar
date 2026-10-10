@@ -30,6 +30,7 @@ function connection(overrides: Record<string, unknown> = {}) {
     is_active: false,
     use_for_jobs: false,
     version: 1,
+    direction_model: null,
     ...overrides,
   }
 }
@@ -98,6 +99,43 @@ describe('AI & privacy screen', () => {
         model_id: 'gpt-test',
       },
     })
+  })
+
+  it('lets a local connection use another model for career directions only', async () => {
+    const user = userEvent.setup()
+    settings = { ...settings, connections: [local] }
+    put.mockResolvedValue({ data: { ...local, direction_model: 'qwen3.6:27b' } })
+    renderPage()
+    const card = (await screen.findByRole('heading', { name: 'Local Ollama' })).closest('section')!
+    const field = within(card).getByLabelText(/model for career directions/i)
+    expect(field).toHaveValue('')
+    expect(field).toHaveAttribute('placeholder', 'same as the model above')
+    await user.type(field, 'qwen3.6:27b')
+    await user.click(within(card).getByRole('button', { name: 'Save directions model' }))
+    expect(put).toHaveBeenCalledWith('/api/v1/settings/ai/connections/{provider_connection_id}', {
+      params: { path: { provider_connection_id: 2 } },
+      body: { expected_version: 1, direction_model: 'qwen3.6:27b' },
+    })
+  })
+
+  it('clears the directions model with an empty value', async () => {
+    const user = userEvent.setup()
+    settings = { ...settings, connections: [{ ...local, direction_model: 'qwen3.6:27b' }] }
+    put.mockResolvedValue({ data: local })
+    renderPage()
+    const card = (await screen.findByRole('heading', { name: 'Local Ollama' })).closest('section')!
+    const field = within(card).getByLabelText(/model for career directions/i)
+    expect(field).toHaveValue('qwen3.6:27b')
+    await user.clear(field)
+    await user.click(within(card).getByRole('button', { name: 'Save directions model' }))
+    expect(put.mock.calls[0][1].body).toEqual({ expected_version: 1, direction_model: '' })
+  })
+
+  it('does not offer a directions model on a remote connection', async () => {
+    settings = { ...settings, connections: [connection()] }
+    renderPage()
+    const card = (await screen.findByRole('heading', { name: 'OpenAI' })).closest('section')!
+    expect(within(card).queryByLabelText(/model for career directions/i)).not.toBeInTheDocument()
   })
 
   it('stores a credential write-only and shows only its status', async () => {

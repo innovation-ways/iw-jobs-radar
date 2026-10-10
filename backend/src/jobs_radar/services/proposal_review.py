@@ -167,6 +167,8 @@ class ReviewService:
             "certifications": [
                 {k: v for k, v in c.items() if k != "provenance"} for c in facts["certifications"]
             ],
+            # Typed by the owner, never proposed by an import: carried over unchanged (ADR-057).
+            "directions": list(facts.get("directions", [])),
         }
         return base, ProfilePrivacy.model_validate(view.revision.privacy_json)
 

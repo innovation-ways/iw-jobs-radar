@@ -75,6 +75,12 @@ export const OPTIONAL_DIMENSIONS: Dimension[] = [
     description:
       'Optional. Education or certifications the posting asks for compared with yours. Off by default.',
   },
+  {
+    key: 'career_direction',
+    label: 'Career direction',
+    description:
+      'Optional. How well the job fits the directions you wrote in your profile, judged by the local model for jobs first seen after you added them. The best fit among your directions counts; a job that has not been assessed is left out instead of counting as zero. Off by default.',
+  },
 ]
 
 export const DEFAULT_WEIGHTS: Weights = {
@@ -88,6 +94,7 @@ export const DEFAULT_WEIGHTS: Weights = {
   company_profile: 7,
   benefits_flexibility: 0,
   qualifications: 0,
+  career_direction: 0,
 }
 
 export const MAX_WEIGHT = 40

@@ -318,6 +318,38 @@ async def test_an_opportunity_stays_open_while_any_listing_is_open_and_closes_wi
     assert opportunity.closed_at == T0 + timedelta(days=5)
 
 
+async def test_refresh_stale_closes_and_reopens_opportunities_after_their_postings_changed(
+    db_session: AsyncSession,
+) -> None:
+    """A posting closed (or reopened) by collection must reach its opportunity (the inbox)."""
+    _c, a, _b = await two_sources(db_session)
+    gone = await posting(db_session, a)
+    back = await posting(db_session, a, title="Platform Engineer")
+    service = DedupService(db_session)
+    await service.link_posting(gone.job_posting_id)
+    await service.link_posting(back.job_posting_id)
+    gone_opportunity = await opportunity_of(db_session, gone.job_posting_id)
+    back_opportunity = await opportunity_of(db_session, back.job_posting_id)
+
+    gone.closed_at = T0 + timedelta(
+        days=2
+    )  # what collection does, without touching the opportunity
+    back.closed_at = T0 + timedelta(days=1)
+    await db_session.flush()
+    await service.refresh_stale()
+    await db_session.refresh(gone_opportunity)
+    await db_session.refresh(back_opportunity)
+    assert gone_opportunity.closed_at == T0 + timedelta(days=2)
+    assert back_opportunity.closed_at == T0 + timedelta(days=1)
+
+    back.closed_at = None  # the job came back
+    await db_session.flush()
+    assert await service.refresh_stale() >= 1
+    await db_session.refresh(back_opportunity)
+    assert back_opportunity.closed_at is None
+    assert await service.refresh_stale() == 0  # nothing is left to fix
+
+
 # --- embeddings ----------------------------------------------------------------------------------------------------------------
 
 

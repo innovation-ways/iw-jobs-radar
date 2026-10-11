@@ -200,6 +200,17 @@ class DedupService:
         )
         return opportunity
 
+    async def refresh_stale(self, limit: int = 1000) -> int:
+        """Bring opportunities in line with their listings; return how many were changed.
+
+        Collection closes a posting after two runs without it and reopens it when it returns, but
+        only here does the opportunity (and so the inbox) learn about it.
+        """
+        ids = await self._repository.stale_closed(limit)
+        for job_opportunity_id in ids:
+            await self.refresh_opportunity(job_opportunity_id)
+        return len(ids)
+
     async def confirm(self, job_opportunity_link_id: int) -> JobOpportunityLink:
         """Record that the owner confirmed a link.
 
@@ -264,6 +275,8 @@ class DedupRunner:
     async def run(self, limit: int = 500) -> int:
         """Link postings that belong to no opportunity yet; return how many were linked."""
         async with self._session_factory() as session:
-            linked = await DedupService(session, self._embedder).link_unlinked(limit)
+            service = DedupService(session, self._embedder)
+            linked = await service.link_unlinked(limit)
+            await service.refresh_stale()
             await session.commit()
             return linked

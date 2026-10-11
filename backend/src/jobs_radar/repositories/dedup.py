@@ -5,7 +5,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.core.errors import NotFoundError
@@ -191,6 +191,45 @@ class DedupRepository:
                 )
             ).scalar_one()
         )
+
+    async def stale_closed(self, limit: int) -> list[int]:
+        """Return opportunities whose closed state differs from that of their listings.
+
+        An opportunity is closed when it has listings and none is open. Collection closes and
+        reopens postings without touching their opportunity, so the two drift apart.
+        """
+        open_listing = (
+            select(JobPosting.job_posting_id)
+            .join(
+                JobOpportunityLink, JobOpportunityLink.job_posting_id == JobPosting.job_posting_id
+            )
+            .where(
+                JobOpportunityLink.job_opportunity_id == JobOpportunity.job_opportunity_id,
+                JobOpportunityLink.state != "rejected",
+                JobPosting.closed_at.is_(None),
+            )
+            .exists()
+        )
+        any_listing = (
+            select(JobOpportunityLink.job_opportunity_link_id)
+            .where(
+                JobOpportunityLink.job_opportunity_id == JobOpportunity.job_opportunity_id,
+                JobOpportunityLink.state != "rejected",
+            )
+            .exists()
+        )
+        rows = await self._session.execute(
+            select(JobOpportunity.job_opportunity_id)
+            .where(
+                or_(
+                    and_(JobOpportunity.closed_at.is_(None), any_listing, ~open_listing),
+                    and_(JobOpportunity.closed_at.is_not(None), open_listing),
+                )
+            )
+            .order_by(JobOpportunity.job_opportunity_id)
+            .limit(limit)
+        )
+        return list(rows.scalars())
 
     async def update_aggregates(
         self,

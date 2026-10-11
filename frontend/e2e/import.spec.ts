@@ -152,11 +152,15 @@ test('import a CV: consent, proposals, review and a new revision', async ({ page
 
 test('AI & privacy starts as No AI and never shows a stored key', async ({ page }) => {
   await page.route('**/api/v1/**', (route) =>
-    json(route, {
-      ...AI,
-      mode: 'no_ai',
-      import_connection_id: null,
-    }),
+    // The app shell also polls the pipeline status; it is not part of this screen, so it fails.
+    new URL(route.request().url()).pathname === '/api/v1/pipeline/status'
+      ? json(route, { error: { code: 'unavailable', message: 'unused', details: {} } }, 503)
+      : json(route, {
+          ...AI,
+          mode: 'no_ai',
+          import_connection_id: null,
+          integrations: { github: 'none' },
+        }),
   )
   await page.goto('/settings')
   await expect(page.getByText(/jobs are still collected/i)).toBeVisible()

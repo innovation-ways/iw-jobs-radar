@@ -102,7 +102,7 @@ test('the company list opens a dossier with sourced facts', async ({ page }) => 
   const panel = page.getByRole('region', { name: 'Northwind Labs' })
   await expect(panel.getByText('software industry')).toBeVisible()
   await expect(panel.getByText(/wikidata · CC0-1\.0/)).toBeVisible()
-  await expect(panel.getByRole('img', { name: /weekly new offers/i })).toBeVisible()
+  await expect(panel.getByRole('group', { name: /new offers per week/i })).toBeVisible()
   await expect(page).toHaveURL(/company=1/)
 })
 

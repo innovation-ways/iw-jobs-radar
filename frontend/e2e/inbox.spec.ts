@@ -103,6 +103,7 @@ function createStub() {
     unread: jobs.filter((j) => j.state === 'unread').length,
     read: jobs.filter((j) => j.state === 'read').length,
     updated_unread: 0,
+    set_aside: 0,
     ignored: jobs.filter((j) => j.state === 'ignored').length,
     archived: 0,
     applied: jobs.filter((j) => j.state === 'applied').length,
@@ -155,6 +156,7 @@ function createStub() {
         items: items.map(summary),
         next_cursor: null,
         counts: counts(),
+        set_aside_below_fit: 0,
         search_intent_id: 5,
       })
     }
@@ -171,6 +173,7 @@ function createStub() {
         dimensions: [],
         events: [],
         last_change: null,
+        brief: { summary: null, summary_model: null, technologies: [], facts: [] },
       })
     }
     const act = path.match(/^\/inbox\/(\d+)\/actions$/)

@@ -126,7 +126,7 @@ async def test_an_unknown_posting_is_not_found_and_an_unextracted_one_conflicts(
                 status="pending",
                 provider="p",
                 model="m",
-                prompt_version="extract-v1",
+                prompt_version="extract-v2",
                 taxonomy_version_id=1,
             )
         )

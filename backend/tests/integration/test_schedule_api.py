@@ -17,6 +17,7 @@ async def test_the_schedule_can_be_read_and_changed_with_the_version_the_owner_s
         "timezone",
         "enabled",
         "company_recency_days",
+        "set_aside_below_fit",
         "version",
         "next_run_at",
         "next_run_local",
@@ -74,6 +75,35 @@ async def test_the_company_recency_limit_defaults_to_30_and_keeps_its_value_when
         URL, json={**base, "company_recency_days": 30, "expected_version": kept.json()["version"]}
     )
     assert reset.json()["company_recency_days"] == 30
+
+
+async def test_the_set_aside_floor_defaults_to_20_and_keeps_its_value_when_omitted(
+    client: httpx.AsyncClient,
+) -> None:
+    """ADR-060: one inbox floor for the whole owner, 0 turns it off."""
+    current = (await client.get(URL)).json()
+    assert current["set_aside_below_fit"] == 20
+    base = {"run_time_local": "07:30", "timezone": "UTC", "enabled": False}
+    changed = await client.put(
+        URL, json={**base, "set_aside_below_fit": 35, "expected_version": current["version"]}
+    )
+    assert changed.json()["set_aside_below_fit"] == 35
+    kept = await client.put(URL, json={**base, "expected_version": changed.json()["version"]})
+    assert kept.json()["set_aside_below_fit"] == 35  # omitted keeps the stored value
+    off = await client.put(
+        URL, json={**base, "set_aside_below_fit": 0, "expected_version": kept.json()["version"]}
+    )
+    assert off.json()["set_aside_below_fit"] == 0
+    for bad in (-1, 101):
+        response = await client.put(
+            URL,
+            json={**base, "set_aside_below_fit": bad, "expected_version": off.json()["version"]},
+        )
+        assert response.status_code == 422
+    reset = await client.put(
+        URL, json={**base, "set_aside_below_fit": 20, "expected_version": off.json()["version"]}
+    )
+    assert reset.json()["set_aside_below_fit"] == 20
 
 
 async def test_a_stale_version_is_409_and_bad_input_is_422(client: httpx.AsyncClient) -> None:

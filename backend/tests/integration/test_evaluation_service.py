@@ -127,7 +127,7 @@ async def test_a_failed_extraction_cannot_be_evaluated(db_session: AsyncSession)
         status="pending",
         provider="p",
         model=unique("m"),
-        prompt_version="extract-v1",
+        prompt_version="extract-v2",
         taxonomy_version_id=1,
     )
     db_session.add(pending)
@@ -345,7 +345,7 @@ async def test_a_materially_changed_job_gets_a_new_evaluation_for_its_new_snapsh
             status="succeeded",
             provider="fixture",
             model=unique("m"),
-            prompt_version="extract-v1",
+            prompt_version="extract-v2",
             taxonomy_version_id=1,
             attributes_json=old.attributes_json,
             attempts=1,

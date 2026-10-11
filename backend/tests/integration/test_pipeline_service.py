@@ -37,7 +37,7 @@ async def setup(
                 status=extraction,
                 provider="ollama",
                 model=MODEL,
-                prompt_version="extract-v1",
+                prompt_version="extract-v2",
                 taxonomy_version_id=1,
                 error_class="schema_invalid" if extraction == "failed" else None,
                 attempts=1,

@@ -173,6 +173,7 @@ async def list_inbox(
         next_cursor=page.next_cursor,
         counts=InboxCounts(**page.counts),
         search_intent_id=page.search_intent_id,
+        set_aside_below_fit=page.set_aside_below_fit,
     )
 
 

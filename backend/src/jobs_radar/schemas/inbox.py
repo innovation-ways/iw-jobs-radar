@@ -125,6 +125,8 @@ class InboxList(StrictModel):
     next_cursor: str | None
     counts: InboxCounts
     search_intent_id: int | None
+    # Recommended jobs with a fit below this are set aside (ADR-060); 0 means the rule is off.
+    set_aside_below_fit: int
 
 
 class InboxEventRead(StrictModel):

@@ -67,6 +67,7 @@ class ScheduleService:
         enabled: bool,
         expected_version: int,
         company_recency_days: int | None = None,
+        set_aside_below_fit: int | None = None,
     ) -> ScheduleView:
         """Change the schedule, checking the version the owner saw.
 
@@ -89,6 +90,8 @@ class ScheduleService:
         setting.enabled = enabled
         if company_recency_days is not None:
             setting.company_recency_days = company_recency_days
+        if set_aside_below_fit is not None:
+            setting.set_aside_below_fit = set_aside_below_fit
         setting.version += 1
         setting.updated_at = self._clock()
         await self._session.flush()

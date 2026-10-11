@@ -2427,6 +2427,8 @@ export interface components {
             next_cursor: string | null;
             /** Search Intent Id */
             search_intent_id: number | null;
+            /** Set Aside Below Fit */
+            set_aside_below_fit: number;
         };
         /**
          * IntentCreate
@@ -3323,6 +3325,8 @@ export interface components {
             next_run_local: string | null;
             /** Run Time Local */
             run_time_local: string;
+            /** Set Aside Below Fit */
+            set_aside_below_fit: number;
             /** Timezone */
             timezone: string;
             /** Version */
@@ -3344,6 +3348,8 @@ export interface components {
              * Format: time
              */
             run_time_local: string;
+            /** Set Aside Below Fit */
+            set_aside_below_fit?: number | null;
             /** Timezone */
             timezone: string;
         };

@@ -2970,13 +2970,18 @@
               }
             ],
             "title": "Search Intent Id"
+          },
+          "set_aside_below_fit": {
+            "title": "Set Aside Below Fit",
+            "type": "integer"
           }
         },
         "required": [
           "items",
           "next_cursor",
           "counts",
-          "search_intent_id"
+          "search_intent_id",
+          "set_aside_below_fit"
         ],
         "title": "InboxList",
         "type": "object"
@@ -5071,6 +5076,10 @@
             "title": "Run Time Local",
             "type": "string"
           },
+          "set_aside_below_fit": {
+            "title": "Set Aside Below Fit",
+            "type": "integer"
+          },
           "timezone": {
             "title": "Timezone",
             "type": "string"
@@ -5085,6 +5094,7 @@
           "timezone",
           "enabled",
           "company_recency_days",
+          "set_aside_below_fit",
           "version",
           "next_run_at",
           "next_run_local"
@@ -5122,6 +5132,19 @@
             "format": "time",
             "title": "Run Time Local",
             "type": "string"
+          },
+          "set_aside_below_fit": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Set Aside Below Fit"
           },
           "timezone": {
             "title": "Timezone",

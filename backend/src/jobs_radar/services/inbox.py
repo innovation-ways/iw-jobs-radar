@@ -35,6 +35,7 @@ from jobs_radar.repositories.inbox import (
     PostingRow,
     RawRow,
 )
+from jobs_radar.repositories.schedule import ScheduleRepository
 from jobs_radar.services.job_brief import JobBrief, JobBriefService
 
 _USER_ACTIONS = frozenset(InboxAction) - {InboxAction.SURFACE_NEW, InboxAction.MATERIAL_UPDATE}
@@ -88,6 +89,7 @@ class InboxPage:
     next_cursor: str | None
     counts: dict[str, int]
     search_intent_id: int | None
+    set_aside_below_fit: int
 
 
 @dataclass(frozen=True)
@@ -142,6 +144,7 @@ class InboxService:
         self._session = session
         self._items = InboxRepository(session)
         self._queries = InboxQueries(session)
+        self._schedule = ScheduleRepository(session)
 
     # --- surfacing and system events -----------------------------------------
 
@@ -259,7 +262,9 @@ class InboxService:
             requested if requested is not None else await self._queries.default_intent_id(owner_id)
         )
 
-    def _query(self, owner_id: int, intent_id: int | None, filters: InboxFilters) -> ListQuery:
+    def _query(
+        self, owner_id: int, intent_id: int | None, filters: InboxFilters, floor: int
+    ) -> ListQuery:
         if filters.sort not in SORTS:
             msg = f"Unknown sort '{filters.sort}'. Use one of: {', '.join(SORTS)}."
             raise InputValidationError(msg)
@@ -279,6 +284,7 @@ class InboxService:
             include_closed=filters.include_closed,
             sort=filters.sort,
             set_aside=filters.set_aside,
+            set_aside_below=floor,
         )
 
     async def _views(self, rows: list[RawRow]) -> list[InboxRowView]:
@@ -327,7 +333,8 @@ class InboxService:
             InputValidationError: unknown sort or a cursor that is not valid for this sort.
         """
         intent_id = await self._intent(owner_id, filters.search_intent_id)
-        query = self._query(owner_id, intent_id, filters)
+        floor = await self._schedule.set_aside_below_fit(owner_id)
+        query = self._query(owner_id, intent_id, filters, floor)
         after = _decode_cursor(cursor, query.sort) if cursor else None
         rows = await self._queries.page(query, limit=limit + 1, after=after)
         more = len(rows) > limit
@@ -343,9 +350,12 @@ class InboxService:
                 last.item.job_inbox_item_id,
             )
         counts = await self._queries.counts(
-            owner_id, include_closed=filters.include_closed, search_intent_id=intent_id
+            owner_id,
+            include_closed=filters.include_closed,
+            search_intent_id=intent_id,
+            set_aside_below=floor,
         )
-        return InboxPage(await self._views(rows), next_cursor, counts, intent_id)
+        return InboxPage(await self._views(rows), next_cursor, counts, intent_id, floor)
 
     async def detail(
         self, owner_id: int, job_inbox_item_id: int, *, search_intent_id: int | None = None

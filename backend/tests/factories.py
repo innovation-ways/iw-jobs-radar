@@ -190,7 +190,7 @@ async def make_extraction(
         status=status,
         provider=ProviderType.OLLAMA.value,
         model=model or unique("model"),
-        prompt_version="extract-v1",
+        prompt_version="extract-v2",
         taxonomy_version_id=1,
         attributes_json=(attributes if attributes is not None else {})
         if status == "succeeded"

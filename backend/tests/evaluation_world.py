@@ -104,7 +104,7 @@ async def world(
         status="succeeded",
         provider=extracted_by[0] if extracted_by else "fixture",
         model=extracted_by[1] if extracted_by else unique("m"),
-        prompt_version="extract-v1",
+        prompt_version="extract-v2",
         taxonomy_version_id=1,
         attributes_json={
             "output": sample_extraction_output(),

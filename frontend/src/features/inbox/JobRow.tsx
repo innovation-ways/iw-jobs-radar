@@ -8,6 +8,8 @@ interface Props {
   item: InboxItem
   selected: boolean
   onSelect: () => void
+  /** The owner's low-fit floor (ADR-060); recommended jobs scored below it are set aside. 0 = off. */
+  floor?: number
 }
 
 const COMPANY_BOARDS = new Set(['greenhouse', 'lever', 'ashby'])
@@ -30,7 +32,7 @@ const SIGNAL_TONE: Record<string, string> = {
  * A job card: the fit tile on the left (the anchor, unlike a mail row), title, company and place,
  * and the signals that usually decide look-or-skip. Status is shown with an icon and words.
  */
-export function JobRow({ item, selected, onSelect }: Props) {
+export function JobRow({ item, selected, onSelect, floor = 0 }: Props) {
   const isNew = item.state === 'unread' || item.state === 'updated_unread'
   const settled = item.state === 'ignored' || item.state === 'archived' || item.state === 'applied'
   return (
@@ -81,6 +83,12 @@ export function JobRow({ item, selected, onSelect }: Props) {
               Cannot apply: {item.evaluation.gates[0].reason}
             </p>
           )}
+        {item.evaluation?.recommendation === 'recommended' && item.evaluation.fit_score < floor && (
+          // No hard constraint fired, but the score is under the owner's floor (ADR-060).
+          <p className="mt-1 truncate text-xs text-ink-2">
+            Low fit: {item.evaluation.fit_score} is below your floor of {floor}.
+          </p>
+        )}
         <ul
           className="mt-2 flex flex-wrap gap-1.5 group-data-[density=compact]/inbox:hidden"
           aria-label="Signals"

@@ -114,6 +114,7 @@ async def test_the_set_aside_filter_and_count_are_exposed(
         f"{API}/inbox", params={"search_intent_id": s.intent.search_intent_id, "company": s.tag}
     )
     assert response.json()["counts"]["set_aside"] >= 1
+    assert response.json()["set_aside_below_fit"] == 20  # the owner's low-fit floor (ADR-060)
 
 
 async def test_filters_and_sorting_are_applied(

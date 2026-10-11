@@ -411,6 +411,7 @@ export function Inbox() {
               item={item}
               selected={item.job_inbox_item_id === selected?.job_inbox_item_id}
               onSelect={() => setSelectedId(item.job_inbox_item_id)}
+              floor={list.setAsideBelowFit}
             />
           ))}
           {list.hasNextPage && (

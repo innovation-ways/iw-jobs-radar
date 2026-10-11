@@ -1,4 +1,4 @@
-"""The extract-v1 prompt: what the model is told and given (document 13, section 6)."""
+"""The extract-v2 prompt: what the model is told and given (document 13, section 6)."""
 
 import json
 from collections.abc import Iterator
@@ -32,8 +32,8 @@ def prompt(**changes: object):  # type: ignore[no-untyped-def]
     return build_prompt(**options)  # type: ignore[arg-type]
 
 
-def test_the_version_is_extract_v1() -> None:
-    assert EXTRACTION_PROMPT_VERSION == "extract-v1"
+def test_the_version_is_extract_v2() -> None:
+    assert EXTRACTION_PROMPT_VERSION == "extract-v2"
 
 
 def test_the_user_message_has_the_title_description_hints_and_allowed_keys() -> None:

@@ -31,6 +31,7 @@ from jobs_radar.domain.enums import (
     Recommendation,
     SourceType,
 )
+from jobs_radar.repositories.schedule import ScheduleRepository
 from jobs_radar.services.inbox import InboxService
 
 pytestmark = pytest.mark.integration
@@ -392,6 +393,54 @@ async def test_set_aside_splits_unread_jobs_by_the_stored_recommendation(
     assert set(shown) == {fine.item.job_inbox_item_id, unscored.item.job_inbox_item_id}
     assert await titles(db_session, s, set_aside=True) == [blocked.item.job_inbox_item_id]
     assert len(await titles(db_session, s, set_aside=None)) == 3
+
+
+async def set_floor(session: AsyncSession, value: int) -> None:
+    """Store the owner's low-fit floor (ADR-060) without committing."""
+    setting = await ScheduleRepository(session).get_or_create(LOCAL_OWNER_ID)
+    setting.set_aside_below_fit = value
+    await session.flush()
+
+
+async def test_a_recommended_job_below_the_floor_is_set_aside(db_session: AsyncSession) -> None:
+    """ADR-060: a near-zero fit is set aside although no gate fired; the floor itself is not."""
+    s = await scene(db_session)
+    await set_floor(db_session, 20)
+    weak = await s.entry(fit=4, days=1)
+    edge = await s.entry(fit=20, days=2)
+    fine = await s.entry(fit=70, days=3)
+    unscored = await s.entry(days=4)
+
+    assert await titles(db_session, s, set_aside=True) == [weak.item.job_inbox_item_id]
+    assert set(await titles(db_session, s, set_aside=False)) == {
+        edge.item.job_inbox_item_id,
+        fine.item.job_inbox_item_id,
+        unscored.item.job_inbox_item_id,  # no verdict yet, never set aside
+    }
+
+
+async def test_a_floor_of_zero_turns_the_low_fit_rule_off(db_session: AsyncSession) -> None:
+    s = await scene(db_session)
+    await set_floor(db_session, 0)
+    weak = await s.entry(fit=0, days=1)
+    assert await titles(db_session, s, set_aside=True) == []
+    assert await titles(db_session, s, set_aside=False) == [weak.item.job_inbox_item_id]
+
+
+async def test_the_counts_follow_the_floor(db_session: AsyncSession) -> None:
+    s = await scene(db_session)
+    await set_floor(db_session, 20)
+
+    async def counts() -> dict[str, int]:
+        page = await InboxService(db_session).list_items(LOCAL_OWNER_ID, s.filters(), limit=1)
+        return page.counts
+
+    before = await counts()
+    await s.entry(fit=4, days=1)
+    await s.entry(fit=70, days=2)
+    after = await counts()
+    assert after["set_aside"] - before["set_aside"] == 1
+    assert after["unread"] - before["unread"] == 1
 
 
 async def test_the_counts_separate_set_aside_jobs_from_those_to_review(

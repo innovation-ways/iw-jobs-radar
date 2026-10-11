@@ -16,6 +16,9 @@ class ScheduleUpdate(StrictModel):
     # How old an offer may be (days since first seen) to count in the company views (ADR-053);
     # omitted keeps the stored value.
     company_recency_days: int | None = Field(default=None, ge=1, le=365)
+    # Recommended jobs with a fit below this are set aside in the inbox (ADR-060); 0 turns the rule
+    # off; omitted keeps the stored value.
+    set_aside_below_fit: int | None = Field(default=None, ge=0, le=100)
     expected_version: int = Field(ge=1)
 
 
@@ -26,6 +29,7 @@ class ScheduleRead(StrictModel):
     timezone: str
     enabled: bool
     company_recency_days: int
+    set_aside_below_fit: int
     version: int
     next_run_at: datetime | None
     next_run_local: str | None

@@ -333,7 +333,7 @@ class TrendTermKind(StrEnum):
 # Policy versions stored with the results they produced.
 MATCHING_POLICY_VERSION = "matching-v1"
 DEDUP_POLICY_VERSION = "dedup-v1"
-EXTRACTION_PROMPT_VERSION = "extract-v1"
+EXTRACTION_PROMPT_VERSION = "extract-v2"
 DIRECTION_PROMPT_VERSION = "direction-v1"
 SUMMARY_PROMPT_VERSION = "summary-v1"
 # The worker writes summaries only for jobs first seen on or after this moment (ADR-059): the jobs

@@ -66,6 +66,25 @@ describe('JobRow set-aside reason', () => {
     ).toBeInTheDocument()
   })
 
+  it('says why a recommended job with a very low fit was set aside', () => {
+    const base = makeItem()
+    const item = makeItem({ evaluation: { ...base.evaluation!, fit_score: 4 } })
+    render(<JobRow item={item} selected={false} onSelect={() => undefined} floor={20} />)
+    expect(screen.getByText('Low fit: 4 is below your floor of 20.')).toBeInTheDocument()
+  })
+
+  it('shows no low-fit reason at the floor, above it or when the rule is off', () => {
+    const base = makeItem()
+    const at = makeItem({ evaluation: { ...base.evaluation!, fit_score: 20 } })
+    const { rerender } = render(
+      <JobRow item={at} selected={false} onSelect={() => undefined} floor={20} />,
+    )
+    expect(screen.queryByText(/Low fit/)).not.toBeInTheDocument()
+    const zero = makeItem({ evaluation: { ...base.evaluation!, fit_score: 0 } })
+    rerender(<JobRow item={zero} selected={false} onSelect={() => undefined} floor={0} />)
+    expect(screen.queryByText(/Low fit/)).not.toBeInTheDocument()
+  })
+
   it('shows no reason for a recommended job', () => {
     render(<JobRow item={makeItem()} selected={false} onSelect={() => undefined} />)
     expect(screen.queryByText(/Cannot apply/)).not.toBeInTheDocument()

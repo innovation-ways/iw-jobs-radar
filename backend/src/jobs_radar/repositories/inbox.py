@@ -180,6 +180,8 @@ class ListQuery:
     include_closed: bool = False
     sort: str = "fit_desc"
     set_aside: bool | None = None
+    # ADR-060: a recommended job with a fit below this is also set aside; 0 turns the rule off.
+    set_aside_below: int = 0
 
 
 @dataclass(frozen=True)
@@ -310,9 +312,13 @@ class InboxQueries:
                 else evaluation.match_evaluation_id.is_(None)
             )
         if query.set_aside is not None:
-            # Set aside = the latest evaluation for the intent is not recommended (a gate fired);
-            # a job without an evaluation has no verdict yet and is never set aside (ADR-058).
-            blocked = evaluation.recommendation == "not_recommended"
+            # Set aside = the latest evaluation for the intent is not recommended (a gate fired,
+            # ADR-058) or its fit is below the owner's floor (ADR-060); a job without an
+            # evaluation has no verdict yet and is never set aside.
+            blocked = or_(
+                evaluation.recommendation == "not_recommended",
+                evaluation.fit_score < query.set_aside_below,
+            )
             statement = statement.where(
                 blocked if query.set_aside else ~func.coalesce(blocked, False)
             )
@@ -362,7 +368,12 @@ class InboxQueries:
         ]
 
     async def counts(
-        self, owner_id: int, *, include_closed: bool, search_intent_id: int | None = None
+        self,
+        owner_id: int,
+        *,
+        include_closed: bool,
+        search_intent_id: int | None = None,
+        set_aside_below: int = 0,
     ) -> dict[str, int]:
         """Return the number of items per state, the shortlisted ones and the total.
 
@@ -397,6 +408,7 @@ class InboxQueries:
             state=InboxState.UNREAD.value,
             include_closed=include_closed,
             set_aside=True,
+            set_aside_below=set_aside_below,
         )
         aside_statement, _evaluation = self._filtered(aside_query)
         set_aside = (

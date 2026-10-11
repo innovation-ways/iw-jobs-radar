@@ -92,6 +92,7 @@ const schedule = {
   timezone: 'Europe/Lisbon',
   enabled: false,
   company_recency_days: 30,
+  set_aside_below_fit: 20,
   version: 1,
   next_run_at: null,
   next_run_local: null,
@@ -206,10 +207,32 @@ describe('Sources screen', () => {
         timezone: 'Europe/Lisbon',
         enabled: true,
         company_recency_days: 30,
+        set_aside_below_fit: 20,
         expected_version: 1,
       },
     })
     expect(await within(card).findByText(/2026-10-09 07:30/)).toBeInTheDocument()
+  })
+
+  it('changes the fit below which the inbox sets recommended jobs aside', async () => {
+    const user = userEvent.setup()
+    renderSources()
+    const card = (await screen.findByRole('heading', { name: 'Daily schedule' })).closest(
+      'section',
+    )!
+    const floor = await within(card).findByLabelText(/set aside recommended jobs with a fit below/i)
+    expect(floor).toHaveValue(20)
+    await user.clear(floor)
+    await user.type(floor, '101')
+    expect(within(card).getByText(/whole number from 0 to 100/i)).toBeInTheDocument()
+    expect(within(card).getByRole('button', { name: 'Save schedule' })).toBeDisabled()
+    await user.clear(floor)
+    await user.type(floor, '0')
+    put.mockResolvedValue({ data: { ...schedule, set_aside_below_fit: 0, version: 2 } })
+    await user.click(within(card).getByRole('button', { name: 'Save schedule' }))
+    expect(put).toHaveBeenCalledWith('/api/v1/settings/schedule', {
+      body: expect.objectContaining({ set_aside_below_fit: 0, expected_version: 1 }),
+    })
   })
 
   it('changes how many days of offers the company views count', async () => {

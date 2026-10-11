@@ -1,4 +1,4 @@
-"""The ``extract-v1`` prompt (document 13, section 6.1; ADR-027).
+"""The ``extract-v2`` prompt (document 13, section 6.1; ADR-027).
 
 The prompt is built from the job alone: it never receives a profile or an intent, so one
 extraction serves every intent. The model is told to extract only what the posting states, to
@@ -108,7 +108,7 @@ def build_prompt(
     taxonomy: Mapping[str, Sequence[str]],
     max_chars: int,
 ) -> PreparedPrompt:
-    """Build the ``extract-v1`` request for one job (no profile or intent data is accepted)."""
+    """Build the ``extract-v2`` request for one job (no profile or intent data is accepted)."""
     used, truncated = truncate_text(description, max_chars)
     allowed = "\n".join(f"- {kind}: {', '.join(keys)}" for kind, keys in sorted(taxonomy.items()))
     parts = [f"Title: {title}"]

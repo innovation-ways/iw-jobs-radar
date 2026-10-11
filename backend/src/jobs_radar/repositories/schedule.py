@@ -12,6 +12,7 @@ from jobs_radar.domain.enums import RunStatus, RunTrigger
 DEFAULT_RUN_TIME = time(7, 30)
 DEFAULT_TIMEZONE = "Europe/Lisbon"
 DEFAULT_COMPANY_RECENCY_DAYS = 30
+DEFAULT_SET_ASIDE_BELOW_FIT = 20
 
 
 class ScheduleRepository:
@@ -50,6 +51,17 @@ class ScheduleRepository:
             )
         ).scalar_one_or_none()
         return DEFAULT_COMPANY_RECENCY_DAYS if days is None else days
+
+    async def set_aside_below_fit(self, owner_id: int) -> int:
+        """Return the owner's low-fit floor for the inbox (the default if never saved)."""
+        floor = (
+            await self._session.execute(
+                select(ScheduleSetting.set_aside_below_fit).where(
+                    ScheduleSetting.owner_id == owner_id
+                )
+            )
+        ).scalar_one_or_none()
+        return DEFAULT_SET_ASIDE_BELOW_FIT if floor is None else floor
 
     async def create_scheduled_run(
         self, owner_id: int, scheduled_for: datetime

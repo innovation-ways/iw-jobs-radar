@@ -92,6 +92,7 @@ export function useInboxList({ tab, search, intentId, options, enabled = true }:
     ...query,
     items: pages.flatMap((page) => page.items),
     counts: pages.at(-1)?.counts,
+    setAsideBelowFit: pages.at(-1)?.set_aside_below_fit ?? 0,
   }
 }
 

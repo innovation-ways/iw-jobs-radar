@@ -78,7 +78,13 @@ class ScheduleSetting(TimestampMixin, Base):
         CheckConstraint(
             "company_recency_days BETWEEN 1 AND 365", name="company_recency_days_in_range"
         ),
-        {"comment": "Daily collection time, time zone and company view limits, one row per owner."},
+        CheckConstraint(
+            "set_aside_below_fit BETWEEN 0 AND 100", name="set_aside_below_fit_in_range"
+        ),
+        {
+            "comment": "Daily collection time, time zone and inbox and company view limits, "
+            "one row per owner."
+        },
     )
 
     schedule_setting_id: Mapped[int] = pk_column("Surrogate primary key of the setting.")
@@ -94,6 +100,11 @@ class ScheduleSetting(TimestampMixin, Base):
         "Offers first seen earlier than this many days ago are left out of the company views "
         "(ADR-053).",
         default=30,
+    )
+    set_aside_below_fit: Mapped[int] = int_column(
+        "Recommended jobs with a fit below this value are listed as set aside in the inbox; "
+        "0 turns the rule off (ADR-060).",
+        default=20,
     )
     version: Mapped[int] = version_column()
 

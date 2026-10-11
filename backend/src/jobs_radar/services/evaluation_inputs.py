@@ -109,7 +109,12 @@ def job_attributes(
     regions = _known(output.remote_regions)
     region_codes = _region_codes(regions) if regions is not None else None
     allowed = source_remote_countries(source_places)
-    if region_codes is not None and allowed is not None:
+    if region_codes is None and allowed is not None and _known(output.work_mode) == "remote":
+        # The model named no regions but the source's own places do (ADR-058): without this,
+        # `Remote - USA` earned location points "as a risk" like any unstated region.
+        region_codes = tuple(sorted(allowed))
+        evidence["remote_regions"] = f"from the source location: {', '.join(source_places)}"
+    elif region_codes is not None and allowed is not None:
         limited = _narrowed_regions(region_codes, allowed)
         if limited != region_codes:
             region_codes = limited

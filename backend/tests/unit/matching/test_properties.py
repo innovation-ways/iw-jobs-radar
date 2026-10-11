@@ -9,8 +9,10 @@ from tests.unit.matching.builders import BERLIN, LISBON, intent, job, pay, run
 
 from jobs_radar.domain.matching.types import DIMENSION_KEYS, JobSkill
 
+# The career direction counts only for a job that was assessed (ADR-057), and these jobs are not, so
+# some other dimension must have a weight or nothing can be scored.
 weights = st.fixed_dictionaries({key: st.integers(0, 40) for key in DIMENSION_KEYS}).filter(
-    lambda w: sum(w.values()) > 0
+    lambda w: sum(v for key, v in w.items() if key != "career_direction") > 0
 )
 modes = st.sampled_from([None, "remote", "hybrid", "onsite"])
 regions = st.sampled_from([None, ("EU",), ("US",), ("UK", "PT")])

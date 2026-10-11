@@ -74,6 +74,13 @@ export function JobRow({ item, selected, onSelect }: Props) {
             </span>
           )}
         </div>
+        {item.evaluation?.recommendation === 'not_recommended' &&
+          item.evaluation.gates.length > 0 && (
+            // The first hard constraint explains why the job is out of the way (ADR-058).
+            <p className="mt-1 truncate text-xs text-bad">
+              Cannot apply: {item.evaluation.gates[0].reason}
+            </p>
+          )}
         <ul
           className="mt-2 flex flex-wrap gap-1.5 group-data-[density=compact]/inbox:hidden"
           aria-label="Signals"

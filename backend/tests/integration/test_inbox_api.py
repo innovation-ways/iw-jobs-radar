@@ -12,7 +12,7 @@ from tests.factories import make_posting, make_source
 from tests.inbox_scene import T0, Entry, Scene, scene
 
 from jobs_radar.db.models import JobOpportunityLink
-from jobs_radar.domain.enums import InboxState, SourceType
+from jobs_radar.domain.enums import InboxState, Recommendation, SourceType
 
 pytestmark = pytest.mark.integration
 
@@ -96,6 +96,24 @@ async def test_default_state_is_unread_and_all_shows_everything(
 
 async def _states(s: Scene) -> list[Entry]:
     return [await s.entry(), await s.entry(state=InboxState.READ)]
+
+
+async def test_the_set_aside_filter_and_count_are_exposed(
+    client: httpx.AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    async def build(s: Scene) -> list[Entry]:
+        return [
+            await s.entry(fit=80, days=1),
+            await s.entry(fit=60, days=2, recommendation=Recommendation.NOT_RECOMMENDED),
+        ]
+
+    s, (fine, blocked) = await committed(session_factory, build)
+    assert await ids(client, s, set_aside="true") == [blocked.item.job_inbox_item_id]
+    assert await ids(client, s, set_aside="false") == [fine.item.job_inbox_item_id]
+    response = await client.get(
+        f"{API}/inbox", params={"search_intent_id": s.intent.search_intent_id, "company": s.tag}
+    )
+    assert response.json()["counts"]["set_aside"] >= 1
 
 
 async def test_filters_and_sorting_are_applied(

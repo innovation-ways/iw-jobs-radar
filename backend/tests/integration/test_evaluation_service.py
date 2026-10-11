@@ -63,7 +63,7 @@ async def test_an_evaluation_is_persisted_with_every_input_and_all_dimensions(
         w.profile_revision_id,
         w.intent_revision_id,
     )
-    assert evaluation.policy_version == "matching-v1.3"
+    assert evaluation.policy_version == "matching-v1.5"
     assert evaluation.job_source_hash.startswith("sha256:")
     assert 0 <= evaluation.fit_score <= 100 and evaluation.recommendation in {
         "recommended",
@@ -303,6 +303,18 @@ async def test_rescoring_evaluates_existing_jobs_under_the_current_revision_with
     assert [e.weights_json["compensation"] for e in evaluations] == [10, 30]
     again = await EvaluationService(db_session, None).rescore(LOCAL_OWNER_ID, w.intent_id)
     assert (again.evaluated, again.skipped) == (0, 1)  # already scored under this revision
+
+
+async def test_rescoring_also_covers_jobs_scored_under_an_earlier_policy(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """After a policy change (ADR-058) a rescore scores every job again, with no model call."""
+    w = await world(db_session)
+    await EvaluationService(db_session, None).evaluate_pending(intent_id=w.intent_id)
+    # The stored evaluation carries the old policy; the running code now has a newer one.
+    monkeypatch.setattr("jobs_radar.services.evaluation.POLICY_VERSION", "matching-v9.9")
+    summary = await EvaluationService(db_session, None).rescore(LOCAL_OWNER_ID, w.intent_id)
+    assert summary.evaluated == 1
 
 
 async def test_a_materially_changed_job_gets_a_new_evaluation_for_its_new_snapshot(

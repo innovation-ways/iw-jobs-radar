@@ -107,6 +107,7 @@ describe('Inbox screen', () => {
       ).toEqual([
         'To review4',
         'Updated1',
+        'Set aside6',
         'Shortlist2',
         'Reviewed2',
         'Ignored3',
@@ -235,6 +236,14 @@ describe('Inbox screen', () => {
         search_intent_id: 5,
         sort: 'fit_desc',
       })
+
+      // ADR-058: jobs the owner cannot apply for are not in "To review".
+      expect(lastListQuery().set_aside).toBe(false)
+
+      await userEvent.click(screen.getByRole('tab', { name: /set aside/i }))
+      await waitFor(() =>
+        expect(lastListQuery()).toMatchObject({ state: 'unread', set_aside: true }),
+      )
 
       await userEvent.click(screen.getByRole('tab', { name: /updated/i }))
       await waitFor(() => expect(lastListQuery().state).toBe('updated_unread'))

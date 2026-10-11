@@ -379,6 +379,41 @@ async def test_a_not_recommended_evaluation_is_reported_as_such(db_session: Asyn
     assert row.evaluation is not None and row.evaluation.recommendation == "not_recommended"
 
 
+async def test_set_aside_splits_unread_jobs_by_the_stored_recommendation(
+    db_session: AsyncSession,
+) -> None:
+    """ADR-058: jobs the latest evaluation does not recommend are set aside, nothing else is."""
+    s = await scene(db_session)
+    fine = await s.entry(fit=70, days=1)
+    blocked = await s.entry(fit=60, days=2, recommendation=Recommendation.NOT_RECOMMENDED)
+    unscored = await s.entry(days=3)
+
+    shown = await titles(db_session, s, set_aside=False)
+    assert set(shown) == {fine.item.job_inbox_item_id, unscored.item.job_inbox_item_id}
+    assert await titles(db_session, s, set_aside=True) == [blocked.item.job_inbox_item_id]
+    assert len(await titles(db_session, s, set_aside=None)) == 3
+
+
+async def test_the_counts_separate_set_aside_jobs_from_those_to_review(
+    db_session: AsyncSession,
+) -> None:
+    s = await scene(db_session)
+
+    async def counts() -> dict[str, int]:
+        page = await InboxService(db_session).list_items(LOCAL_OWNER_ID, s.filters(), limit=1)
+        return page.counts
+
+    before = await counts()  # other tests may have committed items, so compare differences
+    await s.entry(fit=70, days=1)
+    await s.entry(fit=60, days=2, recommendation=Recommendation.NOT_RECOMMENDED)
+    await s.entry(state=InboxState.READ, fit=60, recommendation=Recommendation.NOT_RECOMMENDED)
+    after = await counts()
+    # "To review" no longer counts the set-aside job and a read job is not set aside.
+    assert after["unread"] - before["unread"] == 1
+    assert after["set_aside"] - before["set_aside"] == 1
+    assert after["total"] - before["total"] == 3
+
+
 @pytest.mark.parametrize("sort", ["fit_desc", "newest", "oldest"])
 async def test_pagination_by_cursor_visits_every_item_once(
     db_session: AsyncSession, sort: str

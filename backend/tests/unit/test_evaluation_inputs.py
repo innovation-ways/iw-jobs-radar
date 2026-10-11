@@ -198,8 +198,42 @@ def test_a_source_that_limits_nothing_changes_nothing() -> None:
     assert narrowed(["EU"], []) == ("EU",)
 
 
-def test_regions_the_model_did_not_state_stay_unknown() -> None:
-    assert narrowed(None, ["India (Remote)"]) is None
+def test_regions_the_model_did_not_state_use_the_sources_countries_for_remote_work() -> None:
+    # ADR-058: the model said nothing about regions, the source says Remote USA: the job is open
+    # from the US only, so gate G2 can apply instead of "regions not stated, a risk".
+    assert narrowed(None, ["Remote - USA"]) == ("US",)
+    assert narrowed(None, ["India (Remote)"]) == ("IN",)
+
+
+def test_unstated_regions_stay_unknown_when_the_source_limits_nothing() -> None:
+    assert narrowed(None, ["Seattle", "Remote"]) is None
+    assert narrowed(None, []) is None
+    assert narrowed(None, ["Remote - Worldwide"]) is None
+
+
+def test_unstated_regions_are_left_alone_when_the_job_is_not_remote() -> None:
+    output = sample_extraction_output()
+    output["work_mode"] = {"value": "hybrid", "status": "known", "confidence": 0.9, "evidence": "x"}
+    output["remote_regions"] = {
+        "value": None,
+        "status": "unknown",
+        "confidence": 0.0,
+        "evidence": None,
+    }
+    job = job_attributes(stored(output=output), "t", "d", "Acme", source_places=["Remote - USA"])
+    assert job.remote_regions is None
+
+
+def test_the_quote_says_the_source_gave_the_regions_when_the_model_gave_none() -> None:
+    output = sample_extraction_output()
+    output["remote_regions"] = {
+        "value": None,
+        "status": "unknown",
+        "confidence": 0.0,
+        "evidence": None,
+    }
+    job = job_attributes(stored(output=output), "t", "d", "Acme", source_places=["Remote - USA"])
+    assert "Remote - USA" in job.evidence["remote_regions"]
 
 
 def test_the_quote_says_the_source_limited_the_regions() -> None:

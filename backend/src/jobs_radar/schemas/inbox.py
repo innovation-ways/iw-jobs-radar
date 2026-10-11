@@ -107,6 +107,7 @@ class InboxCounts(StrictModel):
     """Items per state, for the tabs."""
 
     unread: int
+    set_aside: int
     read: int
     updated_unread: int
     ignored: int

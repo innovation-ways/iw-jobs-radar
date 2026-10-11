@@ -2009,10 +2009,10 @@ export interface components {
             intent_revision_id: number;
             /**
              * Policy Version
-             * @default matching-v1.3
+             * @default matching-v1.5
              * @constant
              */
-            policy_version: "matching-v1.3";
+            policy_version: "matching-v1.5";
             /** Profile Revision Id */
             profile_revision_id: number;
         };
@@ -2238,6 +2238,8 @@ export interface components {
             ignored: number;
             /** Read */
             read: number;
+            /** Set Aside */
+            set_aside: number;
             /** Shortlisted */
             shortlisted: number;
             /** Total */
@@ -4408,6 +4410,7 @@ export interface operations {
                 fit_min?: number | null;
                 fit_max?: number | null;
                 evaluated?: boolean | null;
+                set_aside?: boolean | null;
                 from?: string | null;
                 to?: string | null;
                 include_closed?: boolean;

@@ -179,6 +179,7 @@ class ListQuery:
     first_seen_to: datetime | None = None
     include_closed: bool = False
     sort: str = "fit_desc"
+    set_aside: bool | None = None
 
 
 @dataclass(frozen=True)
@@ -308,6 +309,13 @@ class InboxQueries:
                 if query.evaluated
                 else evaluation.match_evaluation_id.is_(None)
             )
+        if query.set_aside is not None:
+            # Set aside = the latest evaluation for the intent is not recommended (a gate fired);
+            # a job without an evaluation has no verdict yet and is never set aside (ADR-058).
+            blocked = evaluation.recommendation == "not_recommended"
+            statement = statement.where(
+                blocked if query.set_aside else ~func.coalesce(blocked, False)
+            )
         if query.first_seen_from is not None:
             statement = statement.where(JobOpportunity.first_seen_at >= query.first_seen_from)
         if query.first_seen_to is not None:
@@ -353,8 +361,14 @@ class InboxQueries:
             for item, opportunity, company, posting, snapshot, ev in rows
         ]
 
-    async def counts(self, owner_id: int, *, include_closed: bool) -> dict[str, int]:
-        """Return the number of items per state, the shortlisted ones and the total."""
+    async def counts(
+        self, owner_id: int, *, include_closed: bool, search_intent_id: int | None = None
+    ) -> dict[str, int]:
+        """Return the number of items per state, the shortlisted ones and the total.
+
+        Unread jobs that the intent's latest evaluation does not recommend are counted as
+        ``set_aside`` instead of ``unread`` (ADR-058); the total still holds every item.
+        """
         shortlisted_flag = case((JobInboxItem.is_shortlisted.is_(True), 1), else_=0)
         statement = (
             select(JobInboxItem.state, func.count(), func.sum(shortlisted_flag))
@@ -376,7 +390,22 @@ class InboxQueries:
         for state, number, flagged in (await self._session.execute(statement)).all():
             counts[state] = int(number)
             shortlisted += int(flagged or 0)
-        return {**counts, "shortlisted": shortlisted, "total": sum(counts.values())}
+        total = sum(counts.values())
+        aside_query = ListQuery(
+            owner_id=owner_id,
+            search_intent_id=search_intent_id,
+            state=InboxState.UNREAD.value,
+            include_closed=include_closed,
+            set_aside=True,
+        )
+        aside_statement, _evaluation = self._filtered(aside_query)
+        set_aside = (
+            await self._session.execute(
+                select(func.count()).select_from(aside_statement.subquery())
+            )
+        ).scalar_one()
+        counts["unread"] -= set_aside
+        return {**counts, "set_aside": set_aside, "shortlisted": shortlisted, "total": total}
 
     async def dimensions(self, evaluation_ids: list[int]) -> dict[int, list[ScoreDimension]]:
         """Return the dimensions of each evaluation."""

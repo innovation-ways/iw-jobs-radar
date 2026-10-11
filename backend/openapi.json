@@ -1889,8 +1889,8 @@
             "type": "integer"
           },
           "policy_version": {
-            "const": "matching-v1.3",
-            "default": "matching-v1.3",
+            "const": "matching-v1.5",
+            "default": "matching-v1.5",
             "title": "Policy Version",
             "type": "string"
           },
@@ -2473,6 +2473,10 @@
             "title": "Read",
             "type": "integer"
           },
+          "set_aside": {
+            "title": "Set Aside",
+            "type": "integer"
+          },
           "shortlisted": {
             "title": "Shortlisted",
             "type": "integer"
@@ -2492,6 +2496,7 @@
         },
         "required": [
           "unread",
+          "set_aside",
           "read",
           "updated_unread",
           "ignored",
@@ -7516,6 +7521,22 @@
                 }
               ],
               "title": "Evaluated"
+            }
+          },
+          {
+            "in": "query",
+            "name": "set_aside",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Set Aside"
             }
           },
           {

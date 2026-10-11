@@ -58,6 +58,7 @@ class InboxFilters:
     first_seen_to: datetime | None = None
     include_closed: bool = False
     sort: str = "fit_desc"
+    set_aside: bool | None = None  # ADR-058: True only the set-aside jobs, False without them
 
 
 @dataclass(frozen=True)
@@ -275,6 +276,7 @@ class InboxService:
             first_seen_to=filters.first_seen_to,
             include_closed=filters.include_closed,
             sort=filters.sort,
+            set_aside=filters.set_aside,
         )
 
     async def _views(self, rows: list[RawRow]) -> list[InboxRowView]:
@@ -338,7 +340,9 @@ class InboxService:
                 last.opportunity.first_seen_at,
                 last.item.job_inbox_item_id,
             )
-        counts = await self._queries.counts(owner_id, include_closed=filters.include_closed)
+        counts = await self._queries.counts(
+            owner_id, include_closed=filters.include_closed, search_intent_id=intent_id
+        )
         return InboxPage(await self._views(rows), next_cursor, counts, intent_id)
 
     async def detail(

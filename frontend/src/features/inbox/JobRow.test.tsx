@@ -43,3 +43,31 @@ describe('JobRow source chip', () => {
     expect(screen.getByText('via Jobicy, Arbeitnow')).toBeInTheDocument()
   })
 })
+
+describe('JobRow set-aside reason', () => {
+  it('says why a job that cannot be applied for was set aside', () => {
+    const base = makeItem()
+    const item = makeItem({
+      evaluation: {
+        ...base.evaluation!,
+        recommendation: 'not_recommended',
+        gates: [
+          {
+            code: 'G2',
+            reason: 'Remote work is not open from any of your regions.',
+            evidence: {},
+          },
+        ],
+      },
+    })
+    render(<JobRow item={item} selected={false} onSelect={() => undefined} />)
+    expect(
+      screen.getByText(/Cannot apply: Remote work is not open from any of your regions\./),
+    ).toBeInTheDocument()
+  })
+
+  it('shows no reason for a recommended job', () => {
+    render(<JobRow item={makeItem()} selected={false} onSelect={() => undefined} />)
+    expect(screen.queryByText(/Cannot apply/)).not.toBeInTheDocument()
+  })
+})

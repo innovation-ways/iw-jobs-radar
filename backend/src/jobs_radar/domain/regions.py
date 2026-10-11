@@ -16,14 +16,36 @@ EU = _codes("AT BE BG HR CY CZ DK EE FI FR DE GR HU IE IT LV LT LU MT NL PL PT R
 EEA = EU | _codes("IS LI NO")
 EUROPE = EEA | _codes("GB CH AD AL BA BY MC MD ME MK RS SM UA VA XK")
 
+# Groups used by job boards that publish a region instead of a country (ADR-058).
+NORTH_AMERICA = _codes("US CA MX")
+LATAM = _codes("MX GT HN SV NI CR PA CU DO PR AR BO BR CL CO EC GY PY PE SR UY VE")
+AMERICAS = NORTH_AMERICA | LATAM | _codes("BS BB BZ JM TT HT")
+APAC = _codes("AU NZ JP KR CN HK TW SG MY TH VN PH ID IN PK BD LK NP KH LA MM MN PG FJ MO BN")
+MIDDLE_EAST = _codes("AE SA IL QA KW BH OM JO LB TR IQ IR SY YE PS")
+AFRICA = _codes(
+    "DZ AO BJ BW BF BI CM CV CF TD KM CG CD CI DJ EG GQ ER SZ ET GA GM GH GN GW KE LS LR LY MG "
+    "MW ML MR MU MA MZ NA NE NG RW ST SN SC SL SO ZA SS SD TZ TG TN UG ZM ZW"
+)
+EMEA = EUROPE | MIDDLE_EAST | AFRICA
+
 _WORLD = "WORLD"
 _GROUPS: dict[str, frozenset[str]] = {
     "EU": EU,
     "EEA": EEA,
     "EUROPE": EUROPE,
     "UK": frozenset({"GB"}),
+    "EMEA": EMEA,
+    "AMERICAS": AMERICAS,
+    "NORTH AMERICA": NORTH_AMERICA,
+    "LATAM": LATAM,
+    "APAC": APAC,
 }
 _ALIASES = {
+    "AMER": "AMERICAS",
+    "THE AMERICAS": "AMERICAS",
+    "LATIN AMERICA": "LATAM",
+    "ASIA PACIFIC": "APAC",
+    "EUROPE MIDDLE EAST AND AFRICA": "EMEA",
     "EUROPEAN UNION": "EU",
     "UNITED KINGDOM": "UK",
     "GREAT BRITAIN": "UK",

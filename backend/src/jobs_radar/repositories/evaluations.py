@@ -221,20 +221,24 @@ class EvaluationRepository:
         del policy_version  # applied by the callers' exists() clauses
         return statement
 
-    def _scored_for_intent(self, policy_version: str) -> Any:
-        """Whether the snapshot has any evaluation for the intent (under any revision)."""
+    def _scored_for_intent(self, policy_version: str | None) -> Any:
+        """Whether the snapshot has an evaluation for the intent (under any revision).
+
+        With a policy version only evaluations of that policy count; ``None`` accepts any policy.
+        """
         evaluation = aliased(MatchEvaluation)
         revision = aliased(IntentRevision)
-        return (
+        statement = (
             select(evaluation.match_evaluation_id)
             .join(revision, revision.intent_revision_id == evaluation.intent_revision_id)
             .where(
                 evaluation.job_snapshot_id == JobExtraction.job_snapshot_id,
                 revision.search_intent_id == SearchIntent.search_intent_id,
-                evaluation.policy_version == policy_version,
             )
-            .exists()
         )
+        if policy_version is not None:
+            statement = statement.where(evaluation.policy_version == policy_version)
+        return statement.exists()
 
     def _scored_exactly(self, policy_version: str) -> Any:
         """Whether this snapshot, extraction and the current revisions already have a score."""
@@ -262,8 +266,8 @@ class EvaluationRepository:
     ) -> list[PendingEvaluation]:
         """Return the jobs to score.
 
-        ``new``: never scored for the intent. ``rescore``: scored before, but not yet under the
-        current revisions of the intent and its profile.
+        ``new``: never scored for the intent. ``rescore``: scored before (under any policy), but
+        not yet under the current revisions of the intent and its profile and the current policy.
         """
         statement = self._candidates(
             policy_version=policy_version, intent_id=intent_id, extraction_filter=extraction_filter
@@ -271,8 +275,9 @@ class EvaluationRepository:
         if mode == "new":
             statement = statement.where(~self._scored_for_intent(policy_version))
         else:
+            # Scored before under any policy: a new policy version must reach old jobs too.
             statement = statement.where(
-                self._scored_for_intent(policy_version), ~self._scored_exactly(policy_version)
+                self._scored_for_intent(None), ~self._scored_exactly(policy_version)
             )
         rows = (await self._session.execute(statement.limit(limit))).all()
         return [

@@ -26,7 +26,7 @@ export function makeItem(overrides: Partial<Item> = {}): Item {
     evaluated: true,
     evaluation: {
       match_evaluation_id: 900 + id,
-      policy_version: 'matching-v1.3',
+      policy_version: 'matching-v1.5',
       fit_score: 82,
       fit_band: 'excellent',
       recommendation: 'recommended',
@@ -126,6 +126,7 @@ export function makeCounts(
 ): Schemas['InboxCounts'] {
   return {
     unread: 4,
+    set_aside: 6,
     read: 2,
     updated_unread: 1,
     ignored: 3,

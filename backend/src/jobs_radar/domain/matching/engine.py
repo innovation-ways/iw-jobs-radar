@@ -32,8 +32,9 @@ from jobs_radar.domain.regions import regions_intersect
 # matching-v1.1 (ADR-052): same rules as matching-v1; the input mapping now reads country names.
 # matching-v1.2 (ADR-056): same rules; the input mapping limits the model's remote regions to what
 # the source's own remote places allow.
-# matching-v1.3 (ADR-057): the career-direction dimension (the best judged direction counts).
-POLICY_VERSION = "matching-v1.3"
+# matching-v1.5 (ADR-058): far offices without a remote statement fire gate G2 and region groups.
+# matching-v1.5 (ADR-057): the career-direction dimension (the best judged direction counts).
+POLICY_VERSION = "matching-v1.5"
 
 ZERO, HALF, ONE = Fraction(0), Fraction(1, 2), Fraction(1)
 _STANCE = {"preferred": ONE, "acceptable": HALF, "rejected": ZERO}
@@ -207,10 +208,29 @@ def _on_site(job: JobAttributes, intent: IntentView, gates: list[Gate], mode: Fr
     return _Raw("mismatch", ZERO, evidence, "All job locations are too far away.")
 
 
+def _unstated_arrangement(job: JobAttributes, intent: IntentView, gates: list[Gate]) -> _Raw:
+    """Score an unstated arrangement: unknown, unless every placed office is out of reach (ADR-058).
+
+    A posting that lists only far offices and never mentions remote work cannot be done from the
+    owner's place, so gate G2 fires. Unplaced locations and a missing list stay unknown.
+    """
+    scratch: list[Gate] = []
+    _on_site(job, intent, scratch, ONE)
+    if scratch:
+        evidence = scratch[0].evidence
+        reason = (
+            "Every job location is outside your distance and the posting does not say "
+            "it can be done remotely."
+        )
+        gates.append(Gate("G2", reason, evidence))
+        return _unknown(reason, **evidence)
+    return _unknown("The work arrangement is not stated.")
+
+
 def _arrangement(job: JobAttributes, intent: IntentView, gates: list[Gate]) -> _Raw:
     mode = job.work_mode
     if mode is None:
-        return _unknown("The work arrangement is not stated.")
+        return _unstated_arrangement(job, intent, gates)
     stance = _stance(intent, "work_arrangements", mode)
     if stance == "rejected":
         gates.append(

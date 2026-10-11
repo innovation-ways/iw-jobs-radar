@@ -19,7 +19,7 @@ _REMOTE = re.compile(
 # Words that describe how or from where the work is done, not which country it is open to.
 _FILLER = re.compile(
     r"\b(remote|remoto|remota|home[- ]based|work from home|home office|wfh|only|based|within|in|"
-    r"from|hybrid)\b",
+    r"from|hybrid|zone\s*\d+|job requisitions?)\b",
     re.I,
 )
 _SPLIT = re.compile(r"[,;/|()\[\]:\N{EN DASH}\N{EM DASH}-]")

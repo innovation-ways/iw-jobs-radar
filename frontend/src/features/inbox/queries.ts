@@ -11,7 +11,7 @@ export type InboxDetail = Schemas['InboxItemDetail']
 export type InboxCounts = Schemas['InboxCounts']
 
 export type TabKey =
-  'unread' | 'updated' | 'shortlist' | 'read' | 'ignored' | 'archived' | 'applied'
+  'unread' | 'updated' | 'set_aside' | 'shortlist' | 'read' | 'ignored' | 'archived' | 'applied'
 
 export interface TabInfo {
   key: TabKey
@@ -19,12 +19,22 @@ export interface TabInfo {
   count: (counts: InboxCounts) => number
   state: string
   shortlisted?: boolean
+  /** Whether the section holds the jobs set aside (true) or leaves them out (false), ADR-058. */
+  setAside?: boolean
 }
 
 /** The sections of the inbox (each maps to a state filter; Shortlist cuts across states). */
 export const TABS: TabInfo[] = [
-  { key: 'unread', label: 'To review', count: (c) => c.unread, state: 'unread' },
+  { key: 'unread', label: 'To review', count: (c) => c.unread, state: 'unread', setAside: false },
   { key: 'updated', label: 'Updated', count: (c) => c.updated_unread, state: 'updated_unread' },
+  // Jobs the owner cannot apply for (a hard constraint fired): still there, but out of the way.
+  {
+    key: 'set_aside',
+    label: 'Set aside',
+    count: (c) => c.set_aside,
+    state: 'unread',
+    setAside: true,
+  },
   {
     key: 'shortlist',
     label: 'Shortlist',
@@ -64,6 +74,7 @@ export function useInboxList({ tab, search, intentId, options, enabled = true }:
             query: {
               state: info.state,
               ...(info.shortlisted ? { shortlisted: true } : {}),
+              ...(info.setAside !== undefined ? { set_aside: info.setAside } : {}),
               ...(search ? { q: search } : {}),
               ...(intentId !== null ? { search_intent_id: intentId } : {}),
               // "first seen within" is counted from the moment the page is requested.

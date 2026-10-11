@@ -25,6 +25,15 @@ from jobs_radar.domain.regions import regions_intersect
         (["PT", "ES"], ["FR"], False),
         (["PT", "ES"], ["FR", "ES"], True),
         (["eu", " pt "], ["EU"], True),  # case and spacing do not matter
+        (["EMEA"], ["PT"], True),  # ADR-058: Europe, Middle East and Africa
+        (["EMEA"], ["US"], False),
+        (["Americas"], ["PT"], False),
+        (["AMER"], ["US"], True),
+        (["North America"], ["PT"], False),
+        (["LATAM"], ["BR"], True),
+        (["LATAM"], ["PT"], False),
+        (["APAC"], ["EU"], False),
+        (["APAC"], ["IN"], True),
     ],
 )
 def test_regions_intersect(job: list[str], user: list[str], expected: bool) -> None:

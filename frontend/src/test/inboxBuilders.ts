@@ -117,6 +117,7 @@ export function makeDetail(item: Item, overrides: Partial<Detail> = {}): Detail 
       : [],
     events: [],
     last_change: null,
+    brief: { summary: null, summary_model: null, technologies: [], facts: [] },
     ...overrides,
   }
 }

@@ -14,6 +14,7 @@ from jobs_radar.schemas.evaluation import (
     GateRead,
     RecommendationValue,
 )
+from jobs_radar.schemas.job_brief import JobBriefRead
 
 InboxStateName = Literal["unread", "read", "updated_unread", "ignored", "archived", "applied"]
 OwnerAction = Literal[
@@ -155,6 +156,7 @@ class InboxItemDetail(InboxItemSummary):
     dimensions: list[DimensionRead]
     events: list[InboxEventRead]
     last_change: ChangeRead | None
+    brief: JobBriefRead
 
 
 class InboxActionResponse(StrictModel):

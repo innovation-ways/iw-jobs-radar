@@ -22,6 +22,7 @@ from jobs_radar.services.dedup import DedupRunner
 from jobs_radar.services.direction_service import DirectionRunner
 from jobs_radar.services.evaluation import EvaluationRunner
 from jobs_radar.services.extraction_queue import ExtractionQueue
+from jobs_radar.services.job_summary import SummaryRunner
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,7 @@ class JobsAi:
     extraction: ExtractionQueue
     evaluation: EvaluationRunner
     directions: DirectionRunner
+    summaries: SummaryRunner
     dedup: DedupRunner
     model: str
     embedding_model: str
@@ -115,6 +117,14 @@ class JobsAiLoader:
             ),
             evaluation=EvaluationRunner(self._session_factory, provider),
             directions=DirectionRunner(
+                self._session_factory,
+                direction_provider,
+                max_chars=self._settings.extraction_max_chars,
+            ),
+            # Prose that must stay faithful to the posting needs the larger local model the owner
+            # chose for directions (the job model unless another is set): on a small model the
+            # summaries invented details (ADR-059).
+            summaries=SummaryRunner(
                 self._session_factory,
                 direction_provider,
                 max_chars=self._settings.extraction_max_chars,

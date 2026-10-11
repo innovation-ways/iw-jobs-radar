@@ -93,6 +93,8 @@ function dossier(overrides: Record<string, unknown> = {}) {
         fit_band: 'excellent',
         state: 'unread',
         is_shortlisted: true,
+        job_inbox_item_id: 90,
+        version: 3,
       },
       {
         job_opportunity_id: 8,
@@ -105,6 +107,8 @@ function dossier(overrides: Record<string, unknown> = {}) {
         fit_band: null,
         state: null,
         is_shortlisted: false,
+        job_inbox_item_id: null,
+        version: null,
       },
       {
         job_opportunity_id: 7,
@@ -117,6 +121,8 @@ function dossier(overrides: Record<string, unknown> = {}) {
         fit_band: 'average',
         state: 'ignored',
         is_shortlisted: false,
+        job_inbox_item_id: 70,
+        version: 2,
       },
     ],
     hiring: Array.from({ length: 12 }, (_, i) => ({
@@ -197,6 +203,21 @@ describe('Companies screen', () => {
     )
   })
 
+  it('folds and unfolds the Followed and All companies groups', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole('option', { name: /Northwind Labs/ })
+    const followedHeader = screen.getByRole('button', { name: /^Followed/ })
+    expect(followedHeader).toHaveAttribute('aria-expanded', 'true')
+    await user.click(followedHeader)
+    expect(followedHeader).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('option', { name: /Northwind Labs/ })).not.toBeInTheDocument()
+    // The other group is untouched.
+    expect(screen.getByRole('option', { name: /Contoso/ })).toBeInTheDocument()
+    await user.click(followedHeader)
+    expect(screen.getByRole('option', { name: /Northwind Labs/ })).toBeInTheDocument()
+  })
+
   it('narrows the list with the filters and the search box', async () => {
     const user = userEvent.setup()
     renderPage()
@@ -256,7 +277,7 @@ describe('Companies screen', () => {
       'href',
       'https://jobs.example.test/9',
     )
-    expect(within(panel).getByRole('img', { name: /weekly new offers/i })).toBeInTheDocument()
+    expect(within(panel).getByRole('group', { name: /new offers per week/i })).toBeInTheDocument()
   })
 
   it('shows offers like the inbox and filters them; ignored ones stay, dimmed', async () => {
@@ -279,6 +300,98 @@ describe('Companies screen', () => {
     expect(within(offers).getByText('Pending')).toBeInTheDocument()
     await user.click(within(offers).getByRole('button', { name: 'Recommended' }))
     expect(within(offers).queryByText('Old role')).not.toBeInTheDocument()
+  })
+
+  describe('triage from the dossier', () => {
+    async function openOffers() {
+      const user = userEvent.setup()
+      renderPage('/companies?company=1')
+      const panel = await screen.findByRole('region', { name: 'Northwind Labs' })
+      const offers = within(panel).getByRole('region', { name: /^Offers/ })
+      return { user, offers }
+    }
+    const inboxCall = (itemId: number, action: string, version: number) => [
+      '/api/v1/inbox/{job_inbox_item_id}/actions',
+      {
+        params: { path: { job_inbox_item_id: itemId }, query: {} },
+        body: { action, expected_version: version },
+      },
+    ]
+
+    beforeEach(() => {
+      post.mockImplementation(() => Promise.resolve({ data: { item: { version: 4 }, undo: null } }))
+    })
+
+    it('shortlists, ignores, archives and marks applied one offer at a time', async () => {
+      const { user, offers } = await openOffers()
+      const row = within(offers).getByRole('listitem', { name: /Senior AI Engineer/ })
+      await user.click(within(row).getByRole('button', { name: 'Ignore Senior AI Engineer' }))
+      expect(post).toHaveBeenLastCalledWith(...inboxCall(90, 'ignore', 3))
+      await user.click(within(row).getByRole('button', { name: 'Archive Senior AI Engineer' }))
+      expect(post).toHaveBeenLastCalledWith(...inboxCall(90, 'archive', 3))
+      await user.click(
+        within(row).getByRole('button', { name: 'Mark Senior AI Engineer as applied' }),
+      )
+      expect(post).toHaveBeenLastCalledWith(...inboxCall(90, 'record_application', 3))
+    })
+
+    it('toggles the shortlist star with a label that names the offer', async () => {
+      const { user, offers } = await openOffers()
+      // Offer 9 is shortlisted: the button removes it; offer 7 is not, so it adds it.
+      await user.click(
+        within(offers).getByRole('button', { name: 'Remove Senior AI Engineer from shortlist' }),
+      )
+      expect(post).toHaveBeenLastCalledWith(...inboxCall(90, 'unshortlist', 3))
+      await user.click(
+        within(offers).getByRole('button', { name: 'Add Ignored role to shortlist' }),
+      )
+      expect(post).toHaveBeenLastCalledWith(...inboxCall(70, 'shortlist', 2))
+    })
+
+    it('offers only Restore on an ignored offer', async () => {
+      const { user, offers } = await openOffers()
+      const row = within(offers).getByRole('listitem', { name: /Ignored role/ })
+      expect(within(row).queryByRole('button', { name: /^Ignore / })).not.toBeInTheDocument()
+      expect(within(row).queryByRole('button', { name: /^Archive / })).not.toBeInTheDocument()
+      await user.click(within(row).getByRole('button', { name: 'Restore Ignored role' }))
+      expect(post).toHaveBeenLastCalledWith(...inboxCall(70, 'restore', 2))
+    })
+
+    it('shows no actions for an offer the owner has no inbox item for', async () => {
+      const { user, offers } = await openOffers()
+      await user.click(within(offers).getByRole('button', { name: 'Closed' }))
+      const row = within(offers).getByRole('listitem', { name: /Old role/ })
+      expect(within(row).queryByRole('button')).not.toBeInTheDocument()
+    })
+
+    it('confirms the action, undoes it and refreshes the dossier and the list', async () => {
+      const { user, offers } = await openOffers()
+      const loads = () =>
+        get.mock.calls.filter(([path]) => path === '/api/v1/companies/{company_id}')
+      const before = loads().length
+      await user.click(within(offers).getByRole('button', { name: 'Ignore Senior AI Engineer' }))
+      const status = await screen.findByRole('status')
+      expect(status).toHaveTextContent('Ignored')
+      await vi.waitFor(() => expect(loads().length).toBeGreaterThan(before))
+      // The offer was unread, so taking it back restores it and marks it unread again, in order
+      // and with the version each step returned.
+      post.mockClear()
+      await user.click(within(status).getByRole('button', { name: 'Undo' }))
+      await vi.waitFor(() => expect(post).toHaveBeenCalledTimes(2))
+      expect(post).toHaveBeenNthCalledWith(1, ...inboxCall(90, 'restore', 4))
+      expect(post).toHaveBeenNthCalledWith(2, ...inboxCall(90, 'mark_unread', 4))
+    })
+
+    it('says so when an action fails, for example on a version conflict', async () => {
+      post.mockImplementation(() =>
+        Promise.resolve({
+          error: { error: { code: 'version_conflict', message: 'Changed elsewhere.' } },
+        }),
+      )
+      const { user, offers } = await openOffers()
+      await user.click(within(offers).getByRole('button', { name: 'Archive Senior AI Engineer' }))
+      expect(await within(offers).findByRole('alert')).toBeInTheDocument()
+    })
   })
 
   it('says when only the best offers are shown', async () => {

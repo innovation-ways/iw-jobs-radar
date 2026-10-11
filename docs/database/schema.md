@@ -424,6 +424,27 @@ Immutable captures of posting content (append-only).
 - foreign key `job_posting_id` → `job_posting.job_posting_id`
 - unique `uq_job_snapshot_job_posting_id_content_hash` (job_posting_id, content_hash)
 
+## job_summary
+
+Model-written summaries of job snapshots (append-only, ADR-059).
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `job_summary_id` | BIGINT | no | Surrogate primary key of the summary. |
+| `job_snapshot_id` | BIGINT | no | Snapshot that was summarised. |
+| `provider` | VARCHAR(50) | no | AI provider kind. |
+| `model` | VARCHAR(100) | no | AI model identifier. |
+| `prompt_version` | VARCHAR(50) | no | Prompt template version, for example summary-v1. |
+| `status` | VARCHAR(20) | no | succeeded or failed. |
+| `summary_text` | TEXT | yes | The summary (one or two paragraphs in English); null when the attempt failed. |
+| `error_class` | VARCHAR(50) | yes | Classified failure reason when the attempt failed. |
+| `latency_ms` | INTEGER | yes | Duration of the model calls in milliseconds. |
+| `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
+
+- check `ck_job_summary_status_valid`: `status IN ('succeeded', 'failed')`
+- check `ck_job_summary_success_has_text`: `status <> 'succeeded' OR summary_text IS NOT NULL`
+- foreign key `job_snapshot_id` → `job_snapshot.job_snapshot_id`
+
 ## match_evaluation
 
 Immutable, reproducible evaluations (append-only).

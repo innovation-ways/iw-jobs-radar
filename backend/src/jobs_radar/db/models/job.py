@@ -19,7 +19,7 @@ from jobs_radar.db.columns import (
     text_column,
     timestamp_column,
 )
-from jobs_radar.domain.enums import JobExtractionStatus, LinkState
+from jobs_radar.domain.enums import JobExtractionStatus, LinkState, SummaryStatus
 
 
 class JobPosting(TimestampMixin, Base):
@@ -159,6 +159,50 @@ class JobExtraction(CreatedAtMixin, Base):
     )
     completed_at: Mapped[datetime | None] = timestamp_column(
         "UTC time at which the extraction was finalised.", nullable=True
+    )
+
+
+class JobSummary(CreatedAtMixin, Base):
+    """The short English summary of a snapshot written by a model (append-only, ADR-059)."""
+
+    __tablename__ = "job_summary"
+    __table_args__ = (
+        # One good summary per snapshot, model and prompt; failed attempts are kept and may repeat.
+        Index(
+            "uq_job_summary_inputs",
+            "job_snapshot_id",
+            "provider",
+            "model",
+            "prompt_version",
+            unique=True,
+            postgresql_where=text("status = 'succeeded'"),
+        ),
+        enum_check("status", SummaryStatus),
+        CheckConstraint(
+            "status <> 'succeeded' OR summary_text IS NOT NULL", name="success_has_text"
+        ),
+        {"comment": "Model-written summaries of job snapshots (append-only, ADR-059)."},
+    )
+
+    job_summary_id: Mapped[int] = pk_column("Surrogate primary key of the summary.")
+    job_snapshot_id: Mapped[int] = fk_column(
+        "job_snapshot.job_snapshot_id", "Snapshot that was summarised.", ondelete="CASCADE"
+    )
+    provider: Mapped[str] = text_column("AI provider kind.", length=50)
+    model: Mapped[str] = text_column("AI model identifier.", length=100)
+    prompt_version: Mapped[str] = text_column(
+        "Prompt template version, for example summary-v1.", length=50
+    )
+    status: Mapped[str] = text_column("succeeded or failed.", length=20)
+    summary_text: Mapped[str | None] = text_column(
+        "The summary (one or two paragraphs in English); null when the attempt failed.",
+        nullable=True,
+    )
+    error_class: Mapped[str | None] = text_column(
+        "Classified failure reason when the attempt failed.", length=50, nullable=True
+    )
+    latency_ms: Mapped[int | None] = int_column(
+        "Duration of the model calls in milliseconds.", nullable=True
     )
 
 

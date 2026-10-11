@@ -5,6 +5,7 @@ import { formatAge, formatDateTime } from '@/lib/format'
 import { bandOf, NOT_EVALUATED, TONE_CLASSES } from './bands'
 import { AssessDirections } from './AssessDirections'
 import { DimensionList } from './DimensionList'
+import { JobBrief } from './JobBrief'
 import type { InboxDetail } from './queries'
 import type { OwnerAction } from './undo'
 
@@ -68,6 +69,8 @@ function ActionBar({ detail, busy, onAction, onOpenOriginal }: Omit<Props, 'onLi
 /**
  * The detail panel: score with its band, the hard constraints that fired, why the score is what
  * it is (with evidence on hover or focus), where the job was seen, the description and actions.
+ * The briefing (AI summary, technologies, key facts) comes first so the job can be understood
+ * without opening the original (ADR-059).
  */
 export function JobDetail({ detail, busy, onAction, onOpenOriginal, onLinkDecision }: Props) {
   const evaluation = detail.evaluation
@@ -167,6 +170,8 @@ export function JobDetail({ detail, busy, onAction, onOpenOriginal, onLinkDecisi
           </p>
         )}
       </div>
+
+      <JobBrief brief={detail.brief} jobPostingId={detail.job_posting_id} />
 
       {evaluation && (
         <section className="border-b border-line px-5 py-4" aria-label="Why this score">

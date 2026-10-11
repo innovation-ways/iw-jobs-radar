@@ -4,6 +4,7 @@ They are plain ``StrEnum`` values so they serialise to the exact strings stored 
 and exposed by the API. This module imports nothing from the rest of the application.
 """
 
+from datetime import UTC, datetime
 from enum import StrEnum
 
 
@@ -115,6 +116,13 @@ class DirectionLevel(StrEnum):
     WEAK = "weak"
     NONE = "none"
     UNKNOWN = "unknown"
+
+
+class SummaryStatus(StrEnum):
+    """Outcome of one job-summary attempt that was stored (ADR-059)."""
+
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
 
 
 class SourceType(StrEnum):
@@ -327,6 +335,10 @@ MATCHING_POLICY_VERSION = "matching-v1"
 DEDUP_POLICY_VERSION = "dedup-v1"
 EXTRACTION_PROMPT_VERSION = "extract-v1"
 DIRECTION_PROMPT_VERSION = "direction-v1"
+SUMMARY_PROMPT_VERSION = "summary-v1"
+# The worker writes summaries only for jobs first seen on or after this moment (ADR-059): the jobs
+# collected and analysed before the feature are summarised on demand or by the sample tool.
+SUMMARIES_FROM = datetime(2026, 10, 11, 15, 0, tzinfo=UTC)
 
 # The single owner of V1: there is no authentication (ADR-009), but ``owner_id`` is kept everywhere.
 LOCAL_OWNER_ID = 1

@@ -44,8 +44,8 @@ export function Companies() {
   const filtered = q !== '' || filters.followed || filters.recommended || filters.pending
 
   return (
-    <div className="grid min-h-full grid-cols-[minmax(300px,400px)_1fr]">
-      <div className="flex flex-col border-r border-line">
+    <div className="grid h-full min-h-0 grid-cols-[minmax(300px,400px)_1fr]">
+      <div className="flex min-h-0 flex-col border-r border-line">
         <div className="flex flex-col gap-2.5 border-b border-line bg-surface p-3">
           <input
             type="search"
@@ -84,7 +84,7 @@ export function Companies() {
             </p>
           )}
         </div>
-        <div className="flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           {isPending && <p className="p-4 text-ink-3">Loading…</p>}
           {isError && (
             <div role="alert" className="flex items-center gap-3 p-4 text-bad">
@@ -127,7 +127,7 @@ export function Companies() {
           )}
         </div>
       </div>
-      <div className="overflow-y-auto">
+      <div className="min-h-0 overflow-y-auto">
         {selected ? (
           <DossierPanel key={selected} companyId={selected} recencyDays={data?.recency_days} />
         ) : (

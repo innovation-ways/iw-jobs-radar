@@ -240,3 +240,72 @@ async def test_a_model_that_is_down_never_stops_the_worker_iteration(
     worker = Worker(settings, session_factory, name="w-test", directions=runner)
     await worker.run_once()  # must not raise
     assert worker.beats >= 1
+
+
+async def test_the_worker_summarises_new_jobs(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from datetime import UTC, datetime, timedelta
+
+    from sqlalchemy import select
+    from tests.evaluation_world import world
+    from tests.factories import make_company, make_posting, make_source, session_factory_for
+    from tests.fake_provider import FakeProvider
+
+    from jobs_radar.db.models import JobSummary
+    from jobs_radar.services.job_summary import SummaryRunner
+
+    await world(db_session)  # closes every other open posting
+    source = await make_source(db_session, await make_company(db_session, "Brand New Co"))
+    since = datetime.now(UTC)
+    _, snapshot = await make_posting(db_session, source, first_seen_at=since + timedelta(hours=1))
+    text_ = "Brand New Co is hiring an engineer. " + "It builds billing software. " * 5
+    provider = FakeProvider(responder=lambda request: {"summary": text_})
+    runner = SummaryRunner(
+        session_factory_for(db_session, monkeypatch), provider, max_chars=12000, since=since
+    )
+    await Worker(settings, session_factory, name="w-test", summaries=runner).run_once()
+    stored = (
+        (
+            await db_session.execute(
+                select(JobSummary).where(JobSummary.job_snapshot_id == snapshot.job_snapshot_id)
+            )
+        )
+        .scalars()
+        .one()
+    )
+    assert stored.status == "succeeded"
+
+
+async def test_a_summary_model_that_is_down_never_stops_the_worker_iteration(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from datetime import UTC, datetime, timedelta
+
+    from tests.evaluation_world import world
+    from tests.factories import make_company, make_posting, make_source, session_factory_for
+    from tests.fake_provider import FakeProvider
+
+    from jobs_radar.adapters.providers.base import ProviderError
+    from jobs_radar.domain.enums import ProviderErrorClass
+    from jobs_radar.services.job_summary import SummaryRunner
+
+    await world(db_session)
+    source = await make_source(db_session, await make_company(db_session, "Brand New Co"))
+    since = datetime.now(UTC)
+    await make_posting(db_session, source, first_seen_at=since + timedelta(hours=1))
+    provider = FakeProvider(
+        responder=lambda request: ProviderError(ProviderErrorClass.UNAVAILABLE, "down")
+    )
+    runner = SummaryRunner(
+        session_factory_for(db_session, monkeypatch), provider, max_chars=12000, since=since
+    )
+    worker = Worker(settings, session_factory, name="w-test", summaries=runner)
+    await worker.run_once()  # must not raise
+    assert worker.beats >= 1

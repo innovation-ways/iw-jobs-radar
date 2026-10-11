@@ -18,6 +18,7 @@ from jobs_radar.db.models.job import (
     JobOpportunityLink,
     JobPosting,
     JobSnapshot,
+    JobSummary,
 )
 from jobs_radar.db.models.owner import Owner
 from jobs_radar.db.models.profile import (
@@ -62,6 +63,7 @@ __all__ = [
     "JobOpportunityLink",
     "JobPosting",
     "JobSnapshot",
+    "JobSummary",
     "MatchEvaluation",
     "Owner",
     "PrivacySetting",

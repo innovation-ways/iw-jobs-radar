@@ -114,3 +114,29 @@ async def test_a_direction_model_is_used_for_directions_and_the_job_model_for_th
         await session.commit()
     changed = await loader.load()
     assert changed is not None and changed.direction_model == "bigger"
+
+
+async def test_the_setup_includes_the_summary_runner(
+    settings: Settings, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    await add(session_factory, use_for_jobs=True)
+    setup = await JobsAiLoader(settings, session_factory).load()
+    assert setup is not None and setup.summaries is not None
+
+
+async def test_summaries_use_the_direction_model_and_default_to_the_job_model(
+    settings: Settings, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    connection_id = await add(session_factory, use_for_jobs=True)
+    loader = JobsAiLoader(settings, session_factory)
+    default = await loader.load()
+    assert default is not None and default.summaries.model == "qwen3:8b"
+    async with session_factory() as session:
+        row = await session.get(ProviderConnection, connection_id)
+        assert row is not None
+        row.config_json = {"direction_model": "big-model"}
+        row.version += 1
+        await session.commit()
+    changed = await loader.load()
+    assert changed is not None and changed.summaries.model == "big-model"
+    assert changed.model == "qwen3:8b"  # extraction keeps the job model

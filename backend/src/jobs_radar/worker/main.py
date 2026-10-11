@@ -27,6 +27,7 @@ from jobs_radar.services.evaluation import EvaluationRunner
 from jobs_radar.services.extraction_queue import ExtractionQueue
 from jobs_radar.services.heartbeat import HeartbeatService
 from jobs_radar.services.inbox import InboxRunner
+from jobs_radar.services.job_summary import SummaryRunner
 from jobs_radar.services.jobs_ai import JobsAiLoader
 from jobs_radar.services.schedule import ScheduleRunner
 from jobs_radar.services.trends import TrendRunner
@@ -49,6 +50,7 @@ class Worker:
         extraction: ExtractionQueue | None = None,
         evaluation: EvaluationRunner | None = None,
         directions: DirectionRunner | None = None,
+        summaries: SummaryRunner | None = None,
         dedup: DedupRunner | None = None,
         inbox: InboxRunner | None = None,
         collection: CollectionService | None = None,
@@ -62,6 +64,7 @@ class Worker:
         self._extraction = extraction
         self._evaluation = evaluation
         self._directions = directions
+        self._summaries = summaries
         self._dedup = dedup
         self._inbox = inbox
         self._collection = collection
@@ -101,13 +104,14 @@ class Worker:
             if written:
                 logger.info("trends_computed", rows=written)
         extraction, evaluation, dedup = self._extraction, self._evaluation, self._dedup
-        directions = self._directions
+        directions, summaries = self._directions, self._summaries
         if self._jobs_ai is not None:
             # The database decides (AI & privacy screen); None means No AI for jobs.
             setup = await self._jobs_ai.load()
             extraction = setup.extraction if setup else None
             evaluation = setup.evaluation if setup else None
             directions = setup.directions if setup else None
+            summaries = setup.summaries if setup else None
             dedup = setup.dedup if setup else self._dedup
         if dedup is not None:
             # Grouping listings needs no AI, so it runs whether or not extraction is enabled.
@@ -136,6 +140,15 @@ class Worker:
             )
             if judged:
                 logger.info("directions_judged", jobs=judged)
+        if summaries is not None:
+            # A summary only reads the posting, so it is independent of scoring; a model that is
+            # down only ends this step.
+            summarised = await summaries.run(
+                budget_seconds=float(self._settings.worker_heartbeat_max_age_seconds) / 2,
+                heartbeat=self._beat,
+            )
+            if summarised:
+                logger.info("summaries_written", jobs=summarised)
         if extraction is not None and summary is not None:
             scored = (
                 await evaluation.run(

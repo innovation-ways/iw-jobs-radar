@@ -137,18 +137,20 @@ async def test_offers_carry_the_inbox_state_and_the_follow_flag(db_session: Asyn
     source = await make_source(db_session, company)
     posting, _ = await make_posting(db_session, source, first_seen_at=NOW - timedelta(days=1))
     opportunity = await make_opportunity(db_session, posting)
-    db_session.add(
-        JobInboxItem(
-            owner_id=1,
-            job_opportunity_id=opportunity.job_opportunity_id,
-            state="ignored",
-            is_shortlisted=True,
-        )
+    item = JobInboxItem(
+        owner_id=1,
+        job_opportunity_id=opportunity.job_opportunity_id,
+        state="ignored",
+        is_shortlisted=True,
     )
+    db_session.add(item)
     await db_session.flush()
     service = CompanyService(db_session, clock=lambda: NOW)
     before = await service.dossier(1, company.company_id, search_intent_id=None)
     assert (before.offers[0].state, before.offers[0].is_shortlisted) == ("ignored", True)
+    # The owner can act on the offer from the dossier: it names the inbox item and its version.
+    assert before.offers[0].job_inbox_item_id == item.job_inbox_item_id
+    assert before.offers[0].version == item.version
     assert before.is_followed is False
     await service.set_followed(1, company.company_id, followed=True)
     assert (await service.dossier(1, company.company_id, search_intent_id=None)).is_followed
@@ -176,3 +178,17 @@ async def test_an_unknown_company_is_404(db_session: AsyncSession) -> None:
         await CompanyService(db_session, clock=lambda: NOW).dossier(
             1, 999_999, search_intent_id=None
         )
+
+
+async def test_an_offer_without_an_inbox_item_has_nothing_to_act_on(
+    db_session: AsyncSession,
+) -> None:
+    company = await make_company(db_session, "No Item Co")
+    source = await make_source(db_session, company)
+    posting, _ = await make_posting(db_session, source, first_seen_at=NOW - timedelta(days=1))
+    await make_opportunity(db_session, posting)
+    dossier = await CompanyService(db_session, clock=lambda: NOW).dossier(
+        1, company.company_id, search_intent_id=None
+    )
+    offer = dossier.offers[0]
+    assert (offer.job_inbox_item_id, offer.version, offer.state) == (None, None, None)

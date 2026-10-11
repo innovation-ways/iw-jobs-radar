@@ -2,7 +2,10 @@ import { useState } from 'react'
 import { formatAge } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { bandOf, NOT_EVALUATED, TONE_CLASSES } from '@/features/inbox/bands'
-import type { Offer } from './queries'
+import { Button } from '@/components/ui/button'
+import { describeApiError } from '@/api/errors'
+import { ACTION_MESSAGES, undoPlan, type InboxState, type OwnerAction } from '@/features/inbox/undo'
+import { useOfferActions, type Offer } from './queries'
 
 type Toggle = 'open' | 'closed' | 'recommended' | 'hideIgnored' | 'older'
 
@@ -16,12 +19,101 @@ function visible(offer: Offer, on: Record<Toggle, boolean>): boolean {
   return true
 }
 
-function Row({ offer }: { offer: Offer }) {
+/** What the Undo button needs to take the last action back. */
+interface LastAction {
+  itemId: number
+  action: OwnerAction
+  previous: InboxState
+  version: number
+  message: string
+}
+
+/**
+ * The triage buttons of one offer, the same actions as the Inbox detail: shortlist, ignore,
+ * archive, mark applied, and Restore once the offer is ignored, archived or applied. Every label
+ * names the offer, so a list of identical buttons stays understandable to a screen reader.
+ */
+function OfferActions({
+  offer,
+  busy,
+  onAction,
+}: {
+  offer: Offer
+  busy: boolean
+  onAction: (action: OwnerAction) => void
+}) {
+  const settled = ['ignored', 'archived', 'applied'].includes(offer.state ?? '')
+  return (
+    <div className="col-span-full flex flex-wrap gap-1.5">
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={busy}
+        aria-pressed={offer.is_shortlisted}
+        aria-label={`${offer.is_shortlisted ? 'Remove' : 'Add'} ${offer.title} ${offer.is_shortlisted ? 'from' : 'to'} shortlist`}
+        onClick={() => onAction(offer.is_shortlisted ? 'unshortlist' : 'shortlist')}
+      >
+        <span aria-hidden="true">{offer.is_shortlisted ? '★' : '☆'}</span> Shortlist
+      </Button>
+      {settled ? (
+        <Button
+          size="sm"
+          disabled={busy}
+          aria-label={`Restore ${offer.title}`}
+          onClick={() => onAction('restore')}
+        >
+          ↩ Restore
+        </Button>
+      ) : (
+        <>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            aria-label={`Ignore ${offer.title}`}
+            onClick={() => onAction('ignore')}
+          >
+            Ignore
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={busy}
+            aria-label={`Archive ${offer.title}`}
+            onClick={() => onAction('archive')}
+          >
+            Archive
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={busy}
+            aria-label={`Mark ${offer.title} as applied`}
+            onClick={() => onAction('record_application')}
+          >
+            Mark applied
+          </Button>
+        </>
+      )}
+    </div>
+  )
+}
+
+function Row({
+  offer,
+  busy,
+  onAction,
+}: {
+  offer: Offer
+  busy: boolean
+  onAction: (action: OwnerAction) => void
+}) {
   const band = offer.fit_band ? bandOf(offer.fit_band) : NOT_EVALUATED
   const dim = offer.state === 'ignored' || offer.state === 'archived' || offer.closed
   const isNew = offer.state === 'unread' || offer.state === 'updated_unread'
   return (
     <li
+      aria-label={offer.title}
       className={cn(
         'grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-3 border-t border-line py-2 first:border-t-0',
         dim && 'opacity-60',
@@ -62,13 +154,17 @@ function Row({ offer }: { offer: Offer }) {
           <span className="rounded-full border border-line-strong px-2">{offer.state}</span>
         )}
       </div>
+      {/* Without an inbox item the owner has nothing to triage (the server has no state to move). */}
+      {offer.job_inbox_item_id !== null && (
+        <OfferActions offer={offer} busy={busy} onAction={onAction} />
+      )}
     </li>
   )
 }
 
 /**
  * The offers of a company, in the Inbox's visual language: fit tile with band in words, triage
- * state, shortlist star; ignored and closed offers stay visible but dimmed. Filters are local;
+ * state, shortlist star and the Inbox's triage actions on every offer (with Undo); ignored and closed offers stay visible but dimmed. Filters are local;
  * "Older" asks the server for offers beyond the recency limit (`onOlderChange`).
  */
 export function OfferList({
@@ -96,6 +192,53 @@ export function OfferList({
     setOn({ ...on, [key]: !on[key] })
     if (key === 'older') onOlderChange(!on.older)
   }
+  const act = useOfferActions()
+  const [last, setLast] = useState<LastAction | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  /** Perform one action on an offer and remember how to take it back. */
+  const perform = async (offer: Offer, action: OwnerAction) => {
+    if (offer.job_inbox_item_id === null || offer.version === null) return
+    setError(null)
+    try {
+      const result = await act.mutateAsync({
+        itemId: offer.job_inbox_item_id,
+        action,
+        version: offer.version,
+      })
+      const previous = (offer.state ?? 'read') as InboxState
+      setLast(
+        undoPlan(action, previous).length
+          ? {
+              itemId: offer.job_inbox_item_id,
+              action,
+              previous,
+              version: result.item.version,
+              message: `${ACTION_MESSAGES[action]}: ${offer.title}`,
+            }
+          : null,
+      )
+    } catch (e) {
+      setLast(null)
+      setError(describeApiError(e).message)
+    }
+  }
+
+  const undo = async () => {
+    if (!last) return
+    setLast(null)
+    setError(null)
+    let version = last.version
+    try {
+      for (const action of undoPlan(last.action, last.previous)) {
+        const result = await act.mutateAsync({ itemId: last.itemId, action, version })
+        version = result.item.version
+      }
+    } catch (e) {
+      setError(describeApiError(e).message)
+    }
+  }
+
   const shown = offers.filter((o) => visible(o, on))
   const chip = (key: Toggle, label: string) => (
     <button
@@ -125,6 +268,19 @@ export function OfferList({
           Showing the {offers.length} best-fitting offers of this company.
         </p>
       )}
+      {error && (
+        <p role="alert" className="mb-2 text-sm text-bad">
+          {error}
+        </p>
+      )}
+      {last && (
+        <p role="status" className="mb-2 flex items-center gap-2 text-sm text-ink-2">
+          {last.message}
+          <Button size="sm" variant="outline" onClick={() => void undo()}>
+            Undo
+          </Button>
+        </p>
+      )}
       {shown.length === 0 ? (
         <p className="text-sm text-ink-2">
           {offers.length === 0
@@ -134,7 +290,12 @@ export function OfferList({
       ) : (
         <ul className="text-sm">
           {shown.map((o) => (
-            <Row key={o.job_opportunity_id} offer={o} />
+            <Row
+              key={o.job_opportunity_id}
+              offer={o}
+              busy={act.isPending}
+              onAction={(action) => void perform(o, action)}
+            />
           ))}
         </ul>
       )}

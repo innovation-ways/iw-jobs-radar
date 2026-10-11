@@ -45,6 +45,10 @@ class OfferRead(StrictModel):
     fit_band: FitBand | None
     state: str | None
     is_shortlisted: bool
+    # The owner's inbox item and its version, so the dossier can triage the offer through the inbox
+    # actions; both are null while the owner has no inbox item for the opportunity.
+    job_inbox_item_id: int | None
+    version: int | None
 
 
 class HiringWeekRead(StrictModel):

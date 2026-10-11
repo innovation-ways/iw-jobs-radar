@@ -556,6 +556,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/jobs/{job_posting_id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Write Summary
+         * @description Write (or return the stored) AI summary of a job with the local model.
+         *
+         *     The worker summarises new jobs by itself; this is how an older one gets its summary.
+         */
+        post: operations["write_summary_api_v1_jobs__job_posting_id__summary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/locations/search": {
         parameters: {
             query?: never;
@@ -2284,6 +2306,7 @@ export interface components {
             applied_at: string | null;
             /** Apply Url */
             apply_url: string | null;
+            brief: components["schemas"]["JobBriefRead"];
             /** Closed */
             closed: boolean;
             /** Company Name */
@@ -2684,6 +2707,20 @@ export interface components {
             search_terms?: string[];
         };
         /**
+         * JobBriefRead
+         * @description What is shown above the full description: the AI summary, the stack and the key facts.
+         */
+        JobBriefRead: {
+            /** Facts */
+            facts: string[];
+            /** Summary */
+            summary: string | null;
+            /** Summary Model */
+            summary_model: string | null;
+            /** Technologies */
+            technologies: components["schemas"]["TechnologyRead"][];
+        };
+        /**
          * LanguagePreferences
          * @description Languages the owner can work in.
          */
@@ -2748,6 +2785,8 @@ export interface components {
             fit_score: number | null;
             /** Is Shortlisted */
             is_shortlisted: boolean;
+            /** Job Inbox Item Id */
+            job_inbox_item_id: number | null;
             /** Job Opportunity Id */
             job_opportunity_id: number;
             /** Recommendation */
@@ -2758,6 +2797,8 @@ export interface components {
             state: string | null;
             /** Title */
             title: string;
+            /** Version */
+            version: number | null;
         };
         /**
          * OnsiteAreaRead
@@ -3661,6 +3702,16 @@ export interface components {
             work_arrangements: components["schemas"]["StanceEntry"][];
         };
         /**
+         * SummaryResponse
+         * @description A summary written (or already stored) for one job.
+         */
+        SummaryResponse: {
+            /** Created */
+            created: boolean;
+            /** Summary */
+            summary: string;
+        };
+        /**
          * TaxonomyGroup
          * @description The current terms of one vocabulary.
          */
@@ -3687,6 +3738,19 @@ export interface components {
             label: string;
             /** Term Key */
             term_key: string;
+        };
+        /**
+         * TechnologyRead
+         * @description One technology or system the posting asks for.
+         */
+        TechnologyRead: {
+            /**
+             * Importance
+             * @enum {string}
+             */
+            importance: "must" | "nice";
+            /** Name */
+            name: string;
         };
         /**
          * TrendReportRead
@@ -4802,6 +4866,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["EvaluationRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    write_summary_api_v1_jobs__job_posting_id__summary_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_posting_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SummaryResponse"];
                 };
             };
             /** @description Validation Error */

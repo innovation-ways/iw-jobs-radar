@@ -2,6 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { api } from '@/api/client'
 import { unwrap } from '@/api/errors'
 import type { components } from '@/api/schema'
+import type { OwnerAction } from '@/features/inbox/undo'
 
 type Schemas = components['schemas']
 export type CompanySummary = Schemas['CompanySummary']
@@ -138,4 +139,29 @@ export function useDossierActions(companyId: number) {
     onSuccess: store,
   })
   return { enrich, summarise, analyse, setWebsite, decide }
+}
+
+/**
+ * Triage of one offer from the dossier, through the same inbox action endpoint the Inbox uses (so
+ * the transitions, events and optimistic concurrency are identical). Whatever the outcome, the
+ * dossier, the company list counts and the inbox are refetched: a conflict means the screen is out
+ * of date, and ignoring or restoring an offer changes what the list counts.
+ */
+export function useOfferActions() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: { itemId: number; action: OwnerAction; version: number }) =>
+      unwrap(
+        api.POST('/api/v1/inbox/{job_inbox_item_id}/actions', {
+          params: { path: { job_inbox_item_id: input.itemId }, query: {} },
+          body: { action: input.action, expected_version: input.version },
+        }),
+      ),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['inbox'] }),
+        queryClient.invalidateQueries({ queryKey: ['dossier'] }),
+        queryClient.invalidateQueries({ queryKey: ['companies'] }),
+      ]),
+  })
 }

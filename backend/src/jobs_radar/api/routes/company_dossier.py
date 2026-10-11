@@ -90,6 +90,8 @@ def dossier_read(dossier: Dossier, warnings: list[str] | None = None) -> Company
                 ),
                 state=o.state,
                 is_shortlisted=o.is_shortlisted,
+                job_inbox_item_id=o.job_inbox_item_id,
+                version=o.version,
             )
             for o in dossier.offers
         ],

@@ -24,7 +24,7 @@ import {
   type TabKey,
 } from '@/features/inbox/queries'
 import { ShortcutsHelp } from '@/features/inbox/ShortcutsHelp'
-import { undoPlan, type InboxState, type OwnerAction } from '@/features/inbox/undo'
+import { ACTION_MESSAGES, undoPlan, type InboxState, type OwnerAction } from '@/features/inbox/undo'
 import { useShortcuts } from '@/features/inbox/useShortcuts'
 import { useIntents, useProfiles } from '@/features/profile/queries'
 import { cn } from '@/lib/utils'
@@ -34,17 +34,6 @@ const INTENT_KEY = 'jobs-radar:inbox-intent'
 const SORT_KEY = 'jobs-radar:inbox-sort'
 const TOAST_MS = 7000
 const SEARCH_DELAY_MS = 300
-
-const MESSAGES: Record<OwnerAction, string> = {
-  open: 'Opened',
-  mark_unread: 'Marked unread',
-  shortlist: 'Added to shortlist',
-  unshortlist: 'Removed from shortlist',
-  ignore: 'Ignored',
-  restore: 'Restored',
-  archive: 'Archived',
-  record_application: 'Marked as applied',
-}
 
 type Density = 'comfortable' | 'compact'
 
@@ -143,7 +132,7 @@ export function Inbox() {
         })
         const undo = undoPlan(action, item.state)
         setToast({
-          message: MESSAGES[action],
+          message: ACTION_MESSAGES[action],
           undo: undo.length
             ? {
                 itemId: item.job_inbox_item_id,

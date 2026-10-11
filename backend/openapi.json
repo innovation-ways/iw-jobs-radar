@@ -2598,6 +2598,9 @@
             ],
             "title": "Apply Url"
           },
+          "brief": {
+            "$ref": "#/components/schemas/JobBriefRead"
+          },
           "closed": {
             "title": "Closed",
             "type": "boolean"
@@ -2781,7 +2784,8 @@
           "application_url",
           "dimensions",
           "events",
-          "last_change"
+          "last_change",
+          "brief"
         ],
         "title": "InboxItemDetail",
         "type": "object"
@@ -3478,6 +3482,56 @@
         "title": "JobBoardFilters",
         "type": "object"
       },
+      "JobBriefRead": {
+        "additionalProperties": false,
+        "description": "What is shown above the full description: the AI summary, the stack and the key facts.",
+        "properties": {
+          "facts": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Facts",
+            "type": "array"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "summary_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary Model"
+          },
+          "technologies": {
+            "items": {
+              "$ref": "#/components/schemas/TechnologyRead"
+            },
+            "title": "Technologies",
+            "type": "array"
+          }
+        },
+        "required": [
+          "summary",
+          "summary_model",
+          "technologies",
+          "facts"
+        ],
+        "title": "JobBriefRead",
+        "type": "object"
+      },
       "LanguagePreferences": {
         "additionalProperties": false,
         "description": "Languages the owner can work in.",
@@ -3617,6 +3671,17 @@
             "title": "Is Shortlisted",
             "type": "boolean"
           },
+          "job_inbox_item_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Job Inbox Item Id"
+          },
           "job_opportunity_id": {
             "title": "Job Opportunity Id",
             "type": "integer"
@@ -3650,6 +3715,17 @@
           "title": {
             "title": "Title",
             "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
           }
         },
         "required": [
@@ -3662,7 +3738,9 @@
           "recommendation",
           "fit_band",
           "state",
-          "is_shortlisted"
+          "is_shortlisted",
+          "job_inbox_item_id",
+          "version"
         ],
         "title": "OfferRead",
         "type": "object"
@@ -6022,6 +6100,26 @@
         "title": "Stances",
         "type": "object"
       },
+      "SummaryResponse": {
+        "additionalProperties": false,
+        "description": "A summary written (or already stored) for one job.",
+        "properties": {
+          "created": {
+            "title": "Created",
+            "type": "boolean"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary",
+          "created"
+        ],
+        "title": "SummaryResponse",
+        "type": "object"
+      },
       "TaxonomyGroup": {
         "additionalProperties": false,
         "description": "The current terms of one vocabulary.",
@@ -6081,6 +6179,30 @@
           "label"
         ],
         "title": "TaxonomyTermRead",
+        "type": "object"
+      },
+      "TechnologyRead": {
+        "additionalProperties": false,
+        "description": "One technology or system the posting asks for.",
+        "properties": {
+          "importance": {
+            "enum": [
+              "must",
+              "nice"
+            ],
+            "title": "Importance",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "importance"
+        ],
+        "title": "TechnologyRead",
         "type": "object"
       },
       "TrendReportRead": {
@@ -8238,6 +8360,49 @@
         "summary": "Evaluate Job",
         "tags": [
           "evaluations"
+        ]
+      }
+    },
+    "/api/v1/jobs/{job_posting_id}/summary": {
+      "post": {
+        "description": "Write (or return the stored) AI summary of a job with the local model.\n\nThe worker summarises new jobs by itself; this is how an older one gets its summary.",
+        "operationId": "write_summary_api_v1_jobs__job_posting_id__summary_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_posting_id",
+            "required": true,
+            "schema": {
+              "title": "Job Posting Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Write Summary",
+        "tags": [
+          "summaries"
         ]
       }
     },

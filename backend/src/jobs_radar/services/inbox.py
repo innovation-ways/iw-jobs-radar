@@ -35,6 +35,7 @@ from jobs_radar.repositories.inbox import (
     PostingRow,
     RawRow,
 )
+from jobs_radar.services.job_brief import JobBrief, JobBriefService
 
 _USER_ACTIONS = frozenset(InboxAction) - {InboxAction.SURFACE_NEW, InboxAction.MATERIAL_UPDATE}
 _EVENT_LIMIT = 25
@@ -102,6 +103,7 @@ class InboxDetail:
     last_change: JobChangeEvent | None
     note: str | None = None
     extra: dict[str, Any] = field(default_factory=dict)
+    brief: JobBrief = field(default_factory=JobBrief)
 
 
 @dataclass(frozen=True)
@@ -371,6 +373,7 @@ class InboxService:
             events=await self._queries.events(job_inbox_item_id, _EVENT_LIMIT),
             last_change=await self._queries.latest_change(row.posting.job_posting_id),
             note=row.item.note,
+            brief=await JobBriefService(self._session).for_posting(row.posting.job_posting_id),
         )
 
 

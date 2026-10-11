@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from tests.factories import make_posting, make_source
 from tests.inbox_scene import T0, Entry, Scene, scene
 
-from jobs_radar.db.models import JobOpportunityLink
+from jobs_radar.db.models import JobOpportunityLink, JobSnapshot, JobSummary
 from jobs_radar.domain.enums import InboxState, Recommendation, SourceType
 
 pytestmark = pytest.mark.integration
@@ -221,6 +221,59 @@ async def test_the_detail_has_the_text_the_evidence_the_sites_and_the_history(
     assert [e["action"] for e in detail["events"]] == ["open"]
     assert detail["read_at"] is not None and detail["last_change"] is None
     assert (await client.get(f"{API}/inbox/987654321")).status_code == 404
+
+
+async def test_the_detail_carries_the_briefing_with_the_default_when_there_is_no_summary(
+    client: httpx.AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    s, (entry,) = await committed(session_factory, lambda s: _one(s))
+    detail = (
+        await client.get(
+            f"{API}/inbox/{entry.item.job_inbox_item_id}",
+            params={"search_intent_id": s.intent.search_intent_id},
+        )
+    ).json()
+    assert detail["brief"] == {
+        "summary": None,
+        "summary_model": None,
+        "technologies": [],
+        "facts": [],
+    }
+
+
+async def test_the_detail_shows_the_stored_summary(
+    client: httpx.AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    async def build(s: Scene) -> list[Entry]:
+        entry = (await _one(s))[0]
+        snapshot_id = (
+            await s.session.execute(
+                select(JobSnapshot.job_snapshot_id).where(
+                    JobSnapshot.job_posting_id == entry.posting.job_posting_id
+                )
+            )
+        ).scalar_one()
+        s.session.add(
+            JobSummary(
+                job_snapshot_id=snapshot_id,
+                provider="fixture",
+                model="qwen3:8b",
+                prompt_version="summary-v1",
+                status="succeeded",
+                summary_text="Acme is hiring a role.",
+            )
+        )
+        return [entry]
+
+    s, (entry,) = await committed(session_factory, build)
+    detail = (
+        await client.get(
+            f"{API}/inbox/{entry.item.job_inbox_item_id}",
+            params={"search_intent_id": s.intent.search_intent_id},
+        )
+    ).json()
+    assert detail["brief"]["summary"] == "Acme is hiring a role."
+    assert detail["brief"]["summary_model"] == "qwen3:8b"
 
 
 async def _one(s: Scene) -> list[Entry]:

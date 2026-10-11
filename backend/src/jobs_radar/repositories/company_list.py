@@ -250,6 +250,8 @@ class OfferRow:
     recommendation: str | None
     state: str | None
     is_shortlisted: bool
+    job_inbox_item_id: int | None
+    version: int | None
 
     @property
     def closed(self) -> bool:
@@ -300,6 +302,8 @@ class CompanyDossierQueries:
                 evaluation.recommendation,
                 JobInboxItem.state,
                 func.coalesce(JobInboxItem.is_shortlisted, False),
+                JobInboxItem.job_inbox_item_id,
+                JobInboxItem.version,
             )
             .select_from(JobOpportunity)
             .join(JobPosting, JobPosting.job_posting_id == JobOpportunity.primary_job_posting_id)

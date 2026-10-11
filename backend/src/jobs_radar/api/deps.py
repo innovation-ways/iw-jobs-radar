@@ -34,6 +34,7 @@ from jobs_radar.services.proposals import ProposalService
 from jobs_radar.services.readiness import ReadinessService
 from jobs_radar.services.schedule import ScheduleService
 from jobs_radar.services.sources import SourceService
+from jobs_radar.services.summary_assess import SummaryAssessService
 from jobs_radar.services.taxonomy import TaxonomyService
 from jobs_radar.services.trends import TrendService
 
@@ -249,3 +250,13 @@ def get_direction_assess_service(
     """Build the service that assesses one job against the owner's career directions."""
     settings: Settings = request.app.state.settings
     return DirectionAssessService(session, ai, max_chars=settings.extraction_max_chars)
+
+
+def get_summary_assess_service(
+    request: Request,
+    session: Annotated[AsyncSession, Depends(get_session)],
+    ai: Annotated[AiSettingsService, Depends(get_ai_settings_service)],
+) -> SummaryAssessService:
+    """Build the service that writes the summary of one job with the local jobs model."""
+    settings: Settings = request.app.state.settings
+    return SummaryAssessService(session, ai, max_chars=settings.extraction_max_chars)

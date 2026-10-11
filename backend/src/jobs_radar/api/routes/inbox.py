@@ -34,6 +34,7 @@ from jobs_radar.schemas.inbox import (
     SignalRead,
     SourceRef,
 )
+from jobs_radar.schemas.job_brief import JobBriefRead, TechnologyRead
 from jobs_radar.services.dedup import DedupService
 from jobs_radar.services.evaluation import EvaluationRecord
 from jobs_radar.services.inbox import InboxFilters, InboxRowView, InboxService
@@ -202,6 +203,12 @@ async def get_inbox_item(
         application_url=item.application_url,
         dimensions=dimensions,
         events=[_event(e) for e in detail.events],
+        brief=JobBriefRead(
+            summary=detail.brief.summary,
+            summary_model=detail.brief.summary_model,
+            technologies=[TechnologyRead.model_validate(t) for t in detail.brief.technologies],
+            facts=detail.brief.facts,
+        ),
         last_change=(
             ChangeRead(changed_fields=list(change.changed_fields), created_at=change.created_at)
             if change

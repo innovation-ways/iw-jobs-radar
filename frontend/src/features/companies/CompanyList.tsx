@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import type { CompanySummary } from './queries'
 
@@ -107,8 +108,59 @@ function Row({
 }
 
 /**
- * The companies as a listbox, followed ones in their own group on top. Each row shows the counted
+ * One collapsible group of companies. The header is a button (`aria-expanded`) that stays pinned
+ * at the top of the scrolling list while its rows are on screen, so the owner can fold a long
+ * group from anywhere in it. The count stays visible when the group is folded.
+ */
+function Group({
+  title,
+  companies,
+  selectedId,
+  onSelect,
+  onToggleFollow,
+}: {
+  title: string
+  companies: CompanySummary[]
+  selectedId: number | null
+  onSelect: (id: number) => void
+  onToggleFollow: (company: CompanySummary) => void
+}) {
+  const [open, setOpen] = useState(true)
+  return (
+    <section>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+        className="sticky top-0 z-10 flex w-full items-center gap-1.5 border-b border-line bg-bg px-3 py-1.5 text-left text-[11px] font-semibold tracking-wider text-ink-2 uppercase hover:bg-surface-2"
+      >
+        <span aria-hidden="true" className="w-3 text-ink-3">
+          {open ? '▾' : '▸'}
+        </span>
+        <span>{title}</span>
+        <span className="font-normal text-ink-3 tabular-nums">({companies.length})</span>
+      </button>
+      {open && (
+        <div role="listbox" aria-label={title} className="flex flex-col gap-1.5 p-2">
+          {companies.map((c) => (
+            <Row
+              key={c.company_id}
+              company={c}
+              selected={c.company_id === selectedId}
+              onSelect={() => onSelect(c.company_id)}
+              onToggleFollow={() => onToggleFollow(c)}
+            />
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+/**
+ * The companies in two collapsible groups, followed ones on top. Each row shows the counted
  * offers (open, recommended), the best fit and whether the company still needs identifying.
+ * With no followed company only the "All companies" group is shown.
  */
 export function CompanyList({
   companies,
@@ -123,38 +175,11 @@ export function CompanyList({
 }) {
   const followed = companies.filter((c) => c.is_followed)
   const others = companies.filter((c) => !c.is_followed)
-  const rows = (list: CompanySummary[]) =>
-    list.map((c) => (
-      <Row
-        key={c.company_id}
-        company={c}
-        selected={c.company_id === selectedId}
-        onSelect={() => onSelect(c.company_id)}
-        onToggleFollow={() => onToggleFollow(c)}
-      />
-    ))
+  const shared = { selectedId, onSelect, onToggleFollow }
   return (
-    <div role="listbox" aria-label="Companies" className="flex flex-col gap-1.5 p-2">
-      {followed.length > 0 && (
-        <>
-          <div
-            role="presentation"
-            className="px-1 pt-1 text-[11px] font-semibold tracking-wider text-ink-3 uppercase"
-          >
-            Followed
-          </div>
-          {rows(followed)}
-        </>
-      )}
-      {followed.length > 0 && others.length > 0 && (
-        <div
-          role="presentation"
-          className="px-1 pt-2 text-[11px] font-semibold tracking-wider text-ink-3 uppercase"
-        >
-          All companies
-        </div>
-      )}
-      {rows(others)}
+    <div>
+      {followed.length > 0 && <Group title="Followed" companies={followed} {...shared} />}
+      {others.length > 0 && <Group title="All companies" companies={others} {...shared} />}
     </div>
   )
 }

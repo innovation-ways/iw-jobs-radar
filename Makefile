@@ -100,6 +100,7 @@ fe-coverage: ## Frontend tests with a coverage summary
 ##@ End-to-end (real browser; needs the app running: make up)
 
 test-e2e: ## Browser smoke tests against the running app (Playwright)
+	@./jobs-radar.sh --health >/dev/null 2>&1 || { echo "The stack is not healthy: run 'make up' (or ./jobs-radar.sh --quick-start) first."; exit 1; }
 	$(PNPM) e2e
 
 ##@ Quality gates
@@ -152,8 +153,8 @@ quality-frontend: fe-lint fe-format-check fe-typecheck fe-license-check ## All f
 check: quality quality-frontend test test-frontend ## Everything fast: quality gates + all tests (needs Docker)
 	@echo "All checks passed."
 
-check-all: check security-sast secret-scan security-audit ## check + SAST + secret scan + dependency audit (needs network and Docker)
-	@echo "Everything passed (run 'make test-e2e' too when the app is running)."
+check-all: check security-sast secret-scan security-audit test-e2e ## check + SAST + secret scan + dependency audit + e2e (needs network, Docker and the app running)
+	@echo "Everything passed."
 
 ##@ Security (needs network / Docker)
 

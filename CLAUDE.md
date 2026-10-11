@@ -80,7 +80,7 @@ make backup / restore-drill / restore   # database + key backups in backups/ (gi
 make config-check / security-audit / smoke   # exposure and secrets; dependency audit; opt-in real-service tests
 make docs-schema                  # regenerate docs/database/schema.md (data dictionary; a test fails if stale)
 make check                        # quality + quality-frontend + test + test-frontend
-make check-all                    # check + security-sast + secret-scan
+make check-all                    # check + security-sast + secret-scan + security-audit + test-e2e (the stack must be running)
 make clean                        # delete caches and generated reports
 ```
 

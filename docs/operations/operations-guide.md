@@ -34,8 +34,9 @@ Everything is managed by `./jobs-radar.sh` (menu) or its flags; `make help` list
 
 ## Checks before you trust a change
 
-`make check` (quality gates and tests), `make check-all` (adds static analysis, secret scan and the
-dependency audit; needs network and Docker), `make test-e2e` (needs the app running),
+`make check` (quality gates and tests), `make check-all` (adds static analysis, secret scan, the
+dependency audit and `make test-e2e`; needs network, Docker and the app running; the e2e step stops
+with a message if the stack is not healthy, and CI never runs it),
 `make config-check` (exposure and secrets), `make smoke` (real services, opt-in).
 
 ## Exposure

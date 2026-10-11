@@ -544,58 +544,7 @@ describe('Inbox screen', () => {
       ).toBeInTheDocument()
     })
 
-    it('keeps the job selected after opening the original, even though it leaves the list', async () => {
-      const everything = [...items]
-      const base = get.getMockImplementation()!
-      // The detail endpoint still knows every job; only the "To review" list drops the opened one.
-      get.mockImplementation(
-        (path: string, options?: { params?: { path?: Record<string, number> } }) =>
-          path === '/api/v1/inbox/{job_inbox_item_id}'
-            ? Promise.resolve({
-                data: makeDetail(
-                  everything.find(
-                    (i) => i.job_inbox_item_id === options?.params?.path?.job_inbox_item_id,
-                  )!,
-                ),
-              })
-            : base(path, options),
-      )
-      post.mockImplementation(() => {
-        items = items.filter((i) => i.job_inbox_item_id !== 2)
-        return Promise.resolve(acted({ ...everything[1], version: 2 }, { state: 'read' }))
-      })
-      renderInbox()
-      await userEvent.click(await screen.findByRole('option', { name: /Platform Engineer/ }))
-      const detail = await screen.findByRole('article', { name: /Platform Engineer/ })
-      const link = within(detail).getByRole('link', { name: /open original/i })
-      link.addEventListener('click', (event) => event.preventDefault())
-      await userEvent.click(link)
-      await waitFor(() => expect(post).toHaveBeenCalledTimes(1))
-      // Wait for the list to refresh without the opened job, then check it is still the one shown.
-      await waitFor(() =>
-        expect(get.mock.calls.filter(([path]) => path === '/api/v1/inbox').length).toBeGreaterThan(
-          1,
-        ),
-      )
-      expect(row(/Platform Engineer/)).toHaveAttribute('aria-selected', 'true')
-      expect(screen.getByRole('article', { name: /Platform Engineer/ })).toBeInTheDocument()
-
-      // Ignoring now acts on the opened job, with the version the open returned (acted() adds one).
-      post.mockResolvedValue(acted({ ...everything[1], version: 3 }, { state: 'ignored' }))
-      await userEvent.click(
-        within(screen.getByRole('article', { name: /Platform Engineer/ })).getByRole('button', {
-          name: /^ignore/i,
-        }),
-      )
-      expect(post.mock.calls.at(-1)![0]).toBe('/api/v1/inbox/{job_inbox_item_id}/actions')
-      expect(post.mock.calls.at(-1)![1]).toMatchObject({
-        params: { path: { job_inbox_item_id: 2 } },
-        body: { action: 'ignore', expected_version: 3 },
-      })
-    })
-
-    it('opens the original and marks the job as read', async () => {
-      post.mockResolvedValue(acted(items[0], { state: 'read' }))
+    it('opens the original without changing the job, so it stays in the list', async () => {
       renderInbox()
       const detail = await screen.findByRole('article', { name: /Applied AI Architect/ })
       const link = within(detail).getByRole('link', { name: /open original/i })
@@ -604,7 +553,8 @@ describe('Inbox screen', () => {
       expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
       link.addEventListener('click', (event) => event.preventDefault()) // do not navigate in jsdom
       await userEvent.click(link)
-      await waitFor(() => expect(post.mock.calls[0][1].body.action).toBe('open'))
+      // Only an explicit button (ignore, archive, applied...) may take a job out of "To review".
+      expect(post).not.toHaveBeenCalled()
     })
 
     it('tells the owner when the job changed elsewhere (409) and refreshes', async () => {

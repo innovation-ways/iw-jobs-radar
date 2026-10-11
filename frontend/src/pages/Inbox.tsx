@@ -78,13 +78,7 @@ export function Inbox() {
     fit: parseFit(searchParams.get('fit')),
     sort: parseSort(readStored(SORT_KEY)),
   }))
-  const [selectedId, setSelectedIdState] = useState<number | null>(null)
-  const [pinned, setPinned] = useState<{ item: InboxItem; index: number } | null>(null)
-  /** Select a job; this also releases the job kept in the list after "Open original". */
-  const setSelectedId = useCallback((id: number | null) => {
-    setSelectedIdState(id)
-    setPinned(null)
-  }, [])
+  const [selectedId, setSelectedId] = useState<number | null>(null)
   const [helpOpen, setHelpOpen] = useState(false)
   const [toast, setToast] = useState<{ message: string; undo: LastAction | null } | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
@@ -115,15 +109,7 @@ export function Inbox() {
     options,
     enabled: !waitingForIntents,
   })
-  // Opening the original marks the job as opened, which takes it out of "Unread". Keep it in the
-  // list (at its old position) until the owner picks another job, so they can still decide on it.
-  const items = useMemo(() => {
-    if (!pinned || list.items.some((i) => i.job_inbox_item_id === pinned.item.job_inbox_item_id))
-      return list.items
-    const copy = [...list.items]
-    copy.splice(Math.min(pinned.index, copy.length), 0, pinned.item)
-    return copy
-  }, [list.items, pinned])
+  const items = list.items
   const selected = items.find((i) => i.job_inbox_item_id === selectedId) ?? items[0] ?? null
   const detail = useInboxDetail(selected?.job_inbox_item_id ?? null, intentId)
   const { act, decideLink } = useInboxActions(intentId)
@@ -144,18 +130,6 @@ export function Inbox() {
           action,
           version: item.version,
         })
-        // Only "open" pins; any other action ends the pin so the item leaves the list normally.
-        setPinned(
-          action === 'open'
-            ? {
-                item: result.item,
-                index: Math.max(
-                  0,
-                  items.findIndex((i) => i.job_inbox_item_id === item.job_inbox_item_id),
-                ),
-              }
-            : null,
-        )
         const undo = undoPlan(action, item.state)
         setToast({
           message: ACTION_MESSAGES[action],
@@ -172,7 +146,7 @@ export function Inbox() {
         setActionError(error instanceof Error ? error.message : 'The action failed.')
       }
     },
-    [act, items],
+    [act],
   )
 
   const undo = useCallback(async () => {
@@ -198,7 +172,7 @@ export function Inbox() {
       const next = items[Math.min(items.length - 1, Math.max(0, index + delta))]
       setSelectedId(next.job_inbox_item_id)
     },
-    [items, selected, setSelectedId],
+    [items, selected],
   )
 
   const on = useCallback(
@@ -254,10 +228,7 @@ export function Inbox() {
               role="tab"
               type="button"
               aria-selected={tab === info.key}
-              onClick={() => {
-                setTab(info.key)
-                setPinned(null)
-              }}
+              onClick={() => setTab(info.key)}
               className={cn(
                 'flex items-center gap-1.5 border-b-2 px-2.5 py-2 whitespace-nowrap',
                 tab === info.key
@@ -461,10 +432,6 @@ export function Inbox() {
             detail={detail.data}
             busy={act.isPending}
             onAction={(action) => void perform(selected, action)}
-            onOpenOriginal={() => {
-              if (selected.state === 'unread' || selected.state === 'updated_unread')
-                void perform(selected, 'open')
-            }}
             onLinkDecision={(linkId, decision) => decideLink.mutate({ linkId, decision })}
           />
         )}

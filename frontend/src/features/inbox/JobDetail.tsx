@@ -13,11 +13,10 @@ interface Props {
   detail: InboxDetail
   busy: boolean
   onAction: (action: OwnerAction) => void
-  onOpenOriginal: () => void
   onLinkDecision: (linkId: number, decision: 'confirm' | 'reject') => void
 }
 
-function ActionBar({ detail, busy, onAction, onOpenOriginal }: Omit<Props, 'onLinkDecision'>) {
+function ActionBar({ detail, busy, onAction }: Omit<Props, 'onLinkDecision'>) {
   const settled =
     detail.state === 'ignored' || detail.state === 'archived' || detail.state === 'applied'
   const star = (
@@ -32,7 +31,8 @@ function ActionBar({ detail, busy, onAction, onOpenOriginal }: Omit<Props, 'onLi
   )
   const original = detail.apply_url && (
     <Button asChild variant={settled ? 'outline' : 'default'}>
-      <a href={detail.apply_url} target="_blank" rel="noopener noreferrer" onClick={onOpenOriginal}>
+      {/* Opening the page does not change the job: only a button moves it out of "To review". */}
+      <a href={detail.apply_url} target="_blank" rel="noopener noreferrer">
         Open original <ExternalLink />
       </a>
     </Button>
@@ -72,7 +72,7 @@ function ActionBar({ detail, busy, onAction, onOpenOriginal }: Omit<Props, 'onLi
  * The briefing (AI summary, technologies, key facts) comes first so the job can be understood
  * without opening the original (ADR-059).
  */
-export function JobDetail({ detail, busy, onAction, onOpenOriginal, onLinkDecision }: Props) {
+export function JobDetail({ detail, busy, onAction, onLinkDecision }: Props) {
   const evaluation = detail.evaluation
   const band = evaluation ? bandOf(evaluation.fit_band) : NOT_EVALUATED
   const possible = detail.sources.filter((s) => s.link_state === 'possible')
@@ -245,7 +245,7 @@ export function JobDetail({ detail, busy, onAction, onOpenOriginal, onLinkDecisi
         </details>
       </section>
 
-      <ActionBar detail={detail} busy={busy} onAction={onAction} onOpenOriginal={onOpenOriginal} />
+      <ActionBar detail={detail} busy={busy} onAction={onAction} />
     </article>
   )
 }

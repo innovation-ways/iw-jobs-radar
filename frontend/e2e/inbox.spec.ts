@@ -298,3 +298,17 @@ test('density is remembered after a reload', async ({ page }) => {
   await page.reload()
   await expect(page.getByTestId('inbox-root')).toHaveAttribute('data-density', 'compact')
 })
+
+test('opening the original leaves the job in To review until a button moves it', async ({
+  page,
+}) => {
+  await page.goto('/inbox')
+  const first = page.getByRole('option', { name: /Senior AI Solutions Engineer/ })
+  const detail = page.getByRole('article', { name: /Senior AI Solutions Engineer/ })
+  const link = detail.getByRole('link', { name: /open original/i })
+  await link.evaluate((a) => a.addEventListener('click', (e) => e.preventDefault())) // stay on the page
+  await link.click()
+  await page.getByRole('option', { name: /Platform Engineer/ }).click()
+  await expect(page.getByRole('article', { name: /Platform Engineer/ })).toBeVisible()
+  await expect(first).toBeVisible()
+})

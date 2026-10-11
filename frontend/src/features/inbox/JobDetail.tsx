@@ -51,6 +51,11 @@ function ActionBar({ detail, busy, onAction }: Omit<Props, 'onLinkDecision'>) {
       {star}
       {!settled && (
         <>
+          {(detail.state === 'unread' || detail.state === 'updated_unread') && (
+            <Button variant="outline" disabled={busy} onClick={() => onAction('open')}>
+              Mark as read
+            </Button>
+          )}
           <Button variant="outline" disabled={busy} onClick={() => onAction('ignore')}>
             Ignore <kbd className="text-[11px] opacity-70">x</kbd>
           </Button>

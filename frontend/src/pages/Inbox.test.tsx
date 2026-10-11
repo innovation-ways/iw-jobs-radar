@@ -544,6 +544,23 @@ describe('Inbox screen', () => {
       ).toBeInTheDocument()
     })
 
+    it('marks an unread job as read with a button', async () => {
+      post.mockResolvedValueOnce(acted(items[0], { state: 'read' }))
+      renderInbox()
+      const detail = await screen.findByRole('article', { name: /Applied AI Architect/ })
+      await userEvent.click(within(detail).getByRole('button', { name: /mark as read/i }))
+      await waitFor(() => expect(post).toHaveBeenCalledTimes(1))
+      expect(post.mock.calls[0][1].body).toEqual({ action: 'open', expected_version: 1 })
+      expect(await screen.findByRole('status')).toHaveTextContent(/marked as read/i)
+    })
+
+    it('offers no mark-as-read button for a job that is already read', async () => {
+      items = [makeItem({ job_inbox_item_id: 1, title: 'Seen job', state: 'read' })]
+      renderInbox()
+      const detail = await screen.findByRole('article', { name: /Seen job/ })
+      expect(within(detail).queryByRole('button', { name: /mark as read/i })).toBeNull()
+    })
+
     it('opens the original without changing the job, so it stays in the list', async () => {
       renderInbox()
       const detail = await screen.findByRole('article', { name: /Applied AI Architect/ })

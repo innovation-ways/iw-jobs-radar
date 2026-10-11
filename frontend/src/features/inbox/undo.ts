@@ -27,7 +27,7 @@ export function undoPlan(action: OwnerAction, previous: InboxState): OwnerAction
 
 /** What the owner is told after each action (the inbox toast and the company offer list). */
 export const ACTION_MESSAGES: Record<OwnerAction, string> = {
-  open: 'Opened',
+  open: 'Marked as read',
   mark_unread: 'Marked unread',
   shortlist: 'Added to shortlist',
   unshortlist: 'Removed from shortlist',

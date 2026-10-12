@@ -156,6 +156,21 @@ Companies an owner follows; unfollowing deletes the row.
 - foreign key `owner_id` → `owner.owner_id`
 - unique `uq_company_follow_owner_id_company_id` (owner_id, company_id)
 
+## company_ignore
+
+Companies an owner ignores; undoing deletes the row.
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `company_ignore_id` | BIGINT | no | Surrogate primary key of the ignore. |
+| `owner_id` | BIGINT | no | Owner who ignores. |
+| `company_id` | BIGINT | no | Company that is ignored. |
+| `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
+
+- foreign key `company_id` → `company.company_id`
+- foreign key `owner_id` → `owner.owner_id`
+- unique `uq_company_ignore_owner_id_company_id` (owner_id, company_id)
+
 ## direction_judgement
 
 Model judgements of a job against the owner's career directions (ADR-057).
@@ -594,13 +609,13 @@ AI provider connections; at most one in use for CV import and one for jobs.
 
 ## schedule_setting
 
-Daily collection time, time zone and inbox and company view limits, one row per owner.
+Daily collection times, time zone and inbox and company view limits, one row per owner.
 
 | Column | Type | Nullable | Description |
 |---|---|---|---|
 | `schedule_setting_id` | BIGINT | no | Surrogate primary key of the setting. |
 | `owner_id` | BIGINT | no | Owner of the schedule. |
-| `run_time_local` | TIME | no | Local wall-clock time of the daily run. |
+| `run_times_local` | ARRAY | no | Local wall-clock times of the daily runs, sorted, one to twelve (ADR-062). |
 | `timezone` | VARCHAR(64) | no | IANA time zone name, for example Europe/Lisbon. |
 | `enabled` | BOOLEAN | no | Whether the daily run is active. |
 | `company_recency_days` | INTEGER | no | Offers first seen earlier than this many days ago are left out of the company views (ADR-053). |
@@ -610,6 +625,7 @@ Daily collection time, time zone and inbox and company view limits, one row per 
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
 
 - check `ck_schedule_setting_company_recency_days_in_range`: `company_recency_days BETWEEN 1 AND 365`
+- check `ck_schedule_setting_run_times_local_in_range`: `cardinality(run_times_local) BETWEEN 1 AND 12`
 - check `ck_schedule_setting_set_aside_below_fit_in_range`: `set_aside_below_fit BETWEEN 0 AND 100`
 - foreign key `owner_id` → `owner.owner_id`
 - unique `uq_schedule_setting_owner_id` (owner_id)

@@ -5,9 +5,22 @@ import { useSaveSchedule, useSchedule, type ScheduleRead } from './queries'
 const ZONES: string[] =
   typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : []
 
+const MAX_TIMES = 12
+
+/** The next hour that is not taken yet, as the suggestion for a new run time. */
+function suggestTime(taken: string[]): string {
+  const latest = taken.filter(Boolean).sort().at(-1) ?? '08:00'
+  for (let step = 1; step <= 24; step += 1) {
+    const hour = (Number(latest.slice(0, 2)) + step) % 24
+    const candidate = `${String(hour).padStart(2, '0')}:00`
+    if (!taken.includes(candidate)) return candidate
+  }
+  return '12:00'
+}
+
 function Form({ schedule }: { schedule: ScheduleRead }) {
   const save = useSaveSchedule()
-  const [time, setTime] = useState(schedule.run_time_local)
+  const [times, setTimes] = useState<string[]>(schedule.run_times_local)
   const [zone, setZone] = useState(schedule.timezone)
   const [enabled, setEnabled] = useState(schedule.enabled)
   const [recency, setRecency] = useState(String(schedule.company_recency_days))
@@ -17,8 +30,14 @@ function Form({ schedule }: { schedule: ScheduleRead }) {
   const floor = Number(floorText)
   const validFloor =
     floorText.trim() !== '' && Number.isInteger(floor) && floor >= 0 && floor <= 100
+  const complete = times.every((value) => value !== '')
+  const repeated = new Set(times).size !== times.length
+  const validTimes = complete && !repeated
+  // The server keeps the times sorted, so compare and send them that way.
+  const sortedTimes = [...times].sort()
+  const timesChanged = sortedTimes.join() !== schedule.run_times_local.join()
   const dirty =
-    time !== schedule.run_time_local ||
+    (validTimes && timesChanged) ||
     zone !== schedule.timezone ||
     enabled !== schedule.enabled ||
     (validDays && days !== schedule.company_recency_days) ||
@@ -31,7 +50,7 @@ function Form({ schedule }: { schedule: ScheduleRead }) {
       onSubmit={(event) => {
         event.preventDefault()
         save.mutate({
-          run_time_local: time,
+          run_times_local: validTimes ? sortedTimes : schedule.run_times_local,
           timezone: zone,
           enabled,
           company_recency_days: validDays ? days : schedule.company_recency_days,
@@ -48,31 +67,61 @@ function Form({ schedule }: { schedule: ScheduleRead }) {
         />
         Run every day
       </label>
-      <div className="grid grid-cols-2 gap-3">
-        <label className="flex flex-col gap-1">
-          Run time
-          <input
-            type="time"
-            value={time}
-            onChange={(event) => setTime(event.target.value)}
-            className="rounded-md border border-line bg-surface px-2 py-1.5"
-          />
-        </label>
-        <label className="flex flex-col gap-1">
-          Time zone
-          <input
-            list="time-zones"
-            value={zone}
-            onChange={(event) => setZone(event.target.value)}
-            className="rounded-md border border-line bg-surface px-2 py-1.5"
-          />
-          <datalist id="time-zones">
-            {ZONES.map((name) => (
-              <option key={name} value={name} />
-            ))}
-          </datalist>
-        </label>
-      </div>
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-1">Run times (each day, in the time zone below)</legend>
+        <ul className="flex flex-col gap-2">
+          {times.map((value, index) => (
+            <li key={index} className="flex items-center gap-2">
+              <input
+                type="time"
+                aria-label={`Run time ${index + 1}`}
+                value={value}
+                onChange={(event) =>
+                  setTimes(times.map((item, at) => (at === index ? event.target.value : item)))
+                }
+                className="rounded-md border border-line bg-surface px-2 py-1.5"
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                aria-label={`Remove run time ${index + 1}`}
+                disabled={times.length === 1}
+                onClick={() => setTimes(times.filter((_, at) => at !== index))}
+              >
+                Remove
+              </Button>
+            </li>
+          ))}
+        </ul>
+        <div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={times.length >= MAX_TIMES}
+            onClick={() => setTimes([...times, suggestTime(times)])}
+          >
+            Add a run time
+          </Button>
+        </div>
+        {!complete && <span className="text-bad">Fill in every run time.</span>}
+        {complete && repeated && <span className="text-bad">Use each run time only once.</span>}
+      </fieldset>
+      <label className="flex flex-col gap-1">
+        Time zone
+        <input
+          list="time-zones"
+          value={zone}
+          onChange={(event) => setZone(event.target.value)}
+          className="rounded-md border border-line bg-surface px-2 py-1.5"
+        />
+        <datalist id="time-zones">
+          {ZONES.map((name) => (
+            <option key={name} value={name} />
+          ))}
+        </datalist>
+      </label>
       <label className="flex flex-col gap-1">
         Company views: count offers first seen in the last (days)
         <input
@@ -113,7 +162,7 @@ function Form({ schedule }: { schedule: ScheduleRead }) {
         <Button
           type="submit"
           size="sm"
-          disabled={!dirty || !validDays || !validFloor || save.isPending}
+          disabled={!dirty || !validTimes || !validDays || !validFloor || save.isPending}
         >
           Save schedule
         </Button>
@@ -123,7 +172,7 @@ function Form({ schedule }: { schedule: ScheduleRead }) {
 }
 
 /**
- * Daily schedule: run time, IANA time zone and an on/off switch. The worker creates the run; this
+ * Daily schedule: one or more run times, IANA time zone and an on/off switch. The worker creates the run; this
  * card only edits the setting. The `key` re-initialises the form when the saved version changes.
  */
 export function ScheduleCard() {

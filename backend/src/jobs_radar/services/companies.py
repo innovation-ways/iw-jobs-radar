@@ -17,7 +17,7 @@ from jobs_radar.db.models import (
     SourceConfiguration,
 )
 from jobs_radar.domain.domains import is_job_board_host, registered_domain
-from jobs_radar.repositories.companies import CompanyFollowRepository
+from jobs_radar.repositories.companies import CompanyFollowRepository, CompanyIgnoreRepository
 from jobs_radar.repositories.company_list import (
     CompanyDossierQueries,
     CompanyListQueries,
@@ -26,6 +26,7 @@ from jobs_radar.repositories.company_list import (
     Sort,
 )
 from jobs_radar.repositories.schedule import ScheduleRepository
+from jobs_radar.services.inbox import InboxService
 
 Clock = Callable[[], datetime]
 # Default minimum fit for an offer to count as relevant (document 13, section 11.2).
@@ -70,6 +71,7 @@ class Dossier:
     boards: list[SourceConfiguration]
     stale: bool
     is_followed: bool
+    is_ignored: bool
     offers_truncated: bool
 
 
@@ -85,6 +87,7 @@ class CompanyService:
         self._queries = CompanyListQueries(session)
         self._dossier = CompanyDossierQueries(session)
         self._follows = CompanyFollowRepository(session)
+        self._ignores = CompanyIgnoreRepository(session)
         self._schedule = ScheduleRepository(session)
         self._clock = clock
 
@@ -93,10 +96,11 @@ class CompanyService:
         owner_id: int,
         *,
         q: str | None = None,
-        sort: Sort = "fit",
+        sort: Sort = "newest",
         search_intent_id: int | None = None,
         relevance_min_score: int = DEFAULT_RELEVANCE_MIN_SCORE,
         followed_only: bool = False,
+        hide_ignored: bool = False,
         open_only: bool = False,
         recommended_only: bool = False,
         pending_only: bool = False,
@@ -116,6 +120,7 @@ class CompanyService:
             relevance_min_score=relevance_min_score,
             sort=sort,
             followed_only=followed_only,
+            hide_ignored=hide_ignored,
             open_only=open_only,
             recommended_only=recommended_only,
             pending_only=pending_only,
@@ -136,6 +141,24 @@ class CompanyService:
             await self._follows.follow(owner_id, company_id)
         else:
             await self._follows.unfollow(owner_id, company_id)
+
+    async def set_ignored(self, owner_id: int, company_id: int, *, ignored: bool) -> None:
+        """Ignore or stop ignoring a company and move its offers at once (ADR-061).
+
+        Repeating the same call changes nothing.
+
+        Raises:
+            NotFoundError: the company does not exist.
+        """
+        if await self._session.get(Company, company_id) is None:
+            msg = f"Company {company_id} does not exist."
+            raise NotFoundError(msg)
+        inbox = InboxService(self._session)
+        if ignored:
+            if await self._ignores.ignore(owner_id, company_id):
+                await inbox.ignore_company(owner_id, company_id)
+        elif await self._ignores.unignore(owner_id, company_id):
+            await inbox.restore_company(owner_id, company_id)
 
     async def set_website(self, company_id: int, url: str) -> None:
         """Record the company's website typed by the owner, reduced to ``https://host/``.
@@ -234,6 +257,7 @@ class CompanyService:
             offers=offers[:OFFER_LIMIT],
             offers_truncated=len(offers) > OFFER_LIMIT,
             is_followed=await self._dossier.is_followed(owner_id, company_id),
+            is_ignored=await self._dossier.is_ignored(owner_id, company_id),
             hiring=self._hiring(await self._dossier.lifespans(company_id), now),
             boards=list(boards),
             stale=company.enriched_at is None or now - company.enriched_at > REFRESH_AFTER,

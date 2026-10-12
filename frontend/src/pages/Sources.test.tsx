@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -88,7 +88,7 @@ const disabled = source({
 })
 
 const schedule = {
-  run_time_local: '07:30',
+  run_times_local: ['07:30'],
   timezone: 'Europe/Lisbon',
   enabled: false,
   company_recency_days: 30,
@@ -184,7 +184,7 @@ describe('Sources screen', () => {
     const card = (await screen.findByRole('heading', { name: 'Daily schedule' })).closest(
       'section',
     )!
-    expect(await within(card).findByLabelText('Run time')).toHaveValue('07:30')
+    expect(await within(card).findByLabelText('Run time 1')).toHaveValue('07:30')
     expect(within(card).getByLabelText('Time zone')).toHaveValue('Europe/Lisbon')
     expect(within(card).getByLabelText('Run every day')).not.toBeChecked()
     expect(within(card).getByText(/scheduled runs are off/i)).toBeInTheDocument()
@@ -203,7 +203,7 @@ describe('Sources screen', () => {
     await user.click(within(card).getByRole('button', { name: 'Save schedule' }))
     expect(put).toHaveBeenCalledWith('/api/v1/settings/schedule', {
       body: {
-        run_time_local: '07:30',
+        run_times_local: ['07:30'],
         timezone: 'Europe/Lisbon',
         enabled: true,
         company_recency_days: 30,
@@ -254,6 +254,55 @@ describe('Sources screen', () => {
     expect(put).toHaveBeenCalledWith('/api/v1/settings/schedule', {
       body: expect.objectContaining({ company_recency_days: 14, expected_version: 1 }),
     })
+  })
+
+  it('adds and removes run times and saves them sorted', async () => {
+    const user = userEvent.setup()
+    renderSources()
+    const card = (await screen.findByRole('heading', { name: 'Daily schedule' })).closest(
+      'section',
+    )!
+    expect(await within(card).findByLabelText('Run time 1')).toHaveValue('07:30')
+    // the only time cannot be removed: turn the schedule off instead
+    expect(within(card).getByRole('button', { name: 'Remove run time 1' })).toBeDisabled()
+
+    await user.click(within(card).getByRole('button', { name: 'Add a run time' }))
+    await user.click(within(card).getByRole('button', { name: 'Add a run time' }))
+    expect(within(card).getByLabelText('Run time 3')).toBeInTheDocument()
+    fireEvent.change(within(card).getByLabelText('Run time 1'), { target: { value: '16:00' } })
+    fireEvent.change(within(card).getByLabelText('Run time 2'), { target: { value: '09:00' } })
+    fireEvent.change(within(card).getByLabelText('Run time 3'), { target: { value: '12:00' } })
+    await user.click(within(card).getByRole('button', { name: 'Remove run time 2' }))
+    expect(within(card).queryByLabelText('Run time 3')).not.toBeInTheDocument()
+    await user.click(within(card).getByRole('button', { name: 'Add a run time' }))
+    fireEvent.change(within(card).getByLabelText('Run time 3'), { target: { value: '09:00' } })
+
+    put.mockResolvedValue({
+      data: { ...schedule, run_times_local: ['09:00', '12:00', '16:00'], version: 2 },
+    })
+    await user.click(within(card).getByRole('button', { name: 'Save schedule' }))
+    expect(put).toHaveBeenCalledWith('/api/v1/settings/schedule', {
+      body: expect.objectContaining({
+        run_times_local: ['09:00', '12:00', '16:00'],
+        expected_version: 1,
+      }),
+    })
+  })
+
+  it('refuses a repeated or empty run time', async () => {
+    const user = userEvent.setup()
+    renderSources()
+    const card = (await screen.findByRole('heading', { name: 'Daily schedule' })).closest(
+      'section',
+    )!
+    await within(card).findByLabelText('Run time 1')
+    await user.click(within(card).getByRole('button', { name: 'Add a run time' }))
+    fireEvent.change(within(card).getByLabelText('Run time 2'), { target: { value: '07:30' } })
+    expect(within(card).getByText(/each run time only once/i)).toBeInTheDocument()
+    expect(within(card).getByRole('button', { name: 'Save schedule' })).toBeDisabled()
+    fireEvent.change(within(card).getByLabelText('Run time 2'), { target: { value: '' } })
+    expect(within(card).getByText(/fill in every run time/i)).toBeInTheDocument()
+    expect(within(card).getByRole('button', { name: 'Save schedule' })).toBeDisabled()
   })
 
   it('reports a rejected schedule', async () => {

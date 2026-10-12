@@ -7,6 +7,7 @@ from jobs_radar.db.models.company import (
     CompanyEnrichmentCandidate,
     CompanyFact,
     CompanyFollow,
+    CompanyIgnore,
 )
 from jobs_radar.db.models.evaluation import DirectionJudgement, MatchEvaluation, ScoreDimension
 from jobs_radar.db.models.inbox import InboxEvent, JobInboxItem
@@ -50,6 +51,7 @@ __all__ = [
     "CompanyEnrichmentCandidate",
     "CompanyFact",
     "CompanyFollow",
+    "CompanyIgnore",
     "DirectionJudgement",
     "Document",
     "Evidence",

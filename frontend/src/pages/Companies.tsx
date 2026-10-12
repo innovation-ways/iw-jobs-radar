@@ -3,21 +3,20 @@ import { Link, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { CompanyList } from '@/features/companies/CompanyList'
 import { DossierPanel } from '@/features/companies/DossierPanel'
-import { useCompanies, useFollow } from '@/features/companies/queries'
+import { useCompanies, useFollow, type CompanySort } from '@/features/companies/queries'
 
 const PAGE = 50
 
-type FilterKey = 'followed' | 'open' | 'recommended' | 'pending'
+type FilterKey = 'open' | 'recommended' | 'pending'
 const FILTERS: { key: FilterKey; label: string }[] = [
-  { key: 'followed', label: '★ Followed' },
   { key: 'open', label: 'With open offers' },
   { key: 'recommended', label: 'Recommended' },
   { key: 'pending', label: 'Needs identification' },
 ]
 
 /**
- * Companies: the companies seen in job postings, followed ones first, then by the best fit of
- * their recent offers (ADR-053). Filters narrow the list; "With open offers" is on by default and
+ * Companies: the companies seen in job postings, followed ones first, then by the newest offers
+ * (or the owner's chosen order; ADR-053). Ignored companies are hidden unless asked for (ADR-061). Filters narrow the list; "With open offers" is on by default and
  * never hides a followed company. Selection is kept in the address (`?company=`) so other screens
  * can link to a company.
  */
@@ -25,23 +24,25 @@ export function Companies() {
   const [params, setParams] = useSearchParams()
   const [q, setQ] = useState('')
   const [filters, setFilters] = useState<Record<FilterKey, boolean>>({
-    followed: false,
     open: true,
     recommended: false,
     pending: false,
   })
+  const [sort, setSort] = useState<CompanySort>('newest')
+  const [showIgnored, setShowIgnored] = useState(false)
   const [limit, setLimit] = useState(PAGE)
   const follow = useFollow()
   const { data, isPending, isError, refetch } = useCompanies({
     q,
-    followedOnly: filters.followed,
+    sort,
+    hideIgnored: !showIgnored,
     openOnly: filters.open,
     recommendedOnly: filters.recommended,
     pendingOnly: filters.pending,
     limit,
   })
   const selected = Number(params.get('company')) || null
-  const filtered = q !== '' || filters.followed || filters.recommended || filters.pending
+  const filtered = q !== '' || filters.recommended || filters.pending
 
   return (
     <div className="grid h-full min-h-0 grid-cols-[minmax(300px,400px)_1fr]">
@@ -73,6 +74,35 @@ export function Companies() {
                 {label}
               </button>
             ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1.5 text-xs text-ink-2">
+              Sort by
+              <select
+                aria-label="Sort companies by"
+                value={sort}
+                onChange={(e) => {
+                  setSort(e.target.value as CompanySort)
+                  setLimit(PAGE)
+                }}
+                className="rounded-md border border-line-strong bg-surface px-2 py-1 text-xs"
+              >
+                <option value="newest">Newest offers</option>
+                <option value="recommended">Most recommended offers</option>
+                <option value="fit">Best fit</option>
+                <option value="name">Name</option>
+              </select>
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                setShowIgnored(!showIgnored)
+                setLimit(PAGE)
+              }}
+              className="ml-auto rounded-full border border-line-strong px-2.5 py-0.5 text-xs text-ink-2"
+            >
+              {showIgnored ? 'Hide ignored' : 'Show ignored'}
+            </button>
           </div>
           {data && (
             <p className="text-xs text-ink-3">

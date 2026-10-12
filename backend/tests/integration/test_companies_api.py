@@ -20,7 +20,7 @@ async def test_the_company_list_has_counts_total_and_the_threshold(
         "relevance_min_score",
         "recency_days",
     }
-    assert body["sort"] == "fit" and body["relevance_min_score"] == 45
+    assert body["sort"] == "newest" and body["relevance_min_score"] == 45
     assert body["recency_days"] == 30
     if body["items"]:
         assert set(body["items"][0]) == {

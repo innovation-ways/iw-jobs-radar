@@ -270,7 +270,7 @@ async def test_one_iteration_creates_the_due_scheduled_run_and_executes_it(
     current = await schedule.get(LOCAL_OWNER_ID)
     await schedule.update(
         LOCAL_OWNER_ID,
-        run_time_local=time(10, 0),
+        run_times_local=[time(10, 0)],
         timezone="Europe/Lisbon",
         enabled=True,
         expected_version=current.setting.version,

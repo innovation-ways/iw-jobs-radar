@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from jobs_radar.db.models import CollectionRun, ScheduleSetting
 from jobs_radar.domain.enums import RunStatus, RunTrigger
 
-DEFAULT_RUN_TIME = time(7, 30)
+DEFAULT_RUN_TIMES = [time(7, 30)]
 DEFAULT_TIMEZONE = "Europe/Lisbon"
 DEFAULT_COMPANY_RECENCY_DAYS = 30
 DEFAULT_SET_ASIDE_BELOW_FIT = 20
@@ -32,7 +32,7 @@ class ScheduleRepository:
                 insert(ScheduleSetting)
                 .values(
                     owner_id=owner_id,
-                    run_time_local=DEFAULT_RUN_TIME,
+                    run_times_local=DEFAULT_RUN_TIMES,
                     timezone=DEFAULT_TIMEZONE,
                     enabled=False,
                 )

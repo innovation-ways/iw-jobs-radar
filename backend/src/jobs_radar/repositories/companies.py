@@ -4,7 +4,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jobs_radar.db.models import Company, CompanyAlias, CompanyFollow
+from jobs_radar.db.models import Company, CompanyAlias, CompanyFollow, CompanyIgnore
 
 
 def normalise_company_name(name: str) -> str:
@@ -66,3 +66,29 @@ class CompanyFollowRepository:
                 CompanyFollow.owner_id == owner_id, CompanyFollow.company_id == company_id
             )
         )
+
+
+class CompanyIgnoreRepository:
+    """Reads and changes which companies an owner ignores (ADR-061)."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def ignore(self, owner_id: int, company_id: int) -> bool:
+        """Ignore the company; returns False when it was already ignored."""
+        inserted = await self._session.execute(
+            insert(CompanyIgnore)
+            .values(owner_id=owner_id, company_id=company_id)
+            .on_conflict_do_nothing(constraint="uq_company_ignore_owner_id_company_id")
+            .returning(CompanyIgnore.company_ignore_id)
+        )
+        return inserted.scalar_one_or_none() is not None
+
+    async def unignore(self, owner_id: int, company_id: int) -> bool:
+        """Stop ignoring the company (the row is deleted); returns False when it was not ignored."""
+        deleted = await self._session.execute(
+            delete(CompanyIgnore)
+            .where(CompanyIgnore.owner_id == owner_id, CompanyIgnore.company_id == company_id)
+            .returning(CompanyIgnore.company_ignore_id)
+        )
+        return deleted.first() is not None

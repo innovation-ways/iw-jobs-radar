@@ -26,7 +26,7 @@ def schedule_read(view: ScheduleView) -> ScheduleRead:
         else None
     )
     return ScheduleRead(
-        run_time_local=setting.run_time_local.strftime("%H:%M"),
+        run_times_local=[value.strftime("%H:%M") for value in setting.run_times_local],
         timezone=setting.timezone,
         enabled=setting.enabled,
         company_recency_days=setting.company_recency_days,
@@ -39,7 +39,7 @@ def schedule_read(view: ScheduleView) -> ScheduleRead:
 
 @router.get("/settings/schedule", response_model=ScheduleRead)
 async def get_schedule(service: Service, session: Session) -> ScheduleRead:
-    """Return the daily run time, time zone, enabled flag and the next scheduled run."""
+    """Return the daily run times, time zone, enabled flag and the next scheduled run."""
     view = await service.get(LOCAL_OWNER_ID)
     await session.commit()  # the default row is created on first read
     return schedule_read(view)
@@ -50,7 +50,7 @@ async def update_schedule(body: ScheduleUpdate, service: Service, session: Sessi
     """Change the schedule; the worker picks it up within one poll interval."""
     view = await service.update(
         LOCAL_OWNER_ID,
-        run_time_local=body.run_time_local,
+        run_times_local=body.run_times_local,
         timezone=body.timezone,
         enabled=body.enabled,
         company_recency_days=body.company_recency_days,

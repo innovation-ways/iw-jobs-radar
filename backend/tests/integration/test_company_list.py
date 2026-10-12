@@ -20,6 +20,7 @@ from jobs_radar.db.models import (
     CompanyAlias,
     CompanyEnrichmentCandidate,
     CompanyFollow,
+    CompanyIgnore,
     JobInboxItem,
 )
 from jobs_radar.domain.enums import LOCAL_OWNER_ID, InboxState, Recommendation
@@ -140,7 +141,7 @@ async def test_without_an_intent_nothing_is_recommended(db_session: AsyncSession
     assert (row.open_offers, row.recommended_offers, row.best_fit_score) == (1, 0, None)
 
 
-async def test_default_sort_is_best_fit_then_name_and_followed_come_first(
+async def test_sort_by_best_fit_or_name_with_followed_companies_first(
     db_session: AsyncSession,
 ) -> None:
     world = await (World(db_session)).setup()
@@ -148,13 +149,34 @@ async def test_default_sort_is_best_fit_then_name_and_followed_come_first(
     await world.company("Top", [(1, 90, R)])
     await world.company("None", [(1, None, R)])
     watched = await world.company("Low", [(1, 10, R)])
-    assert names(await world.list()) == ["Top", "Mid", "Low", "None"]
+    assert names(await world.list(sort="fit")) == ["Top", "Mid", "Low", "None"]
     db_session.add(CompanyFollow(owner_id=LOCAL_OWNER_ID, company_id=watched))
     await db_session.flush()
-    page = await world.list()
+    page = await world.list(sort="fit")
     assert names(page) == ["Low", "Top", "Mid", "None"]  # followed pinned on top
     assert [r.is_followed for r in page.rows] == [True, False, False, False]
     assert names(await world.list(sort="name")) == ["Low", "Mid", "None", "Top"]
+
+
+async def test_sort_by_newest_offer_and_by_most_recommended_offers(
+    db_session: AsyncSession,
+) -> None:
+    world = await (World(db_session)).setup()
+    await world.company("Fresh", [(1, 50, R)])  # newest offer, one recommended
+    await world.company("Busy", [(5, 90, R), (6, 80, R), (7, 70, R)])  # three recommended
+    await world.company("Old", [(20, 99, R), (21, 99, R)])  # two recommended, oldest offers
+    assert names(await world.list(sort="newest")) == ["Fresh", "Busy", "Old"]
+    assert names(await world.list(sort="recommended")) == ["Busy", "Old", "Fresh"]
+
+
+async def test_hide_ignored_companies_keeps_the_rest(db_session: AsyncSession) -> None:
+    world = await (World(db_session)).setup()
+    await world.company("Kept", [(1, 50, R)])
+    muted = await world.company("Muted", [(1, 50, R)])
+    db_session.add(CompanyIgnore(owner_id=LOCAL_OWNER_ID, company_id=muted))
+    await db_session.flush()
+    assert sorted(names(await world.list())) == ["Kept", "Muted"]
+    assert names(await world.list(hide_ignored=True)) == ["Kept"]
 
 
 async def test_open_filter_hides_companies_without_counted_offers_except_followed(

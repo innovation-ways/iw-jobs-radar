@@ -4,10 +4,15 @@ from datetime import UTC, datetime, time
 
 import pytest
 
-from jobs_radar.domain.schedule import latest_occurrence, next_occurrence, validate_timezone
+from jobs_radar.domain.schedule import (
+    latest_occurrence,
+    next_occurrence,
+    normalise_run_times,
+    validate_timezone,
+)
 
 LISBON = "Europe/Lisbon"
-T0730 = time(7, 30)
+T0730 = (time(7, 30),)
 
 
 def utc(*args: int) -> datetime:
@@ -37,15 +42,17 @@ def test_the_local_time_stays_the_same_when_the_clocks_go_forward() -> None:
 
 def test_a_time_that_does_not_exist_that_day_runs_just_after_the_gap() -> None:
     # 01:30 does not exist in Lisbon on 2027-03-28 (01:00 jumps to 02:00): run at 02:30 local
-    assert next_occurrence(utc(2027, 3, 28, 0, 0), time(1, 30), LISBON) == utc(2027, 3, 28, 1, 30)
+    assert next_occurrence(utc(2027, 3, 28, 0, 0), (time(1, 30),), LISBON) == utc(
+        2027, 3, 28, 1, 30
+    )
 
 
 def test_a_time_that_happens_twice_that_day_runs_the_first_time_only() -> None:
     # 01:30 happens twice in Lisbon on 2026-10-25; the first one is 00:30 UTC
-    assert next_occurrence(utc(2026, 10, 24, 12, 0), time(1, 30), LISBON) == utc(
+    assert next_occurrence(utc(2026, 10, 24, 12, 0), (time(1, 30),), LISBON) == utc(
         2026, 10, 25, 0, 30
     )
-    assert next_occurrence(utc(2026, 10, 25, 0, 31), time(1, 30), LISBON) == utc(
+    assert next_occurrence(utc(2026, 10, 25, 0, 31), (time(1, 30),), LISBON) == utc(
         2026, 10, 26, 1, 30
     )
 
@@ -87,3 +94,46 @@ def test_time_zones_are_validated() -> None:
 def test_naive_times_are_rejected() -> None:
     with pytest.raises(ValueError, match="aware"):
         next_occurrence(datetime(2026, 10, 8, 5, 0), T0730, LISBON)
+
+
+# Several times a day (ADR-062): 09:00, 12:00 and 16:00 Lisbon summer time = 08:00, 11:00, 15:00 UTC
+THREE = (time(9, 0), time(12, 0), time(16, 0))
+
+
+def test_the_next_run_is_the_nearest_time_of_the_day() -> None:
+    assert next_occurrence(utc(2026, 10, 8, 7, 0), THREE, LISBON) == utc(2026, 10, 8, 8, 0)
+    assert next_occurrence(utc(2026, 10, 8, 8, 0), THREE, LISBON) == utc(2026, 10, 8, 11, 0)
+    assert next_occurrence(utc(2026, 10, 8, 12, 0), THREE, LISBON) == utc(2026, 10, 8, 15, 0)
+
+
+def test_after_the_last_time_the_next_run_is_the_first_one_tomorrow() -> None:
+    assert next_occurrence(utc(2026, 10, 8, 15, 0), THREE, LISBON) == utc(2026, 10, 9, 8, 0)
+
+
+def test_the_order_of_the_times_does_not_matter() -> None:
+    shuffled = (time(16, 0), time(9, 0), time(12, 0))
+    now = utc(2026, 10, 8, 9, 0)
+    assert next_occurrence(now, shuffled, LISBON) == next_occurrence(now, THREE, LISBON)
+    assert latest_occurrence(now, shuffled, LISBON) == latest_occurrence(now, THREE, LISBON)
+
+
+def test_the_latest_run_is_the_most_recent_time_that_has_passed() -> None:
+    assert latest_occurrence(utc(2026, 10, 8, 13, 0), THREE, LISBON) == utc(2026, 10, 8, 11, 0)
+    assert latest_occurrence(utc(2026, 10, 8, 23, 0), THREE, LISBON) == utc(2026, 10, 8, 15, 0)
+    # before the first time of the day, the last time of the previous day
+    assert latest_occurrence(utc(2026, 10, 8, 7, 0), THREE, LISBON) == utc(2026, 10, 7, 15, 0)
+
+
+def test_no_times_is_an_error() -> None:
+    with pytest.raises(ValueError, match="at least one"):
+        next_occurrence(utc(2026, 10, 8, 7, 0), (), LISBON)
+    with pytest.raises(ValueError, match="at least one"):
+        latest_occurrence(utc(2026, 10, 8, 7, 0), (), LISBON)
+
+
+def test_normalise_run_times_sorts_drops_seconds_and_duplicates() -> None:
+    assert normalise_run_times([time(16, 0, 30), time(9, 0), time(9, 0, 10), time(12, 0)]) == THREE
+    with pytest.raises(ValueError, match="at least one"):
+        normalise_run_times([])
+    with pytest.raises(ValueError, match="at most"):
+        normalise_run_times([time(hour, 0) for hour in range(13)])

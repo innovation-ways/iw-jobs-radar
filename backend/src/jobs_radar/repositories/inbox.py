@@ -17,6 +17,7 @@ from sqlalchemy.orm import aliased
 from jobs_radar.core.errors import ConflictError, NotFoundError
 from jobs_radar.db.models import (
     Company,
+    CompanyIgnore,
     InboxEvent,
     IntentRevision,
     JobChangeEvent,
@@ -512,6 +513,57 @@ class InboxQueries:
             .where(JobOpportunity.closed_at.is_(None), ~has_item)
             .order_by(JobOpportunity.first_seen_at.desc(), JobOpportunity.job_opportunity_id.desc())
             .limit(limit)
+        )
+        return [int(i) for i in rows.scalars()]
+
+    async def company_is_ignored(self, owner_id: int, job_opportunity_id: int) -> bool:
+        """Whether the owner ignores the company of the opportunity (ADR-061)."""
+        found = await self._session.execute(
+            select(CompanyIgnore.company_ignore_id)
+            .join(JobOpportunity, JobOpportunity.company_id == CompanyIgnore.company_id)
+            .where(
+                CompanyIgnore.owner_id == owner_id,
+                JobOpportunity.job_opportunity_id == job_opportunity_id,
+            )
+        )
+        return found.first() is not None
+
+    async def company_items(
+        self, owner_id: int, company_id: int, *, states: list[InboxState], reason: str | None = None
+    ) -> list[JobInboxItem]:
+        """Items of the company's opportunities in the given states (and ignore reason)."""
+        statement = (
+            select(JobInboxItem)
+            .join(
+                JobOpportunity,
+                JobOpportunity.job_opportunity_id == JobInboxItem.job_opportunity_id,
+            )
+            .where(
+                JobInboxItem.owner_id == owner_id,
+                JobOpportunity.company_id == company_id,
+                JobInboxItem.state.in_([state.value for state in states]),
+            )
+        )
+        if reason is not None:
+            statement = statement.where(JobInboxItem.ignore_reason == reason)
+        return list((await self._session.execute(statement)).scalars())
+
+    async def company_unsurfaced(self, owner_id: int, company_id: int) -> list[int]:
+        """Open opportunities of the company that have no inbox item for the owner yet."""
+        has_item = (
+            select(JobInboxItem.job_inbox_item_id)
+            .where(
+                JobInboxItem.owner_id == owner_id,
+                JobInboxItem.job_opportunity_id == JobOpportunity.job_opportunity_id,
+            )
+            .exists()
+        )
+        rows = await self._session.execute(
+            select(JobOpportunity.job_opportunity_id).where(
+                JobOpportunity.company_id == company_id,
+                JobOpportunity.closed_at.is_(None),
+                ~has_item,
+            )
         )
         return [int(i) for i in rows.scalars()]
 

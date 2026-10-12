@@ -5,7 +5,7 @@ import { AnalysisCard, WebsiteForm } from './CompanyAnalysis'
 import { FollowStar } from './CompanyList'
 import { HiringChart } from './HiringChart'
 import { OfferList } from './OfferList'
-import { useDossier, useDossierActions, useFollow, type Dossier } from './queries'
+import { useDossier, useDossierActions, useFollow, useIgnoreCompany, type Dossier } from './queries'
 
 const FACT_LABELS: Record<string, string> = {
   homepage: 'Website',
@@ -99,6 +99,7 @@ export function DossierPanel({
   const [includeOlder, setIncludeOlder] = useState(false)
   const { data, isPending, isError } = useDossier(companyId, includeOlder)
   const follow = useFollow()
+  const ignore = useIgnoreCompany()
   const { enrich, summarise, analyse, setWebsite, decide } = useDossierActions(companyId)
   const [editingWebsite, setEditingWebsite] = useState(false)
   const attempted = useRef(new Set<number>())
@@ -117,7 +118,9 @@ export function DossierPanel({
         Could not load this company.
       </p>
     )
-  const failure = [enrich, summarise, analyse, setWebsite, decide].find((m) => m.isError)?.error
+  const failure = [enrich, summarise, analyse, setWebsite, decide, ignore].find(
+    (m) => m.isError,
+  )?.error
   const dossier = data.facts.find((f) => f.fact_key === 'ai_dossier')
   const host = data.homepage_url ? new URL(data.homepage_url).hostname.replace(/^www\./, '') : null
 
@@ -133,7 +136,14 @@ export function DossierPanel({
             onToggle={() => follow.mutate({ companyId, follow: !data.is_followed })}
           />
           <div>
-            <h2 className="text-lg font-semibold">{data.name}</h2>
+            <h2 className="text-lg font-semibold">
+              {data.name}
+              {data.is_ignored && (
+                <span className="ml-2 rounded-full bg-bad-bg px-2 text-xs font-medium text-bad">
+                  Ignored
+                </span>
+              )}
+            </h2>
             <p className="mt-1 text-sm text-ink-2">
               {data.homepage_url ? (
                 <a
@@ -161,6 +171,19 @@ export function DossierPanel({
           </div>
         </div>
         <div className="flex gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={ignore.isPending}
+            title={
+              data.is_ignored
+                ? 'Restore the offers that ignoring this company moved'
+                : 'Move all its offers to Ignored, now and when they appear'
+            }
+            onClick={() => ignore.mutate({ companyId, ignore: !data.is_ignored })}
+          >
+            {data.is_ignored ? 'Stop ignoring company' : 'Ignore company'}
+          </Button>
           <Button
             size="sm"
             variant="outline"

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -30,6 +30,7 @@ function company(id: number, name: string, overrides: Record<string, unknown> = 
     best_fit_score: 82,
     pending_candidates: 0,
     is_followed: false,
+    is_ignored: false,
     ...overrides,
   }
 }
@@ -44,6 +45,7 @@ function dossier(overrides: Record<string, unknown> = {}) {
     enriched_at: '2026-10-08T09:00:00Z',
     stale: false,
     is_followed: false,
+    is_ignored: false,
     offers_truncated: false,
     facts: [
       {
@@ -196,10 +198,12 @@ describe('Companies screen', () => {
     const contoso = screen.getByRole('option', { name: /Contoso/ })
     expect(within(contoso).getByText('No open offers')).toBeInTheDocument()
     expect(screen.getByText(/last 30 days/)).toBeInTheDocument()
-    // "With open offers" is on by default; nothing else is.
+    // "With open offers" is on by default, ignored companies are hidden, newest offers first.
     expect(get).toHaveBeenCalledWith(
       '/api/v1/companies',
-      expect.objectContaining({ params: { query: { limit: 50, open_only: true } } }),
+      expect.objectContaining({
+        params: { query: { limit: 50, sort: 'newest', hide_ignored: true, open_only: true } },
+      }),
     )
   })
 
@@ -223,7 +227,6 @@ describe('Companies screen', () => {
     renderPage()
     await screen.findByRole('option', { name: /Northwind Labs/ })
     await user.click(screen.getByRole('button', { name: 'With open offers' })) // turn off
-    await user.click(screen.getByRole('button', { name: '★ Followed' }))
     await user.click(screen.getByRole('button', { name: 'Recommended' }))
     await user.click(screen.getByRole('button', { name: 'Needs identification' }))
     await user.type(screen.getByRole('searchbox', { name: 'Search companies' }), 'north')
@@ -231,10 +234,38 @@ describe('Companies screen', () => {
     expect(last.params.query).toEqual({
       limit: 50,
       q: 'north',
-      followed_only: true,
+      sort: 'newest',
+      hide_ignored: true,
       recommended_only: true,
       pending_only: true,
     })
+  })
+
+  it('hides ignored companies by default and shows them on request', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole('option', { name: /Northwind Labs/ })
+    const queryOf = () =>
+      get.mock.calls.filter(([p]) => p === '/api/v1/companies').at(-1)![1].params.query
+    expect(queryOf()).toMatchObject({ hide_ignored: true })
+    await user.click(screen.getByRole('button', { name: 'Show ignored' }))
+    await screen.findByRole('button', { name: 'Hide ignored' })
+    expect(queryOf()).not.toHaveProperty('hide_ignored')
+  })
+
+  it('sorts the list by newest offers (default), most recommended, best fit or name', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByRole('option', { name: /Northwind Labs/ })
+    const queryOf = () =>
+      get.mock.calls.filter(([p]) => p === '/api/v1/companies').at(-1)![1].params.query
+    const box = screen.getByRole('combobox', { name: 'Sort companies by' })
+    expect(box).toHaveValue('newest')
+    expect(queryOf()).toMatchObject({ sort: 'newest' })
+    await user.selectOptions(box, 'Most recommended offers')
+    await waitFor(() => expect(queryOf()).toMatchObject({ sort: 'recommended' }))
+    await user.selectOptions(box, 'Name')
+    await waitFor(() => expect(queryOf()).toMatchObject({ sort: 'name' }))
   })
 
   it('follows and unfollows a company from the list without opening it', async () => {
@@ -435,6 +466,34 @@ describe('Companies screen', () => {
     expect(put).toHaveBeenCalledWith('/api/v1/companies/{company_id}/follow', {
       params: { path: { company_id: 1 } },
     })
+  })
+
+  it('ignores and stops ignoring a company from the dossier', async () => {
+    const user = userEvent.setup()
+    put.mockResolvedValue({ data: { company_id: 1, is_ignored: true } })
+    del.mockResolvedValue({ data: { company_id: 1, is_ignored: false } })
+    detail = dossier({ is_ignored: false })
+    renderPage('/companies?company=1')
+    const panel = await screen.findByRole('region', { name: 'Northwind Labs' })
+    put.mockImplementation(() => {
+      detail = dossier({ is_ignored: true }) // the server now ignores it
+      return Promise.resolve({ data: { company_id: 1, is_ignored: true } })
+    })
+    await user.click(within(panel).getByRole('button', { name: 'Ignore company' }))
+    expect(put).toHaveBeenCalledWith('/api/v1/companies/{company_id}/ignore', {
+      params: { path: { company_id: 1 } },
+    })
+    await user.click(await within(panel).findByRole('button', { name: 'Stop ignoring company' }))
+    expect(del).toHaveBeenCalledWith('/api/v1/companies/{company_id}/ignore', {
+      params: { path: { company_id: 1 } },
+    })
+  })
+
+  it('marks an ignored company in the list with text', async () => {
+    list = [company(1, 'Northwind Labs', { is_ignored: true }), company(2, 'Contoso')]
+    renderPage('/companies')
+    const row = (await screen.findByText('Northwind Labs')).closest('[role="option"]')!
+    expect(within(row as HTMLElement).getByText('Ignored')).toBeInTheDocument()
   })
 
   it('looks a stale company up in the public sources once, by itself', async () => {

@@ -174,6 +174,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/{company_id}/ignore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Ignore Company
+         * @description Ignore a company: its open offers move to Ignored at once (idempotent, ADR-061).
+         */
+        put: operations["ignore_company_api_v1_companies__company_id__ignore_put"];
+        post?: never;
+        /**
+         * Unignore Company
+         * @description Stop ignoring a company: restores the offers that ignoring moved (idempotent).
+         */
+        delete: operations["unignore_company_api_v1_companies__company_id__ignore_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{company_id}/summary": {
         parameters: {
             query?: never;
@@ -1057,7 +1081,7 @@ export interface paths {
         };
         /**
          * Get Schedule
-         * @description Return the daily run time, time zone, enabled flag and the next scheduled run.
+         * @description Return the daily run times, time zone, enabled flag and the next scheduled run.
          */
         get: operations["get_schedule_api_v1_settings_schedule_get"];
         /**
@@ -1575,6 +1599,8 @@ export interface components {
             homepage_url: string | null;
             /** Is Followed */
             is_followed: boolean;
+            /** Is Ignored */
+            is_ignored: boolean;
             /** Name */
             name: string;
             /** Offers */
@@ -1597,6 +1623,16 @@ export interface components {
             is_followed: boolean;
         };
         /**
+         * CompanyIgnoreState
+         * @description Whether the owner ignores a company (ADR-061).
+         */
+        CompanyIgnoreState: {
+            /** Company Id */
+            company_id: number;
+            /** Is Ignored */
+            is_ignored: boolean;
+        };
+        /**
          * CompanyList
          * @description A page of the company list.
          */
@@ -1613,7 +1649,7 @@ export interface components {
              * Sort
              * @enum {string}
              */
-            sort: "fit" | "name";
+            sort: "newest" | "recommended" | "fit" | "name";
             /** Total */
             total: number;
         };
@@ -1634,6 +1670,8 @@ export interface components {
             homepage_url: string | null;
             /** Is Followed */
             is_followed: boolean;
+            /** Is Ignored */
+            is_ignored: boolean;
             /** Name */
             name: string;
             /** Open Offers */
@@ -3323,8 +3361,8 @@ export interface components {
             next_run_at: string | null;
             /** Next Run Local */
             next_run_local: string | null;
-            /** Run Time Local */
-            run_time_local: string;
+            /** Run Times Local */
+            run_times_local: string[];
             /** Set Aside Below Fit */
             set_aside_below_fit: number;
             /** Timezone */
@@ -3343,11 +3381,8 @@ export interface components {
             enabled: boolean;
             /** Expected Version */
             expected_version: number;
-            /**
-             * Run Time Local
-             * Format: time
-             */
-            run_time_local: string;
+            /** Run Times Local */
+            run_times_local: string[];
             /** Set Aside Below Fit */
             set_aside_below_fit?: number | null;
             /** Timezone */
@@ -3996,10 +4031,11 @@ export interface operations {
         parameters: {
             query?: {
                 q?: string | null;
-                sort?: "fit" | "name";
+                sort?: "newest" | "recommended" | "fit" | "name";
                 search_intent_id?: number | null;
                 relevance_min_score?: number;
                 followed_only?: boolean;
+                hide_ignored?: boolean;
                 open_only?: boolean;
                 recommended_only?: boolean;
                 pending_only?: boolean;
@@ -4241,6 +4277,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompanyFollowState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ignore_company_api_v1_companies__company_id__ignore_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyIgnoreState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unignore_company_api_v1_companies__company_id__ignore_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanyIgnoreState"];
                 };
             };
             /** @description Validation Error */

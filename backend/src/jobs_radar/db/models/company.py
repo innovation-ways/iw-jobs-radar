@@ -157,3 +157,19 @@ class CompanyFollow(CreatedAtMixin, Base):
     company_id: Mapped[int] = fk_column(
         "company.company_id", "Company that is followed.", ondelete="CASCADE"
     )
+
+
+class CompanyIgnore(CreatedAtMixin, Base):
+    """The owner ignores a company: its offers go to Ignored (personal state, ADR-061)."""
+
+    __tablename__ = "company_ignore"
+    __table_args__ = (
+        UniqueConstraint("owner_id", "company_id", name="uq_company_ignore_owner_id_company_id"),
+        {"comment": "Companies an owner ignores; undoing deletes the row."},
+    )
+
+    company_ignore_id: Mapped[int] = pk_column("Surrogate primary key of the ignore.")
+    owner_id: Mapped[int] = fk_column("owner.owner_id", "Owner who ignores.", index=False)
+    company_id: Mapped[int] = fk_column(
+        "company.company_id", "Company that is ignored.", ondelete="CASCADE"
+    )

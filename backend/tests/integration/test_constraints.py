@@ -147,13 +147,13 @@ async def test_there_is_one_schedule_per_owner(db_session: AsyncSession) -> None
 
     db_session.add(
         ScheduleSetting(
-            owner_id=LOCAL_OWNER_ID, run_time_local=time(7, 30), timezone="Europe/Lisbon"
+            owner_id=LOCAL_OWNER_ID, run_times_local=[time(7, 30)], timezone="Europe/Lisbon"
         )
     )
     await db_session.flush()
     await expect_violation(
         db_session,
-        ScheduleSetting(owner_id=LOCAL_OWNER_ID, run_time_local=time(8, 0), timezone="UTC"),
+        ScheduleSetting(owner_id=LOCAL_OWNER_ID, run_times_local=[time(8, 0)], timezone="UTC"),
         match="schedule_setting",
     )
 

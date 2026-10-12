@@ -21,6 +21,7 @@ from jobs_radar.db.models import (
     CompanyAlias,
     CompanyEnrichmentCandidate,
     CompanyFollow,
+    CompanyIgnore,
     IntentRevision,
     JobInboxItem,
     JobOpportunity,
@@ -29,7 +30,7 @@ from jobs_radar.db.models import (
 )
 from jobs_radar.domain.enums import InboxState, Recommendation
 
-Sort = Literal["fit", "name"]
+Sort = Literal["newest", "recommended", "fit", "name"]
 
 
 @dataclass(frozen=True)
@@ -46,6 +47,8 @@ class CompanyRow:
     best_fit_score: int | None
     pending_candidates: int
     is_followed: bool
+    is_ignored: bool
+    latest_offer_at: datetime | None
 
 
 @dataclass(frozen=True)
@@ -142,6 +145,7 @@ class CompanyListQueries:
                 .filter(recommended)
                 .label("recommended_offers"),
                 func.max(evaluation.fit_score).label("best_fit_score"),
+                func.max(JobOpportunity.first_seen_at).label("latest_offer_at"),
                 select(func.count())
                 .where(
                     CompanyEnrichmentCandidate.company_id == Company.company_id,
@@ -156,6 +160,12 @@ class CompanyListQueries:
                     CompanyFollow.company_id == Company.company_id,
                 )
                 .label("is_followed"),
+                exists()
+                .where(
+                    CompanyIgnore.owner_id == owner_id,
+                    CompanyIgnore.company_id == Company.company_id,
+                )
+                .label("is_ignored"),
             )
             .select_from(Company)
             .outerjoin(JobOpportunity, counted)
@@ -188,6 +198,7 @@ class CompanyListQueries:
         relevance_min_score: int,
         sort: Sort,
         followed_only: bool,
+        hide_ignored: bool,
         open_only: bool,
         recommended_only: bool,
         pending_only: bool,
@@ -210,6 +221,8 @@ class CompanyListQueries:
         filtered = select(stats)
         if followed_only:
             filtered = filtered.where(stats.c.is_followed)
+        if hide_ignored:
+            filtered = filtered.where(~stats.c.is_ignored)
         if open_only:
             filtered = filtered.where(or_(stats.c.open_offers > 0, stats.c.is_followed))
         if recommended_only:
@@ -217,6 +230,14 @@ class CompanyListQueries:
         if pending_only:
             filtered = filtered.where(stats.c.pending_candidates > 0)
         orders: dict[str, list[Any]] = {
+            "newest": [
+                stats.c.latest_offer_at.desc().nulls_last(),
+                stats.c.recommended_offers.desc(),
+            ],
+            "recommended": [
+                stats.c.recommended_offers.desc(),
+                stats.c.latest_offer_at.desc().nulls_last(),
+            ],
             "fit": [stats.c.best_fit_score.desc().nulls_last(), stats.c.open_offers.desc()],
             "name": [],
         }
@@ -270,6 +291,15 @@ class CompanyDossierQueries:
         found = await self._session.execute(
             select(CompanyFollow.company_follow_id).where(
                 CompanyFollow.owner_id == owner_id, CompanyFollow.company_id == company_id
+            )
+        )
+        return found.first() is not None
+
+    async def is_ignored(self, owner_id: int, company_id: int) -> bool:
+        """Whether the owner ignores the company (ADR-061)."""
+        found = await self._session.execute(
+            select(CompanyIgnore.company_ignore_id).where(
+                CompanyIgnore.owner_id == owner_id, CompanyIgnore.company_id == company_id
             )
         )
         return found.first() is not None

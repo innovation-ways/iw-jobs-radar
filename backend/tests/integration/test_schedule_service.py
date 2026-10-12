@@ -55,8 +55,8 @@ async def scheduled_runs(session: AsyncSession) -> int:
 async def test_the_default_schedule_is_0730_lisbon_and_disabled(db_session: AsyncSession) -> None:
     await db_session.execute(ScheduleSetting.__table__.delete())
     view = await ScheduleService(db_session).get(LOCAL_OWNER_ID)
-    assert (view.setting.run_time_local, view.setting.timezone, view.setting.enabled) == (
-        time(7, 30),
+    assert (view.setting.run_times_local, view.setting.timezone, view.setting.enabled) == (
+        [time(7, 30)],
         "Europe/Lisbon",
         False,
     )
@@ -72,7 +72,7 @@ async def test_updating_the_schedule_validates_and_reports_the_next_run(
     first_version = current.setting.version
     updated = await service.update(
         LOCAL_OWNER_ID,
-        run_time_local=time(7, 30),
+        run_times_local=[time(7, 30)],
         timezone="Europe/Lisbon",
         enabled=True,
         expected_version=first_version,
@@ -82,7 +82,7 @@ async def test_updating_the_schedule_validates_and_reports_the_next_run(
 
     moved = await service.update(
         LOCAL_OWNER_ID,
-        run_time_local=time(11, 0),
+        run_times_local=[time(11, 0)],
         timezone="Europe/Lisbon",
         enabled=True,
         expected_version=updated.setting.version,
@@ -97,14 +97,14 @@ async def test_an_unknown_time_zone_or_a_stale_version_is_refused(db_session: As
     with pytest.raises(InputValidationError, match="time zone"):
         await service.update(
             LOCAL_OWNER_ID,
-            run_time_local=time(7, 30),
+            run_times_local=[time(7, 30)],
             timezone="Mars/Phobos",
             enabled=True,
             expected_version=seen,
         )
     await service.update(
         LOCAL_OWNER_ID,
-        run_time_local=time(8, 0),
+        run_times_local=[time(8, 0)],
         timezone="UTC",
         enabled=False,
         expected_version=seen,
@@ -112,7 +112,7 @@ async def test_an_unknown_time_zone_or_a_stale_version_is_refused(db_session: As
     with pytest.raises(ConflictError):
         await service.update(
             LOCAL_OWNER_ID,
-            run_time_local=time(9, 0),
+            run_times_local=[time(9, 0)],
             timezone="UTC",
             enabled=False,
             expected_version=seen,
@@ -129,7 +129,7 @@ async def enable_at(
     current = await service.get(LOCAL_OWNER_ID)
     await service.update(
         LOCAL_OWNER_ID,
-        run_time_local=run_time,
+        run_times_local=[run_time],
         timezone="Europe/Lisbon",
         enabled=enabled,
         expected_version=current.setting.version,
@@ -211,3 +211,61 @@ async def test_a_missed_run_is_caught_up_within_the_grace_period_only(
     )  # 14 h after the next one
     assert await too_late.create_due_run() is None
     del service
+
+
+async def enable_with(
+    session: AsyncSession, clock: Clock, run_times: list[time]
+) -> ScheduleService:
+    service = ScheduleService(session, clock=clock)
+    current = await service.get(LOCAL_OWNER_ID)
+    await service.update(
+        LOCAL_OWNER_ID,
+        run_times_local=run_times,
+        timezone="Europe/Lisbon",
+        enabled=True,
+        expected_version=current.setting.version,
+    )
+    return service
+
+
+async def test_each_time_of_the_day_creates_its_own_run_once(db_session: AsyncSession) -> None:
+    """ADR-062: 09:00, 12:00 and 16:00 Lisbon give three runs a day, each exactly once."""
+    await only_one_enabled_source(db_session)
+    day = datetime(2026, 10, 8, 0, 0, tzinfo=UTC)
+    clock = Clock(day)  # saved before the first time of the day
+    service = await enable_with(db_session, clock, [time(16, 0), time(9, 0), time(12, 0)])
+    before = await scheduled_runs(db_session)
+    created = []
+    for hour in (7, 8, 9, 11, 12, 15, 17):  # UTC; Lisbon is UTC+1
+        clock.now = day + timedelta(hours=hour, minutes=1)
+        run = await service.create_due_run()
+        if run is not None:
+            created.append(run.scheduled_for)
+        assert await service.create_due_run() is None  # never twice for the same time
+    assert created == [day + timedelta(hours=h) for h in (8, 11, 15)]
+    assert await scheduled_runs(db_session) == before + 3
+
+
+async def test_after_an_outage_only_the_latest_missed_time_runs(db_session: AsyncSession) -> None:
+    """A worker that was down through 09:00 and 12:00 starts one run at 13:00, not a burst."""
+    await only_one_enabled_source(db_session)
+    day = datetime(2026, 10, 8, 0, 0, tzinfo=UTC)
+    clock = Clock(day)
+    await enable_with(db_session, clock, [time(9, 0), time(12, 0), time(16, 0)])
+    before = await scheduled_runs(db_session)
+    late = ScheduleService(db_session, clock=Clock(day + timedelta(hours=12)))  # 13:00 Lisbon
+    run = await late.create_due_run()
+    assert run is not None and run.scheduled_for == day + timedelta(hours=11)
+    assert await late.create_due_run() is None
+    assert await scheduled_runs(db_session) == before + 1
+
+
+async def test_saving_new_times_does_not_run_a_time_that_already_passed(
+    db_session: AsyncSession,
+) -> None:
+    await only_one_enabled_source(db_session)
+    clock = Clock(NOW)  # 10:00 Lisbon
+    service = await enable_with(db_session, clock, [time(9, 0), time(12, 0)])
+    assert await service.create_due_run() is None  # 09:00 passed before the save
+    clock.now = NOW + timedelta(hours=2)  # 12:00 Lisbon
+    assert await service.create_due_run() is not None

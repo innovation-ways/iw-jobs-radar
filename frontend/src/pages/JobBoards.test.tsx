@@ -125,7 +125,7 @@ const scope = {
   onsite_areas: [{ place: 'Lisbon, Portugal', radius_km: 40 }],
 }
 const schedule = {
-  run_time_local: '07:30',
+  run_times_local: ['07:30'],
   timezone: 'Europe/Lisbon',
   enabled: false,
   version: 1,

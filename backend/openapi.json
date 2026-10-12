@@ -699,6 +699,10 @@
             "title": "Is Followed",
             "type": "boolean"
           },
+          "is_ignored": {
+            "title": "Is Ignored",
+            "type": "boolean"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -735,6 +739,7 @@
           "enriched_at",
           "stale",
           "is_followed",
+          "is_ignored",
           "facts",
           "candidates",
           "offers",
@@ -764,6 +769,26 @@
           "is_followed"
         ],
         "title": "CompanyFollowState",
+        "type": "object"
+      },
+      "CompanyIgnoreState": {
+        "additionalProperties": false,
+        "description": "Whether the owner ignores a company (ADR-061).",
+        "properties": {
+          "company_id": {
+            "title": "Company Id",
+            "type": "integer"
+          },
+          "is_ignored": {
+            "title": "Is Ignored",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "company_id",
+          "is_ignored"
+        ],
+        "title": "CompanyIgnoreState",
         "type": "object"
       },
       "CompanyList": {
@@ -798,6 +823,8 @@
           },
           "sort": {
             "enum": [
+              "newest",
+              "recommended",
               "fit",
               "name"
             ],
@@ -876,6 +903,10 @@
             "title": "Is Followed",
             "type": "boolean"
           },
+          "is_ignored": {
+            "title": "Is Ignored",
+            "type": "boolean"
+          },
           "name": {
             "title": "Name",
             "type": "string"
@@ -903,7 +934,8 @@
           "recommended_offers",
           "best_fit_score",
           "pending_candidates",
-          "is_followed"
+          "is_followed",
+          "is_ignored"
         ],
         "title": "CompanySummary",
         "type": "object"
@@ -5072,9 +5104,12 @@
             ],
             "title": "Next Run Local"
           },
-          "run_time_local": {
-            "title": "Run Time Local",
-            "type": "string"
+          "run_times_local": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Run Times Local",
+            "type": "array"
           },
           "set_aside_below_fit": {
             "title": "Set Aside Below Fit",
@@ -5090,7 +5125,7 @@
           }
         },
         "required": [
-          "run_time_local",
+          "run_times_local",
           "timezone",
           "enabled",
           "company_recency_days",
@@ -5128,10 +5163,15 @@
             "title": "Expected Version",
             "type": "integer"
           },
-          "run_time_local": {
-            "format": "time",
-            "title": "Run Time Local",
-            "type": "string"
+          "run_times_local": {
+            "items": {
+              "format": "time",
+              "type": "string"
+            },
+            "maxItems": 12,
+            "minItems": 1,
+            "title": "Run Times Local",
+            "type": "array"
           },
           "set_aside_below_fit": {
             "anyOf": [
@@ -5152,7 +5192,7 @@
           }
         },
         "required": [
-          "run_time_local",
+          "run_times_local",
           "timezone",
           "enabled",
           "expected_version"
@@ -6734,8 +6774,10 @@
             "name": "sort",
             "required": false,
             "schema": {
-              "default": "fit",
+              "default": "newest",
               "enum": [
+                "newest",
+                "recommended",
                 "fit",
                 "name"
               ],
@@ -6779,6 +6821,16 @@
             "schema": {
               "default": false,
               "title": "Followed Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hide_ignored",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Hide Ignored",
               "type": "boolean"
             }
           },
@@ -7203,6 +7255,90 @@
           }
         },
         "summary": "Follow Company",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
+    "/api/v1/companies/{company_id}/ignore": {
+      "delete": {
+        "description": "Stop ignoring a company: restores the offers that ignoring moved (idempotent).",
+        "operationId": "unignore_company_api_v1_companies__company_id__ignore_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "title": "Company Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyIgnoreState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Unignore Company",
+        "tags": [
+          "companies"
+        ]
+      },
+      "put": {
+        "description": "Ignore a company: its open offers move to Ignored at once (idempotent, ADR-061).",
+        "operationId": "ignore_company_api_v1_companies__company_id__ignore_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "company_id",
+            "required": true,
+            "schema": {
+              "title": "Company Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyIgnoreState"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ignore Company",
         "tags": [
           "companies"
         ]
@@ -9761,7 +9897,7 @@
     },
     "/api/v1/settings/schedule": {
       "get": {
-        "description": "Return the daily run time, time zone, enabled flag and the next scheduled run.",
+        "description": "Return the daily run times, time zone, enabled flag and the next scheduled run.",
         "operationId": "get_schedule_api_v1_settings_schedule_get",
         "responses": {
           "200": {

@@ -79,6 +79,7 @@ class CompanyDossierRead(StrictModel):
     enriched_at: datetime | None
     stale: bool
     is_followed: bool
+    is_ignored: bool
     facts: list[FactRead]
     candidates: list[CandidateRead]
     offers: list[OfferRead]

@@ -80,6 +80,11 @@ function Row({
           )}
         >
           <span className="truncate">{c.name}</span>
+          {c.is_ignored && (
+            <span className="shrink-0 rounded-full bg-bad-bg px-2 text-xs font-medium text-bad">
+              Ignored
+            </span>
+          )}
           {c.pending_candidates > 0 && (
             <span className="shrink-0 rounded-full bg-surface-2 px-2 text-xs font-normal text-ink-2">
               Identify

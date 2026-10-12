@@ -4,6 +4,7 @@ from datetime import datetime, time
 from typing import Any
 
 from sqlalchemy import CheckConstraint, Time, UniqueConstraint
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
 from jobs_radar.db.base import Base, CreatedAtMixin, TimestampMixin
@@ -71,10 +72,13 @@ class SourceConfiguration(TimestampMixin, Base):
 
 
 class ScheduleSetting(TimestampMixin, Base):
-    """The owner's daily collection schedule; the worker reads it without a restart (ADR-017)."""
+    """The owner's daily collection schedule, one or more times a day (ADR-017, ADR-062)."""
 
     __tablename__ = "schedule_setting"
     __table_args__ = (
+        CheckConstraint(
+            "cardinality(run_times_local) BETWEEN 1 AND 12", name="run_times_local_in_range"
+        ),
         CheckConstraint(
             "company_recency_days BETWEEN 1 AND 365", name="company_recency_days_in_range"
         ),
@@ -82,15 +86,17 @@ class ScheduleSetting(TimestampMixin, Base):
             "set_aside_below_fit BETWEEN 0 AND 100", name="set_aside_below_fit_in_range"
         ),
         {
-            "comment": "Daily collection time, time zone and inbox and company view limits, "
+            "comment": "Daily collection times, time zone and inbox and company view limits, "
             "one row per owner."
         },
     )
 
     schedule_setting_id: Mapped[int] = pk_column("Surrogate primary key of the setting.")
     owner_id: Mapped[int] = fk_column("owner.owner_id", "Owner of the schedule.", unique=True)
-    run_time_local: Mapped[time] = mapped_column(
-        Time, nullable=False, comment="Local wall-clock time of the daily run."
+    run_times_local: Mapped[list[time]] = mapped_column(
+        ARRAY(Time),
+        nullable=False,
+        comment="Local wall-clock times of the daily runs, sorted, one to twelve (ADR-062).",
     )
     timezone: Mapped[str] = text_column(
         "IANA time zone name, for example Europe/Lisbon.", length=64

@@ -7,6 +7,8 @@
 /* Design tokens from the agreed UI mock-up (docs/design/frontend-mock.html, research R-00170).
    Neutral base, one accent, colour only for meaning; every status also has text or an icon. */
 :root {
+  /* Tells the browser which native widgets to draw (scrollbars, form controls). */
+  color-scheme: light;
   --bg: #fbfbfc;
   --surface: #ffffff;
   --surface-2: #f3f4f6;
@@ -33,6 +35,7 @@
 }
 
 [data-theme='dark'] {
+  color-scheme: dark; /* dark scrollbars instead of light grey ones */
   --bg: #0d0e11;
   --surface: #14161a;
   --surface-2: #1b1e23;

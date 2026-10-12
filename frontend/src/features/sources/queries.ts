@@ -223,7 +223,7 @@ export function useJobBoardActions() {
 export type ScheduleRead = components['schemas']['ScheduleRead']
 const SCHEDULE = ['schedule'] as const
 
-/** The daily schedule (run time, time zone, on/off and the next run). */
+/** The daily schedule (run times, time zone, on/off and the next run). */
 export function useSchedule() {
   return useQuery({
     queryKey: SCHEDULE,
@@ -236,7 +236,7 @@ export function useSaveSchedule() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (change: {
-      run_time_local: string
+      run_times_local: string[]
       timezone: string
       enabled: boolean
       company_recency_days: number

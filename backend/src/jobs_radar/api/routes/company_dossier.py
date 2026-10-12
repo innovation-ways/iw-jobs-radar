@@ -56,6 +56,7 @@ def dossier_read(dossier: Dossier, warnings: list[str] | None = None) -> Company
         enriched_at=company.enriched_at,
         stale=dossier.stale,
         is_followed=dossier.is_followed,
+        is_ignored=dossier.is_ignored,
         offers_truncated=dossier.offers_truncated,
         facts=[
             FactRead(

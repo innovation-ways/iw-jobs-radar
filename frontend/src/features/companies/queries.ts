@@ -9,26 +9,30 @@ export type CompanySummary = Schemas['CompanySummary']
 export type Dossier = Schemas['CompanyDossierRead']
 export type Offer = Schemas['OfferRead']
 
+export type CompanySort = 'newest' | 'recommended' | 'fit' | 'name'
+
 interface ListParams {
   q: string
-  followedOnly: boolean
+  sort: CompanySort
+  hideIgnored: boolean
   openOnly: boolean
   recommendedOnly: boolean
   pendingOnly: boolean
   limit: number
 }
 
-/** The company list: followed first, then by the best fit of the counted offers. */
+/** The company list: followed first, then in the chosen order (newest offers by default). */
 export function useCompanies({
   q,
-  followedOnly,
+  sort,
+  hideIgnored,
   openOnly,
   recommendedOnly,
   pendingOnly,
   limit,
 }: ListParams) {
   return useQuery({
-    queryKey: ['companies', q, followedOnly, openOnly, recommendedOnly, pendingOnly, limit],
+    queryKey: ['companies', q, sort, hideIgnored, openOnly, recommendedOnly, pendingOnly, limit],
     placeholderData: keepPreviousData,
     queryFn: () =>
       unwrap(
@@ -37,7 +41,8 @@ export function useCompanies({
             query: {
               limit,
               ...(q ? { q } : {}),
-              ...(followedOnly ? { followed_only: true } : {}),
+              sort,
+              ...(hideIgnored ? { hide_ignored: true } : {}),
               ...(openOnly ? { open_only: true } : {}),
               ...(recommendedOnly ? { recommended_only: true } : {}),
               ...(pendingOnly ? { pending_only: true } : {}),
@@ -62,6 +67,25 @@ export function useFollow() {
       Promise.all([
         queryClient.invalidateQueries({ queryKey: ['companies'] }),
         queryClient.invalidateQueries({ queryKey: ['dossier', companyId] }),
+      ]),
+  })
+}
+
+/** Ignore or stop ignoring a company; its offers move at once, so the inbox refreshes too. */
+export function useIgnoreCompany() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ companyId, ignore }: { companyId: number; ignore: boolean }) => {
+      const params = { params: { path: { company_id: companyId } } }
+      return ignore
+        ? unwrap(api.PUT('/api/v1/companies/{company_id}/ignore', params))
+        : unwrap(api.DELETE('/api/v1/companies/{company_id}/ignore', params))
+    },
+    onSuccess: (_state, { companyId }) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['companies'] }),
+        queryClient.invalidateQueries({ queryKey: ['dossier', companyId] }),
+        queryClient.invalidateQueries({ queryKey: ['inbox'] }),
       ]),
   })
 }

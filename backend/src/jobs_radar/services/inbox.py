@@ -42,6 +42,9 @@ _USER_ACTIONS = frozenset(InboxAction) - {InboxAction.SURFACE_NEW, InboxAction.M
 _EVENT_LIMIT = 25
 _SURFACE_BATCH = 1000
 
+# Reason code on items ignored because the owner ignores their company (ADR-061).
+COMPANY_IGNORED_REASON = "company_ignored"
+
 
 @dataclass(frozen=True)
 class InboxFilters:
@@ -152,9 +155,58 @@ class InboxService:
         """Create an item (and its ``surface_new`` event) for each opportunity that has none."""
         created = 0
         for opportunity_id in await self._queries.unsurfaced(owner_id, _SURFACE_BATCH):
-            await self._items.surface(owner_id, opportunity_id)
+            item = await self._items.surface(owner_id, opportunity_id)
+            if await self._queries.company_is_ignored(owner_id, opportunity_id):
+                await self._ignore_for_company(item)  # never shown as unread (ADR-061)
             created += 1
         return created
+
+    async def _ignore_for_company(self, item: JobInboxItem) -> None:
+        """Move an item to ignored because its company is ignored."""
+        await self._items.apply(
+            item,
+            expected_version=item.version,
+            action=InboxAction.IGNORE,
+            to_state=InboxState.IGNORED,
+            actor=Actor.SYSTEM,
+            changes={"ignore_reason": COMPANY_IGNORED_REASON},
+            metadata={"reason": COMPANY_IGNORED_REASON},
+        )
+
+    async def ignore_company(self, owner_id: int, company_id: int) -> int:
+        """Ignore every open offer of the company at once; returns how many items moved.
+
+        Archived, applied and already ignored items are left alone (ADR-061).
+        """
+        for opportunity_id in await self._queries.company_unsurfaced(owner_id, company_id):
+            await self._items.surface(owner_id, opportunity_id)
+        items = await self._queries.company_items(
+            owner_id,
+            company_id,
+            states=[InboxState.UNREAD, InboxState.READ, InboxState.UPDATED_UNREAD],
+        )
+        for item in items:
+            await self._ignore_for_company(item)
+        return len(items)
+
+    async def restore_company(self, owner_id: int, company_id: int) -> int:
+        """Restore only the items the company ignore moved; returns how many came back."""
+        items = await self._queries.company_items(
+            owner_id,
+            company_id,
+            states=[InboxState.IGNORED],
+            reason=COMPANY_IGNORED_REASON,
+        )
+        for item in items:
+            await self._items.apply(
+                item,
+                expected_version=item.version,
+                action=InboxAction.RESTORE,
+                to_state=InboxState.READ,
+                actor=Actor.SYSTEM,
+                changes={"ignore_reason": None},
+            )
+        return len(items)
 
     async def notify_material_change(self, job_posting_id: int) -> int:
         """Move eligible items of the posting's opportunity to ``updated_unread``.

@@ -20,6 +20,7 @@ class CompanySummary(StrictModel):
     best_fit_score: int | None
     pending_candidates: int
     is_followed: bool
+    is_ignored: bool
 
 
 class CompanyList(StrictModel):
@@ -27,7 +28,7 @@ class CompanyList(StrictModel):
 
     items: list[CompanySummary]
     total: int
-    sort: Literal["fit", "name"]
+    sort: Literal["newest", "recommended", "fit", "name"]
     search_intent_id: int | None
     relevance_min_score: int
     recency_days: int
@@ -38,6 +39,13 @@ class CompanyFollowState(StrictModel):
 
     company_id: int
     is_followed: bool
+
+
+class CompanyIgnoreState(StrictModel):
+    """Whether the owner ignores a company (ADR-061)."""
+
+    company_id: int
+    is_ignored: bool
 
 
 class CompanyWebsiteSet(StrictModel):

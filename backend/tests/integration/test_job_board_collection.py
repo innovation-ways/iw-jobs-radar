@@ -218,7 +218,7 @@ async def test_the_number_of_dropped_postings_is_recorded(
     assert (await last_result(db_session, source)).dropped_count == 7
 
 
-async def test_a_truncated_run_is_partial_and_never_closes_postings(
+async def test_a_truncated_run_is_partial_and_a_board_never_closes_postings(
     db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch, clock: Clock
 ) -> None:
     a = make_posting("A", company_name="Acme Robotics")
@@ -244,10 +244,11 @@ async def test_a_truncated_run_is_partial_and_never_closes_postings(
     } == {"A", "B"}
     clock.advance(hours=7)
     await run(service, source)
+    # ADR-063: a board only reads the latest days, so absence never closes a posting.
     open_ids = {
         p.external_job_id for p in await postings_of(db_session, source) if p.closed_at is None
     }
-    assert open_ids == {"A"}
+    assert open_ids == {"A", "B"}
 
 
 # --- minimum interval ---------------------------------------------------------------------------
@@ -386,3 +387,19 @@ async def test_a_key_that_cannot_be_used_fails_the_board_before_any_request(
     assert result.outcome == SourceOutcome.FAILED.value
     assert result.error_class == SourceErrorClass.CONFIGURATION.value
     assert "the-itjobs-key" not in str(result.error_message)
+
+
+async def test_a_job_board_never_closes_a_posting_it_no_longer_sees(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch, clock: Clock
+) -> None:
+    """ADR-063: a posting that left the few days a board reads is not closed for that."""
+    a = make_posting("A", company_name="Acme Robotics")
+    b = make_posting("B", company_name="Acme Robotics")
+    adapter = FakeAdapter([listing(a, b), listing(a), listing(a), listing(a)])
+    source = await board(db_session)
+    service = build(db_session, monkeypatch, adapter, clock)
+    for _ in range(4):
+        await run(service, source)
+        clock.advance(hours=7)
+    assert (await last_result(db_session, source)).closed_count == 0
+    assert all(p.closed_at is None for p in await postings_of(db_session, source))

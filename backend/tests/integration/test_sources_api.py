@@ -308,7 +308,7 @@ async def test_the_catalogue_lists_the_available_job_boards_without_secrets(
     assert himalayas["requires_credential"] is False
     assert himalayas["already_added"] is False
     assert "country_codes" not in himalayas["default_filters"]
-    assert himalayas["default_filters"]["max_age_days"] == 30
+    assert himalayas["default_filters"]["max_age_days"] == 4
     assert himalayas["terms_url"].startswith("https://")
     assert himalayas["available_categories"]
     assert not {"endpoint", "credential"} & himalayas.keys()

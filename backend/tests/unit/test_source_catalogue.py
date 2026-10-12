@@ -112,6 +112,12 @@ def test_boards_with_a_delayed_feed_say_so() -> None:
 # --- filters ------------------------------------------------------------------------------------
 
 
+def test_every_board_reads_only_the_latest_days_by_default() -> None:
+    """ADR-063: the daily runs make older postings duplicates, so the window is short."""
+    for entry in CATALOGUE:
+        assert entry.default_filters.max_age_days == 4
+
+
 def test_filter_defaults_follow_adr_049() -> None:
     filters = JobBoardFilters()
     assert filters.schema_version == 1

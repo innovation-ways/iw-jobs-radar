@@ -13,6 +13,9 @@ from jobs_radar.domain.enums import SourceType
 from jobs_radar.schemas.source_filters import JOB_BOARD_CATEGORIES, JobBoardFilters
 
 _TERMS_READ_ON = date(2026, 10, 9)
+# A board is read every day, so postings older than this are duplicates of what is already stored;
+# a short window also keeps slow, paged boards fast (ADR-063).
+JOB_BOARD_MAX_AGE_DAYS = 4
 
 
 @dataclass(frozen=True)
@@ -34,7 +37,9 @@ class CatalogueEntry:
     credential_label: str | None = None
     delay_note: str | None = None
     available_categories: tuple[str, ...] = JOB_BOARD_CATEGORIES
-    default_filters: JobBoardFilters = field(default_factory=JobBoardFilters)
+    default_filters: JobBoardFilters = field(
+        default_factory=lambda: JobBoardFilters(max_age_days=JOB_BOARD_MAX_AGE_DAYS)
+    )
     terms_read_on: date = _TERMS_READ_ON
     # False while the adapter is unfinished; the entry then stays out of the owner's list.
     available: bool = True

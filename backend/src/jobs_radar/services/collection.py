@@ -5,6 +5,7 @@ short transaction that stores postings, snapshots, change events and the run res
 failing never stops the others, and a failed run never closes anything (document 14, T2).
 """
 
+import asyncio
 import logging
 from collections.abc import Awaitable, Callable, Mapping
 from contextlib import AbstractAsyncContextManager
@@ -45,6 +46,10 @@ from jobs_radar.services.location_scope import LocationScopeService
 from jobs_radar.services.normalise import build_normalised_job, material_of_job
 
 logger = logging.getLogger(__name__)
+
+# Sources of one run collected at the same time. Each uses one short database session at a time, so
+# this stays well inside the connection pool (ADR-063).
+DEFAULT_MAX_PARALLEL_SOURCES = 8
 
 SessionFactory = Callable[[], AbstractAsyncContextManager[AsyncSession]]
 Clock = Callable[[], datetime]
@@ -93,11 +98,15 @@ class CollectionService:
         *,
         clock: Clock = _utc_now,
         box: CredentialBox | None = None,
+        max_parallel: int = 1,
     ) -> None:
         self._session_factory = session_factory
         self._adapters = adapters
         self._clock = clock
         self._box = box
+        # How many sources of one run are collected at the same time (ADR-063). The default of 1
+        # keeps one session sequential; the worker passes ``DEFAULT_MAX_PARALLEL_SOURCES``.
+        self._max_parallel = max(1, max_parallel)
 
     # --- requesting and finishing runs ---------------------------------------------------------
 
@@ -215,11 +224,26 @@ class CollectionService:
                     for s in await sources.list_for_owner(owner_id, only_enabled=True)
                 ]
 
-        outcomes = []
-        for source_id in source_ids:
-            outcomes.append(await self._process_source(collection_run_id, source_id))
+        # Sources run at the same time, bounded, so one slow board never holds back the rest
+        # (ADR-063). Each source uses its own short sessions, so nothing is shared between them.
+        gate = asyncio.Semaphore(self._max_parallel)
+
+        async def collect_one(source_id: int) -> SourceOutcome:
+            async with gate:
+                try:
+                    outcome = await self._process_source(collection_run_id, source_id)
+                # Intentionally broad: whatever goes wrong with one source must not cancel the
+                # others; it is recorded as a failure and the run carries on.
+                except Exception:
+                    logger.exception(
+                        "source_run_crashed", extra={"source_configuration_id": source_id}
+                    )
+                    outcome = SourceOutcome.FAILED
             if on_progress is not None:
                 await on_progress()
+            return outcome
+
+        outcomes = await asyncio.gather(*(collect_one(source_id) for source_id in source_ids))
 
         if all(outcome in _OK for outcome in outcomes):
             status = RunStatus.SUCCEEDED
@@ -379,6 +403,15 @@ class CollectionService:
         await self._store_failure(collection_run_id, view, started, failure)
         return SourceOutcome.FAILED
 
+    async def _resolve_companies(self, names: set[str]) -> dict[str, int]:
+        """Find or create the companies a job board names, committing at once (ADR-063)."""
+        if not names:
+            return {}
+        async with self._session_factory() as session:
+            found = await CompanyRepository(session).get_or_create_many(names)
+            await session.commit()
+            return found
+
     async def _store_skipped(
         self, collection_run_id: int, view: _SourceView, started: datetime
     ) -> None:
@@ -477,8 +510,13 @@ class CollectionService:
             raise NotFoundError(msg)
         counts = _Counts(collected=len(fetched.postings))
         seen: set[str] = set()
-        companies = CompanyRepository(session)
         company_ids: dict[str, int] = {}
+        if view.company_id is None:
+            # A job board names the company of each posting. They are resolved first, in their own
+            # short transaction, so sources collected at the same time never create one twice.
+            company_ids = await self._resolve_companies(
+                {p.company_name for p in fetched.postings if p.company_name}
+            )
         for posting in fetched.postings:
             seen.add(posting.external_job_id)
             company_id = view.company_id
@@ -488,8 +526,6 @@ class CollectionService:
                 if not name:
                     counts.collected -= 1
                     continue
-                if name not in company_ids:
-                    company_ids[name] = (await companies.get_or_create(name)).company_id
                 company_id = company_ids[name]
             job = build_normalised_job(posting, company_id=company_id, source_type=view.source_type)
             material = material_of_job(job)
@@ -541,7 +577,9 @@ class CollectionService:
                 counts.deduplicated += 1
             del snapshot_created  # creation is implied by content_changed / created
 
-        if not fetched.truncated:
+        # A job board is read for the latest days only, so not seeing a posting says nothing about
+        # it: boards never close postings by absence (ADR-063). Company boards list everything.
+        if not fetched.truncated and not view.is_job_board:
             counts.closed = await jobs.close_unseen(
                 view.source_configuration_id,
                 seen,

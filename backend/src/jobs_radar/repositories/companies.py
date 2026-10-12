@@ -1,6 +1,8 @@
 """Data access for companies (document 13, section 9)."""
 
-from sqlalchemy import delete, select
+from collections.abc import Iterable
+
+from sqlalchemy import delete, func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -43,6 +45,27 @@ class CompanyRepository:
         await self._session.flush()
         await self._session.refresh(company)
         return company
+
+    async def get_or_create_many(self, names: Iterable[str]) -> dict[str, int]:
+        """Return ``{name: company_id}``, creating the missing companies (ADR-063).
+
+        Sources are collected at the same time and ``company.name_normalised`` is not unique, so
+        two runs could both create "Acme". A transaction-scoped advisory lock per normalised name
+        serialises them: the second sees the first one's company. The locks are taken in sorted
+        order, so two callers can never wait on each other. The caller commits promptly, which
+        releases the locks.
+        """
+        names = list(names)
+        by_normalised = {normalise_company_name(name): name for name in names}
+        found: dict[str, int] = {}
+        for normalised in sorted(by_normalised):
+            await self._session.execute(
+                select(func.pg_advisory_xact_lock(func.hashtext(normalised)))
+            )
+            name = by_normalised[normalised]
+            found[normalised] = (await self.get_or_create(name)).company_id
+        # Several spellings can share one normalised name; every spelling maps to its company.
+        return {name: found[normalise_company_name(name)] for name in names}
 
 
 class CompanyFollowRepository:

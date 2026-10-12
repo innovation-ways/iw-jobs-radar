@@ -173,6 +173,63 @@ async def test_the_dossier_says_when_it_shows_only_the_best_offers(
     assert len(dossier.offers) == 3 and dossier.offers_truncated is False
 
 
+async def test_ignored_and_closed_offers_never_crowd_out_the_open_ones(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """When the list is cut, the offers the owner can still act on win over the settled ones."""
+    monkeypatch.setattr("jobs_radar.services.companies.OFFER_LIMIT", 2)
+    company = await make_company(db_session, "Crowded Co")
+    source = await make_source(db_session, company)
+    # Two ignored offers are the newest; the open ones are older and would be cut by a plain order.
+    for age, ignored in ((1, True), (2, True), (3, False), (4, False)):
+        posting, _ = await make_posting(db_session, source, first_seen_at=NOW - timedelta(days=age))
+        opportunity = await make_opportunity(db_session, posting)
+        if ignored:
+            db_session.add(
+                JobInboxItem(
+                    owner_id=1, job_opportunity_id=opportunity.job_opportunity_id, state="ignored"
+                )
+            )
+    await db_session.flush()
+    service = CompanyService(db_session, clock=lambda: NOW)
+    dossier = await service.dossier(1, company.company_id, search_intent_id=None)
+    assert [o.state for o in dossier.offers] == [None, None]
+    assert dossier.offers_truncated is True
+
+
+async def test_offers_set_aside_never_show_in_the_company_view(db_session: AsyncSession) -> None:
+    """Offers below the fit floor or not recommended are the inbox's "Set aside" and stay hidden."""
+    company = await make_company(db_session, "Floor Co")
+    source = await make_source(db_session, company)
+    profile, profile_revision = await make_profile(db_session)
+    intent, intent_revision = await make_intent(db_session, profile)
+    cases = [
+        ("Kept", 60, Recommendation.RECOMMENDED),
+        ("Low", 10, Recommendation.RECOMMENDED),  # below the default floor of 20
+        ("Gated", 70, Recommendation.NOT_RECOMMENDED),
+        ("Unscored", None, None),  # no verdict yet: never set aside
+    ]
+    for title, fit, recommendation in cases:
+        posting, snapshot = await make_posting(
+            db_session, source, title=title, first_seen_at=NOW - timedelta(days=1)
+        )
+        await make_opportunity(db_session, posting)
+        if fit is not None and recommendation is not None:
+            await make_evaluation(
+                db_session,
+                snapshot,
+                await make_extraction(db_session, snapshot),
+                profile_revision,
+                intent_revision,
+                fit_score=fit,
+                recommendation=recommendation,
+            )
+    await db_session.flush()
+    service = CompanyService(db_session, clock=lambda: NOW)
+    dossier = await service.dossier(1, company.company_id, search_intent_id=intent.search_intent_id)
+    assert sorted(o.title for o in dossier.offers) == ["Kept", "Unscored"]
+
+
 async def test_an_unknown_company_is_404(db_session: AsyncSession) -> None:
     with pytest.raises(NotFoundError):
         await CompanyService(db_session, clock=lambda: NOW).dossier(

@@ -120,9 +120,9 @@ async def test_recommended_offers_and_the_best_fit_use_the_threshold(
     world = await (World(db_session)).setup()
     await world.company("Beta", [(1, 90, R), (2, 45, R), (3, 44, R), (4, 99, N), (5, None, R)])
     row = (await world.list()).rows[0]
-    assert row.open_offers == 5
-    assert row.recommended_offers == 2  # 90 and 45; 44 is too low, 99 is gated, one unscored
-    assert row.best_fit_score == 99  # the best fit among evaluated offers, gated or not
+    assert row.open_offers == 4  # the gated offer (99) is "Set aside" and is not counted
+    assert row.recommended_offers == 2  # 90 and 45; 44 is too low, one is unscored
+    assert row.best_fit_score == 90  # the best fit among the offers that are not set aside
     assert (await world.list(relevance_min_score=60)).rows[0].recommended_offers == 1
 
 
@@ -148,7 +148,7 @@ async def test_sort_by_best_fit_or_name_with_followed_companies_first(
     await world.company("Mid", [(1, 60, R)])
     await world.company("Top", [(1, 90, R)])
     await world.company("None", [(1, None, R)])
-    watched = await world.company("Low", [(1, 10, R)])
+    watched = await world.company("Low", [(1, 25, R)])  # above the floor of 20
     assert names(await world.list(sort="fit")) == ["Top", "Mid", "Low", "None"]
     db_session.add(CompanyFollow(owner_id=LOCAL_OWNER_ID, company_id=watched))
     await db_session.flush()
@@ -253,3 +253,11 @@ async def test_closed_opportunities_do_not_count_as_open(db_session: AsyncSessio
     opportunity.closed_at = NOW
     await db_session.flush()
     assert (await world.list()).rows[0].open_offers == 0
+
+
+async def test_offers_below_the_fit_floor_are_not_counted(db_session: AsyncSession) -> None:
+    """A fit below the owner's floor is "Set aside" in the inbox and so not counted here."""
+    world = await (World(db_session)).setup()
+    await world.company("Floor", [(1, 10, R), (2, 50, R)])
+    row = (await world.list()).rows[0]
+    assert (row.open_offers, row.best_fit_score) == (1, 50)

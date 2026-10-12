@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any, Literal
 
-from sqlalchemy import Select, and_, exists, func, literal, or_, select
+from sqlalchemy import Select, and_, case, exists, func, literal, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
@@ -104,6 +104,21 @@ def ignored_by(owner_id: int) -> Any:
     )
 
 
+def set_aside_by(evaluation: Any, floor: int) -> Any:
+    """Predicate: the latest evaluation is "Set aside" in the inbox (ADR-058, ADR-060).
+
+    That is a ``not_recommended`` verdict or a fit below the owner's floor. A job without an
+    evaluation has no verdict yet, so the predicate is never true for it (``coalesce``).
+    """
+    return func.coalesce(
+        or_(
+            evaluation.recommendation == Recommendation.NOT_RECOMMENDED.value,
+            evaluation.fit_score < floor,
+        ),
+        False,
+    )
+
+
 class CompanyListQueries:
     """Reads the company list."""
 
@@ -119,6 +134,7 @@ class CompanyListQueries:
         search: str | None,
         search_intent_id: int | None,
         relevance_min_score: int,
+        set_aside_below: int,
     ) -> Select[Any]:
         evaluation, on_evaluation = latest_evaluation_join(search_intent_id)
         recommended: Any = and_(
@@ -133,6 +149,9 @@ class CompanyListQueries:
             JobOpportunity.first_seen_at >= now - timedelta(days=recency_days),
             ~ignored_by(owner_id),
         )
+        # The evaluation is joined after the opportunity, so the set-aside rule (same as the
+        # inbox tab) is applied to the aggregates below instead of the join.
+        kept: Any = ~set_aside_by(evaluation, set_aside_below)
         statement = (
             select(
                 Company.company_id,
@@ -140,12 +159,12 @@ class CompanyListQueries:
                 Company.homepage_url,
                 Company.careers_url,
                 Company.employer_type,
-                func.count(JobOpportunity.job_opportunity_id).label("open_offers"),
+                func.count(JobOpportunity.job_opportunity_id).filter(kept).label("open_offers"),
                 func.count(JobOpportunity.job_opportunity_id)
-                .filter(recommended)
+                .filter(and_(kept, recommended))
                 .label("recommended_offers"),
-                func.max(evaluation.fit_score).label("best_fit_score"),
-                func.max(JobOpportunity.first_seen_at).label("latest_offer_at"),
+                func.max(evaluation.fit_score).filter(kept).label("best_fit_score"),
+                func.max(JobOpportunity.first_seen_at).filter(kept).label("latest_offer_at"),
                 select(func.count())
                 .where(
                     CompanyEnrichmentCandidate.company_id == Company.company_id,
@@ -196,6 +215,7 @@ class CompanyListQueries:
         search: str | None,
         search_intent_id: int | None,
         relevance_min_score: int,
+        set_aside_below: int,
         sort: Sort,
         followed_only: bool,
         hide_ignored: bool,
@@ -217,6 +237,7 @@ class CompanyListQueries:
             search=search,
             search_intent_id=search_intent_id,
             relevance_min_score=relevance_min_score,
+            set_aside_below=set_aside_below,
         ).subquery()
         filtered = select(stats)
         if followed_only:
@@ -312,11 +333,17 @@ class CompanyDossierQueries:
         limit: int,
         *,
         not_before: datetime | None,
+        set_aside_below: int = 0,
     ) -> list[OfferRow]:
-        """Return the company's opportunities: best fit first, then newest.
+        """Return the company's opportunities: actionable ones first, then best fit, then newest.
+
+        Ignored and closed opportunities sort last, so that when ``limit`` cuts the list they are
+        the ones left out: the cut must never hide offers the owner can still act on.
 
         ``not_before`` leaves out opportunities first seen earlier than that time (``None`` keeps
         all). Each row carries the owner's inbox state so the screen can dim ignored offers.
+        Offers the inbox lists under "Set aside" (``not_recommended`` or a fit below
+        ``set_aside_below``) are left out, as they are in the counts of the company list.
         """
         from jobs_radar.db.models import JobPosting  # local: keeps the module header small
 
@@ -345,12 +372,20 @@ class CompanyDossierQueries:
                     JobInboxItem.owner_id == owner_id,
                 ),
             )
-            .where(JobOpportunity.company_id == company_id)
+            .where(
+                JobOpportunity.company_id == company_id,
+                ~set_aside_by(evaluation, set_aside_below),
+            )
         )
         if not_before is not None:
             statement = statement.where(JobOpportunity.first_seen_at >= not_before)
         rows = await self._session.execute(
             statement.order_by(
+                case(
+                    (JobInboxItem.state == InboxState.IGNORED.value, 1),
+                    (JobOpportunity.closed_at.is_not(None), 1),
+                    else_=0,
+                ),
                 evaluation.fit_score.desc().nulls_last(),
                 JobOpportunity.first_seen_at.desc(),
                 JobOpportunity.job_opportunity_id.desc(),

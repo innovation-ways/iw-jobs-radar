@@ -118,6 +118,7 @@ class CompanyService:
             search=q,
             search_intent_id=search_intent_id,
             relevance_min_score=relevance_min_score,
+            set_aside_below=await self._schedule.set_aside_below_fit(owner_id),
             sort=sort,
             followed_only=followed_only,
             hide_ignored=hide_ignored,
@@ -237,6 +238,7 @@ class CompanyService:
             not_before=None
             if include_older
             else now - timedelta(days=await self._schedule.company_recency_days(owner_id)),
+            set_aside_below=await self._schedule.set_aside_below_fit(owner_id),
         )
         return Dossier(
             company=company,

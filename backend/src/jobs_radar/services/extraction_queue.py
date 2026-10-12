@@ -39,11 +39,15 @@ CLAIM_TIMEOUT = timedelta(minutes=10)
 
 @dataclass(frozen=True)
 class BatchSummary:
-    """What one batch did. ``stopped`` means the provider was unavailable and the batch ended."""
+    """What one batch did. ``stopped`` means the provider was unavailable and the batch ended.
+
+    ``backlog`` is true when the time budget ended the batch while jobs were still waiting.
+    """
 
     succeeded: int
     failed: int
     stopped: bool
+    backlog: bool = False
 
 
 def _utc_now() -> datetime:
@@ -121,7 +125,11 @@ class ExtractionQueue:
         extractor = JobExtractor(self._provider, taxonomy, max_chars=self._max_chars)
         succeeded = failed = 0
         seen: set[int] = set()
-        while self._clock() < deadline:
+        backlog = False
+        while True:
+            if self._clock() >= deadline:
+                backlog = True
+                break
             claimed = await self._claim(seen)
             if claimed is None:
                 break
@@ -134,7 +142,7 @@ class ExtractionQueue:
             failed += outcome == "failed"
             if heartbeat is not None:
                 await heartbeat()
-        return BatchSummary(succeeded, failed, stopped=False)
+        return BatchSummary(succeeded, failed, stopped=False, backlog=backlog)
 
     async def _claim(
         self, seen: set[int]

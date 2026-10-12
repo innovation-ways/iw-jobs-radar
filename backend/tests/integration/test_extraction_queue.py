@@ -281,3 +281,21 @@ async def test_the_batch_stops_at_its_time_budget_and_beats_after_each_job(
     summary = await q.run_batch(budget_seconds=45, heartbeat=beat)
     assert summary.succeeded == 2  # the third would start after the budget is spent
     assert len(beats) == 2
+
+
+async def test_the_batch_reports_a_backlog_only_when_the_budget_cut_it_short(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for _ in range(3):
+        await job(db_session)
+    clock = Clock()
+
+    def slow(_request: Any) -> object:
+        clock.now += timedelta(seconds=30)
+        return sample_extraction_output()
+
+    q = queue(db_session, monkeypatch, FakeProvider(responder=slow), clock)
+    await q.enqueue_missing()
+
+    assert (await q.run_batch(budget_seconds=45)).backlog is True  # one job is still waiting
+    assert (await q.run_batch(budget_seconds=45)).backlog is False  # the queue ran dry

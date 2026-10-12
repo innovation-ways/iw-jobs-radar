@@ -309,3 +309,48 @@ async def test_a_summary_model_that_is_down_never_stops_the_worker_iteration(
     worker = Worker(settings, session_factory, name="w-test", summaries=runner)
     await worker.run_once()  # must not raise
     assert worker.beats >= 1
+
+
+class _Step:
+    """A stand-in runner that records whether the worker called it."""
+
+    def __init__(self) -> None:
+        self.calls = 0
+
+    async def run(self, **_kwargs: object) -> int:
+        self.calls += 1
+        return 0
+
+
+class _Extraction:
+    """A stand-in extraction queue whose batch reports a backlog or not."""
+
+    def __init__(self, *, backlog: bool) -> None:
+        self._backlog = backlog
+
+    async def enqueue_missing(self) -> int:
+        return 0
+
+    async def run_batch(self, **_kwargs: object) -> object:
+        from jobs_radar.services.extraction_queue import BatchSummary
+
+        return BatchSummary(1, 0, stopped=False, backlog=self._backlog)
+
+
+@pytest.mark.parametrize(("backlog", "expected_calls"), [(True, 0), (False, 1)])
+async def test_directions_and_summaries_wait_while_extraction_has_a_backlog(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    backlog: bool,
+    expected_calls: int,
+) -> None:
+    directions, summaries = _Step(), _Step()
+    await Worker(
+        settings,
+        session_factory,
+        name="w-test",
+        extraction=_Extraction(backlog=backlog),  # type: ignore[arg-type]
+        directions=directions,  # type: ignore[arg-type]
+        summaries=summaries,  # type: ignore[arg-type]
+    ).run_once()
+    assert (directions.calls, summaries.calls) == (expected_calls, expected_calls)

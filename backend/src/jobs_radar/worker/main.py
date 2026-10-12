@@ -130,7 +130,11 @@ class Worker:
                 budget_seconds=float(self._settings.worker_heartbeat_max_age_seconds) / 2,
                 heartbeat=self._beat,
             )
-        if directions is not None:
+        # While extraction has a backlog, the larger direction/summary model is left alone: it
+        # competes with the extraction model for the GPU (and swaps in and out of memory), and
+        # neither step feeds the score. They resume once the queue is empty.
+        extraction_busy = summary is not None and summary.backlog
+        if directions is not None and not extraction_busy:
             # Judging needs the job's extraction, so it follows the extraction batch and comes
             # before scoring (a job is then scored once, with its judgements); a model that is
             # down only ends this step.
@@ -140,7 +144,7 @@ class Worker:
             )
             if judged:
                 logger.info("directions_judged", jobs=judged)
-        if summaries is not None:
+        if summaries is not None and not extraction_busy:
             # A summary only reads the posting, so it is independent of scoring; a model that is
             # down only ends this step.
             summarised = await summaries.run(

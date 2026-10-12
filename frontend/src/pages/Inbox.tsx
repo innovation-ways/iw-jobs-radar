@@ -110,7 +110,11 @@ export function Inbox() {
     enabled: !waitingForIntents,
   })
   const items = list.items
-  const selected = items.find((i) => i.job_inbox_item_id === selectedId) ?? items[0] ?? null
+  // Neighbours of the job last acted on, in order of preference (next, then previous): when that
+  // job leaves the list, the selection moves to the first of them still listed, not to the top.
+  const [fallbackIds, setFallbackIds] = useState<number[]>([])
+  const byId = (id: number | null) => items.find((i) => i.job_inbox_item_id === id)
+  const selected = byId(selectedId) ?? fallbackIds.map(byId).find(Boolean) ?? items[0] ?? null
   const detail = useInboxDetail(selected?.job_inbox_item_id ?? null, intentId)
   const { act, decideLink } = useInboxActions(intentId)
 
@@ -124,6 +128,11 @@ export function Inbox() {
   const perform = useCallback(
     async (item: InboxItem, action: OwnerAction) => {
       setActionError(null)
+      const index = items.findIndex((i) => i.job_inbox_item_id === item.job_inbox_item_id)
+      setSelectedId(item.job_inbox_item_id)
+      setFallbackIds(
+        [items[index + 1], items[index - 1]].filter(Boolean).map((i) => i.job_inbox_item_id),
+      )
       try {
         const result = await act.mutateAsync({
           itemId: item.job_inbox_item_id,
@@ -146,7 +155,7 @@ export function Inbox() {
         setActionError(error instanceof Error ? error.message : 'The action failed.')
       }
     },
-    [act],
+    [act, items],
   )
 
   const undo = useCallback(async () => {
@@ -190,16 +199,26 @@ export function Inbox() {
       j: () => move(1),
       k: () => move(-1),
       s: on('shortlist'),
-      x: on('ignore'),
-      e: on('archive'),
-      a: on('record_application'),
+      i: on('ignore'),
+      a: on('archive'),
+      m: () => {
+        // "Mark as read" only exists for unread jobs; elsewhere the key does nothing.
+        if (selected?.state === 'unread' || selected?.state === 'updated_unread') on('open')()
+      },
+      o: () => {
+        const url = detail.data?.apply_url
+        // Opening the page does not change the job (same as the link): noopener keeps the tab isolated.
+        if (url) window.open(url, '_blank', 'noopener,noreferrer')
+      },
+      ArrowDown: () => move(1),
+      ArrowUp: () => move(-1),
       u: on('mark_unread'),
       r: on('restore'),
       z: () => void undo(),
       '?': () => setHelpOpen(true),
       '/': () => searchRef.current?.focus(),
     }),
-    [move, on, undo],
+    [move, on, undo, selected, detail.data],
   )
   useShortcuts(shortcuts, !helpOpen)
 

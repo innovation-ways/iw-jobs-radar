@@ -13,7 +13,8 @@ export function useShortcuts(shortcuts: Shortcuts, enabled = true): void {
       const target = event.target as HTMLElement | null
       if (target && /^(input|select|textarea)$/i.test(target.tagName)) return
       if (event.ctrlKey || event.altKey || event.metaKey) return
-      const handler = shortcuts[event.key]
+      // Letters match in either case (I or i); named keys such as ArrowDown match as they are.
+      const handler = shortcuts[event.key] ?? shortcuts[event.key.toLowerCase()]
       if (!handler) return
       event.preventDefault()
       handler()

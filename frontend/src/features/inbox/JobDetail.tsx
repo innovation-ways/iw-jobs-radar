@@ -16,6 +16,19 @@ interface Props {
   onLinkDecision: (linkId: number, decision: 'confirm' | 'reject') => void
 }
 
+/**
+ * A label whose first letter is the underlined hotkey. The whole word is one element: the buttons
+ * are flex containers with a gap, so a separate letter would be spaced away from the rest.
+ */
+function Hotkey({ children }: { children: string }) {
+  return (
+    <span>
+      <u className="underline-offset-2">{children[0]}</u>
+      {children.slice(1)}
+    </span>
+  )
+}
+
 function ActionBar({ detail, busy, onAction }: Omit<Props, 'onLinkDecision'>) {
   const settled =
     detail.state === 'ignored' || detail.state === 'archived' || detail.state === 'applied'
@@ -25,15 +38,27 @@ function ActionBar({ detail, busy, onAction }: Omit<Props, 'onLinkDecision'>) {
       disabled={busy}
       onClick={() => onAction(detail.is_shortlisted ? 'unshortlist' : 'shortlist')}
     >
-      {detail.is_shortlisted ? '★ Shortlisted — remove' : '☆ Shortlist'}{' '}
-      <kbd className="text-[11px] opacity-70">s</kbd>
+      {detail.is_shortlisted ? (
+        <>
+          <span>
+            ★ <u className="underline-offset-2">S</u>hortlisted — remove
+          </span>
+        </>
+      ) : (
+        <>
+          <span>
+            ☆ <u className="underline-offset-2">S</u>hortlist
+          </span>
+        </>
+      )}
     </Button>
   )
   const original = detail.apply_url && (
     <Button asChild variant={settled ? 'outline' : 'default'}>
       {/* Opening the page does not change the job: only a button moves it out of "To review". */}
       <a href={detail.apply_url} target="_blank" rel="noopener noreferrer">
-        Open original <ExternalLink />
+        <Hotkey>Open original</Hotkey>
+        <ExternalLink />
       </a>
     </Button>
   )
@@ -53,17 +78,17 @@ function ActionBar({ detail, busy, onAction }: Omit<Props, 'onLinkDecision'>) {
         <>
           {(detail.state === 'unread' || detail.state === 'updated_unread') && (
             <Button variant="outline" disabled={busy} onClick={() => onAction('open')}>
-              Mark as read
+              <Hotkey>Mark as read</Hotkey>
             </Button>
           )}
           <Button variant="outline" disabled={busy} onClick={() => onAction('ignore')}>
-            Ignore <kbd className="text-[11px] opacity-70">x</kbd>
+            <Hotkey>Ignore</Hotkey>
           </Button>
           <Button variant="outline" disabled={busy} onClick={() => onAction('archive')}>
-            Archive <kbd className="text-[11px] opacity-70">e</kbd>
+            <Hotkey>Archive</Hotkey>
           </Button>
           <Button variant="ghost" disabled={busy} onClick={() => onAction('record_application')}>
-            Mark applied <kbd className="text-[11px] opacity-70">a</kbd>
+            Mark applied
           </Button>
         </>
       )}

@@ -1,14 +1,15 @@
 import { useEffect } from 'react'
 
 const SHORTCUTS: [keys: string, text: string][] = [
-  ['j  k', 'Next / previous job'],
+  ['↓  ↑  j  k', 'Next / previous job'],
+  ['o', 'Open the original posting'],
   ['s', 'Shortlist / remove from shortlist'],
+  ['m', 'Mark as read'],
   ['u', 'Mark unread'],
   ['r', 'Restore (ignored, archived, applied)'],
   ['z', 'Undo last action'],
-  ['x', 'Ignore'],
-  ['e', 'Archive'],
-  ['a', 'Record application'],
+  ['i', 'Ignore'],
+  ['a', 'Archive'],
   ['/', 'Search'],
   ['Esc', 'Close this panel'],
 ]

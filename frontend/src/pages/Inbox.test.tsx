@@ -513,11 +513,76 @@ describe('Inbox screen', () => {
       post.mockResolvedValue(acted(items[0], { state: 'archived' }))
       renderInbox()
       await screen.findByRole('article', { name: /Applied AI Architect/ })
-      await userEvent.keyboard('e')
+      await userEvent.keyboard('a')
       await waitFor(() => expect(post.mock.calls[0][1].body.action).toBe('archive'))
       post.mockResolvedValue(acted({ ...items[0], version: 2 }, { state: 'unread' }))
       await userEvent.keyboard('z')
       await waitFor(() => expect(post.mock.calls.at(-1)![1].body.action).toBe('mark_unread'))
+    })
+
+    it('moves the selection with the arrow keys', async () => {
+      renderInbox()
+      await screen.findByRole('article', { name: /Applied AI Architect/ })
+      await userEvent.click(row(/Platform Engineer/))
+      await userEvent.keyboard('{ArrowDown}')
+      expect(await screen.findByRole('article', { name: /Data Analyst/ })).toBeInTheDocument()
+      await userEvent.keyboard('{ArrowUp}')
+      expect(await screen.findByRole('article', { name: /Platform Engineer/ })).toBeInTheDocument()
+    })
+
+    it.each([
+      ['I', 'ignore'],
+      ['i', 'ignore'],
+      ['s', 'shortlist'],
+      ['S', 'shortlist'],
+      ['m', 'open'],
+      ['A', 'archive'],
+    ])('the key %s runs %s on the selected job', async (key, action) => {
+      post.mockResolvedValue(acted(items[0], { state: 'archived' }))
+      renderInbox()
+      await screen.findByRole('article', { name: /Applied AI Architect/ })
+      await userEvent.keyboard(key)
+      await waitFor(() => expect(post.mock.calls[0][1].body.action).toBe(action))
+    })
+
+    it.each([
+      ['the next job', /Platform Engineer/, /Data Analyst/],
+      ['the previous job when it was the last', /Data Analyst/, /Platform Engineer/],
+    ])('selects %s after ignoring one that leaves the list', async (_, ignored, expected) => {
+      post.mockImplementation(async () => {
+        items = items.filter((i) => !ignored.test(i.title))
+        return acted(items[0], { state: 'ignored' })
+      })
+      renderInbox()
+      await screen.findByRole('article', { name: /Applied AI Architect/ })
+      await userEvent.click(row(ignored))
+      await userEvent.keyboard('i')
+      expect(await screen.findByRole('article', { name: expected })).toBeInTheDocument()
+    })
+
+    it('opens the original posting with the O key', async () => {
+      const open = vi.spyOn(window, 'open').mockReturnValue(null)
+      renderInbox()
+      const detail = await screen.findByRole('article', { name: /Applied AI Architect/ })
+      const link = within(detail).getByRole('link', { name: /open original/i })
+      await userEvent.keyboard('o')
+      expect(open).toHaveBeenCalledWith(link.getAttribute('href'), '_blank', 'noopener,noreferrer')
+      open.mockRestore()
+    })
+
+    it('underlines the hotkey letter of each action button', async () => {
+      renderInbox()
+      const detail = await screen.findByRole('article', { name: /Applied AI Architect/ })
+      for (const [role, name, letter] of [
+        ['link', /open original/i, 'O'],
+        ['button', /shortlist/i, 'S'],
+        ['button', /mark as read/i, 'M'],
+        ['button', /^ignore/i, 'I'],
+        ['button', /^archive/i, 'A'],
+      ] as const) {
+        const button = within(detail).getByRole(role, { name })
+        expect(button.querySelector('u')?.textContent).toBe(letter)
+      }
     })
 
     it('records an application', async () => {

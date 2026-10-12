@@ -74,6 +74,117 @@
         "title": "AiSettingsRead",
         "type": "object"
       },
+      "ApplicationContent": {
+        "additionalProperties": false,
+        "description": "What the model wrote for one job; stored in ``application_draft.draft_json``.",
+        "properties": {
+          "cover_letter": {
+            "maxLength": 4000,
+            "title": "Cover Letter",
+            "type": "string"
+          },
+          "gaps": {
+            "items": {
+              "maxLength": 400,
+              "minLength": 3,
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Gaps",
+            "type": "array"
+          },
+          "letter_language": {
+            "enum": [
+              "pt",
+              "en"
+            ],
+            "title": "Letter Language",
+            "type": "string"
+          },
+          "positioning": {
+            "maxLength": 900,
+            "minLength": 20,
+            "title": "Positioning",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "strengths": {
+            "items": {
+              "$ref": "#/components/schemas/Strength"
+            },
+            "maxItems": 6,
+            "minItems": 3,
+            "title": "Strengths",
+            "type": "array"
+          }
+        },
+        "required": [
+          "strengths",
+          "positioning",
+          "cover_letter",
+          "letter_language"
+        ],
+        "title": "ApplicationContent",
+        "type": "object"
+      },
+      "ApplicationDraftList": {
+        "additionalProperties": false,
+        "description": "The drafts of one job, newest first.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApplicationDraftRead"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ApplicationDraftList",
+        "type": "object"
+      },
+      "ApplicationDraftRead": {
+        "additionalProperties": false,
+        "description": "A stored draft as returned to clients.",
+        "properties": {
+          "application_draft_id": {
+            "title": "Application Draft Id",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "draft": {
+            "$ref": "#/components/schemas/ApplicationContent"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "application_draft_id",
+          "created_at",
+          "model",
+          "prompt_version",
+          "draft"
+        ],
+        "title": "ApplicationDraftRead",
+        "type": "object"
+      },
       "AssessResponse": {
         "additionalProperties": false,
         "description": "What assessing one job did: judgements made and new evaluations stored.",
@@ -6164,6 +6275,30 @@
         "title": "Stances",
         "type": "object"
       },
+      "Strength": {
+        "additionalProperties": false,
+        "description": "One point to stress and the profile fact it rests on.",
+        "properties": {
+          "evidence": {
+            "maxLength": 400,
+            "minLength": 3,
+            "title": "Evidence",
+            "type": "string"
+          },
+          "point": {
+            "maxLength": 400,
+            "minLength": 3,
+            "title": "Point",
+            "type": "string"
+          }
+        },
+        "required": [
+          "point",
+          "evidence"
+        ],
+        "title": "Strength",
+        "type": "object"
+      },
       "SummaryResponse": {
         "additionalProperties": false,
         "description": "A summary written (or already stored) for one job.",
@@ -8424,6 +8559,92 @@
         "summary": "Restore Intent Revision",
         "tags": [
           "intents"
+        ]
+      }
+    },
+    "/api/v1/jobs/{job_posting_id}/application-draft": {
+      "post": {
+        "description": "Write a new pre-application draft of a job with the local model and keep it.\n\nNever automatic: the owner asks, so the profile facts reach the model only on request.",
+        "operationId": "write_draft_api_v1_jobs__job_posting_id__application_draft_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_posting_id",
+            "required": true,
+            "schema": {
+              "title": "Job Posting Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationDraftRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Write Draft",
+        "tags": [
+          "application-drafts"
+        ]
+      }
+    },
+    "/api/v1/jobs/{job_posting_id}/application-drafts": {
+      "get": {
+        "description": "List the drafts written for a job, newest first.",
+        "operationId": "list_drafts_api_v1_jobs__job_posting_id__application_drafts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_posting_id",
+            "required": true,
+            "schema": {
+              "title": "Job Posting Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationDraftList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Drafts",
+        "tags": [
+          "application-drafts"
         ]
       }
     },

@@ -17,9 +17,9 @@
   Technology areas are matched by keywords in titles and tags, so the filter is loose on purpose.
 - Arbeitnow and Jobicy do not state who may apply: a posting whose place cannot be read is kept
   and judged later. Jobicy is read through its `europe`, `anywhere` and country slugs only.
-- ITJobs.pt (Portugal) follows its public documentation but was not tested with a real key: the
-  offer link is built from the public offer address, and remote work is recognised from the words
-  "remote" or "remoto" because its `workModel` codes are not documented.
+- ITJobs.pt (Portugal) was checked with a real key on 2026-10-12: collection succeeds, the offer links
+  open, and remote work is read from `workModel` (0 on site, 1 remote, 2 hybrid) or from the words
+  "remote" or "remoto". Those codes are an observation, not documented by the service.
 - Company board places are free text ("Hybrid - Lisbon / Madrid"): the location filter reads
   what it can and keeps what it cannot, so some out-of-reach postings still reach the inbox.
 - A job board posting is not deleted from the list of sources; disable the board instead.

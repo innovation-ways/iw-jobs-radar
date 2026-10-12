@@ -336,6 +336,7 @@ DEDUP_POLICY_VERSION = "dedup-v1"
 EXTRACTION_PROMPT_VERSION = "extract-v2"
 DIRECTION_PROMPT_VERSION = "direction-v1"
 SUMMARY_PROMPT_VERSION = "summary-v1"
+APPLICATION_PROMPT_VERSION = "application-v1"
 # The worker writes summaries only for jobs first seen on or after this moment (ADR-059): the jobs
 # collected and analysed before the feature are summarised on demand or by the sample tool.
 SUMMARIES_FROM = datetime(2026, 10, 11, 15, 0, tzinfo=UTC)

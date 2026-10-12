@@ -538,6 +538,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/jobs/{job_posting_id}/application-draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Write Draft
+         * @description Write a new pre-application draft of a job with the local model and keep it.
+         *
+         *     Never automatic: the owner asks, so the profile facts reach the model only on request.
+         */
+        post: operations["write_draft_api_v1_jobs__job_posting_id__application_draft_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/jobs/{job_posting_id}/application-drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Drafts
+         * @description List the drafts written for a job, newest first.
+         */
+        get: operations["list_drafts_api_v1_jobs__job_posting_id__application_drafts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/jobs/{job_posting_id}/assess-directions": {
         parameters: {
             query?: never;
@@ -1371,6 +1413,57 @@ export interface components {
              */
             mode: "no_ai" | "local" | "remote";
             privacy: components["schemas"]["PrivacyRead"];
+        };
+        /**
+         * ApplicationContent
+         * @description What the model wrote for one job; stored in ``application_draft.draft_json``.
+         */
+        ApplicationContent: {
+            /** Cover Letter */
+            cover_letter: string;
+            /** Gaps */
+            gaps?: string[];
+            /**
+             * Letter Language
+             * @enum {string}
+             */
+            letter_language: "pt" | "en";
+            /** Positioning */
+            positioning: string;
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /** Strengths */
+            strengths: components["schemas"]["Strength"][];
+        };
+        /**
+         * ApplicationDraftList
+         * @description The drafts of one job, newest first.
+         */
+        ApplicationDraftList: {
+            /** Items */
+            items: components["schemas"]["ApplicationDraftRead"][];
+        };
+        /**
+         * ApplicationDraftRead
+         * @description A stored draft as returned to clients.
+         */
+        ApplicationDraftRead: {
+            /** Application Draft Id */
+            application_draft_id: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            draft: components["schemas"]["ApplicationContent"];
+            /** Model */
+            model: string;
+            /** Prompt Version */
+            prompt_version: string;
         };
         /**
          * AssessResponse
@@ -3743,6 +3836,16 @@ export interface components {
             work_arrangements: components["schemas"]["StanceEntry"][];
         };
         /**
+         * Strength
+         * @description One point to stress and the profile fact it rests on.
+         */
+        Strength: {
+            /** Evidence */
+            evidence: string;
+            /** Point */
+            point: string;
+        };
+        /**
          * SummaryResponse
          * @description A summary written (or already stored) for one job.
          */
@@ -4904,6 +5007,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["IntentSaveResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    write_draft_api_v1_jobs__job_posting_id__application_draft_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_posting_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationDraftRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_drafts_api_v1_jobs__job_posting_id__application_drafts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_posting_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationDraftList"];
                 };
             };
             /** @description Validation Error */

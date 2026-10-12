@@ -206,6 +206,34 @@ class JobSummary(CreatedAtMixin, Base):
     )
 
 
+class ApplicationDraft(CreatedAtMixin, Base):
+    """A pre-application draft written by a model on request (append-only, ADR-064)."""
+
+    __tablename__ = "application_draft"
+    __table_args__ = (
+        {"comment": "Model-written pre-application drafts of jobs (append-only, ADR-064)."},
+    )
+
+    application_draft_id: Mapped[int] = pk_column("Surrogate primary key of the draft.")
+    job_snapshot_id: Mapped[int] = fk_column(
+        "job_snapshot.job_snapshot_id", "Snapshot the draft was written for.", ondelete="CASCADE"
+    )
+    profile_revision_id: Mapped[int] = fk_column(
+        "profile_revision.profile_revision_id", "Profile revision whose facts the draft used."
+    )
+    provider: Mapped[str] = text_column("AI provider kind.", length=50)
+    model: Mapped[str] = text_column("AI model identifier.", length=100)
+    prompt_version: Mapped[str] = text_column(
+        "Prompt template version, for example application-v1.", length=50
+    )
+    draft_json: Mapped[Any] = json_column(
+        "Strengths, positioning, gaps and cover letter, validated with a schema_version."
+    )
+    latency_ms: Mapped[int | None] = int_column(
+        "Duration of the model calls in milliseconds.", nullable=True
+    )
+
+
 class JobOpportunity(TimestampMixin, Base):
     """One real opportunity, possibly listed on several sources (ADR-023)."""
 

@@ -12,6 +12,7 @@ from jobs_radar.core.settings import Settings
 from jobs_radar.domain.enums import LOCAL_OWNER_ID, SourceType
 from jobs_radar.repositories.inbox import InboxQueries
 from jobs_radar.services.ai_settings import AiSettingsService, build_credential_box
+from jobs_radar.services.application_draft import ApplicationDraftService
 from jobs_radar.services.collection import CollectionService
 from jobs_radar.services.companies import CompanyService
 from jobs_radar.services.company_analysis import CompanyAnalysisService, SiteReader
@@ -260,3 +261,13 @@ def get_summary_assess_service(
     """Build the service that writes the summary of one job with the local jobs model."""
     settings: Settings = request.app.state.settings
     return SummaryAssessService(session, ai, max_chars=settings.extraction_max_chars)
+
+
+def get_application_draft_service(
+    request: Request,
+    session: Annotated[AsyncSession, Depends(get_session)],
+    ai: Annotated[AiSettingsService, Depends(get_ai_settings_service)],
+) -> ApplicationDraftService:
+    """Build the service that writes pre-application drafts with the local jobs model."""
+    settings: Settings = request.app.state.settings
+    return ApplicationDraftService(session, ai, max_chars=settings.extraction_max_chars)

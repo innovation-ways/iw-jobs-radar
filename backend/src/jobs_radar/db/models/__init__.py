@@ -13,6 +13,7 @@ from jobs_radar.db.models.evaluation import DirectionJudgement, MatchEvaluation,
 from jobs_radar.db.models.inbox import InboxEvent, JobInboxItem
 from jobs_radar.db.models.intent import IntentRevision, SearchIntent
 from jobs_radar.db.models.job import (
+    ApplicationDraft,
     JobChangeEvent,
     JobExtraction,
     JobOpportunity,
@@ -43,6 +44,7 @@ from jobs_radar.db.models.trend import TrendWeekly
 from jobs_radar.db.models.worker import WorkerHeartbeat
 
 __all__ = [
+    "ApplicationDraft",
     "AuditEvent",
     "CareerProfile",
     "CollectionRun",

@@ -6,6 +6,7 @@ import { bandOf, NOT_EVALUATED, TONE_CLASSES } from './bands'
 import { AssessDirections } from './AssessDirections'
 import { DimensionList } from './DimensionList'
 import { JobBrief } from './JobBrief'
+import { PreApplication } from './PreApplication'
 import type { InboxDetail } from './queries'
 import type { OwnerAction } from './undo'
 
@@ -202,6 +203,7 @@ export function JobDetail({ detail, busy, onAction, onLinkDecision }: Props) {
       </div>
 
       <JobBrief brief={detail.brief} jobPostingId={detail.job_posting_id} />
+      <PreApplication jobPostingId={detail.job_posting_id} />
 
       {evaluation && (
         <section className="border-b border-line px-5 py-4" aria-label="Why this score">

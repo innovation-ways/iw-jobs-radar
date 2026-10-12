@@ -20,6 +20,15 @@ _JOB_BOARD_SUFFIXES = (
 _LABEL = re.compile(r"^[a-z0-9-]{1,63}$")
 
 
+def https_url(url: str) -> str:
+    """Return ``url`` with a plain ``http://`` scheme upgraded to ``https://``.
+
+    The guarded HTTP client fetches https only, and the public sites this is used for answer it.
+    Any other value is returned unchanged.
+    """
+    return "https://" + url[len("http://") :] if url[:7].lower() == "http://" else url
+
+
 def _host(url: str) -> str | None:
     text = url.strip()
     if not text:

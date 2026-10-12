@@ -21,6 +21,7 @@ from jobs_radar.adapters.enrichment.website import WebPage, WebsiteUnreadableErr
 from jobs_radar.adapters.providers.base import ExtractionRequest, ProviderError
 from jobs_radar.core.errors import DependencyUnavailableError, InputValidationError, NotFoundError
 from jobs_radar.db.models import Company, CompanyFact
+from jobs_radar.domain.domains import https_url
 from jobs_radar.domain.enums import FactOrigin
 from jobs_radar.domain.text_match import quote_occurs
 from jobs_radar.services.ai_settings import AiSettingsService
@@ -150,7 +151,8 @@ class CompanyAnalysisService:
         connection, provider = target
 
         try:
-            pages = await self._reader.read(company.homepage_url)
+            # Addresses stored before the https rule (or taken from a dataset) may still be http.
+            pages = await self._reader.read(https_url(company.homepage_url))
         except WebsiteUnreadableError as error:
             raise self._unreadable(error) from error
         if not pages:

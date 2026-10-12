@@ -177,6 +177,17 @@ async def test_a_candidate_whose_website_domain_matches_is_accepted_with_sourced
     assert company.homepage_url == "https://www.northwind.example/" and company.enriched_at == NOW  # type: ignore[union-attr]
 
 
+async def test_a_website_that_wikidata_gives_over_http_is_stored_as_https(
+    db_session: AsyncSession,
+) -> None:
+    # The guarded HTTP client only fetches https, so an http address could never be analysed.
+    company_id = await company_with_domain(db_session)
+    svc, _ = service(db_session, [candidate(website="http://www.northwind.example/")])
+    await svc.enrich(1, company_id)
+    company = await db_session.get(Company, company_id)
+    assert company.homepage_url == "https://www.northwind.example/"  # type: ignore[union-attr]
+
+
 async def test_a_different_domain_stays_unmatched_until_the_owner_confirms(
     db_session: AsyncSession,
 ) -> None:

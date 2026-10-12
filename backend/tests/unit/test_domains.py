@@ -36,3 +36,12 @@ def test_job_board_hosts_are_not_company_domains() -> None:
     assert is_job_board_host("https://jobs.lever.co/acme")
     assert is_job_board_host("https://jobs.ashbyhq.com/acme")
     assert not is_job_board_host("https://www.northwind.example/careers")
+
+
+def test_https_url_upgrades_only_a_plain_http_scheme() -> None:
+    from jobs_radar.domain.domains import https_url
+
+    assert https_url("http://www.devoteam.com") == "https://www.devoteam.com"
+    assert https_url("HTTP://zapier.com/") == "https://zapier.com/"
+    assert https_url("https://zapier.com/") == "https://zapier.com/"
+    assert https_url("zapier.com") == "zapier.com"

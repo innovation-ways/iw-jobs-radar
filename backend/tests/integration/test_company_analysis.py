@@ -324,3 +324,12 @@ async def test_the_larger_model_chosen_for_directions_does_the_analysis(
     fact = await service.analyse(1, await company(db_session))
     assert world.requests[0][0].model == "qwen3.6:27b"
     assert fact.source_name == "ollama:qwen3.6:27b"
+
+
+async def test_a_website_stored_over_http_is_read_over_https(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    service, world = await setup(db_session, settings)
+    company_id = await company(db_session, homepage="http://northwind.example/")
+    await service.analyse(1, company_id)
+    assert world.visited == [HOME]

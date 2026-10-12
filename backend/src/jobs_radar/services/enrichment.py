@@ -23,7 +23,7 @@ from jobs_radar.adapters.enrichment.gleif import LegalEntity
 from jobs_radar.adapters.enrichment.wikipedia import WikipediaSummary
 from jobs_radar.core.errors import ConflictError, DependencyUnavailableError, NotFoundError
 from jobs_radar.db.models import Company, CompanyEnrichmentCandidate, CompanyFact, JobPosting
-from jobs_radar.domain.domains import is_job_board_host, registered_domain
+from jobs_radar.domain.domains import https_url, is_job_board_host, registered_domain
 from jobs_radar.domain.enums import EnrichmentCandidateStatus, FactOrigin
 
 Clock = Callable[[], datetime]
@@ -279,7 +279,8 @@ class EnrichmentService:
             )
         homepage = payload.get("homepage", {}).get("value")
         if isinstance(homepage, str):
-            company.homepage_url = homepage
+            # The guarded HTTP client fetches https only; datasets often list plain http.
+            company.homepage_url = https_url(homepage)
 
         adapters = self._adapters
         if adapters.wikipedia is not None and links.get("wikipedia_title"):

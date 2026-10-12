@@ -61,10 +61,13 @@ class World:
             WebPage(ABOUT, "Founded in 2015. We are remote-first with a hub in Lisbon."),
         ]
         self.answer: dict[str, object] = {
+            "overview": "Northwind sells billing software to telecom operators.",
+            "company_type": "product",
+            "remote_policy": "remote",
             "statements": [
-                statement("product", "Builds billing software.", "builds billing software", HOME),
+                statement("offering", "Builds billing software.", "builds billing software", HOME),
                 statement("remote_policy", "Remote-first.", "We are remote-first"),
-                statement("portugal_presence", "Has a Lisbon hub.", "a hub in Lisbon"),
+                statement("locations", "Has a Lisbon hub.", "a hub in Lisbon"),
             ],
             "open_questions": ["Salary bands are not published."],
         }
@@ -86,7 +89,7 @@ async def clean(db_session: AsyncSession) -> None:
 
 
 async def setup(
-    session: AsyncSession, settings: Settings, *, local: bool = True
+    session: AsyncSession, settings: Settings, *, local: bool = True, directions_model: str = ""
 ) -> tuple[CompanyAnalysisService, World]:
     world = World()
     on = settings.model_copy(update={"allow_local_providers": True})
@@ -101,6 +104,13 @@ async def setup(
             1, provider_type="ollama", display_name="L", endpoint_url=None, model_id="qwen3:8b"
         )
         await ai.activate_for_jobs(1, row.provider_connection_id)
+        if directions_model:
+            await ai.update_connection(
+                1,
+                row.provider_connection_id,
+                expected_version=row.version,
+                direction_model=directions_model,
+            )
     return CompanyAnalysisService(session, ai, reader=world), world
 
 
@@ -140,7 +150,7 @@ async def test_the_dossier_keeps_only_statements_whose_quote_is_on_the_page(
     service, world = await setup(db_session, settings)
     company_id = await company(db_session)
     world.answer["statements"] = [  # type: ignore[index]
-        statement("product", "Builds billing software.", "builds billing software", HOME),
+        statement("offering", "Builds billing software.", "builds billing software", HOME),
         statement("culture", "Famous for free lunches.", "free lunches every day"),
         statement("remote_policy", "Remote-first.", "We are remote-first"),
     ]
@@ -148,7 +158,7 @@ async def test_the_dossier_keeps_only_statements_whose_quote_is_on_the_page(
     assert (fact.fact_key, fact.origin) == ("ai_dossier", "ai_inference")
     assert fact.source_name == "ollama:qwen3:8b" and fact.source_url == HOME
     value = fact.value_json
-    assert [s["topic"] for s in value["statements"]] == ["product", "remote_policy"]
+    assert [s["topic"] for s in value["statements"]] == ["offering", "remote_policy"]
     assert value["dropped"] == 1
     assert value["pages"] == [HOME, ABOUT]
     assert value["open_questions"] == ["Salary bands are not published."]
@@ -160,7 +170,7 @@ async def test_a_quote_must_come_from_the_page_it_names(
     service, world = await setup(db_session, settings)
     company_id = await company(db_session)
     world.answer["statements"] = [  # type: ignore[index]
-        statement("product", "Builds billing software.", "builds billing software", ABOUT),
+        statement("offering", "Builds billing software.", "builds billing software", ABOUT),
         statement("remote_policy", "Remote-first.", "We are remote-first"),
     ]
     fact = await service.analyse(1, company_id)
@@ -263,3 +273,54 @@ async def test_a_page_that_is_too_large_is_named_as_such(
         await service.analyse(1, company_id)
     assert caught.value.details["error_class"] == "site_too_large"
     assert "too large" in caught.value.message and "HTTP" not in caught.value.message
+
+
+async def test_the_overview_the_kind_of_company_and_the_remote_policy_are_stored(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    service, _ = await setup(db_session, settings)
+    fact = await service.analyse(1, await company(db_session))
+    value = fact.value_json
+    assert value["overview"] == "Northwind sells billing software to telecom operators."
+    assert (value["company_type"], value["remote_policy"]) == ("product", "remote")
+
+
+async def test_an_unknown_kind_of_company_or_policy_is_normalised(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    service, world = await setup(db_session, settings)
+    world.answer["company_type"] = "unicorn"
+    world.answer["remote_policy"] = "sometimes"
+    value = (await service.analyse(1, await company(db_session))).value_json
+    assert (value["company_type"], value["remote_policy"]) == ("unknown", "not_stated")
+
+
+async def test_a_statement_that_only_repeats_its_quote_is_dropped(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    service, world = await setup(db_session, settings)
+    world.answer["statements"] = [
+        statement("offering", "We are remote-first", "We are remote-first"),
+        statement("remote_policy", "Works remotely.", "We are remote-first"),
+    ]
+    value = (await service.analyse(1, await company(db_session))).value_json
+    assert [s["text"] for s in value["statements"]] == ["Works remotely."]
+    assert value["dropped"] == 1
+
+
+async def test_an_answer_without_an_overview_is_refused(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    service, world = await setup(db_session, settings)
+    world.answer["overview"] = " "
+    with pytest.raises(DependencyUnavailableError):
+        await service.analyse(1, await company(db_session))
+
+
+async def test_the_larger_model_chosen_for_directions_does_the_analysis(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    service, world = await setup(db_session, settings, directions_model="qwen3.6:27b")
+    fact = await service.analyse(1, await company(db_session))
+    assert world.requests[0][0].model == "qwen3.6:27b"
+    assert fact.source_name == "ollama:qwen3.6:27b"

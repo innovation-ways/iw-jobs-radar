@@ -547,7 +547,7 @@ describe('Companies screen', () => {
     )
   })
 
-  it('writes an AI summary on request and reports why it cannot', async () => {
+  it('updates everything with one button and reports why a step cannot run', async () => {
     const user = userEvent.setup()
     post.mockResolvedValue({
       error: {
@@ -560,8 +560,11 @@ describe('Companies screen', () => {
       response: { status: 422 },
     })
     renderPage('/companies?company=1')
-    await user.click(await screen.findByRole('button', { name: 'Write AI summary' }))
+    await user.click(await screen.findByRole('button', { name: 'Update info' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(/local model/i)
+    // One button replaces the three old ones.
+    expect(screen.queryByRole('button', { name: 'Analyse website' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Write AI summary' })).not.toBeInTheDocument()
   })
 
   it('says so when no company has open offers and when there is no company yet', async () => {

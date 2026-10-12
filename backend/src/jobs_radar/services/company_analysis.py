@@ -1,10 +1,13 @@
 """The deep company analysis (ADR-054): public pages of the company's own website, local model.
 
 The owner asks for it per company. The pages of the confirmed website are read (same domain only),
-their text goes to the *local* model chosen for job analysis (ADR-046) and never to a remote
-provider, and the model returns short statements, each with a quote copied from a page. A statement
-whose quote is not found on the page it names is dropped, like job extraction (ADR-044). The result
-is one fact ``ai_dossier`` with origin ``ai_inference``; a newer analysis supersedes the older one.
+their text goes to the *local* model and never to a remote provider (ADR-046). It uses the larger
+model chosen for career directions and job summaries (the job model if none is chosen), because the
+small one only copied sentences. The model returns an overview, the kind of company, the remote
+policy and short statements in its own words, each backed by a quote copied from a page. A statement
+whose quote is not found on the page it names, or that merely repeats its quote, is dropped, like
+job extraction (ADR-044). The result is one fact ``ai_dossier`` with origin ``ai_inference``; a
+newer analysis supersedes the older one.
 """
 
 import json
@@ -24,38 +27,64 @@ from jobs_radar.services.ai_settings import AiSettingsService
 
 FACT_KEY = "ai_dossier"
 TOPICS = (
-    "product",
-    "business_model",
+    "offering",
+    "customers",
+    "locations",
     "size_and_stage",
+    "financials",
     "technology",
-    "engineering_culture",
     "remote_policy",
-    "portugal_presence",
+    "culture",
     "risks",
     "other",
 )
+COMPANY_TYPES = (
+    "product",
+    "consulting_outsourcing",
+    "staffing_recruitment",
+    "agency",
+    "marketplace_platform",
+    "other",
+    "unknown",
+)
+REMOTE_POLICIES = ("remote", "hybrid", "on_site", "not_stated")
 # A local model has a small context: the pages share this budget, the statements are bounded too.
-PROMPT_TEXT_LIMIT = 14_000
-MAX_STATEMENTS = 24
+PROMPT_TEXT_LIMIT = 24_000
+MAX_STATEMENTS = 20
+_OVERVIEW_LIMIT = 700
 MAX_QUESTIONS = 5
 _STATEMENT_LIMIT = 300
 SYSTEM_PROMPT = "\n".join(
     [
-        "You describe a company for a job seeker using ONLY the web pages below.",
-        "Never add facts, numbers, names or opinions that are not on the pages.",
-        f"Give statements, each with one of these topics: {', '.join(TOPICS)}.",
-        'Every statement needs a "quote": an exact quote copied verbatim from the page named in '
-        '"page_url". A statement without a verbatim quote is discarded.',
-        "Cover remote or hybrid policy and any presence in Portugal only when the pages say it. "
-        "Never write a statement that something is missing or not mentioned: put that in "
-        '"open_questions" instead.',
-        'List in "open_questions" what the pages do not answer. Answer with a JSON object '
-        '{"statements": [{"topic", "text", "quote", "page_url"}], "open_questions": [""]}.',
+        "You explain a company to a job seeker who wants to know what it is before applying. "
+        "Use ONLY the web pages below; never add facts, numbers, names or opinions that are not "
+        "on them. Write in English, in your own words, plainly.",
+        '"overview": two or three sentences saying what the company does, for whom, and how it '
+        "makes money (for example: sells a product, sells consulting or outsourced teams, places "
+        "staff). Mention where it operates only if the pages say so.",
+        f'"company_type": one of {", ".join(COMPANY_TYPES)}. Use "unknown" if the pages do not '
+        "make it clear.",
+        f'"remote_policy": one of {", ".join(REMOTE_POLICIES)}; "not_stated" unless the pages '
+        "say how people work.",
+        f'"statements": facts that are on the pages, each with a "topic" ({", ".join(TOPICS)}), '
+        'a "text" in your own words (never a copy of the quote), a "quote" copied verbatim from '
+        'the page named in "page_url", and that "page_url". A statement without a verbatim quote '
+        "is discarded. Prefer concrete facts: services or products, customers or sectors, "
+        "countries and cities, number of employees, clients or years, funding or revenue, "
+        "technologies, work model. Do not make several statements from the same sentence.",
+        'Never write that something is missing or not mentioned in a statement: list it in "open_'
+        'questions" (at most five, the ones that matter most to a job seeker: size, profit or '
+        "funding, where it operates, remote work).",
+        'Answer with a JSON object {"overview", "company_type", "remote_policy", "statements": '
+        '[{"topic", "text", "quote", "page_url"}], "open_questions": [""]}.',
     ]
 )
 _SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
+        "overview": {"type": "string"},
+        "company_type": {"type": "string", "enum": list(COMPANY_TYPES)},
+        "remote_policy": {"type": "string", "enum": list(REMOTE_POLICIES)},
         "statements": {
             "type": "array",
             "items": {
@@ -71,7 +100,7 @@ _SCHEMA: dict[str, Any] = {
         },
         "open_questions": {"type": "array", "items": {"type": "string"}},
     },
-    "required": ["statements"],
+    "required": ["overview", "company_type", "remote_policy", "statements"],
 }
 
 
@@ -114,7 +143,7 @@ class CompanyAnalysisService:
         if not company.homepage_url:
             msg = "Add or confirm the company's website before analysing it."
             raise InputValidationError(msg)
-        target = await self._ai.jobs_target(owner_id)
+        target = await self._ai.direction_target(owner_id)
         if target is None:
             msg = "Choose a local model for job analysis in AI & privacy to analyse companies."
             raise InputValidationError(msg)
@@ -159,7 +188,7 @@ class CompanyAnalysisService:
             fact_key=FACT_KEY,
             value_json=value,
             origin=FactOrigin.AI_INFERENCE.value,
-            source_name=f"{connection.provider_type}:{connection.model_id}",
+            source_name=f"{connection.provider_type}:{provider.model}",
             source_url=company.homepage_url,
             retrieved_at=now,
             licence=None,
@@ -198,6 +227,14 @@ class CompanyAnalysisService:
             raise _invalid() from error
         if not isinstance(raw, list):
             raise _invalid()
+        overview = data.get("overview")
+        if not isinstance(overview, str) or not overview.strip():
+            raise _invalid()
+        overview = " ".join(overview.split())
+        if len(overview) > _OVERVIEW_LIMIT:
+            overview = overview[: _OVERVIEW_LIMIT - 1].rstrip() + "…"
+        company_type = data.get("company_type")
+        remote_policy = data.get("remote_policy")
         by_url = {page.url: page.text for page in pages}
         kept: list[dict[str, str]] = []
         seen: set[tuple[str, str]] = set()
@@ -219,6 +256,8 @@ class CompanyAnalysisService:
                 or url not in by_url
                 or not quote_occurs(quote, by_url[url])
                 or key in seen
+                # A statement that only repeats its quote tells the reader nothing new.
+                or " ".join(text.lower().split()) == " ".join(quote.lower().split())
                 or len(kept) >= MAX_STATEMENTS
             ):
                 dropped += 1
@@ -236,6 +275,9 @@ class CompanyAnalysisService:
             if isinstance(q, str) and q.strip()
         ][:MAX_QUESTIONS]
         return {
+            "overview": overview,
+            "company_type": company_type if company_type in COMPANY_TYPES else "unknown",
+            "remote_policy": remote_policy if remote_policy in REMOTE_POLICIES else "not_stated",
             "statements": kept,
             "open_questions": cleaned,
             "pages": [page.url for page in pages],

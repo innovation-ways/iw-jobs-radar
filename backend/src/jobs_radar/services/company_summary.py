@@ -1,9 +1,10 @@
 """The AI company summary (T7.4): a short text, always labelled "AI inference".
 
-Only public data goes to the model: the company's current non-AI facts and the titles of its recent
-offers. It uses the *local* model chosen for job analysis (ADR-046), never a remote provider. The
-summary is stored as a fact with origin ``ai_inference`` and the model as its source; a newer one
-supersedes the older. The model is told to use only the facts it is given.
+Only public data goes to the model: the company's current non-AI facts, the overview of its website
+analysis (when there is one) and the titles of its recent offers. It uses the *local* model chosen
+for career directions and job summaries (the job model if none), never a remote provider
+(ADR-046). The summary is stored as a fact with origin ``ai_inference`` and the model as its
+source; a newer one supersedes the older. The model is told to use only the facts it is given.
 """
 
 import json
@@ -55,7 +56,7 @@ class CompanySummaryService:
         if company is None:
             msg = f"Company {company_id} does not exist."
             raise NotFoundError(msg)
-        target = await self._ai.jobs_target(owner_id)
+        target = await self._ai.direction_target(owner_id)
         if target is None:
             msg = "Choose a local model for job analysis in AI & privacy to write summaries."
             raise InputValidationError(msg)
@@ -70,6 +71,15 @@ class CompanySummaryService:
                 )
             )
         ).scalars()
+        analysis = (
+            await self._session.execute(
+                select(CompanyFact.value_json).where(
+                    CompanyFact.company_id == company_id,
+                    CompanyFact.fact_key == "ai_dossier",
+                    CompanyFact.superseded_at.is_(None),
+                )
+            )
+        ).scalar_one_or_none()
         titles = (
             await self._session.execute(
                 select(JobPosting.title)
@@ -84,6 +94,9 @@ class CompanySummaryService:
         ).scalars()
         lines = [f"Company: {company.canonical_name}"]
         lines += [f"{f.fact_key}: {json.dumps(f.value_json, ensure_ascii=False)}" for f in facts]
+        # The website analysis is the best description there is; its overview leads the input.
+        if isinstance(analysis, dict) and isinstance(analysis.get("overview"), str):
+            lines.append(f"Website overview: {analysis['overview']}")
         title_list = list(titles)
         if title_list:
             lines.append("Recent job titles: " + "; ".join(title_list))
@@ -114,7 +127,7 @@ class CompanySummaryService:
             fact_key="ai_summary",
             value_json=text,
             origin=FactOrigin.AI_INFERENCE.value,
-            source_name=f"{connection.provider_type}:{connection.model_id}",
+            source_name=f"{connection.provider_type}:{provider.model}",
             source_url=None,
             retrieved_at=now,
             licence=None,

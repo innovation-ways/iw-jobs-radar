@@ -17,10 +17,9 @@ const FACT_LABELS: Record<string, string> = {
   legal_entity: 'Legal entity',
   technologies: 'Technologies',
   stage: 'Stage',
-  ai_summary: 'Summary',
 }
-// The cited analysis has its own card below, so it is not repeated as a plain fact.
-const HIDDEN = new Set(['homepage', 'ai_dossier'])
+// The analysis and the summary have their own cards, so they are not repeated as plain facts.
+const HIDDEN = new Set(['homepage', 'ai_dossier', 'ai_summary'])
 
 /**
  * Public page of a candidate entity, so the owner can compare look-alike candidates.
@@ -101,6 +100,8 @@ export function DossierPanel({
   const follow = useFollow()
   const ignore = useIgnoreCompany()
   const { enrich, summarise, analyse, setWebsite, decide } = useDossierActions(companyId)
+  const [step, setStep] = useState<string | null>(null)
+  const [stepErrors, setStepErrors] = useState<string[]>([])
   const [editingWebsite, setEditingWebsite] = useState(false)
   const attempted = useRef(new Set<number>())
 
@@ -111,6 +112,36 @@ export function DossierPanel({
     }
   }, [data?.stale, companyId, enrich])
 
+  /**
+   * "Update info": public sources, then the website analysis, then the summary, one after the
+   * other (the summary reads what the first two found). A step that fails is reported and does not
+   * stop the next one.
+   */
+  async function updateInfo() {
+    const steps: [string, () => Promise<unknown>, boolean][] = [
+      ['Looking up public sources…', () => enrich.mutateAsync(), true],
+      [
+        'Reading the company website with the local model. This can take a few minutes…',
+        () => analyse.mutateAsync(),
+        !!data?.homepage_url,
+      ],
+      ['Writing the summary…', () => summarise.mutateAsync(), true],
+    ]
+    const errors: string[] = []
+    for (const [label, run, enabled] of steps) {
+      if (!enabled) continue
+      setStep(label)
+      try {
+        await run()
+      } catch (error) {
+        errors.push(error instanceof Error ? error.message : 'A step failed.')
+      }
+    }
+    setStep(null)
+    // The same cause (for example no local model) often fails several steps: say it once.
+    setStepErrors([...new Set(errors)])
+  }
+
   if (isPending) return <p className="p-6 text-ink-3">Loading…</p>
   if (isError)
     return (
@@ -118,9 +149,8 @@ export function DossierPanel({
         Could not load this company.
       </p>
     )
-  const failure = [enrich, summarise, analyse, setWebsite, decide, ignore].find(
-    (m) => m.isError,
-  )?.error
+  const failure = [setWebsite, decide, ignore].find((m) => m.isError)?.error
+  const summary = data.facts.find((f) => f.fact_key === 'ai_summary')
   const dossier = data.facts.find((f) => f.fact_key === 'ai_dossier')
   const host = data.homepage_url ? new URL(data.homepage_url).hostname.replace(/^www\./, '') : null
 
@@ -186,27 +216,11 @@ export function DossierPanel({
           </Button>
           <Button
             size="sm"
-            variant="outline"
-            disabled={enrich.isPending}
-            onClick={() => enrich.mutate()}
+            disabled={step !== null}
+            title="Looks up public sources, reads the company website and writes a summary"
+            onClick={() => void updateInfo()}
           >
-            Update from public sources
-          </Button>
-          <Button
-            size="sm"
-            disabled={analyse.isPending || !data.homepage_url}
-            title={data.homepage_url ? undefined : 'Add the company website first'}
-            onClick={() => analyse.mutate()}
-          >
-            Analyse website
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={summarise.isPending}
-            onClick={() => summarise.mutate()}
-          >
-            Write AI summary
+            Update info
           </Button>
         </div>
       </div>
@@ -216,17 +230,16 @@ export function DossierPanel({
           onSubmit={(url) => setWebsite.mutate(url, { onSuccess: () => setEditingWebsite(false) })}
         />
       )}
-      {analyse.isPending && (
+      {step && (
         <p role="status" className="text-sm text-ink-3">
-          Reading the company website and writing the analysis with the local model. This can take a
-          few minutes…
+          {step}
         </p>
       )}
-      {enrich.isPending && (
-        <p role="status" className="text-sm text-ink-3">
-          Looking up public sources…
+      {stepErrors.map((message) => (
+        <p key={message} role="alert" className="rounded-md bg-bad-bg px-3 py-2 text-sm text-bad">
+          {message}
         </p>
-      )}
+      ))}
       {failure && (
         <p role="alert" className="rounded-md bg-bad-bg px-3 py-2 text-sm text-bad">
           {failure.message}
@@ -314,8 +327,10 @@ export function DossierPanel({
         </h3>
         {data.facts.filter((f) => !HIDDEN.has(f.fact_key)).length === 0 ? (
           <p className="text-sm text-ink-2">
-            Nothing is known beyond the job board yet. Add the company website, then update from
-            public sources, or confirm one of the candidates above.
+            This lists facts from public datasets (Wikidata, Wikipedia, GLEIF, GitHub), and only
+            once the company is identified there. None has been found yet: add the company website
+            and press “Update info”, or confirm one of the candidates above. The website analysis
+            has its own card below.
           </p>
         ) : (
           <ul className="text-sm">
@@ -327,6 +342,22 @@ export function DossierPanel({
           </ul>
         )}
       </section>
+
+      {summary && (
+        <section aria-labelledby="about" className="rounded-lg border border-line bg-surface p-4">
+          <h3 id="about" className="mb-1 text-sm font-semibold">
+            About
+          </h3>
+          <p className="text-sm">{factText(summary.value)}</p>
+          <p className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-ink-3">
+            <span className="rounded bg-caution/20 px-1.5 py-px font-medium text-ink">
+              AI inference
+            </span>
+            <span>{summary.source_name}</span>
+            <span>{formatDateTime(summary.retrieved_at)}</span>
+          </p>
+        </section>
+      )}
 
       <section aria-labelledby="analysis" className="rounded-lg border border-line bg-surface p-4">
         <h3 id="analysis" className="mb-2 text-sm font-semibold">
@@ -340,8 +371,8 @@ export function DossierPanel({
           />
         ) : (
           <p className="text-sm text-ink-2">
-            Not analysed yet. “Analyse website” reads a few public pages of the company site and
-            writes a cited summary with the local model.
+            Not analysed yet. “Update info” reads a few public pages of the company site and writes
+            a cited profile with the local model.
           </p>
         )}
       </section>

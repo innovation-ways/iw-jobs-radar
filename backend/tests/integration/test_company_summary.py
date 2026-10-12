@@ -200,3 +200,24 @@ async def test_a_long_summary_is_shortened(db_session: AsyncSession, settings: S
     world.answer = json.dumps({"summary": "word " * 400})
     fact = await service.generate(1, company_id)
     assert len(fact.value_json) <= 700
+
+
+async def test_the_website_overview_reaches_the_model_and_the_larger_model_is_used(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    service, world = await setup(db_session, settings)
+    company_id = await company(db_session)
+    db_session.add(
+        CompanyFact(
+            company_id=company_id,
+            fact_key="ai_dossier",
+            value_json={"overview": "Northwind sells billing software.", "statements": []},
+            origin="ai_inference",
+            source_name="ollama:qwen3.6:27b",
+            source_url=None,
+            retrieved_at=__import__("datetime").datetime.now(__import__("datetime").UTC),
+        )
+    )
+    await db_session.flush()
+    await service.generate(1, company_id)
+    assert "Website overview: Northwind sells billing software." in world.requests[0][1].user

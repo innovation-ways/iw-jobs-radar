@@ -12,6 +12,10 @@ export interface AnalysisStatement {
 
 /** The stored value of the `ai_dossier` fact. */
 export interface AnalysisValue {
+  /** Two or three sentences: what the company does and how it makes money (newer analyses). */
+  overview?: string
+  company_type?: string
+  remote_policy?: string
   statements: AnalysisStatement[]
   open_questions: string[]
   pages: string[]
@@ -19,15 +23,34 @@ export interface AnalysisValue {
 }
 
 const TOPIC_LABELS: Record<string, string> = {
-  product: 'Product',
-  business_model: 'Business model',
+  offering: 'What it offers',
+  customers: 'Customers',
+  locations: 'Where it operates',
   size_and_stage: 'Size and stage',
+  financials: 'Funding and revenue',
   technology: 'Technology',
-  engineering_culture: 'Engineering culture',
   remote_policy: 'Remote or hybrid policy',
-  portugal_presence: 'Presence in Portugal',
+  culture: 'Culture and benefits',
   risks: 'Risks',
   other: 'Other',
+  // Topics of analyses written before the profile format; kept so they still display.
+  product: 'Product',
+  business_model: 'Business model',
+  engineering_culture: 'Engineering culture',
+  portugal_presence: 'Presence in Portugal',
+}
+const COMPANY_TYPE_LABELS: Record<string, string> = {
+  product: 'Sells a product',
+  consulting_outsourcing: 'Consulting / outsourcing',
+  staffing_recruitment: 'Staffing / recruitment',
+  agency: 'Agency',
+  marketplace_platform: 'Marketplace / platform',
+  other: 'Other type',
+}
+const REMOTE_LABELS: Record<string, string> = {
+  remote: 'Remote',
+  hybrid: 'Hybrid',
+  on_site: 'On site',
 }
 // Topics the owner cares about most come first.
 const TOPIC_ORDER = Object.keys(TOPIC_LABELS)
@@ -38,6 +61,9 @@ function asAnalysis(value: unknown): AnalysisValue | null {
   const v = value as Partial<AnalysisValue>
   if (!Array.isArray(v.statements)) return null
   return {
+    overview: typeof v.overview === 'string' ? v.overview : undefined,
+    company_type: typeof v.company_type === 'string' ? v.company_type : undefined,
+    remote_policy: typeof v.remote_policy === 'string' ? v.remote_policy : undefined,
     statements: v.statements,
     open_questions: Array.isArray(v.open_questions) ? v.open_questions : [],
     pages: Array.isArray(v.pages) ? v.pages : [],
@@ -51,8 +77,9 @@ function shortUrl(url: string): string {
 }
 
 /**
- * The deep analysis of a company: statements grouped by topic, each with the quote it rests on and
- * a link to the page. Always labelled AI inference. Props: the stored fact value, the model that
+ * The deep analysis of a company: the overview with the kind of company and the work model, then
+ * statements grouped by topic. Each statement keeps the quote it rests on and a link to the page
+ * behind a "Source" disclosure. Always labelled AI inference. Props: the stored fact value, the model that
  * wrote it and when.
  */
 export function AnalysisCard({
@@ -66,6 +93,9 @@ export function AnalysisCard({
 }) {
   const analysis = asAnalysis(value)
   if (!analysis) return <p className="text-sm text-ink-2">The analysis could not be shown.</p>
+  // "unknown" and "not stated" are the absence of an answer, not something to show as a fact.
+  const type = analysis.company_type ? COMPANY_TYPE_LABELS[analysis.company_type] : undefined
+  const remote = analysis.remote_policy ? REMOTE_LABELS[analysis.remote_policy] : undefined
   const topics = TOPIC_ORDER.filter((t) => analysis.statements.some((s) => s.topic === t))
   return (
     <div className="flex flex-col gap-3 text-sm">
@@ -77,6 +107,15 @@ export function AnalysisCard({
         <span>{formatDateTime(retrievedAt)}</span>
         <span>{analysis.pages.length} pages read</span>
       </div>
+      {analysis.overview && <p>{analysis.overview}</p>}
+      {(type || remote) && (
+        <ul className="flex flex-wrap gap-1.5 text-xs">
+          {type && <li className="rounded bg-surface-2 px-2 py-0.5 text-ink-2">{type}</li>}
+          {remote && (
+            <li className="rounded bg-surface-2 px-2 py-0.5 text-ink-2">{remote} work model</li>
+          )}
+        </ul>
+      )}
       {topics.map((topic) => (
         <div key={topic}>
           <h4 className="text-xs font-semibold uppercase tracking-wide text-ink-3">
@@ -88,8 +127,8 @@ export function AnalysisCard({
               .map((s) => (
                 <li key={`${s.topic}-${s.text}`}>
                   <div>{s.text}</div>
-                  <div className="text-xs text-ink-3">
-                    “{s.quote}” ·{' '}
+                  <details className="text-xs text-ink-3">
+                    <summary className="cursor-pointer">Source</summary>“{s.quote}” ·{' '}
                     <a
                       className="underline"
                       href={s.page_url}
@@ -98,7 +137,7 @@ export function AnalysisCard({
                     >
                       {shortUrl(s.page_url)}
                     </a>
-                  </div>
+                  </details>
                 </li>
               ))}
           </ul>

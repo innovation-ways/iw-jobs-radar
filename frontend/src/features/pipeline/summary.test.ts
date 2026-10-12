@@ -71,6 +71,8 @@ describe('headline', () => {
     expect(headline(status({ state: 'no_ai' }))).toBe('Job analysis is off')
     expect(headline(status({ state: 'worker_stopped' }))).toBe('Worker not responding')
     expect(headline(status({ state: 'no_progress' }))).toBe('No progress in the last 15 min')
+    // A running collection explains the wait: it is not reported as stuck.
+    expect(headline(status({ state: 'collecting' }))).toBe('Collecting…')
   })
 })
 

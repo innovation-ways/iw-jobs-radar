@@ -18,6 +18,7 @@ from jobs_radar.repositories.heartbeat import HeartbeatRepository
 from jobs_radar.repositories.inbox import InboxQueries
 from jobs_radar.repositories.pipeline import PipelineRepository
 from jobs_radar.repositories.providers import ProviderRepository
+from jobs_radar.repositories.runs import RunRepository
 from jobs_radar.schemas.pipeline import (
     FailuresRead,
     PipelineStateName,
@@ -39,12 +40,15 @@ def pipeline_state(
     ai_configured: bool,
     waiting: int,
     progressed: bool,
+    collecting: bool = False,
 ) -> PipelineStateName:
     """Summarise the pipeline in one word.
 
     A worker that does not report comes first (nothing else can be trusted), then a missing AI
     connection. With work waiting, recent progress means ``working``; none means ``no_progress``
-    (for example the model is unreachable or very slow).
+    (for example the model is unreachable or very slow), unless a collection is running: the worker
+    is one loop that collects first and analyses what it found afterwards, so the wait is expected
+    and the state is ``collecting``.
     """
     if worker != "up":
         return "worker_stopped"
@@ -52,7 +56,9 @@ def pipeline_state(
         return "no_ai"
     if waiting == 0:
         return "idle"
-    return "working" if progressed else "no_progress"
+    if progressed:
+        return "working"
+    return "collecting" if collecting else "no_progress"
 
 
 def estimate_minutes_left(*, waiting: int, completed: int, window_minutes: int) -> int | None:
@@ -72,6 +78,7 @@ class PipelineService:
         self._providers = ProviderRepository(session)
         self._heartbeats = HeartbeatRepository(session)
         self._inbox = InboxQueries(session)
+        self._runs = RunRepository(session)
 
     async def status(
         self, owner_id: int, *, intent_id: int | None = None, now: datetime | None = None
@@ -116,6 +123,7 @@ class PipelineService:
                 ai_configured=connection is not None,
                 waiting=analysis_waiting + scoring_waiting,
                 progressed=recent_analysed + recent_scored > 0,
+                collecting=await self._runs.has_running_run(owner_id),
             ),
             ai_model=model,
             worker=WorkerRead(status=worker.value, last_beat_at=beat_at),

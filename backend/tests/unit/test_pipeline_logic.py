@@ -29,6 +29,18 @@ def test_work_waiting_without_recent_progress_is_flagged() -> None:
     assert pipeline_state(**{**BASE, "progressed": False}) == "no_progress"
 
 
+def test_work_waiting_while_a_collection_runs_is_collecting_not_stuck() -> None:
+    # The worker is one loop: it collects first, then analyses what the collection found.
+    assert pipeline_state(**{**BASE, "progressed": False, "collecting": True}) == "collecting"
+
+
+def test_collecting_does_not_hide_progress_or_a_stopped_worker_or_missing_ai() -> None:
+    assert pipeline_state(**{**BASE, "collecting": True}) == "working"
+    assert pipeline_state(**{**BASE, "worker": "stale", "collecting": True}) == "worker_stopped"
+    assert pipeline_state(**{**BASE, "ai_configured": False, "collecting": True}) == "no_ai"
+    assert pipeline_state(**{**BASE, "waiting": 0, "collecting": True}) == "idle"
+
+
 def test_the_time_left_is_the_waiting_jobs_over_the_recent_rate() -> None:
     assert estimate_minutes_left(waiting=440, completed=45, window_minutes=15) == 147
     assert estimate_minutes_left(waiting=1, completed=60, window_minutes=15) == 1  # rounds up

@@ -3903,7 +3903,8 @@
               "worker_stopped",
               "idle",
               "working",
-              "no_progress"
+              "no_progress",
+              "collecting"
             ],
             "title": "State",
             "type": "string"

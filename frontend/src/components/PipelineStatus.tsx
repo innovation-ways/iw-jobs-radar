@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils'
 const TONE: Record<Status['state'], string> = {
   idle: 'bg-good',
   working: 'bg-brand',
+  collecting: 'bg-brand',
   no_ai: 'bg-band',
   no_progress: 'bg-caution',
   worker_stopped: 'bg-bad',

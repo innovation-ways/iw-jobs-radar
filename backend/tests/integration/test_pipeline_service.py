@@ -10,9 +10,9 @@ from tests.evaluation_world import World, world
 from tests.factories import unique
 from tests.fake_provider import FakeProvider
 
-from jobs_radar.db.models import JobExtraction, ProviderConnection
+from jobs_radar.db.models import CollectionRun, JobExtraction, ProviderConnection
 from jobs_radar.db.models.worker import WorkerHeartbeat
-from jobs_radar.domain.enums import LOCAL_OWNER_ID
+from jobs_radar.domain.enums import LOCAL_OWNER_ID, RunStatus, RunTrigger
 from jobs_radar.services.evaluation import EvaluationService
 from jobs_radar.services.pipeline import PipelineService
 
@@ -133,10 +133,46 @@ async def test_a_worker_that_stopped_beating_is_reported_as_stopped(
     assert status.worker.status == "stale" and status.state == "worker_stopped"
 
 
+async def test_work_waiting_while_a_collection_runs_is_collecting_not_stuck(
+    db_session: AsyncSession,
+) -> None:
+    w, now = await setup(db_session, extraction="pending")
+    # An hour later, so that work other tests left behind is outside the 15-minute window.
+    later = now + timedelta(hours=1)
+    db_session.add(WorkerHeartbeat(worker_name=unique("w"), started_at=later, beat_at=later))
+    await db_session.execute(delete(CollectionRun))
+
+    async def state() -> str:
+        return (
+            await service(db_session).status(LOCAL_OWNER_ID, intent_id=w.intent_id, now=later)
+        ).state
+
+    assert await state() == "no_progress"
+
+    # A queued run has not started: the worker is not busy with it yet.
+    run = CollectionRun(
+        owner_id=LOCAL_OWNER_ID, trigger=RunTrigger.SCHEDULED.value, status=RunStatus.QUEUED.value
+    )
+    db_session.add(run)
+    await db_session.flush()
+    assert await state() == "no_progress"
+
+    run.status = RunStatus.RUNNING.value
+    await db_session.flush()
+    assert await state() == "collecting"
+
+
 async def test_the_pipeline_status_is_served_by_the_api(client: httpx.AsyncClient) -> None:
     body = (await client.get("/api/v1/pipeline/status")).json()
 
-    assert body["state"] in {"no_ai", "worker_stopped", "idle", "working", "no_progress"}
+    assert body["state"] in {
+        "no_ai",
+        "worker_stopped",
+        "idle",
+        "working",
+        "no_progress",
+        "collecting",
+    }
     assert set(body) == {
         "state",
         "ai_model",

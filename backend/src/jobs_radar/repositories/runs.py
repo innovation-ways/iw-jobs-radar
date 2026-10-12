@@ -214,3 +214,15 @@ class RunRepository:
             )
         )
         return bool(count)
+
+    async def has_running_run(self, owner_id: int) -> bool:
+        """Whether the worker is executing a run of the owner now (a queued run does not count)."""
+        count = await self._session.scalar(
+            select(func.count())
+            .select_from(CollectionRun)
+            .where(
+                CollectionRun.owner_id == owner_id,
+                CollectionRun.status == RunStatus.RUNNING.value,
+            )
+        )
+        return bool(count)

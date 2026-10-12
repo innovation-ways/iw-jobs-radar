@@ -2896,7 +2896,7 @@ export interface components {
              * State
              * @enum {string}
              */
-            state: "no_ai" | "worker_stopped" | "idle" | "working" | "no_progress";
+            state: "no_ai" | "worker_stopped" | "idle" | "working" | "no_progress" | "collecting";
             worker: components["schemas"]["WorkerRead"];
         };
         /**

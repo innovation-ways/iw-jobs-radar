@@ -5,7 +5,9 @@ from typing import Literal
 
 from jobs_radar.schemas.common import StrictModel
 
-PipelineStateName = Literal["no_ai", "worker_stopped", "idle", "working", "no_progress"]
+PipelineStateName = Literal[
+    "no_ai", "worker_stopped", "idle", "working", "no_progress", "collecting"
+]
 WorkerStatusName = Literal["up", "stale", "missing"]
 
 

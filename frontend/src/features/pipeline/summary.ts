@@ -18,6 +18,9 @@ export function headline(status: PipelineStatus): string {
       return 'Job analysis is off'
     case 'worker_stopped':
       return 'Worker not responding'
+    case 'collecting':
+      // The worker collects first and analyses afterwards, so the jobs wait on purpose.
+      return 'Collecting…'
     case 'no_progress':
       return `No progress in the last ${status.recent.window_minutes} min`
     default:

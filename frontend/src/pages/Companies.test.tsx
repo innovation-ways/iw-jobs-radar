@@ -302,6 +302,28 @@ describe('Companies screen', () => {
     expect(within(offers).queryByText('Old role')).not.toBeInTheDocument()
   })
 
+  it('sorts the offers by age or by fit score', async () => {
+    const user = userEvent.setup()
+    renderPage('/companies?company=1')
+    const panel = await screen.findByRole('region', { name: 'Northwind Labs' })
+    const offers = within(panel).getByRole('region', { name: /^Offers/ })
+    const titles = () =>
+      within(offers)
+        .getAllByRole('listitem')
+        .map((li) => li.getAttribute('aria-label'))
+    const sortBy = (label: string) =>
+      user.selectOptions(within(offers).getByRole('combobox', { name: 'Sort by' }), label)
+
+    await sortBy('Oldest first')
+    expect(titles()).toEqual(['Ignored role', 'Senior AI Engineer'])
+    await sortBy('Newest first')
+    expect(titles()).toEqual(['Senior AI Engineer', 'Ignored role'])
+    await sortBy('Lowest fit')
+    expect(titles()).toEqual(['Ignored role', 'Senior AI Engineer'])
+    await sortBy('Highest fit')
+    expect(titles()).toEqual(['Senior AI Engineer', 'Ignored role'])
+  })
+
   describe('triage from the dossier', () => {
     async function openOffers() {
       const user = userEvent.setup()

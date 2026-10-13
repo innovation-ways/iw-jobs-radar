@@ -38,7 +38,7 @@ export const TABS: TabInfo[] = [
     key: 'set_aside',
     label: 'Set aside',
     count: (c) => c.set_aside,
-    state: 'unread',
+    state: 'to_review',
     setAside: true,
   },
   {

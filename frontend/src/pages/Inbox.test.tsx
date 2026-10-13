@@ -241,7 +241,7 @@ describe('Inbox screen', () => {
 
       await userEvent.click(screen.getByRole('tab', { name: /set aside/i }))
       await waitFor(() =>
-        expect(lastListQuery()).toMatchObject({ state: 'unread', set_aside: true }),
+        expect(lastListQuery()).toMatchObject({ state: 'to_review', set_aside: true }),
       )
 
       await userEvent.click(screen.getByRole('tab', { name: /shortlist/i }))

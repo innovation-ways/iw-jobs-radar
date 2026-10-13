@@ -388,20 +388,17 @@ class InboxService:
     ) -> WidgetSummary:
         """Count the offers waiting for review, as the sidebar badge does, and those at fit_min+.
 
-        Waiting for review = unread (set-aside offers left out) plus updated-unread.
+        Waiting for review = unread plus updated-unread, set-aside offers left out.
         """
         intent_id = await self._intent(owner_id, search_intent_id)
         floor = await self._schedule.set_aside_below_fit(owner_id)
 
         def query(state: str, minimum: int | None = None) -> ListQuery:
-            # Like the sidebar badge: set-aside jobs leave "unread" (ADR-058/060), while every
-            # updated-unread job still waits for the owner.
+            # Like the sidebar badge: set-aside jobs leave "to review" (ADR-058/060).
             return self._query(
                 owner_id,
                 intent_id,
-                InboxFilters(
-                    state=state, set_aside=False if state == "unread" else None, fit_min=minimum
-                ),
+                InboxFilters(state=state, set_aside=False, fit_min=minimum),
                 floor,
             )
 

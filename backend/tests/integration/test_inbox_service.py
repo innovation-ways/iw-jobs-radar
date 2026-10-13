@@ -395,6 +395,23 @@ async def test_set_aside_splits_unread_jobs_by_the_stored_recommendation(
     assert len(await titles(db_session, s, set_aside=None)) == 3
 
 
+async def test_a_not_recommended_updated_job_is_set_aside_too(db_session: AsyncSession) -> None:
+    """A source change does not bring a not-recommended job back to "To review"."""
+    s = await scene(db_session)
+    await set_floor(db_session, 20)
+    blocked = await s.entry(
+        state=InboxState.UPDATED_UNREAD, fit=60, recommendation=Recommendation.NOT_RECOMMENDED
+    )
+    weak = await s.entry(state=InboxState.UPDATED_UNREAD, fit=4, days=1)  # floor leaves it
+    unread_blocked = await s.entry(fit=60, days=2, recommendation=Recommendation.NOT_RECOMMENDED)
+
+    aside = await titles(db_session, s, state="to_review", set_aside=True)
+    assert set(aside) == {blocked.item.job_inbox_item_id, unread_blocked.item.job_inbox_item_id}
+    assert await titles(db_session, s, state="to_review", set_aside=False) == [
+        weak.item.job_inbox_item_id
+    ]
+
+
 async def set_floor(session: AsyncSession, value: int) -> None:
     """Store the owner's low-fit floor (ADR-060) without committing."""
     setting = await ScheduleRepository(session).get_or_create(LOCAL_OWNER_ID)

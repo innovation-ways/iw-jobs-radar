@@ -6741,6 +6741,70 @@
         "title": "Weights",
         "type": "object"
       },
+      "WidgetSummaryRead": {
+        "additionalProperties": false,
+        "description": "Compact summary for a dashboard widget (ADR-065); holds no personal data.",
+        "properties": {
+          "best_fit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Best Fit"
+          },
+          "components": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Components",
+            "type": "object"
+          },
+          "fit_threshold": {
+            "title": "Fit Threshold",
+            "type": "integer"
+          },
+          "followed_recommended": {
+            "title": "Followed Recommended",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "ready",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "to_review": {
+            "title": "To Review",
+            "type": "integer"
+          },
+          "to_review_high_fit": {
+            "title": "To Review High Fit",
+            "type": "integer"
+          },
+          "unread_total": {
+            "title": "Unread Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "to_review",
+          "to_review_high_fit",
+          "fit_threshold",
+          "best_fit",
+          "unread_total",
+          "followed_recommended",
+          "status",
+          "components"
+        ],
+        "title": "WidgetSummaryRead",
+        "type": "object"
+      },
       "WorkRules": {
         "additionalProperties": false,
         "description": "Place rules per work arrangement.",
@@ -10683,6 +10747,69 @@
         "summary": "Recompute Trends",
         "tags": [
           "trends"
+        ]
+      }
+    },
+    "/api/v1/widget/summary": {
+      "get": {
+        "description": "Return the jobs to review, those at or above ``fit_min`` and whether the stack is ready.\n\nAlways answers 200 so the widget can show the state; ``/readyz`` is the probe for monitors.",
+        "operationId": "widget_summary_api_v1_widget_summary_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "fit_min",
+            "required": false,
+            "schema": {
+              "default": 65,
+              "maximum": 100,
+              "minimum": 0,
+              "title": "Fit Min",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search_intent_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search Intent Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WidgetSummaryRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Widget Summary",
+        "tags": [
+          "widget"
         ]
       }
     },

@@ -21,6 +21,7 @@ from jobs_radar.api.routes import (
     sources,
     summaries,
     trends,
+    widget,
 )
 
 v1_router = APIRouter(prefix="/api/v1")
@@ -34,6 +35,7 @@ v1_router.include_router(directions.router)
 v1_router.include_router(summaries.router)
 v1_router.include_router(application_drafts.router)
 v1_router.include_router(inbox.router)
+v1_router.include_router(widget.router)
 v1_router.include_router(schedule.router)
 v1_router.include_router(digests.router)
 v1_router.include_router(ai_settings.router)

@@ -1346,6 +1346,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/widget/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Widget Summary
+         * @description Return the jobs to review, those at or above ``fit_min`` and whether the stack is ready.
+         *
+         *     Always answers 200 so the widget can show the state; ``/readyz`` is the probe for monitors.
+         */
+        get: operations["widget_summary_api_v1_widget_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/healthz": {
         parameters: {
             query?: never;
@@ -4049,6 +4071,33 @@ export interface components {
             work_arrangement_location: number;
         };
         /**
+         * WidgetSummaryRead
+         * @description Compact summary for a dashboard widget (ADR-065); holds no personal data.
+         */
+        WidgetSummaryRead: {
+            /** Best Fit */
+            best_fit: number | null;
+            /** Components */
+            components: {
+                [key: string]: string;
+            };
+            /** Fit Threshold */
+            fit_threshold: number;
+            /** Followed Recommended */
+            followed_recommended: number;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ready" | "unavailable";
+            /** To Review */
+            to_review: number;
+            /** To Review High Fit */
+            to_review_high_fit: number;
+            /** Unread Total */
+            unread_total: number;
+        };
+        /**
          * WorkRules
          * @description Place rules per work arrangement.
          */
@@ -6491,6 +6540,38 @@ export interface operations {
                     "application/json": {
                         [key: string]: number;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    widget_summary_api_v1_widget_summary_get: {
+        parameters: {
+            query?: {
+                fit_min?: number;
+                search_intent_id?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WidgetSummaryRead"];
                 };
             };
             /** @description Validation Error */

@@ -173,3 +173,19 @@ class LinkDecisionResponse(StrictModel):
 
     job_opportunity_id: int
     state: Literal["confirmed", "rejected"]
+
+
+class WidgetSummaryRead(StrictModel):
+    """Compact summary for a dashboard widget (ADR-065); holds no personal data."""
+
+    to_review: int
+    to_review_high_fit: int
+    fit_threshold: int
+    best_fit: int | None
+    # Every unread offer, including the ones set aside.
+    unread_total: int
+    # "To review" offers of followed companies whose latest evaluation is recommended.
+    followed_recommended: int
+    # "ready" when the database is reachable and the worker heartbeat is fresh, else "unavailable".
+    status: Literal["ready", "unavailable"]
+    components: dict[str, str]

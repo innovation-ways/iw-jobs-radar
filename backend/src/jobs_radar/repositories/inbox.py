@@ -17,6 +17,7 @@ from sqlalchemy.orm import aliased
 from jobs_radar.core.errors import ConflictError, NotFoundError
 from jobs_radar.db.models import (
     Company,
+    CompanyFollow,
     CompanyIgnore,
     InboxEvent,
     IntentRevision,
@@ -181,6 +182,9 @@ class ListQuery:
     include_closed: bool = False
     sort: str = "fit_desc"
     set_aside: bool | None = None
+    # Dashboard widget (ADR-065): only offers of followed companies / only recommended ones.
+    followed_only: bool = False
+    recommended_only: bool = False
     # ADR-060: a recommended job with a fit below this is also set aside; 0 turns the rule off.
     set_aside_below: int = 0
 
@@ -323,6 +327,18 @@ class InboxQueries:
             statement = statement.where(
                 blocked if query.set_aside else ~func.coalesce(blocked, False)
             )
+        if query.followed_only:
+            followed = (
+                select(CompanyFollow.company_follow_id)
+                .where(
+                    CompanyFollow.owner_id == query.owner_id,
+                    CompanyFollow.company_id == JobOpportunity.company_id,
+                )
+                .exists()
+            )
+            statement = statement.where(followed)
+        if query.recommended_only:
+            statement = statement.where(evaluation.recommendation == "recommended")
         if query.first_seen_from is not None:
             statement = statement.where(JobOpportunity.first_seen_at >= query.first_seen_from)
         if query.first_seen_to is not None:
@@ -367,6 +383,13 @@ class InboxQueries:
             RawRow(item, opportunity, company, posting, snapshot, ev)
             for item, opportunity, company, posting, snapshot, ev in rows
         ]
+
+    async def count(self, query: ListQuery) -> int:
+        """Return how many items match ``query`` (same filters as the list, without paging)."""
+        statement, _evaluation = self._filtered(query)
+        return (
+            await self._session.execute(select(func.count()).select_from(statement.subquery()))
+        ).scalar_one()
 
     async def counts(
         self,

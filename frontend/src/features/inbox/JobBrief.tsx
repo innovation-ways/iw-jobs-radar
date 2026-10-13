@@ -18,7 +18,7 @@ function Technologies({ technologies }: { technologies: Brief['technologies'] })
   const hidden = technologies.length - shown.length
   return (
     <div className="mt-3">
-      <h4 className="mb-1.5 text-xs font-semibold tracking-wider text-ink-3 uppercase">
+      <h4 className="mb-1.5 text-sm font-semibold tracking-wider text-ink-3 uppercase">
         Technologies{' '}
         <span className="font-normal tracking-normal normal-case">
           · solid = required, dashed = preferred
@@ -29,7 +29,7 @@ function Technologies({ technologies }: { technologies: Brief['technologies'] })
           <li
             key={tech.name}
             className={cn(
-              'rounded-md border px-2 py-px text-xs',
+              'rounded-md border px-2 py-px text-sm',
               tech.importance === 'must'
                 ? 'border-line-strong bg-surface-2 font-semibold'
                 : 'border-dashed border-line-strong text-ink-2',
@@ -75,17 +75,17 @@ export function JobBrief({ brief, jobPostingId }: { brief: Brief; jobPostingId: 
   return (
     <section className="border-b border-line px-5 py-4" aria-label="Job briefing">
       {brief.facts.length > 0 && (
-        <p aria-label="Key facts" className="mb-2 text-sm font-medium">
+        <p aria-label="Key facts" className="mb-2 text-base font-medium">
           {brief.facts.join(' · ')}
         </p>
       )}
       {summary ? (
-        <div className="flex flex-col gap-2 text-sm leading-relaxed">
+        <div className="flex flex-col gap-2 text-base leading-relaxed">
           {summary.split(/\n\n+/).map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
           <span
-            className="self-start rounded-full border border-line-strong px-2 py-px text-xs text-ink-3"
+            className="self-start rounded-full border border-line-strong px-2 py-px text-sm text-ink-3"
             title={
               brief.summary_model
                 ? `Written by ${brief.summary_model}; check the full description`
@@ -96,7 +96,7 @@ export function JobBrief({ brief, jobPostingId }: { brief: Brief; jobPostingId: 
           </span>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-2 text-sm text-ink-2">
+        <div className="flex flex-wrap items-center gap-2 text-base text-ink-2">
           <span>The summary has not been generated yet.</span>
           <Button
             variant="outline"

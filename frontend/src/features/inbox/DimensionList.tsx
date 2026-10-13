@@ -52,7 +52,7 @@ export function DimensionList({ dimensions }: { dimensions: Dimension[] }) {
             <span
               aria-hidden="true"
               className={cn(
-                'grid size-5 place-items-center rounded-full text-xs font-bold',
+                'grid size-5 place-items-center rounded-full text-sm font-bold',
                 STATUS_BADGE[dimension.status],
               )}
             >
@@ -61,14 +61,14 @@ export function DimensionList({ dimensions }: { dimensions: Dimension[] }) {
             <div>
               <div className="font-semibold">
                 {label}
-                <span className="ml-1.5 text-xs font-medium text-ink-2">
+                <span className="ml-1.5 text-sm font-medium text-ink-2">
                   <span>{STATUS_TEXT[dimension.status]}</span>
                   {dimension.status === 'match' && dimension.quality && (
                     <span> · {dimension.quality}</span>
                   )}
                 </span>
                 {direction && (
-                  <span className="block text-xs font-normal text-ink-2">Fits: {direction}</span>
+                  <span className="block text-sm font-normal text-ink-2">Fits: {direction}</span>
                 )}
               </div>
             </div>

@@ -110,14 +110,14 @@ export function JobDetail({ detail, busy, onAction, onLinkDecision }: Props) {
   const settled =
     detail.state === 'ignored' || detail.state === 'archived' || detail.state === 'applied'
   return (
-    <article aria-label={detail.title} className="flex min-h-full flex-col bg-surface">
+    <article aria-label={detail.title} className="flex min-h-full flex-col bg-surface text-[15px]">
       <div className="border-b border-line px-5 pt-4 pb-3.5">
         <h2 className="mb-1 text-lg leading-snug font-semibold tracking-tight">{detail.title}</h2>
         <div className="text-ink-2">
           {detail.company_name}
           {detail.locations.length > 0 && ` · ${detail.locations.join('; ')}`}
         </div>
-        <div className="mt-2.5 flex flex-wrap gap-1.5 text-xs">
+        <div className="mt-2.5 flex flex-wrap gap-1.5 text-sm">
           <span className="rounded-full border border-line-strong px-2 py-px">
             First seen {formatAge(detail.first_seen_at)} ago
           </span>
@@ -142,7 +142,7 @@ export function JobDetail({ detail, busy, onAction, onLinkDecision }: Props) {
             <div className="flex-1">
               <div
                 className={cn(
-                  'mb-1.5 inline-block rounded-md px-2 py-px text-xs font-semibold',
+                  'mb-1.5 inline-block rounded-md px-2 py-px text-sm font-semibold',
                   TONE_CLASSES[band.tone].soft,
                 )}
               >
@@ -166,10 +166,10 @@ export function JobDetail({ detail, busy, onAction, onLinkDecision }: Props) {
           </div>
         ) : (
           <div className="mt-3.5">
-            <span className="rounded-md bg-band-bg px-2 py-px text-xs font-semibold text-band">
+            <span className="rounded-md bg-band-bg px-2 py-px text-sm font-semibold text-band">
               {NOT_EVALUATED.label}
             </span>
-            <p className="mt-2 text-sm text-ink-2">
+            <p className="mt-2 text-base text-ink-2">
               This job has not been scored yet: AI evaluation is off or the job is waiting its turn.
               You can still read it and decide manually.
             </p>
@@ -177,7 +177,7 @@ export function JobDetail({ detail, busy, onAction, onLinkDecision }: Props) {
         )}
 
         {evaluation && evaluation.gates.length > 0 && (
-          <div className="mt-3 rounded-md bg-bad-bg px-3 py-2 text-sm text-bad">
+          <div className="mt-3 rounded-md bg-bad-bg px-3 py-2 text-base text-bad">
             <strong>Hard constraints</strong>
             <ul className="mt-1 list-disc pl-5">
               {evaluation.gates.map((gate) => (
@@ -187,7 +187,7 @@ export function JobDetail({ detail, busy, onAction, onLinkDecision }: Props) {
           </div>
         )}
         {settled && (
-          <p className="mt-3 rounded-md bg-surface-2 px-3 py-2 text-sm text-ink-2">
+          <p className="mt-3 rounded-md bg-surface-2 px-3 py-2 text-base text-ink-2">
             This job is <strong>{detail.state}</strong>
             {detail.state === 'applied' && detail.applied_at
               ? ` (application recorded ${formatDateTime(detail.applied_at)})`
@@ -196,7 +196,7 @@ export function JobDetail({ detail, busy, onAction, onLinkDecision }: Props) {
           </p>
         )}
         {detail.last_change && (
-          <p className="mt-3 rounded-md bg-caution-bg px-3 py-2 text-sm text-caution">
+          <p className="mt-3 rounded-md bg-caution-bg px-3 py-2 text-base text-caution">
             <strong>Updated:</strong> {detail.last_change.changed_fields.join(', ')}
           </p>
         )}
@@ -207,7 +207,7 @@ export function JobDetail({ detail, busy, onAction, onLinkDecision }: Props) {
 
       {evaluation && (
         <section className="border-b border-line px-5 py-4" aria-label="Why this score">
-          <h3 className="mb-2 text-xs font-semibold tracking-wider text-ink-3 uppercase">
+          <h3 className="mb-2 text-sm font-semibold tracking-wider text-ink-3 uppercase">
             Why this score{' '}
             <span className="font-normal tracking-normal normal-case">
               · hover or focus a row to see the posting&apos;s words
@@ -215,36 +215,36 @@ export function JobDetail({ detail, busy, onAction, onLinkDecision }: Props) {
           </h3>
           <DimensionList dimensions={detail.dimensions} />
           <AssessDirections jobPostingId={detail.job_posting_id} dimensions={detail.dimensions} />
-          <p className="mt-2 text-xs text-ink-3">
+          <p className="mt-2 text-sm text-ink-3">
             Unknown facts add nothing to the score. Policy {evaluation.policy_version}.
           </p>
         </section>
       )}
 
       <section className="border-b border-line px-5 py-3" aria-label="Where this job was seen">
-        <h3 className="mb-2 text-xs font-semibold tracking-wider text-ink-3 uppercase">
+        <h3 className="mb-2 text-sm font-semibold tracking-wider text-ink-3 uppercase">
           Where this job was seen ({detail.sources.length})
         </h3>
-        <ul className="flex flex-col gap-1.5 text-sm">
+        <ul className="flex flex-col gap-1.5 text-base">
           {detail.sources.map((source, index) => (
             <li key={source.job_posting_id} className="flex flex-wrap items-center gap-2">
               <a href={source.url} target="_blank" rel="noopener noreferrer" className="underline">
                 {source.source_name}
               </a>
               {index === 0 && (
-                <span className="rounded-full border border-line-strong px-2 text-xs">primary</span>
+                <span className="rounded-full border border-line-strong px-2 text-sm">primary</span>
               )}
               {source.link_state === 'confirmed' && (
-                <span className="text-xs text-ink-3">confirmed same job</span>
+                <span className="text-sm text-ink-3">confirmed same job</span>
               )}
-              {source.closed && <span className="text-xs text-ink-3">no longer listed</span>}
+              {source.closed && <span className="text-sm text-ink-3">no longer listed</span>}
             </li>
           ))}
         </ul>
         {possible.map((source) => (
           <div
             key={source.job_opportunity_link_id}
-            className="mt-2 rounded-md bg-caution-bg px-3 py-2 text-sm text-caution"
+            className="mt-2 rounded-md bg-caution-bg px-3 py-2 text-base text-caution"
           >
             <p>
               {source.source_name} may be the same job ({Math.round(source.similarity * 100)}%
@@ -272,8 +272,8 @@ export function JobDetail({ detail, busy, onAction, onLinkDecision }: Props) {
 
       <section className="flex-1 px-5 py-3" aria-label="Description">
         <details>
-          <summary className="cursor-pointer text-sm text-ink-2">Full description</summary>
-          <p className="mt-2 text-sm whitespace-pre-line">{detail.description_text}</p>
+          <summary className="cursor-pointer text-base text-ink-2">Full description</summary>
+          <p className="mt-2 text-base whitespace-pre-line">{detail.description_text}</p>
         </details>
       </section>
 

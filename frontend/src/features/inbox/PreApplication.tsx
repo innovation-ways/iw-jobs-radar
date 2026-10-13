@@ -23,29 +23,29 @@ function DraftView({ draft }: { draft: Draft }) {
     }
   }
   return (
-    <div className="mt-3 flex flex-col gap-4 text-sm">
+    <div className="mt-3 flex flex-col gap-4 text-base">
       <div>
-        <h4 className="mb-1.5 text-xs font-semibold tracking-wider text-ink-3 uppercase">
+        <h4 className="mb-1.5 text-sm font-semibold tracking-wider text-ink-3 uppercase">
           Strengths to stress
         </h4>
         <ul className="flex flex-col gap-1.5">
           {strengths.map((s) => (
             <li key={s.point}>
               <span className="font-medium">{s.point}</span>
-              <span className="block text-xs text-ink-3">Based on: {s.evidence}</span>
+              <span className="block text-sm text-ink-3">Based on: {s.evidence}</span>
             </li>
           ))}
         </ul>
       </div>
       <div>
-        <h4 className="mb-1.5 text-xs font-semibold tracking-wider text-ink-3 uppercase">
+        <h4 className="mb-1.5 text-sm font-semibold tracking-wider text-ink-3 uppercase">
           How to present yourself
         </h4>
         <p className="leading-relaxed">{positioning}</p>
       </div>
       {gaps.length > 0 && (
         <div>
-          <h4 className="mb-1.5 text-xs font-semibold tracking-wider text-ink-3 uppercase">
+          <h4 className="mb-1.5 text-sm font-semibold tracking-wider text-ink-3 uppercase">
             Gaps to address
           </h4>
           <ul className="list-disc pl-5">
@@ -57,13 +57,13 @@ function DraftView({ draft }: { draft: Draft }) {
       )}
       <div>
         <div className="mb-1.5 flex flex-wrap items-center gap-2">
-          <h4 className="text-xs font-semibold tracking-wider text-ink-3 uppercase">
+          <h4 className="text-sm font-semibold tracking-wider text-ink-3 uppercase">
             Cover letter base · {letter_language === 'pt' ? 'Portuguese' : 'English'}
           </h4>
           <Button variant="outline" size="sm" onClick={copy}>
             Copy letter
           </Button>
-          {copied && <span className="text-xs text-ink-3">Copied</span>}
+          {copied && <span className="text-sm text-ink-3">Copied</span>}
         </div>
         <div
           aria-label="Cover letter"
@@ -110,7 +110,7 @@ export function PreApplication({ jobPostingId }: { jobPostingId: number }) {
   return (
     <section className="border-b border-line px-5 py-4" aria-label="Pre-application">
       <div className="flex flex-wrap items-center gap-2">
-        <h3 className="text-xs font-semibold tracking-wider text-ink-3 uppercase">
+        <h3 className="text-sm font-semibold tracking-wider text-ink-3 uppercase">
           Pre-application
         </h3>
         <Button
@@ -123,7 +123,7 @@ export function PreApplication({ jobPostingId }: { jobPostingId: number }) {
         </Button>
         {newest && (
           <span
-            className="rounded-full border border-line-strong px-2 py-px text-xs text-ink-3"
+            className="rounded-full border border-line-strong px-2 py-px text-sm text-ink-3"
             title={`Written by ${newest.model} on ${formatDateTime(newest.created_at)}`}
           >
             AI draft: check every claim before sending
@@ -131,7 +131,7 @@ export function PreApplication({ jobPostingId }: { jobPostingId: number }) {
         )}
       </div>
       {write.error && (
-        <p role="alert" className="mt-2 text-sm text-bad">
+        <p role="alert" className="mt-2 text-base text-bad">
           The local model could not write the draft: {write.error.message}
         </p>
       )}

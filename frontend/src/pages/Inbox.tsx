@@ -23,6 +23,9 @@ import {
   type InboxItem,
   type TabKey,
 } from '@/features/inbox/queries'
+import { useOutletContext } from 'react-router'
+import type { ShellContext } from '@/components/AppShell'
+import { createPortal } from 'react-dom'
 import { ShortcutsHelp } from '@/features/inbox/ShortcutsHelp'
 import { ACTION_MESSAGES, undoPlan, type InboxState, type OwnerAction } from '@/features/inbox/undo'
 import { useShortcuts } from '@/features/inbox/useShortcuts'
@@ -80,6 +83,8 @@ export function Inbox() {
   }))
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [helpOpen, setHelpOpen] = useState(false)
+  // The "?" button lives in the application header next to the theme toggle (a slot of AppShell).
+  const headerSlot = useOutletContext<ShellContext | undefined>()?.headerSlot ?? null
   const [toast, setToast] = useState<{ message: string; undo: LastAction | null } | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
   const [intentChoice, setIntentChoice] = useState<number | null>(
@@ -233,13 +238,13 @@ export function Inbox() {
     <div
       data-testid="inbox-root"
       data-density={density}
-      className="group/inbox grid h-full min-h-0 grid-cols-[minmax(420px,1fr)_460px]"
+      className="group/inbox grid h-full min-h-0 grid-cols-[minmax(340px,1fr)_580px]"
     >
       <div className="flex min-h-0 min-w-0 flex-col border-r border-line">
         <div
           role="tablist"
           aria-label="Inbox sections"
-          className="flex gap-0.5 overflow-x-auto border-b border-line bg-surface px-3.5 pt-2"
+          className="flex gap-0.5 border-b border-line bg-surface px-3.5 pt-2"
         >
           {TABS.map((info) => (
             <button
@@ -249,7 +254,7 @@ export function Inbox() {
               aria-selected={tab === info.key}
               onClick={() => setTab(info.key)}
               className={cn(
-                'flex items-center gap-1.5 border-b-2 px-2.5 py-2 whitespace-nowrap',
+                'flex flex-col items-center border-b-2 px-2.5 py-1.5 leading-tight',
                 tab === info.key
                   ? 'border-brand font-semibold text-ink'
                   : 'border-transparent text-ink-2 hover:text-ink',
@@ -371,14 +376,6 @@ export function Inbox() {
               </button>
             ))}
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-label="Keyboard shortcuts"
-            onClick={() => setHelpOpen(true)}
-          >
-            <kbd>?</kbd>
-          </Button>
         </div>
 
         {!waitingForIntents && intentId === null && (
@@ -475,6 +472,18 @@ export function Inbox() {
           )}
         </div>
       )}
+      {headerSlot &&
+        createPortal(
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label="Keyboard shortcuts"
+            onClick={() => setHelpOpen(true)}
+          >
+            <kbd>?</kbd>
+          </Button>,
+          headerSlot,
+        )}
       {helpOpen && <ShortcutsHelp onClose={() => setHelpOpen(false)} />}
     </div>
   )

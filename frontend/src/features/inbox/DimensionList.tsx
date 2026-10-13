@@ -26,12 +26,18 @@ function textOf(dimension: Dimension, key: string): string | null {
 
 const quoteOf = (dimension: Dimension) => textOf(dimension, 'job_quote')
 
+const LIST_LIMIT = 6
+
 /** A list of strings from the evidence, joined for display, or null when it is missing or empty. */
 function listOf(dimension: Dimension, key: string): string | null {
   const value = dimension.evidence[key]
   if (!Array.isArray(value)) return null
   const items = value.filter((item): item is string => typeof item === 'string' && item !== '')
-  return items.length ? items.join(', ') : null
+  if (!items.length) return null
+  // A group such as "Europe" is stored as its member countries: show the first few only.
+  return items.length > LIST_LIMIT
+    ? `${items.slice(0, LIST_LIMIT).join(', ')} … +${items.length - LIST_LIMIT} more`
+    : items.join(', ')
 }
 
 /**

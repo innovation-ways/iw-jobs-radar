@@ -101,4 +101,19 @@ describe('DimensionList', () => {
     )
     expect(screen.queryByText('Board location')).not.toBeInTheDocument()
   })
+
+  it('shortens a long list of countries in "Open from"', () => {
+    const codes = ['AD', 'AL', 'AT', 'BA', 'BE', 'BG', 'BY', 'CH', 'CY', 'CZ']
+    render(
+      <DimensionList
+        dimensions={[
+          dimension({
+            dimension_key: 'work_arrangement_location',
+            evidence: { source_places: ['Europe', 'Remote'], job_regions: codes },
+          }),
+        ]}
+      />,
+    )
+    expect(screen.getByText('AD, AL, AT, BA, BE, BG … +4 more')).toBeInTheDocument()
+  })
 })

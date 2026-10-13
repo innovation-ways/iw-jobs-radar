@@ -36,7 +36,8 @@ from jobs_radar.domain.regions import regions_intersect
 # matching-v1.5 (ADR-057): the career-direction dimension (the best judged direction counts).
 # matching-v1.6 (ADR-066): gate G1 also fires when the primary role family is rejected.
 # matching-v1.7 (ADR-068): a bare country or region next to a remote marker limits remote work.
-POLICY_VERSION = "matching-v1.7"
+# matching-v1.8 (ADR-069): the location evidence names the source's places and the text's regions.
+POLICY_VERSION = "matching-v1.8"
 
 ZERO, HALF, ONE = Fraction(0), Fraction(1, 2), Fraction(1)
 _STANCE = {"preferred": ONE, "acceptable": HALF, "rejected": ZERO}
@@ -165,11 +166,15 @@ def _skills(job: JobAttributes, profile: ProfileView, relations: SkillRelations)
 
 
 def _remote(job: JobAttributes, intent: IntentView, gates: list[Gate], mode: Fraction) -> _Raw:
-    evidence = {
+    evidence: dict[str, Any] = {
         "job_quote": _quote(job, "remote_regions"),
         "job_regions": job.remote_regions,
         "your_regions": intent.remote_regions,
     }
+    if job.source_places:
+        # Evidence only (ADR-069): what the board says next to what the text says.
+        evidence["source_places"] = list(job.source_places)
+        evidence["text_regions"] = list(job.text_remote_regions or ())
     if job.remote_regions is None:
         return _scored(
             mode * _UNVERIFIED_REMOTE_FACTOR,

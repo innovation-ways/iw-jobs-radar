@@ -89,6 +89,10 @@ class JobAttributes:
     role_families: tuple[tuple[str, float], ...] = ()
     work_mode: str | None = None
     remote_regions: tuple[str, ...] | None = None
+    # Evidence only (ADR-069): the places the board states and the regions the model read from the
+    # text, before the places limited them. Neither changes the score.
+    text_remote_regions: tuple[str, ...] | None = None
+    source_places: tuple[str, ...] = ()
     locations: tuple[JobLocation, ...] = ()
     employment_types: tuple[str, ...] | None = None
     hours: str | None = None

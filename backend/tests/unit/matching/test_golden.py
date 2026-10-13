@@ -63,7 +63,7 @@ def test_raising_the_compensation_weight_to_30_gives_68() -> None:
 
 
 def test_the_policy_version_is_recorded() -> None:
-    assert run().policy_version == "matching-v1.7"
+    assert run().policy_version == "matching-v1.8"
 
 
 def test_a_job_with_nothing_known_scores_zero_and_is_still_recommended() -> None:

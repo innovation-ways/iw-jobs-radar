@@ -58,4 +58,47 @@ describe('DimensionList', () => {
     expect(screen.getByText('Compensation')).toBeInTheDocument()
     expect(screen.queryByText(/fits:/i)).not.toBeInTheDocument()
   })
+
+  it('shows the board location next to the regions the text names for remote work (ADR-069)', () => {
+    render(
+      <DimensionList
+        dimensions={[
+          dimension({
+            dimension_key: 'work_arrangement_location',
+            status: 'mismatch',
+            quality: null,
+            evidence: {
+              job_quote: 'This role is open to candidates based in the US and Europe.',
+              source_places: ['North America', 'Remote'],
+              text_regions: ['US', 'Europe'],
+              job_regions: ['US'],
+              your_regions: ['PT'],
+            },
+            explanation: 'Remote work is restricted to other regions.',
+          }),
+        ]}
+      />,
+    )
+    const row = screen.getByRole('listitem')
+    expect(within(row).getByText('Board location')).toBeInTheDocument()
+    expect(within(row).getByText('North America, Remote')).toBeInTheDocument()
+    expect(within(row).getByText('Regions in the text')).toBeInTheDocument()
+    expect(within(row).getByText('US, Europe')).toBeInTheDocument()
+    expect(within(row).getByText('Open from')).toBeInTheDocument()
+    expect(within(row).getByText('US')).toBeInTheDocument()
+  })
+
+  it('shows no region block when the evidence has no source places', () => {
+    render(
+      <DimensionList
+        dimensions={[
+          dimension({
+            dimension_key: 'work_arrangement_location',
+            evidence: { job_quote: 'Remote within the EU', job_regions: ['EU'] },
+          }),
+        ]}
+      />,
+    )
+    expect(screen.queryByText('Board location')).not.toBeInTheDocument()
+  })
 })

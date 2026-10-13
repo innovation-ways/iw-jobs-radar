@@ -244,3 +244,25 @@ def test_the_quote_says_the_source_limited_the_regions() -> None:
     assert "India (Remote)" in job.evidence["remote_regions"]
     unchanged = job_attributes(stored_regions(["EU"]), "t", "d", "Acme", source_places=[])
     assert unchanged.evidence["remote_regions"] == "within EU time zones"
+
+
+# --- the evidence shows where each region came from (ADR-069) ----------------------------------
+
+
+def test_the_job_keeps_the_sources_places_and_the_regions_the_text_gave() -> None:
+    job = job_attributes(
+        stored_regions(["US", "Europe"]),
+        "t",
+        "d",
+        "Acme",
+        source_places=["North America", "Remote"],
+    )
+    assert job.source_places == ("North America", "Remote")
+    assert job.text_remote_regions == ("US", "Europe")  # as the model wrote them
+    assert job.remote_regions == ("US",)  # what the source left of them
+
+
+def test_without_source_places_the_job_carries_none() -> None:
+    job = job_attributes(stored_regions(["EU"]), "t", "d", "Acme", source_places=[])
+    assert job.source_places == ()
+    assert job.text_remote_regions == ("EU",)

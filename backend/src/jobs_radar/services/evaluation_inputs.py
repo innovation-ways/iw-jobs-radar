@@ -108,6 +108,7 @@ def job_attributes(
     )
     regions = _known(output.remote_regions)
     region_codes = _region_codes(regions) if regions is not None else None
+    text_regions = region_codes  # kept for the evidence before the source limits it (ADR-069)
     allowed = source_remote_countries(source_places)
     if region_codes is None and allowed is not None and _known(output.work_mode) == "remote":
         # The model named no regions but the source's own places do (ADR-058): without this,
@@ -131,6 +132,8 @@ def job_attributes(
         role_families=tuple((r.key, r.confidence) for r in output.role_families),
         work_mode=_known(output.work_mode),
         remote_regions=region_codes,
+        text_remote_regions=text_regions,
+        source_places=tuple(source_places),
         locations=locations,
         employment_types=tuple(employment) if employment is not None else None,
         hours=_known(output.hours),

@@ -26,6 +26,14 @@ function textOf(dimension: Dimension, key: string): string | null {
 
 const quoteOf = (dimension: Dimension) => textOf(dimension, 'job_quote')
 
+/** A list of strings from the evidence, joined for display, or null when it is missing or empty. */
+function listOf(dimension: Dimension, key: string): string | null {
+  const value = dimension.evidence[key]
+  if (!Array.isArray(value)) return null
+  const items = value.filter((item): item is string => typeof item === 'string' && item !== '')
+  return items.length ? items.join(', ') : null
+}
+
 /**
  * "Why this score": one row per dimension with its points. Hover or focus a row to see the
  * posting's own words and what it was compared with. Unstated facts are unknown and add nothing.
@@ -41,6 +49,10 @@ export function DimensionList({ dimensions }: { dimensions: Dimension[] }) {
         // Career direction: the model's best-fitting direction, with the owner's own words.
         const direction = textOf(dimension, 'direction')
         const directionQuote = textOf(dimension, 'direction_quote')
+        // Remote location: what the board states next to what the text says (ADR-069).
+        const boardPlaces = listOf(dimension, 'source_places')
+        const textRegions = listOf(dimension, 'text_regions')
+        const openFrom = listOf(dimension, 'job_regions')
         const opensUp = index >= active.length - 3
         return (
           <li
@@ -91,6 +103,20 @@ export function DimensionList({ dimensions }: { dimensions: Dimension[] }) {
               <blockquote className="mb-2.5 border-l-[3px] border-brand pl-2.5 text-[13px]">
                 {quote ? `“${quote}”` : 'Not stated in the posting.'}
               </blockquote>
+              {boardPlaces && (
+                <dl className="mb-2.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-[13px]">
+                  <dt className="text-ink-3">Board location</dt>
+                  <dd>{boardPlaces}</dd>
+                  <dt className="text-ink-3">Regions in the text</dt>
+                  <dd>{textRegions ?? 'None named'}</dd>
+                  {openFrom && (
+                    <>
+                      <dt className="text-ink-3">Open from</dt>
+                      <dd>{openFrom}</dd>
+                    </>
+                  )}
+                </dl>
+              )}
               {directionQuote && (
                 <>
                   <h4 className="mb-1 text-[11px] font-semibold tracking-wider text-ink-3 uppercase">

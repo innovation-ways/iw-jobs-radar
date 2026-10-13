@@ -8,7 +8,7 @@ from tests.factories import build_full_graph, make_opportunity, make_posting
 from jobs_radar.core.errors import ConflictError, NotFoundError
 from jobs_radar.db.models import InboxEvent
 from jobs_radar.domain.enums import LOCAL_OWNER_ID, Actor, InboxAction, InboxState
-from jobs_radar.repositories.inbox import InboxRepository
+from jobs_radar.repositories.inbox import InboxQueries, InboxRepository, ListQuery
 
 pytestmark = pytest.mark.integration
 
@@ -143,3 +143,42 @@ async def test_items_are_scoped_to_their_owner(db_session: AsyncSession) -> None
         await repository.get(owner_id=999, job_inbox_item_id=item.job_inbox_item_id)
     with pytest.raises(NotFoundError):
         await repository.get(LOCAL_OWNER_ID, 987654321)
+
+
+async def test_to_review_holds_unread_and_updated_items_but_not_read_ones(
+    db_session: AsyncSession,
+) -> None:
+    repository = InboxRepository(db_session)
+    states: dict[str, int] = {}
+    for target in (InboxState.UNREAD, InboxState.UPDATED_UNREAD, InboxState.READ):
+        item = await repository.surface(
+            LOCAL_OWNER_ID, (await fresh_opportunity(db_session)).job_opportunity_id
+        )
+        if target is not InboxState.UNREAD:
+            await repository.apply(
+                item,
+                expected_version=1,
+                action=InboxAction.MATERIAL_UPDATE
+                if target is InboxState.UPDATED_UNREAD
+                else InboxAction.OPEN,
+                to_state=target,
+                actor=Actor.SYSTEM,
+            )
+        states[target.value] = item.job_inbox_item_id
+
+    queries = InboxQueries(db_session)
+    for set_aside in (None, False):
+        rows = await queries.page(
+            ListQuery(
+                owner_id=LOCAL_OWNER_ID,
+                search_intent_id=None,
+                state="to_review",
+                set_aside=set_aside,
+            ),
+            limit=100,
+            after=None,
+        )
+        found = {row.item.job_inbox_item_id for row in rows}
+        assert states["unread"] in found
+        assert states["updated_unread"] in found  # an updated job is never set aside
+        assert states["read"] not in found

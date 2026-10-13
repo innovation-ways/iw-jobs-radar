@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import case, func, literal, or_, select, tuple_, update
+from sqlalchemy import and_, case, func, literal, or_, select, tuple_, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -160,6 +160,8 @@ class InboxRepository:
 
 
 SORTS = ("fit_desc", "newest", "oldest")
+# Pseudo-state of the "To review" section: unread plus updated-unread items.
+TO_REVIEW = "to_review"
 _STATES = tuple(state.value for state in InboxState)
 
 
@@ -265,7 +267,12 @@ class InboxQueries:
 
     def _filtered(self, query: ListQuery) -> tuple[Any, Any]:
         statement, evaluation, snapshot = self._select(query)
-        if query.state is not None:
+        if query.state == TO_REVIEW:
+            # "To review" holds the unread jobs and those the source changed since (updated).
+            statement = statement.where(
+                JobInboxItem.state.in_([InboxState.UNREAD.value, InboxState.UPDATED_UNREAD.value])
+            )
+        elif query.state is not None:
             statement = statement.where(JobInboxItem.state == query.state)
         if query.shortlisted is not None:
             statement = statement.where(JobInboxItem.is_shortlisted.is_(query.shortlisted))
@@ -324,8 +331,12 @@ class InboxQueries:
                 evaluation.recommendation == "not_recommended",
                 evaluation.fit_score < query.set_aside_below,
             )
+            # Only unread jobs are ever set aside: an updated job always waits for the owner.
+            is_updated = JobInboxItem.state == InboxState.UPDATED_UNREAD.value
             statement = statement.where(
-                blocked if query.set_aside else ~func.coalesce(blocked, False)
+                and_(~is_updated, blocked)
+                if query.set_aside
+                else or_(is_updated, ~func.coalesce(blocked, False))
             )
         if query.followed_only:
             followed = (

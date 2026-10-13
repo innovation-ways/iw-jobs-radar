@@ -7858,7 +7858,7 @@
             "required": false,
             "schema": {
               "default": "unread",
-              "pattern": "^(all|unread|read|updated_unread|ignored|archived|applied)$",
+              "pattern": "^(all|to_review|unread|read|updated_unread|ignored|archived|applied)$",
               "title": "State",
               "type": "string"
             }

@@ -128,7 +128,7 @@ def _event(event: InboxEvent) -> InboxEventRead:
 async def list_inbox(
     service: Service,
     state: Annotated[
-        str, Query(pattern=r"^(all|unread|read|updated_unread|ignored|archived|applied)$")
+        str, Query(pattern=r"^(all|to_review|unread|read|updated_unread|ignored|archived|applied)$")
     ] = "unread",
     shortlisted: bool | None = None,
     search_intent_id: Annotated[int | None, Query(ge=1)] = None,

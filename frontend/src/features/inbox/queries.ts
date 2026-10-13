@@ -11,7 +11,7 @@ export type InboxDetail = Schemas['InboxItemDetail']
 export type InboxCounts = Schemas['InboxCounts']
 
 export type TabKey =
-  'unread' | 'updated' | 'set_aside' | 'shortlist' | 'read' | 'ignored' | 'archived' | 'applied'
+  'unread' | 'set_aside' | 'shortlist' | 'read' | 'ignored' | 'archived' | 'applied'
 
 export interface TabInfo {
   key: TabKey
@@ -25,8 +25,14 @@ export interface TabInfo {
 
 /** The sections of the inbox (each maps to a state filter; Shortlist cuts across states). */
 export const TABS: TabInfo[] = [
-  { key: 'unread', label: 'To review', count: (c) => c.unread, state: 'unread', setAside: false },
-  { key: 'updated', label: 'Updated', count: (c) => c.updated_unread, state: 'updated_unread' },
+  // Unread jobs plus those the source changed since (shown with an UPDATED badge in the list).
+  {
+    key: 'unread',
+    label: 'To review',
+    count: (c) => c.unread + c.updated_unread,
+    state: 'to_review',
+    setAside: false,
+  },
   // Jobs the owner cannot apply for (a hard constraint fired): still there, but out of the way.
   {
     key: 'set_aside',

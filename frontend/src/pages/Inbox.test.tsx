@@ -105,8 +105,7 @@ describe('Inbox screen', () => {
           .getAllByRole('tab')
           .map((t) => t.textContent),
       ).toEqual([
-        'To review4',
-        'Updated1',
+        'To review5',
         'Set aside6',
         'Shortlist2',
         'Reviewed2',
@@ -232,7 +231,7 @@ describe('Inbox screen', () => {
       renderInbox()
       await screen.findByRole('option', { name: /Applied AI Architect/ })
       expect(lastListQuery()).toMatchObject({
-        state: 'unread',
+        state: 'to_review',
         search_intent_id: 5,
         sort: 'fit_desc',
       })
@@ -244,9 +243,6 @@ describe('Inbox screen', () => {
       await waitFor(() =>
         expect(lastListQuery()).toMatchObject({ state: 'unread', set_aside: true }),
       )
-
-      await userEvent.click(screen.getByRole('tab', { name: /updated/i }))
-      await waitFor(() => expect(lastListQuery().state).toBe('updated_unread'))
 
       await userEvent.click(screen.getByRole('tab', { name: /shortlist/i }))
       await waitFor(() =>

@@ -18,6 +18,7 @@ export function makeItem(overrides: Partial<Item> = {}): Item {
     is_shortlisted: false,
     version: 1,
     title: `Senior AI Engineer ${id}`,
+    company_id: 700 + id,
     company_name: 'Northwind Labs',
     locations: ['Remote - EU'],
     first_seen_at: '2026-10-08T10:00:00Z',
@@ -26,7 +27,7 @@ export function makeItem(overrides: Partial<Item> = {}): Item {
     evaluated: true,
     evaluation: {
       match_evaluation_id: 900 + id,
-      policy_version: 'matching-v1.5',
+      policy_version: 'matching-v1.6',
       fit_score: 82,
       fit_band: 'excellent',
       recommendation: 'recommended',

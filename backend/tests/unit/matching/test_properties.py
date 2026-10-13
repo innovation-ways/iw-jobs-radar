@@ -112,11 +112,8 @@ def test_the_order_of_options_does_not_change_the_result(the_job) -> None:  # ty
             group: dict(reversed(list(options.items()))) for group, options in base.stances.items()
         },
     )
-    reversed_job = replace(
-        the_job,
-        role_families=tuple(reversed(the_job.role_families)),
-        skills=tuple(reversed(the_job.skills)),
-    )
+    # Role families are left alone: their order is meaningful (the first is the primary, ADR-066).
+    reversed_job = replace(the_job, skills=tuple(reversed(the_job.skills)))
     assert (
         outcome(run(the_job, base))
         == outcome(run(the_job, reordered))

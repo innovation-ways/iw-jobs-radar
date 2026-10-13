@@ -2032,8 +2032,8 @@
             "type": "integer"
           },
           "policy_version": {
-            "const": "matching-v1.5",
-            "default": "matching-v1.5",
+            "const": "matching-v1.6",
+            "default": "matching-v1.6",
             "title": "Policy Version",
             "type": "string"
           },
@@ -2748,6 +2748,10 @@
             "title": "Closed",
             "type": "boolean"
           },
+          "company_id": {
+            "title": "Company Id",
+            "type": "integer"
+          },
           "company_name": {
             "title": "Company Name",
             "type": "string"
@@ -2908,6 +2912,7 @@
           "is_shortlisted",
           "version",
           "title",
+          "company_id",
           "company_name",
           "locations",
           "first_seen_at",
@@ -2952,6 +2957,10 @@
           "closed": {
             "title": "Closed",
             "type": "boolean"
+          },
+          "company_id": {
+            "title": "Company Id",
+            "type": "integer"
           },
           "company_name": {
             "title": "Company Name",
@@ -3062,6 +3071,7 @@
           "is_shortlisted",
           "version",
           "title",
+          "company_id",
           "company_name",
           "locations",
           "first_seen_at",

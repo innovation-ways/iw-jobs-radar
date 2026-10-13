@@ -34,7 +34,8 @@ from jobs_radar.domain.regions import regions_intersect
 # the source's own remote places allow.
 # matching-v1.5 (ADR-058): far offices without a remote statement fire gate G2 and region groups.
 # matching-v1.5 (ADR-057): the career-direction dimension (the best judged direction counts).
-POLICY_VERSION = "matching-v1.5"
+# matching-v1.6 (ADR-066): gate G1 also fires when the primary role family is rejected.
+POLICY_VERSION = "matching-v1.6"
 
 ZERO, HALF, ONE = Fraction(0), Fraction(1, 2), Fraction(1)
 _STANCE = {"preferred": ONE, "acceptable": HALF, "rejected": ZERO}
@@ -124,6 +125,11 @@ def _role(job: JobAttributes, intent: IntentView, gates: list[Gate]) -> _Raw:
     if all_rejected:
         gates.append(Gate("G1", "Every identified role family is one you rejected.", evidence))
         return _Raw("mismatch", ZERO, evidence, "All identified role families are rejected.")
+    # The model lists the best-fitting family first (ADR-066): a rejected primary family is a
+    # rejected job, whatever acceptable family is listed after it (a "Sales Engineer" is sales).
+    if stances[families[0]] == "rejected":
+        gates.append(Gate("G1", "The main role family of the job is one you rejected.", evidence))
+        return _Raw("mismatch", ZERO, evidence, "The primary role family is rejected.")
     return _scored(strength, evidence, "Best stance among the identified role families.")
 
 

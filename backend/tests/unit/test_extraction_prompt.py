@@ -1,4 +1,4 @@
-"""The extract-v2 prompt: what the model is told and given (document 13, section 6)."""
+"""The extract-v3 prompt: what the model is told and given (document 13, section 6)."""
 
 import json
 from collections.abc import Iterator
@@ -33,7 +33,7 @@ def prompt(**changes: object):  # type: ignore[no-untyped-def]
 
 
 def test_the_version_is_extract_v2() -> None:
-    assert EXTRACTION_PROMPT_VERSION == "extract-v2"
+    assert EXTRACTION_PROMPT_VERSION == "extract-v3"
 
 
 def test_the_user_message_has_the_title_description_hints_and_allowed_keys() -> None:
@@ -138,3 +138,9 @@ def test_the_validation_model_itself_is_not_tightened() -> None:
     """Stored extractions must keep validating, so only the schema sent to the model is bounded."""
     big = {"name": "x", "importance": "must", "evidence": "q" * 500}
     ExtractedSkill.model_validate(big)
+
+
+def test_the_lists_are_required_in_the_schema_sent_to_the_model() -> None:
+    # Without this the model may leave out `role_families` (a third of the answers did) and the
+    # role gate has nothing to judge; an empty list stays allowed for a posting with no role.
+    assert {"role_families", "skills"} <= set(_prompt_schema()["required"])

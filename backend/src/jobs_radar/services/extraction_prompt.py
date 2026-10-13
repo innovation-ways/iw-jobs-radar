@@ -1,4 +1,4 @@
-"""The ``extract-v2`` prompt (document 13, section 6.1; ADR-027).
+"""The ``extract-v3`` prompt (document 13, section 6.1; ADR-027).
 
 The prompt is built from the job alone: it never receives a profile or an intent, so one
 extraction serves every intent. The model is told to extract only what the posting states, to
@@ -78,6 +78,10 @@ def bounded_schema() -> dict[str, Any]:
                 bound(value)
 
     bound(schema)
+    # The lists have defaults in the validation model (so stored extractions keep validating), but
+    # a schema without them in `required` lets the model skip them: about a third of the answers
+    # had no role family. Requiring them forces the model to answer; an empty list is still valid.
+    schema["required"] = [*schema["required"], "role_families", "skills"]
     schema["properties"]["skills"]["maxItems"] = _MAX_SKILLS
     schema["properties"]["role_families"]["maxItems"] = _MAX_ROLE_FAMILIES
     return schema
@@ -108,7 +112,7 @@ def build_prompt(
     taxonomy: Mapping[str, Sequence[str]],
     max_chars: int,
 ) -> PreparedPrompt:
-    """Build the ``extract-v2`` request for one job (no profile or intent data is accepted)."""
+    """Build the ``extract-v3`` request for one job (no profile or intent data is accepted)."""
     used, truncated = truncate_text(description, max_chars)
     allowed = "\n".join(f"- {kind}: {', '.join(keys)}" for kind, keys in sorted(taxonomy.items()))
     parts = [f"Title: {title}"]

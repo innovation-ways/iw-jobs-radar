@@ -2184,10 +2184,10 @@ export interface components {
             intent_revision_id: number;
             /**
              * Policy Version
-             * @default matching-v1.5
+             * @default matching-v1.6
              * @constant
              */
-            policy_version: "matching-v1.5";
+            policy_version: "matching-v1.6";
             /** Profile Revision Id */
             profile_revision_id: number;
         };
@@ -2462,6 +2462,8 @@ export interface components {
             brief: components["schemas"]["JobBriefRead"];
             /** Closed */
             closed: boolean;
+            /** Company Id */
+            company_id: number;
             /** Company Name */
             company_name: string;
             /** Description Text */
@@ -2525,6 +2527,8 @@ export interface components {
             applied_at: string | null;
             /** Closed */
             closed: boolean;
+            /** Company Id */
+            company_id: number;
             /** Company Name */
             company_name: string;
             /** Evaluated */

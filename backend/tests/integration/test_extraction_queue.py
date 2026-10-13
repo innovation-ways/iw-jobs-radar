@@ -84,7 +84,7 @@ async def test_the_latest_snapshot_of_each_open_posting_is_queued_once(
         0,
         "fixture",
         "fixture-model",
-        "extract-v2",
+        "extract-v3",
     )
     assert posting.closed_at is None
 

@@ -46,9 +46,22 @@ def test_no_role_family_is_unknown() -> None:
     assert dim(run(job()), ROLE).status == "unknown"
 
 
-def test_the_best_role_family_counts_and_a_rejected_one_alongside_does_not_gate() -> None:
-    evaluation = run(job(role_families=(("data_analysis", 0.9), ("ai_solutions_engineering", 0.9))))
+def test_the_best_role_family_counts_and_a_rejected_secondary_one_does_not_gate() -> None:
+    evaluation = run(job(role_families=(("ai_solutions_engineering", 0.9), ("data_analysis", 0.9))))
     assert dim(evaluation, ROLE).strength == Decimal("1.0000")
+    assert "G1" not in gate_codes(evaluation)
+
+
+def test_a_rejected_primary_role_family_fires_g1_even_with_an_acceptable_secondary_one() -> None:
+    # The first family is the one that best fits the role (a "Sales Engineer" listed as sales
+    # first and consulting second is still a sales job).
+    evaluation = run(job(role_families=(("data_analysis", 0.9), ("ai_solutions_engineering", 0.9))))
+    assert gate_codes(evaluation) == ["G1"]
+    assert dim(evaluation, ROLE).status == "mismatch"
+
+
+def test_the_primary_role_family_is_the_first_one_that_clears_the_confidence_floor() -> None:
+    evaluation = run(job(role_families=(("data_analysis", 0.5), ("ai_solutions_engineering", 0.9))))
     assert "G1" not in gate_codes(evaluation)
 
 

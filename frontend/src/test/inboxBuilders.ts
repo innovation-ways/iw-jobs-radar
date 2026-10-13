@@ -27,7 +27,7 @@ export function makeItem(overrides: Partial<Item> = {}): Item {
     evaluated: true,
     evaluation: {
       match_evaluation_id: 900 + id,
-      policy_version: 'matching-v1.6',
+      policy_version: 'matching-v1.7',
       fit_score: 82,
       fit_band: 'excellent',
       recommendation: 'recommended',

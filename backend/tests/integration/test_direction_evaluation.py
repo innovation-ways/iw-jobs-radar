@@ -98,7 +98,7 @@ async def test_the_best_stored_judgement_is_scored_and_named(db_session: AsyncSe
     assert found.evidence_json["direction"] == "Billing SME"
     assert found.evidence_json["job_quote"] == "large enterprises in finance and telecom"
     assert record.evaluation.direction_basis.startswith("sha256:")
-    assert record.evaluation.policy_version == "matching-v1.6"
+    assert record.evaluation.policy_version == "matching-v1.7"
 
 
 async def test_a_job_without_judgements_is_not_assessed_and_the_dimension_is_left_out(
@@ -168,7 +168,7 @@ async def test_a_preview_scores_with_other_weights_and_stores_nothing(
     direction = next(d for d in weighted.dimensions if d.key == "career_direction")
     assert direction.excluded is False and direction.strength == 1
     assert weighted.fit_score != plain.fit_score
-    assert weighted.policy_version == "matching-v1.6"
+    assert weighted.policy_version == "matching-v1.7"
     assert (
         await db_session.execute(
             select(MatchEvaluation).where(MatchEvaluation.job_snapshot_id == w.snapshot_id)

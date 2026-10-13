@@ -17,6 +17,10 @@ from jobs_radar.services.remote_places import source_remote_countries
         (["Remote, Europe"], set(EUROPE)),
         (["Remote - USA"], {"US"}),  # ADR-058
         (["Remote - USA", "US - Remote Zone 1 (Job Requisitions Only)"], {"US"}),
+        (["North America", "Remote"], {"US", "CA", "MX"}),  # ADR-068: Ashby adds the marker
+        (["Canada", "United States", "Remote"], {"CA", "US"}),
+        (["United Kingdom", "Remote"], {"GB"}),
+        (["Remote", "Germany", "Poland"], {"DE", "PL"}),
         (["US - Remote Zone 1"], {"US"}),  # a zone number is filler
         (["Remote Canada"], {"CA"}),
         (["Home Based - Americas"], None),  # replaced below: the Americas, no Portugal
@@ -57,3 +61,22 @@ def test_anything_else_gives_no_limit(places: list[str]) -> None:
 def test_a_group_that_includes_portugal_does_not_exclude_it() -> None:
     found = source_remote_countries(["Remote - EMEA"])
     assert found is not None and "PT" in found and "US" not in found
+
+
+def test_a_bare_region_next_to_a_remote_marker_limits_remote_work() -> None:
+    found = source_remote_countries(["Europe", "Remote"])
+    assert found is not None and "PT" in found and "US" not in found  # ADR-068
+
+
+@pytest.mark.parametrize(
+    "places",
+    [
+        ["North America"],  # no remote marker: could be a hub, not a limit
+        ["Lisbon", "Remote"],  # a city next to the marker
+        ["United States", "Austin", "Remote"],  # one office among the countries
+        ["Europe", "Narnia", "Remote"],  # an unknown place cannot limit anything
+        ["Worldwide", "Remote"],  # open to everyone
+    ],
+)
+def test_bare_places_without_a_clear_limit_give_none(places: list[str]) -> None:
+    assert source_remote_countries(places) is None

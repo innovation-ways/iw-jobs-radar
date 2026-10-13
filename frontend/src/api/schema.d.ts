@@ -2184,10 +2184,10 @@ export interface components {
             intent_revision_id: number;
             /**
              * Policy Version
-             * @default matching-v1.6
+             * @default matching-v1.7
              * @constant
              */
-            policy_version: "matching-v1.6";
+            policy_version: "matching-v1.7";
             /** Profile Revision Id */
             profile_revision_id: number;
         };

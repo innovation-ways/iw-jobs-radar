@@ -35,7 +35,8 @@ from jobs_radar.domain.regions import regions_intersect
 # matching-v1.5 (ADR-058): far offices without a remote statement fire gate G2 and region groups.
 # matching-v1.5 (ADR-057): the career-direction dimension (the best judged direction counts).
 # matching-v1.6 (ADR-066): gate G1 also fires when the primary role family is rejected.
-POLICY_VERSION = "matching-v1.6"
+# matching-v1.7 (ADR-068): a bare country or region next to a remote marker limits remote work.
+POLICY_VERSION = "matching-v1.7"
 
 ZERO, HALF, ONE = Fraction(0), Fraction(1, 2), Fraction(1)
 _STANCE = {"preferred": ONE, "acceptable": HALF, "rejected": ZERO}

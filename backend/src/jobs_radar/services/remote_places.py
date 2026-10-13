@@ -45,11 +45,15 @@ def source_remote_countries(places: Sequence[str]) -> frozenset[str] | None:
 
     Every place must be either a remote place naming countries or regions, or a bare "Remote"
     (which some adapters add and which says nothing); a named office, a region that is not
-    understood or a place open to everyone means the source does not limit remote work.
+    understood or a place open to everyone means the source does not limit remote work. When
+    some place carries a remote word, a place that is only a country or a region (``North
+    America``, ``Canada``) is read as one the work is open from (ADR-068); a city is not.
     """
+    named = [item for item in places if item.strip()]
+    flagged_remote = any(_REMOTE.search(item) for item in named)
     allowed: set[str] = set()
-    for place in (item for item in places if item.strip()):
-        if not _REMOTE.search(place):
+    for place in named:
+        if not flagged_remote and not _REMOTE.search(place):
             return None  # an office (or hub): the source does not say where remote work is open
         tokens = _tokens(place)
         for token in tokens:

@@ -19,11 +19,10 @@ The API has no authentication in V1: every device that can reach the port can re
 
 | Field | Meaning |
 |---|---|
-| `to_review_high_fit` | Offers in the "To review" tab with a fit of `fit_min` or more (the threshold itself counts). Unscored offers never count. |
-| `to_review` | Offers in the "To review" tab (unread, not set aside). |
-| `unread_total` | Every unread offer, including the ones set aside. It is larger than `to_review` by the "Set aside" count. |
-| `followed_recommended` | Offers in "To review" from **followed companies** whose latest evaluation is *recommended*, whatever their fit. |
-| `best_fit` | Highest fit among the offers in "To review" (null if none is scored). |
+| `to_review` | Offers waiting for review: unread (minus the ones under "Set aside") plus updated. It is the number on the Inbox badge in the sidebar. |
+| `to_review_high_fit` | Of those, the ones with a fit of `fit_min` or more (the threshold itself counts). Unscored offers never count. |
+| `followed_recommended` | Of those, the ones from **followed companies** whose latest evaluation is *recommended*, whatever their fit. |
+| `best_fit` | Highest fit among them (null if none is scored). |
 | `status` | `ready` when the database and the worker are healthy, else `unavailable`. |
 | `fit_threshold` | The `fit_min` that was used. |
 
@@ -47,8 +46,8 @@ Replace `<host>` with the address of the Jobs Radar host.
         - field: to_review_high_fit
           label: To review ≥ 65
           format: number
-        - field: unread_total
-          label: Unread in inbox
+        - field: to_review
+          label: To review in inbox
           format: number
         - field: followed_recommended
           label: Followed · recommended
@@ -56,8 +55,8 @@ Replace `<host>` with the address of the Jobs Radar host.
 ```
 
 - **To review with fit ≥ 65:** `to_review_high_fit`. For another threshold change `fit_min` in the URL and the label (`fit_min=70` → "To review ≥ 70").
-- **Total unread in the inbox:** `unread_total`. Use `to_review` instead if you want the number the "To review" tab shows (set-aside offers left out).
-- **Recommended offers of followed companies:** `followed_recommended`. Follow companies with the star in the Companies screen; the count only includes offers still waiting for a decision, so it drops when you read or dismiss them.
+- **Total waiting in the inbox:** `to_review`, the same number as the Inbox badge in the sidebar (unread without the "Set aside" ones, plus updated).
+- **Recommended offers of followed companies:** `followed_recommended`. Follow companies with the star in the Companies screen; the count only includes offers still waiting for review, so it drops when you read or dismiss them.
 - **"Is Jobs Radar up?":** the `siteMonitor` line puts a green or red dot on the card. It turns red if the API, the database or the worker is down. To see it as text too, add `- field: status` / `label: Status` / `format: text` to `mappings`.
 
 Homepage's `customapi` allows up to four mappings per widget; the three above leave room for `best_fit`. Reload the page after editing `services.yaml` (Homepage picks the change up on its own). If a value shows `-` or an error, open the `url` in a browser from the Homepage host to see the response.

@@ -31,7 +31,6 @@ async def widget_summary(
         to_review_high_fit=summary.to_review_high_fit,
         fit_threshold=fit_min,
         best_fit=summary.best_fit,
-        unread_total=summary.unread_total,
         followed_recommended=summary.followed_recommended,
         status="ready" if report.ready else "unavailable",
         components={"database": report.database.value, "worker": report.worker.value},

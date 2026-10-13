@@ -6786,10 +6786,6 @@
           "to_review_high_fit": {
             "title": "To Review High Fit",
             "type": "integer"
-          },
-          "unread_total": {
-            "title": "Unread Total",
-            "type": "integer"
           }
         },
         "required": [
@@ -6797,7 +6793,6 @@
           "to_review_high_fit",
           "fit_threshold",
           "best_fit",
-          "unread_total",
           "followed_recommended",
           "status",
           "components"

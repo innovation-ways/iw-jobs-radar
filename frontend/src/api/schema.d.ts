@@ -4094,8 +4094,6 @@ export interface components {
             to_review: number;
             /** To Review High Fit */
             to_review_high_fit: number;
-            /** Unread Total */
-            unread_total: number;
         };
         /**
          * WorkRules

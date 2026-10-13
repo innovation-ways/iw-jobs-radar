@@ -54,7 +54,7 @@ async def test_it_reports_the_readiness_without_failing_when_a_part_is_down(
     assert body["status"] in {"ready", "unavailable"}
 
 
-async def test_it_counts_all_unread_and_recommended_jobs_of_followed_companies(
+async def test_updated_jobs_count_and_followed_companies_are_counted(
     client: httpx.AsyncClient, session_factory: async_sessionmaker[AsyncSession]
 ) -> None:
     async with session_factory() as session:
@@ -70,13 +70,12 @@ async def test_it_counts_all_unread_and_recommended_jobs_of_followed_companies(
         blocked = await s.entry(fit=90, recommendation=Recommendation.NOT_RECOMMENDED)
         read = await s.entry(fit=80, state=InboxState.READ)  # followed but already read
         unscored = await s.entry()  # followed, no verdict yet
-        for entry in (followed, low, blocked, read, unscored):
+        updated = await s.entry(fit=80, state=InboxState.UPDATED_UNREAD)  # counts as to review
+        for entry in (followed, low, blocked, read, unscored, updated):
             session.add(
                 CompanyFollow(owner_id=LOCAL_OWNER_ID, company_id=entry.opportunity.company_id)
             )
         await session.commit()
     after = (await client.get(URL, params=pin)).json()
-    assert after["followed_recommended"] - before["followed_recommended"] == 2
-    # Unread in total includes the set-aside job, which "to review" leaves out.
-    assert after["unread_total"] - before["unread_total"] == 5
-    assert after["to_review"] - before["to_review"] == 4
+    assert after["followed_recommended"] - before["followed_recommended"] == 3
+    assert after["to_review"] - before["to_review"] == 5

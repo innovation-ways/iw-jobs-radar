@@ -102,7 +102,6 @@ class WidgetSummary:
     to_review: int
     to_review_high_fit: int
     best_fit: int | None
-    unread_total: int
     followed_recommended: int
 
 
@@ -385,32 +384,40 @@ class InboxService:
     async def widget_summary(
         self, owner_id: int, fit_min: int, search_intent_id: int | None = None
     ) -> WidgetSummary:
-        """Count the "To review" jobs (unread, not set aside) and those at ``fit_min`` or above."""
+        """Count the offers waiting for review, as the sidebar badge does, and those at fit_min+.
+
+        Waiting for review = unread (set-aside offers left out) plus updated-unread.
+        """
         intent_id = await self._intent(owner_id, search_intent_id)
         floor = await self._schedule.set_aside_below_fit(owner_id)
 
-        def query(minimum: int | None) -> ListQuery:
-            # set_aside=False is the "To review" tab: set-aside jobs are not waiting for a decision.
+        def query(state: str, minimum: int | None = None) -> ListQuery:
+            # Like the sidebar badge: set-aside jobs leave "unread" (ADR-058/060), while every
+            # updated-unread job still waits for the owner.
             return self._query(
                 owner_id,
                 intent_id,
-                InboxFilters(state="unread", set_aside=False, fit_min=minimum),
+                InboxFilters(
+                    state=state, set_aside=False if state == "unread" else None, fit_min=minimum
+                ),
                 floor,
             )
 
-        to_review = await self._queries.count(query(None))
-        high = await self._queries.count(query(fit_min))
-        best = await self._queries.page(query(None), limit=1, after=None)  # fit_desc is the default
-        best_fit = best[0].evaluation.fit_score if best and best[0].evaluation else None
-        # Every unread offer, including the ones set aside (the "To review" tab leaves those out).
-        unread_total = await self._queries.count(
-            self._query(owner_id, intent_id, InboxFilters(state="unread"), floor)
+        states = ("unread", "updated_unread")
+        to_review = sum([await self._queries.count(query(st)) for st in states])
+        high = sum([await self._queries.count(query(st, fit_min)) for st in states])
+        followed = sum(
+            [
+                await self._queries.count(
+                    replace(query(st), followed_only=True, recommended_only=True)
+                )
+                for st in states
+            ]
         )
-        # Recommended offers of followed companies that still wait for a decision.
-        followed = await self._queries.count(
-            replace(query(None), followed_only=True, recommended_only=True)
-        )
-        return WidgetSummary(to_review, high, best_fit, unread_total, followed)
+        # The best fit among all of them: the top row of each state, then the larger one.
+        tops = [await self._queries.page(query(st), limit=1, after=None) for st in states]
+        fits = [r[0].evaluation.fit_score for r in tops if r and r[0].evaluation]
+        return WidgetSummary(to_review, high, max(fits, default=None), followed)
 
     async def list_items(
         self,

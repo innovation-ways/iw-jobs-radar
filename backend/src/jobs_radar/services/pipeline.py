@@ -11,7 +11,10 @@ from typing import Literal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jobs_radar.domain.enums import EXTRACTION_PROMPT_VERSION
+from jobs_radar.domain.enums import (
+    EXTRACTION_ACCEPTED_PROMPT_VERSIONS,
+    EXTRACTION_PROMPT_VERSION,
+)
 from jobs_radar.domain.matching.engine import POLICY_VERSION
 from jobs_radar.repositories.evaluations import EvaluationRepository
 from jobs_radar.repositories.heartbeat import HeartbeatRepository
@@ -92,16 +95,17 @@ class PipelineService:
         provider = connection.provider_type if connection else None
         model = connection.model_id if connection else None
 
+        # The worker keeps accepted earlier prompt versions (ADR-067), so they count as done here:
+        # counting only the current version left those jobs "waiting" for ever.
+        prompts = (EXTRACTION_PROMPT_VERSION, *EXTRACTION_ACCEPTED_PROMPT_VERSIONS)
         open_jobs, analysed, failed = await self._pipeline.analysis_counts(
-            provider=provider, model=model, prompt_version=EXTRACTION_PROMPT_VERSION
+            provider=provider, model=model, prompt_versions=prompts
         )
         intent_id = intent_id or await self._inbox.default_intent_id(owner_id)
         eligible = scored = 0
         if intent_id is not None:
             filter_ = (
-                (provider, model, EXTRACTION_PROMPT_VERSION)
-                if provider is not None and model is not None
-                else None
+                (provider, model, prompts) if provider is not None and model is not None else None
             )
             eligible, scored = await self._evaluations.queue_counts(
                 intent_id, POLICY_VERSION, filter_

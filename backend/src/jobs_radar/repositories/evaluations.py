@@ -1,6 +1,6 @@
 """Data access for evaluations and the work queue of jobs still to be scored (LLD section 2)."""
 
-from collections.abc import Sequence
+from collections.abc import Collection, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -164,7 +164,7 @@ class EvaluationRepository:
         *,
         policy_version: str,
         intent_id: int | None,
-        extraction_filter: tuple[str, str, str] | None,
+        extraction_filter: tuple[str, str, Collection[str]] | None,
     ) -> Any:
         """Latest snapshot of each open posting with its latest successful extraction."""
         newer_snapshot = aliased(JobSnapshot)
@@ -175,16 +175,16 @@ class EvaluationRepository:
             newer_extraction.status == "succeeded",
         ]
         if extraction_filter is not None:
-            provider, model, prompt = extraction_filter
+            provider, model, prompts = extraction_filter
             extraction_conditions += [
                 JobExtraction.provider == provider,
                 JobExtraction.model == model,
-                JobExtraction.prompt_version == prompt,
+                JobExtraction.prompt_version.in_(prompts),
             ]
             newer_conditions += [
                 newer_extraction.provider == provider,
                 newer_extraction.model == model,
-                newer_extraction.prompt_version == prompt,
+                newer_extraction.prompt_version.in_(prompts),
             ]
         statement = (
             select(
@@ -262,7 +262,7 @@ class EvaluationRepository:
         policy_version: str,
         intent_id: int | None,
         limit: int,
-        extraction_filter: tuple[str, str, str] | None = None,
+        extraction_filter: tuple[str, str, Collection[str]] | None = None,
     ) -> list[PendingEvaluation]:
         """Return the jobs to score.
 
@@ -296,7 +296,7 @@ class EvaluationRepository:
         self,
         intent_id: int,
         policy_version: str,
-        extraction_filter: tuple[str, str, str] | None,
+        extraction_filter: tuple[str, str, Collection[str]] | None,
     ) -> tuple[int, int]:
         """Return ``(analysed jobs, of which scored)`` for the intent, as the worker sees them."""
         statement = self._candidates(

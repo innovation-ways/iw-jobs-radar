@@ -7,7 +7,7 @@ pairs that have never been judged, and re-scoring after a weight change needs no
 """
 
 import hashlib
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Collection
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
@@ -31,7 +31,11 @@ from jobs_radar.db.models import (
     SearchIntent,
 )
 from jobs_radar.domain.directions import direction_hash
-from jobs_radar.domain.enums import DIRECTION_PROMPT_VERSION, EXTRACTION_PROMPT_VERSION
+from jobs_radar.domain.enums import (
+    DIRECTION_PROMPT_VERSION,
+    EXTRACTION_ACCEPTED_PROMPT_VERSIONS,
+    EXTRACTION_PROMPT_VERSION,
+)
 from jobs_radar.domain.matching.engine import POLICY_VERSION, evaluate
 from jobs_radar.domain.matching.types import DirectionJudgement as DirectionResult
 from jobs_radar.domain.matching.types import Evaluation
@@ -361,7 +365,7 @@ class EvaluationService:
         *,
         intent_id: int | None = None,
         limit: int = 200,
-        extraction_filter: tuple[str, str, str] | None = None,
+        extraction_filter: tuple[str, str, Collection[str]] | None = None,
     ) -> int:
         """Score jobs that were never scored for an enabled intent; return how many were scored.
 
@@ -458,7 +462,7 @@ class EvaluationRunner:
                     extraction_filter=(
                         self._provider.provider,
                         self._provider.model,
-                        EXTRACTION_PROMPT_VERSION,
+                        (EXTRACTION_PROMPT_VERSION, *EXTRACTION_ACCEPTED_PROMPT_VERSIONS),
                     ),
                 )
                 await session.commit()

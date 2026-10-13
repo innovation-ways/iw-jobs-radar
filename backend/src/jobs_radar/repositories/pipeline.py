@@ -1,5 +1,6 @@
 """Read-only counts behind the pipeline status: open jobs, analysed, scored, failed, recent work."""
 
+from collections.abc import Collection
 from datetime import datetime
 from typing import Any
 
@@ -34,11 +35,12 @@ class PipelineRepository:
         return statement
 
     async def analysis_counts(
-        self, *, provider: str | None, model: str | None, prompt_version: str
+        self, *, provider: str | None, model: str | None, prompt_versions: Collection[str]
     ) -> tuple[int, int, int]:
         """Return ``(open jobs, analysed, failed)`` for the latest snapshots of open postings.
 
-        With a provider and model only extractions by them count (a new model re-queues the same
+        With a provider and model only extractions by them, with one of ``prompt_versions`` (the
+        current prompt and the accepted earlier ones), count (a new model re-queues the same
         job); without them (No AI) any successful extraction counts.
         """
         statement = self._latest_open_snapshots()
@@ -55,7 +57,7 @@ class PipelineRepository:
                 conditions += [
                     JobExtraction.provider == provider,
                     JobExtraction.model == model,
-                    JobExtraction.prompt_version == prompt_version,
+                    JobExtraction.prompt_version.in_(prompt_versions),
                 ]
             # One job counts once even if it was extracted by several attempts or taxonomies.
             return int(

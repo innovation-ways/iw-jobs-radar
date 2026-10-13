@@ -219,6 +219,7 @@ class CompanyListQueries:
         sort: Sort,
         followed_only: bool,
         hide_ignored: bool,
+        ignored_only: bool,
         open_only: bool,
         recommended_only: bool,
         pending_only: bool,
@@ -244,6 +245,8 @@ class CompanyListQueries:
             filtered = filtered.where(stats.c.is_followed)
         if hide_ignored:
             filtered = filtered.where(~stats.c.is_ignored)
+        if ignored_only:
+            filtered = filtered.where(stats.c.is_ignored)
         if open_only:
             filtered = filtered.where(or_(stats.c.open_offers > 0, stats.c.is_followed))
         if recommended_only:

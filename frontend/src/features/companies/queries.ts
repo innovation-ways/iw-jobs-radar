@@ -15,6 +15,7 @@ interface ListParams {
   q: string
   sort: CompanySort
   hideIgnored: boolean
+  ignoredOnly?: boolean
   openOnly: boolean
   recommendedOnly: boolean
   pendingOnly: boolean
@@ -26,13 +27,24 @@ export function useCompanies({
   q,
   sort,
   hideIgnored,
+  ignoredOnly = false,
   openOnly,
   recommendedOnly,
   pendingOnly,
   limit,
 }: ListParams) {
   return useQuery({
-    queryKey: ['companies', q, sort, hideIgnored, openOnly, recommendedOnly, pendingOnly, limit],
+    queryKey: [
+      'companies',
+      q,
+      sort,
+      hideIgnored,
+      ignoredOnly,
+      openOnly,
+      recommendedOnly,
+      pendingOnly,
+      limit,
+    ],
     placeholderData: keepPreviousData,
     queryFn: () =>
       unwrap(
@@ -43,6 +55,7 @@ export function useCompanies({
               ...(q ? { q } : {}),
               sort,
               ...(hideIgnored ? { hide_ignored: true } : {}),
+              ...(ignoredOnly ? { ignored_only: true } : {}),
               ...(openOnly ? { open_only: true } : {}),
               ...(recommendedOnly ? { recommended_only: true } : {}),
               ...(pendingOnly ? { pending_only: true } : {}),

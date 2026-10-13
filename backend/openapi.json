@@ -7041,6 +7041,16 @@
           },
           {
             "in": "query",
+            "name": "ignored_only",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Ignored Only",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
             "name": "open_only",
             "required": false,
             "schema": {

@@ -179,6 +179,15 @@ async def test_hide_ignored_companies_keeps_the_rest(db_session: AsyncSession) -
     assert names(await world.list(hide_ignored=True)) == ["Kept"]
 
 
+async def test_ignored_only_lists_just_the_ignored_companies(db_session: AsyncSession) -> None:
+    world = await (World(db_session)).setup()
+    await world.company("Kept", [(1, 50, R)])
+    muted = await world.company("Muted", [(1, 50, R)])
+    db_session.add(CompanyIgnore(owner_id=LOCAL_OWNER_ID, company_id=muted))
+    await db_session.flush()
+    assert names(await world.list(ignored_only=True)) == ["Muted"]
+
+
 async def test_open_filter_hides_companies_without_counted_offers_except_followed(
     db_session: AsyncSession,
 ) -> None:

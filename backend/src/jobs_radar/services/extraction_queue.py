@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.adapters.providers.base import ExtractionProvider
 from jobs_radar.db.models import JobExtraction, JobSnapshot
-from jobs_radar.domain.enums import EXTRACTION_PROMPT_VERSION
+from jobs_radar.domain.enums import EXTRACTION_ACCEPTED_PROMPT_VERSIONS, EXTRACTION_PROMPT_VERSION
 from jobs_radar.repositories.extractions import ExtractionRepository
 from jobs_radar.repositories.taxonomy import TaxonomyRepository
 from jobs_radar.services.extraction import (
@@ -99,7 +99,11 @@ class ExtractionQueue:
         self._max_attempts = max_attempts
 
     async def enqueue_missing(self, limit: int = 500) -> int:
-        """Queue the latest snapshots of open postings that have no extraction yet."""
+        """Queue the latest snapshots of open postings that have no extraction yet.
+
+        A snapshot with a successful extraction of an accepted earlier prompt version is left
+        alone (ADR-067).
+        """
         async with self._session_factory() as session:
             repository = ExtractionRepository(session)
             queued = await repository.enqueue_missing(
@@ -108,6 +112,7 @@ class ExtractionQueue:
                 prompt_version=EXTRACTION_PROMPT_VERSION,
                 taxonomy_version_id=await repository.current_taxonomy_version_id(),
                 limit=limit,
+                accepted_prompt_versions=EXTRACTION_ACCEPTED_PROMPT_VERSIONS,
             )
             await session.commit()
             return queued

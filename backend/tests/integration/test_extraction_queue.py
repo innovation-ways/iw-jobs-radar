@@ -89,6 +89,43 @@ async def test_the_latest_snapshot_of_each_open_posting_is_queued_once(
     assert posting.closed_at is None
 
 
+async def test_a_snapshot_with_an_accepted_earlier_extraction_is_not_queued_again(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A prompt upgrade does not re-extract jobs already extracted by an accepted version."""
+    provider = FakeProvider()
+    q = queue(db_session, monkeypatch, provider)
+    _, accepted = await job(db_session)
+    _, failed_before = await job(db_session)
+    _, other_model = await job(db_session)
+    taxonomy_id = await q_taxonomy_id(db_session)
+    for snapshot, status, model in (
+        (accepted, "succeeded", provider.model),
+        (failed_before, "failed", provider.model),
+        (other_model, "succeeded", "another-model"),
+    ):
+        db_session.add(
+            JobExtraction(
+                job_snapshot_id=snapshot.job_snapshot_id,
+                status=status,
+                provider=provider.provider,
+                model=model,
+                prompt_version="extract-v2",
+                taxonomy_version_id=taxonomy_id,
+                attributes_json={} if status == "succeeded" else None,
+                attempts=1,
+            )
+        )
+    await db_session.flush()
+    assert await q.enqueue_missing() == 2  # only the accepted one is left alone
+
+
+async def q_taxonomy_id(session: AsyncSession) -> int:
+    from jobs_radar.repositories.extractions import ExtractionRepository
+
+    return await ExtractionRepository(session).current_taxonomy_version_id()
+
+
 async def test_closed_postings_are_not_queued(
     db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:

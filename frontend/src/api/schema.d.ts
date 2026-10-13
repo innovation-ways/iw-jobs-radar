@@ -4190,6 +4190,7 @@ export interface operations {
                 relevance_min_score?: number;
                 followed_only?: boolean;
                 hide_ignored?: boolean;
+                ignored_only?: boolean;
                 open_only?: boolean;
                 recommended_only?: boolean;
                 pending_only?: boolean;

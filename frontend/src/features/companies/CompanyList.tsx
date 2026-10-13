@@ -123,14 +123,16 @@ function Group({
   selectedId,
   onSelect,
   onToggleFollow,
+  defaultOpen = false,
 }: {
   title: string
+  defaultOpen?: boolean
   companies: CompanySummary[]
   selectedId: number | null
   onSelect: (id: number) => void
   onToggleFollow: (company: CompanySummary) => void
 }) {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(defaultOpen)
   return (
     <section>
       <button
@@ -163,17 +165,19 @@ function Group({
 }
 
 /**
- * The companies in two collapsible groups, followed ones on top. Each row shows the counted
- * offers (open, recommended), the best fit and whether the company still needs identifying.
- * With no followed company only the "All companies" group is shown.
+ * The companies in up to three collapsible groups: followed ones on top, then all the others,
+ * then the ignored ones. Every group starts folded; the owner opens the one they want. Each row shows the counted offers (open, recommended), the best fit and whether the
+ * company still needs identifying. Empty groups are not shown.
  */
 export function CompanyList({
   companies,
+  ignored = [],
   selectedId,
   onSelect,
   onToggleFollow,
 }: {
   companies: CompanySummary[]
+  ignored?: CompanySummary[]
   selectedId: number | null
   onSelect: (id: number) => void
   onToggleFollow: (company: CompanySummary) => void
@@ -185,6 +189,7 @@ export function CompanyList({
     <div>
       {followed.length > 0 && <Group title="Followed" companies={followed} {...shared} />}
       {others.length > 0 && <Group title="All companies" companies={others} {...shared} />}
+      {ignored.length > 0 && <Group title="Ignored" companies={ignored} {...shared} />}
     </div>
   )
 }

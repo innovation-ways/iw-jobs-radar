@@ -146,7 +146,26 @@ function dossier(overrides: Record<string, unknown> = {}) {
 }
 
 let list: unknown[]
+let ignoredList: unknown[]
 let detail: Record<string, unknown>
+
+/** The calls of the main list (the ignored group has its own query). */
+function mainCalls() {
+  return get.mock.calls.filter(
+    ([p, o]) => p === '/api/v1/companies' && !o?.params.query.ignored_only,
+  )
+}
+
+/** Every group starts folded; opens all of them, as the owner would. */
+async function openGroups() {
+  const user = userEvent.setup()
+  await screen.findAllByRole('button', { name: /^(Followed|All companies|Ignored)/ })
+  for (const header of screen.getAllByRole('button', {
+    name: /^(Followed|All companies|Ignored)/,
+  })) {
+    if (header.getAttribute('aria-expanded') === 'false') await user.click(header)
+  }
+}
 
 function renderPage(path = '/companies') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -169,26 +188,32 @@ describe('Companies screen', () => {
       company(1, 'Northwind Labs', { is_followed: true }),
       company(2, 'Contoso', { open_offers: 0, recommended_offers: 0, best_fit_score: null }),
     ]
+    ignoredList = []
     detail = dossier()
-    get.mockImplementation((path: string) => {
-      if (path === '/api/v1/companies')
-        return Promise.resolve({
-          data: {
-            items: list,
-            total: list.length,
-            sort: 'fit',
-            search_intent_id: 1,
-            relevance_min_score: 45,
-            recency_days: 30,
-          },
-        })
-      if (path === '/api/v1/companies/{company_id}') return Promise.resolve({ data: detail })
-      return Promise.reject(new Error(`unexpected GET ${path}`))
-    })
+    get.mockImplementation(
+      (path: string, options?: { params: { query: Record<string, unknown> } }) => {
+        if (path === '/api/v1/companies') {
+          const items = options?.params.query.ignored_only ? ignoredList : list
+          return Promise.resolve({
+            data: {
+              items,
+              total: items.length,
+              sort: 'fit',
+              search_intent_id: 1,
+              relevance_min_score: 45,
+              recency_days: 30,
+            },
+          })
+        }
+        if (path === '/api/v1/companies/{company_id}') return Promise.resolve({ data: detail })
+        return Promise.reject(new Error(`unexpected GET ${path}`))
+      },
+    )
   })
 
   it('lists followed companies first with their counted offers and best fit', async () => {
     renderPage()
+    await openGroups()
     const northwind = await screen.findByRole('option', { name: /Northwind Labs/ })
     expect(within(northwind).getByText(/5 open/)).toBeInTheDocument()
     expect(within(northwind).getByText(/2 recommended/)).toBeInTheDocument()
@@ -210,27 +235,32 @@ describe('Companies screen', () => {
   it('folds and unfolds the Followed and All companies groups', async () => {
     const user = userEvent.setup()
     renderPage()
-    await screen.findByRole('option', { name: /Northwind Labs/ })
-    const followedHeader = screen.getByRole('button', { name: /^Followed/ })
-    expect(followedHeader).toHaveAttribute('aria-expanded', 'true')
-    await user.click(followedHeader)
+    const followedHeader = await screen.findByRole('button', { name: /^Followed/ })
+    // Every group starts folded and compressed.
     expect(followedHeader).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByRole('option', { name: /Northwind Labs/ })).not.toBeInTheDocument()
-    // The other group is untouched.
-    expect(screen.getByRole('option', { name: /Contoso/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^All companies/ })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    )
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
     await user.click(followedHeader)
+    expect(followedHeader).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByRole('option', { name: /Northwind Labs/ })).toBeInTheDocument()
+    // The other group is untouched.
+    expect(screen.queryByRole('option', { name: /Contoso/ })).not.toBeInTheDocument()
+    await user.click(followedHeader)
+    expect(screen.queryByRole('option', { name: /Northwind Labs/ })).not.toBeInTheDocument()
   })
 
   it('narrows the list with the filters and the search box', async () => {
     const user = userEvent.setup()
     renderPage()
-    await screen.findByRole('option', { name: /Northwind Labs/ })
+    await screen.findByRole('button', { name: /^Followed/ })
     await user.click(screen.getByRole('button', { name: 'With open offers' })) // turn off
     await user.click(screen.getByRole('button', { name: 'Recommended' }))
     await user.click(screen.getByRole('button', { name: 'Needs identification' }))
     await user.type(screen.getByRole('searchbox', { name: 'Search companies' }), 'north')
-    const last = get.mock.calls.filter(([p]) => p === '/api/v1/companies').at(-1)![1]
+    const last = mainCalls().at(-1)![1]
     expect(last.params.query).toEqual({
       limit: 50,
       q: 'north',
@@ -241,24 +271,30 @@ describe('Companies screen', () => {
     })
   })
 
-  it('hides ignored companies by default and shows them on request', async () => {
+  it('keeps ignored companies out of the main list and in a folded third group', async () => {
     const user = userEvent.setup()
+    ignoredList = [company(5, 'Muted Corp', { is_ignored: true, open_offers: 0 })]
     renderPage()
-    await screen.findByRole('option', { name: /Northwind Labs/ })
-    const queryOf = () =>
-      get.mock.calls.filter(([p]) => p === '/api/v1/companies').at(-1)![1].params.query
-    expect(queryOf()).toMatchObject({ hide_ignored: true })
-    await user.click(screen.getByRole('button', { name: 'Show ignored' }))
-    await screen.findByRole('button', { name: 'Hide ignored' })
-    expect(queryOf()).not.toHaveProperty('hide_ignored')
+    await screen.findByRole('button', { name: /^Followed/ })
+    expect(mainCalls().at(-1)![1].params.query).toMatchObject({ hide_ignored: true })
+    const header = await screen.findByRole('button', { name: /^Ignored/ })
+    expect(header).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('option', { name: /Muted Corp/ })).not.toBeInTheDocument()
+    await user.click(header)
+    expect(screen.getByRole('option', { name: /Muted Corp/ })).toBeInTheDocument()
+    // It is the last group, and its query ignores the open-offers filter.
+    const groups = screen.getAllByRole('button', { name: /^(Followed|All companies|Ignored)/ })
+    expect(groups.at(-1)).toBe(header)
+    const call = get.mock.calls.find(([, o]) => o?.params.query.ignored_only)!
+    expect(call[1].params.query).toMatchObject({ ignored_only: true })
+    expect(call[1].params.query).not.toHaveProperty('open_only')
   })
 
   it('sorts the list by newest offers (default), most recommended, best fit or name', async () => {
     const user = userEvent.setup()
     renderPage()
-    await screen.findByRole('option', { name: /Northwind Labs/ })
-    const queryOf = () =>
-      get.mock.calls.filter(([p]) => p === '/api/v1/companies').at(-1)![1].params.query
+    await screen.findByRole('button', { name: /^Followed/ })
+    const queryOf = () => mainCalls().at(-1)![1].params.query
     const box = screen.getByRole('combobox', { name: 'Sort companies by' })
     expect(box).toHaveValue('newest')
     expect(queryOf()).toMatchObject({ sort: 'newest' })
@@ -273,6 +309,7 @@ describe('Companies screen', () => {
     put.mockResolvedValue({ data: { company_id: 2, is_followed: true } })
     del.mockResolvedValue({ data: { company_id: 1, is_followed: false } })
     renderPage()
+    await openGroups()
     await user.click(await screen.findByRole('button', { name: 'Follow Contoso' }))
     expect(put).toHaveBeenCalledWith('/api/v1/companies/{company_id}/follow', {
       params: { path: { company_id: 2 } },
@@ -287,6 +324,7 @@ describe('Companies screen', () => {
   it('shows the pending identification on a row', async () => {
     list = [company(3, 'Harbor Data', { pending_candidates: 3 })]
     renderPage()
+    await openGroups()
     const row = await screen.findByRole('option', { name: /Harbor Data/ })
     expect(within(row).getByText('Identify')).toBeInTheDocument()
   })
@@ -294,6 +332,7 @@ describe('Companies screen', () => {
   it('shows the dossier of the selected company with sourced facts and labels', async () => {
     const user = userEvent.setup()
     renderPage()
+    await openGroups()
     await user.click(await screen.findByRole('option', { name: /Northwind Labs/ }))
     const panel = await screen.findByRole('region', { name: 'Northwind Labs' })
     expect(within(panel).getByRole('link', { name: /northwind\.example/ })).toHaveAttribute(
@@ -492,6 +531,7 @@ describe('Companies screen', () => {
   it('marks an ignored company in the list with text', async () => {
     list = [company(1, 'Northwind Labs', { is_ignored: true }), company(2, 'Contoso')]
     renderPage('/companies')
+    await openGroups()
     const row = (await screen.findByText('Northwind Labs')).closest('[role="option"]')!
     expect(within(row as HTMLElement).getByText('Ignored')).toBeInTheDocument()
   })

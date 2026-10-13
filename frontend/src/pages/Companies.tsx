@@ -16,8 +16,9 @@ const FILTERS: { key: FilterKey; label: string }[] = [
 
 /**
  * Companies: the companies seen in job postings, followed ones first, then by the newest offers
- * (or the owner's chosen order; ADR-053). Ignored companies are hidden unless asked for (ADR-061). Filters narrow the list; "With open offers" is on by default and
- * never hides a followed company. Selection is kept in the address (`?company=`) so other screens
+ * (or the owner's chosen order; ADR-053). Ignored companies leave
+ * the main list and wait in a third group at the end (ADR-061). Filters narrow the list; "With
+ * open offers" is on by default and never hides a followed company. Selection is kept in the address (`?company=`) so other screens
  * can link to a company.
  */
 export function Companies() {
@@ -29,18 +30,30 @@ export function Companies() {
     pending: false,
   })
   const [sort, setSort] = useState<CompanySort>('newest')
-  const [showIgnored, setShowIgnored] = useState(false)
   const [limit, setLimit] = useState(PAGE)
   const follow = useFollow()
   const { data, isPending, isError, refetch } = useCompanies({
     q,
     sort,
-    hideIgnored: !showIgnored,
+    hideIgnored: true,
     openOnly: filters.open,
     recommendedOnly: filters.recommended,
     pendingOnly: filters.pending,
     limit,
   })
+  // The ignored companies are a separate query: the filters that narrow the main list (open
+  // offers, recommended) say nothing about a company the owner has set aside.
+  const ignoredList = useCompanies({
+    q,
+    sort,
+    hideIgnored: false,
+    ignoredOnly: true,
+    openOnly: false,
+    recommendedOnly: false,
+    pendingOnly: false,
+    limit: 200,
+  })
+  const ignoredItems = ignoredList.data?.items ?? []
   const selected = Number(params.get('company')) || null
   const filtered = q !== '' || filters.recommended || filters.pending
 
@@ -93,16 +106,6 @@ export function Companies() {
                 <option value="name">Name</option>
               </select>
             </label>
-            <button
-              type="button"
-              onClick={() => {
-                setShowIgnored(!showIgnored)
-                setLimit(PAGE)
-              }}
-              className="ml-auto rounded-full border border-line-strong px-2.5 py-0.5 text-xs text-ink-2"
-            >
-              {showIgnored ? 'Hide ignored' : 'Show ignored'}
-            </button>
           </div>
           {data && (
             <p className="text-xs text-ink-3">
@@ -129,7 +132,7 @@ export function Companies() {
               Could not change the follow state. Try again.
             </p>
           )}
-          {data && data.items.length === 0 && (
+          {data && data.items.length === 0 && ignoredItems.length === 0 && (
             <p className="p-4 text-sm text-ink-2">
               {filtered
                 ? 'No company matches.'
@@ -138,9 +141,10 @@ export function Companies() {
                   : 'No companies yet. Companies appear when you add a job board in Sources.'}
             </p>
           )}
-          {data && data.items.length > 0 && (
+          {data && (data.items.length > 0 || ignoredItems.length > 0) && (
             <CompanyList
               companies={data.items}
+              ignored={ignoredItems}
               selectedId={selected}
               onSelect={(id) => setParams({ company: String(id) })}
               onToggleFollow={(c) =>

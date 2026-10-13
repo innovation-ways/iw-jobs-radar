@@ -8,7 +8,7 @@ from collections.abc import Collection
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import func, literal, select
+from sqlalchemy import and_, func, literal, or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -37,11 +37,14 @@ class ExtractionRepository:
         prompt_version: str,
         taxonomy_version_id: int,
         limit: int,
+        accepted_prompt_versions: Collection[str] = (),
     ) -> int:
         """Queue the latest snapshot of every open posting that has no extraction yet.
 
         "Yet" means for this provider, model, prompt version and taxonomy version, so a new model
-        or prompt re-queues the same snapshot. Newest postings are queued first.
+        or prompt re-queues the same snapshot, except when the snapshot already has a successful
+        extraction of one of ``accepted_prompt_versions`` (same provider, model and taxonomy).
+        Newest postings are queued first.
         """
         newer = aliased(JobSnapshot)
         latest = (
@@ -55,8 +58,14 @@ class ExtractionRepository:
                 JobExtraction.job_snapshot_id == JobSnapshot.job_snapshot_id,
                 JobExtraction.provider == provider,
                 JobExtraction.model == model,
-                JobExtraction.prompt_version == prompt_version,
                 JobExtraction.taxonomy_version_id == taxonomy_version_id,
+                or_(
+                    JobExtraction.prompt_version == prompt_version,
+                    and_(
+                        JobExtraction.prompt_version.in_(accepted_prompt_versions),
+                        JobExtraction.status == "succeeded",
+                    ),
+                ),
             )
             .exists()
         )

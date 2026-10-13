@@ -5,7 +5,7 @@ Everything is managed by `./jobs-radar.sh` (menu) or its flags; `make help` list
 
 ## First start
 
-1. Install Docker, `uv` and Node 22 with pnpm through corepack (see `CLAUDE.md`).
+1. Install Docker, `uv` and Node 22 with pnpm through corepack (see `CONTRIBUTING.md`).
 2. `./jobs-radar.sh --init-env` creates `.env` with a random database password and credential key.
    Back up `JOBS_RADAR_CREDENTIAL_KEY` somewhere other than the database backups.
 3. `./jobs-radar.sh --quick-start` starts the database, API and worker, waits until they are

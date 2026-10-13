@@ -1,23 +1,68 @@
-# iw-jobs-radar
+# Jobs Radar
 
-Jobs Radar — a local-first, single-user job-market radar. It collects jobs from permitted public sources,
-extracts what matters with an AI model (local by default), scores each job against your profile and
-search intent with an explainable deterministic rule set, and keeps a personal inbox and market trends.
+[![CI](https://github.com/innovation-ways/iw-jobs-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/innovation-ways/iw-jobs-radar/actions/workflows/ci.yml)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+
+A **local-first, single-user job-market radar**. It collects jobs from permitted public sources,
+extracts what matters with an AI model (local by default), scores each job against your career
+profile and search intent with an explainable deterministic rule set, and keeps a personal inbox,
+company dossiers and market trends. Your data stays on your machine.
+
+> **Status: beta.** Version 1 works end to end but has had a single user. Expect rough edges and read
+> `docs/operations/known-limitations.md`.
+
+## What it does
+
+- **Sources**: company boards (Greenhouse, Lever, Ashby, SmartRecruiters, Eightfold) and job boards
+  (Arbeitnow, Jobicy, Himalayas, ITJobs.pt), managed from the web UI with per-source status.
+- **Career profile and search intent**: explicit, versioned and yours. A CV import only creates
+  proposals you review item by item; the uploaded CV is never stored.
+- **Explainable scoring**: the AI reads each job and judges it per dimension with quoted evidence;
+  the final score is a deterministic function of those judgements (hard gates, then weights that
+  sum to 100). No model is involved in the last step.
+- **Inbox**: one item per real opportunity (duplicates across sources are linked), keyboard-first
+  triage, a daily digest, company dossiers and weekly market trends.
+- **Privacy**: "No AI" is the default. Job analysis is local only (Ollama); remote AI is limited to
+  CV import, after per-document consent and with contact details redacted.
 
 ## Quick start
 
+Prerequisites: Docker, [`uv`](https://docs.astral.sh/uv/), Node 22 with pnpm through corepack, and
+optionally [Ollama](https://ollama.com) for local AI.
+
 ```bash
-./jobs-radar.sh                   # interactive menu (start, stop, health, logs, tests, addresses)
-./jobs-radar.sh --quick-start     # or in one go; needs Docker, uv, Node 22 + pnpm (corepack)
-./jobs-radar.sh --urls            # where to open the app
-make help                         # every command: tests, quality gates, ...
+./jobs-radar.sh --init-env        # creates .env with a random database password and credential key
+./jobs-radar.sh --quick-start     # database, API and worker (Docker) plus the frontend (Vite)
+./jobs-radar.sh --urls            # where to open the app (default http://localhost:5180)
+make help                         # every command: tests, quality gates, backups, ...
 ```
 
-Operations (configuration, backup and restore runbook, sources and providers, known limitations):
-`docs/operations/`.
+AI extraction is off until you turn it on in `.env` (`JOBS_RADAR_EXTRACTION_ENABLED`,
+`JOBS_RADAR_ALLOW_LOCAL_PROVIDERS`) and choose a local model in the *AI & privacy* screen. Without
+it, jobs are still collected and shown as "not evaluated".
 
-Design and decisions live in `ai-dev/docs/` (start with `00 - Implementation Pack Index.md`);
-the build plan is `ai-dev/docs/14 - Implementation Guide.md`. Working rules and commands for
-contributors and AI agents are in `CLAUDE.md`.
+## Security
 
-The application has no authentication in V1: keep it on loopback or a trusted LAN.
+Version 1 has **no authentication**. The API and database listen on loopback by default; keep them
+there or on a trusted LAN, never on the public internet. See [SECURITY.md](SECURITY.md) to report a
+vulnerability.
+
+## Documentation
+
+- Operations (configuration, backup and restore, sources and providers, known limitations):
+  [`docs/operations/`](docs/operations/)
+- Data-source terms and obligations: [`docs/legal/data-sources.md`](docs/legal/data-sources.md)
+- Database data dictionary: [`docs/database/schema.md`](docs/database/schema.md)
+- UI mock-ups: [`docs/design/`](docs/design/)
+
+## Contributing
+
+Contributions are welcome: read [CONTRIBUTING.md](CONTRIBUTING.md) (tests first, DCO sign-off) and
+the [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Licence and credits
+
+Apache-2.0, see [LICENSE](LICENSE) and [NOTICE](NOTICE). Third-party licences are in
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md). Place lookup uses
+[GeoNames](https://www.geonames.org) data (CC BY 4.0). Job data belongs to its sources; each board is
+credited in the app.

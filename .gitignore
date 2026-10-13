@@ -57,16 +57,15 @@ db-start-guard-*/
 # iw-fix-gates session logs (per-run developer artefact — not committed)
 ai-dev/work/fix-gates-*.md
 
-# Private development workspace — work items, archives, operational configs
-# Keep: ai-dev/templates/ and ai-dev/workflow.md (generic, useful for OSS users)
-ai-dev/active/
-ai-dev/work/
-ai-dev/archive/
-ai-dev/archives/
-ai-dev/iw-config/
-ai-dev/logs/
-ai-dev/docs/samples/
-#ai-dev/
+# Maintainer workspace, kept local and not published: design documents, ADRs, work items, brand
+# assets and the AI-agent workflow files.
+ai-dev/
+.claude/
+.opencode/
+.pi/
+.claudeignore
+CLAUDE.md
+docs/.generated/
 
 # Generated work item reports
 reports/

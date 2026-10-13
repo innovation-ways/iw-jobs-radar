@@ -1,6 +1,6 @@
 # Design: Job boards on the Sources screen
 
-Status: ADR-049 approved 2026-10-09 (`ai-dev/docs/11 - Architecture Decision Log.md`); implementation is task T9. Research: `docs/research/R-00173-job-boards-as-sources.md`. Visual rules come from R-00170 and the existing screens (`frontend/src/pages/Sources.tsx`, `frontend/src/features/sources/`, `frontend/src/features/ai/ConnectionCard.tsx`).
+Status: ADR-049 approved 2026-10-09 (maintainer design notes, not published); implementation is task T9. Research: `docs/research/R-00173-job-boards-as-sources.md`. Visual rules come from R-00170 and the existing screens (`frontend/src/pages/Sources.tsx`, `frontend/src/features/sources/`, `frontend/src/features/ai/ConnectionCard.tsx`).
 
 ## 1. What the owner can do
 

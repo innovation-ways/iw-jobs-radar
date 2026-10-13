@@ -27,6 +27,6 @@
   included; the identifier of a Lever, Ashby or SmartRecruiters board must be found by the owner
   on the company's careers address.
 - Notifications outside the app, a larger place gazetteer and
-  skill taxonomies such as ESCO are not included; see `ai-dev/docs/13` section 12.
-- Licence: the repository carries the GPL-3.0 text it was created with; the project is for the
-  owner's personal use and is not published (ODR-007). Decide the licence again before any release.
+  skill taxonomies such as ESCO are not included.
+- Licence: Apache-2.0 (`LICENSE`, `NOTICE`). Terms of the job sources are in `docs/legal/data-sources.md`;
+  the project is for personal use and collected postings must not be republished.

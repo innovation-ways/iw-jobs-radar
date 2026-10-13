@@ -1,6 +1,6 @@
 # V1 release acceptance review
 
-Review of the V1 definition of done (`ai-dev/docs/09`, "V1 definition of done" and the acceptance
+Review of the V1 definition of done (maintainer design notes, "V1 definition of done" and the acceptance
 matrix) against the repository as of the end of task T8. Evidence is an automated test, a command,
 or a manual verification recorded in the ADR of the task. **The owner's trial period and sign-off
 are still pending** (see the end).
@@ -38,7 +38,7 @@ A fresh `git clone` of the repository at commit `36559eb` with no `.env` and no 
 
 ## Deferred improvements (recorded, not blocking V1)
 
-From `ai-dev/docs/13` section 12 and what the work revealed:
+From the maintainer design notes and what the work revealed:
 
 - Currency conversion for pay comparison.
 - A skills taxonomy (ESCO) and a larger place gazetteer (towns below about 15,000 inhabitants).

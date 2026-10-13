@@ -90,6 +90,7 @@ class InboxItemSummary(StrictModel):
     is_shortlisted: bool
     version: int
     title: str
+    company_id: int
     company_name: str
     locations: list[str]
     first_seen_at: datetime

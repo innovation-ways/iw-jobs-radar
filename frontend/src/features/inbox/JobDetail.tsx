@@ -1,4 +1,5 @@
 import { ExternalLink } from 'lucide-react'
+import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { formatAge, formatDateTime } from '@/lib/format'
@@ -114,7 +115,13 @@ export function JobDetail({ detail, busy, onAction, onLinkDecision }: Props) {
       <div className="border-b border-line px-5 pt-4 pb-3.5">
         <h2 className="mb-1 text-lg leading-snug font-semibold tracking-tight">{detail.title}</h2>
         <div className="text-ink-2">
-          {detail.company_name}
+          {/* Opens the Companies screen on this company, to see its other offers. */}
+          <Link
+            to={`/companies?company=${detail.company_id}`}
+            className="underline-offset-2 hover:text-ink hover:underline"
+          >
+            {detail.company_name}
+          </Link>
           {detail.locations.length > 0 && ` · ${detail.locations.join('; ')}`}
         </div>
         <div className="mt-2.5 flex flex-wrap gap-1.5 text-sm">

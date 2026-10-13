@@ -72,6 +72,7 @@ class InboxRowView:
 
     item: JobInboxItem
     title: str
+    company_id: int
     company_name: str
     locations: list[str]
     first_seen_at: datetime
@@ -365,6 +366,7 @@ class InboxService:
                 InboxRowView(
                     item=row.item,
                     title=normalised["title"],
+                    company_id=row.opportunity.company_id,
                     company_name=row.company_name,
                     locations=locations,
                     first_seen_at=row.opportunity.first_seen_at,

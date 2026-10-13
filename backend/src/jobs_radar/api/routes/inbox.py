@@ -90,6 +90,7 @@ def summary(row: InboxRowView) -> InboxItemSummary:
         is_shortlisted=item.is_shortlisted,
         version=item.version,
         title=row.title,
+        company_id=row.company_id,
         company_name=row.company_name,
         locations=row.locations,
         first_seen_at=row.first_seen_at,

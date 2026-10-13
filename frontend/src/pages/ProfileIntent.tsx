@@ -109,10 +109,13 @@ export function ProfileIntent() {
   )
   const confirmLoss = () => !anyDirty || window.confirm(UNSAVED)
 
-  if (profiles.isPending) return <p className="px-6 py-8 text-ink-3">Loading…</p>
+  if (profiles.isPending) return <p className="px-4 sm:px-6 py-8 text-ink-3">Loading…</p>
   if (profiles.isError) {
     return (
-      <div role="alert" className="mx-auto flex max-w-3xl items-center gap-3 px-6 py-8 text-bad">
+      <div
+        role="alert"
+        className="mx-auto flex max-w-3xl items-center gap-3 px-4 sm:px-6 py-8 text-bad"
+      >
         Could not load your profiles.
         <Button variant="outline" size="sm" onClick={() => void profiles.refetch()}>
           Try again
@@ -122,7 +125,7 @@ export function ProfileIntent() {
   }
   if (!profile) {
     return (
-      <div className="mx-auto max-w-3xl px-6 py-8">
+      <div className="mx-auto max-w-3xl px-4 sm:px-6 py-8">
         <div className="rounded-lg border border-line bg-surface p-5">
           <h2 className="text-sm font-semibold">Create your first profile</h2>
           <p className="mt-1 mb-4 text-sm text-ink-2">
@@ -159,7 +162,7 @@ export function ProfileIntent() {
 
   return (
     <div className="flex min-h-full flex-col">
-      <div className="border-b border-line bg-surface px-6 py-3">
+      <div className="border-b border-line bg-surface px-4 sm:px-6 py-3">
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-xs text-ink-2">
             Career profile
@@ -250,7 +253,7 @@ export function ProfileIntent() {
         </div>
       </div>
 
-      <div className="mx-auto w-full max-w-5xl flex-1 px-6 py-5">
+      <div className="mx-auto w-full max-w-5xl flex-1 px-4 sm:px-6 py-5">
         {/* Panels stay mounted (hidden) so unsaved edits survive switching sections. */}
         <div role="tabpanel" id="panel-profile" hidden={tab !== 'profile'}>
           <ProfilePanel

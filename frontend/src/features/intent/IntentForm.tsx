@@ -224,7 +224,7 @@ export function IntentForm({ value, onChange, taxonomy }: Props) {
         title="Compensation"
         hint="Pay is compared in the form it is given: an annual salary for employees, a day rate for contractors, and only within one currency."
       >
-        <div className="grid gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
           <div>
             <p className="mb-2 text-xs font-semibold text-ink-2">Employee · gross pay</p>
             <EmployeePayFields

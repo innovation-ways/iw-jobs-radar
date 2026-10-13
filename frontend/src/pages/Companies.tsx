@@ -1,9 +1,11 @@
+import { ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { CompanyList } from '@/features/companies/CompanyList'
 import { DossierPanel } from '@/features/companies/DossierPanel'
 import { useCompanies, useFollow, type CompanySort } from '@/features/companies/queries'
+import { cn } from '@/lib/utils'
 
 const PAGE = 50
 
@@ -55,11 +57,21 @@ export function Companies() {
   })
   const ignoredItems = ignoredList.data?.items ?? []
   const selected = Number(params.get('company')) || null
+  // Below `lg` only one pane fits; a link with ?company= opens straight on the dossier.
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>(selected ? 'detail' : 'list')
   const filtered = q !== '' || filters.recommended || filters.pending
 
   return (
-    <div className="grid h-full min-h-0 grid-cols-[minmax(300px,400px)_1fr]">
-      <div className="flex min-h-0 flex-col border-r border-line">
+    <div
+      data-mobile-view={mobileView}
+      className="grid h-full min-h-0 grid-cols-1 lg:grid-cols-[minmax(300px,400px)_1fr]"
+    >
+      <div
+        className={cn(
+          'flex min-h-0 flex-col border-r border-line',
+          mobileView === 'detail' && 'max-lg:hidden',
+        )}
+      >
         <div className="flex flex-col gap-2.5 border-b border-line bg-surface p-3">
           <input
             type="search"
@@ -146,7 +158,10 @@ export function Companies() {
               companies={data.items}
               ignored={ignoredItems}
               selectedId={selected}
-              onSelect={(id) => setParams({ company: String(id) })}
+              onSelect={(id) => {
+                setParams({ company: String(id) })
+                setMobileView('detail')
+              }}
               onToggleFollow={(c) =>
                 follow.mutate({ companyId: c.company_id, follow: !c.is_followed })
               }
@@ -161,7 +176,13 @@ export function Companies() {
           )}
         </div>
       </div>
-      <div className="min-h-0 overflow-y-auto">
+      <div className={cn('min-h-0 overflow-y-auto', mobileView === 'list' && 'max-lg:hidden')}>
+        <div className="sticky top-0 z-[5] border-b border-line bg-surface px-3 py-1.5 lg:hidden">
+          <Button variant="ghost" size="sm" onClick={() => setMobileView('list')}>
+            <ArrowLeft aria-hidden="true" />
+            Back to the list
+          </Button>
+        </div>
         {selected ? (
           <DossierPanel key={selected} companyId={selected} recencyDays={data?.recency_days} />
         ) : (

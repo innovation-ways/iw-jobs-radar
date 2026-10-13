@@ -699,6 +699,19 @@ describe('Inbox screen', () => {
     expect(within(detail).getAllByRole('meter')).toHaveLength(1)
     expect(makeDimension().dimension_key).toBe('work_arrangement_location')
   })
+
+  describe('on a narrow screen', () => {
+    it('shows the list first, opens the detail on a tap and goes back', async () => {
+      renderInbox()
+      const root = await screen.findByTestId('inbox-root')
+      await screen.findByRole('option', { name: /Platform Engineer/ })
+      expect(root).toHaveAttribute('data-mobile-view', 'list')
+      await userEvent.click(row(/Platform Engineer/))
+      expect(root).toHaveAttribute('data-mobile-view', 'detail')
+      await userEvent.click(screen.getByRole('button', { name: /back to the list/i }))
+      expect(root).toHaveAttribute('data-mobile-view', 'list')
+    })
+  })
 })
 
 function install_default(path: string, options?: { params?: { path?: Record<string, number> } }) {

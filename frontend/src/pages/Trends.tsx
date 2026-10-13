@@ -31,7 +31,7 @@ export function Trends() {
   const report = base.data
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-4 px-6 py-6">
+    <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 sm:px-6 py-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">Market trends</h2>
@@ -95,7 +95,7 @@ export function Trends() {
               directly comparable, so look at shares.
             </p>
           ))}
-          <div className="grid items-start gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
             {CARDS.map((card) => (
               <TrendCard key={card.kind} kind={card.kind} title={card.title} weeks={weeks} />
             ))}

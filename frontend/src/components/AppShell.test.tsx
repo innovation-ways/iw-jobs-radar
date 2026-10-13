@@ -146,4 +146,24 @@ describe('AppShell', () => {
     expect(link).toHaveAttribute('rel', expect.stringContaining('noreferrer'))
     expect(screen.getByText(/CC BY 4\.0/)).toBeInTheDocument()
   })
+
+  describe('on a narrow screen', () => {
+    it('opens and closes the navigation drawer from the menu button', async () => {
+      renderAt('/inbox')
+      const button = screen.getByRole('button', { name: /open navigation menu/i })
+      expect(button).toHaveAttribute('aria-expanded', 'false')
+      await userEvent.click(button)
+      expect(button).toHaveAttribute('aria-expanded', 'true')
+      await userEvent.click(screen.getByRole('button', { name: /close navigation menu/i }))
+      expect(button).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    it('closes the drawer after choosing a page', async () => {
+      renderAt('/inbox')
+      const button = screen.getByRole('button', { name: /open navigation menu/i })
+      await userEvent.click(button)
+      await userEvent.click(screen.getByRole('link', { name: /trends/i }))
+      expect(button).toHaveAttribute('aria-expanded', 'false')
+    })
+  })
 })

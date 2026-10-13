@@ -615,4 +615,16 @@ describe('Companies screen', () => {
     await user.click(screen.getByRole('button', { name: 'With open offers' })) // turn off
     expect(await screen.findByText(/no companies yet/i)).toBeInTheDocument()
   })
+
+  it('on a narrow screen shows the list first, opens the dossier on a tap and goes back', async () => {
+    const user = userEvent.setup()
+    const { container } = renderPage()
+    await openGroups()
+    const root = container.querySelector('[data-mobile-view]')!
+    expect(root).toHaveAttribute('data-mobile-view', 'list')
+    await user.click(await screen.findByRole('option', { name: /Northwind Labs/ }))
+    expect(root).toHaveAttribute('data-mobile-view', 'detail')
+    await user.click(screen.getByRole('button', { name: /back to the list/i }))
+    expect(root).toHaveAttribute('data-mobile-view', 'list')
+  })
 })

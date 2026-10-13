@@ -54,7 +54,7 @@ export function DirectionsEditor({ directions, onChange }: Props) {
           {directions.map((item, index) => (
             <li
               key={index}
-              className="grid gap-2 rounded-md border border-line p-3 sm:grid-cols-[1fr_auto]"
+              className="grid grid-cols-1 gap-2 rounded-md border border-line p-3 sm:grid-cols-[1fr_auto]"
             >
               <label className="flex flex-col gap-1 text-xs text-ink-2">
                 Label

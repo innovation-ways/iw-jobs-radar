@@ -28,10 +28,10 @@ const HEALTH_TEXT = {
  */
 export function Today() {
   const { data, isPending, isError, refetch } = useDigest()
-  if (isPending) return <p className="px-6 py-6 text-ink-3">Loading the digest…</p>
+  if (isPending) return <p className="px-4 sm:px-6 py-6 text-ink-3">Loading the digest…</p>
   if (isError)
     return (
-      <div role="alert" className="flex items-center gap-3 px-6 py-6 text-bad">
+      <div role="alert" className="flex items-center gap-3 px-4 sm:px-6 py-6 text-bad">
         Could not load the digest.
         <Button variant="outline" size="sm" onClick={() => void refetch()}>
           Try again
@@ -40,7 +40,7 @@ export function Today() {
     )
   const quiet = data.counts.new_high_fit === 0 && data.counts.changed_shortlisted === 0
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4 px-6 py-6">
+    <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 sm:px-6 py-6">
       <p className="text-ink-2">
         Since <time dateTime={data.since}>{formatDateTime(data.since)}</time>
         {data.last_run?.finished_at && (

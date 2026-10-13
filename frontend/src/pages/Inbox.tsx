@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/button'
@@ -83,6 +84,8 @@ export function Inbox() {
   }))
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [helpOpen, setHelpOpen] = useState(false)
+  // Below the `pane` breakpoint only one pane fits: the list, or the detail of the tapped job.
+  const [mobileView, setMobileView] = useState<'list' | 'detail'>('list')
   // The "?" button lives in the application header next to the theme toggle (a slot of AppShell).
   const headerSlot = useOutletContext<ShellContext | undefined>()?.headerSlot ?? null
   const [toast, setToast] = useState<{ message: string; undo: LastAction | null } | null>(null)
@@ -238,13 +241,19 @@ export function Inbox() {
     <div
       data-testid="inbox-root"
       data-density={density}
-      className="group/inbox grid h-full min-h-0 grid-cols-[minmax(340px,1fr)_580px]"
+      data-mobile-view={mobileView}
+      className="group/inbox grid h-full min-h-0 grid-cols-1 pane:grid-cols-[minmax(340px,1fr)_580px]"
     >
-      <div className="flex min-h-0 min-w-0 flex-col border-r border-line">
+      <div
+        className={cn(
+          'flex min-h-0 min-w-0 flex-col border-r border-line',
+          mobileView === 'detail' && 'max-pane:hidden',
+        )}
+      >
         <div
           role="tablist"
           aria-label="Inbox sections"
-          className="flex gap-0.5 border-b border-line bg-surface px-3.5 pt-2"
+          className="flex gap-0.5 overflow-x-auto border-b border-line bg-surface px-3.5 pt-2"
         >
           {TABS.map((info) => (
             <button
@@ -254,7 +263,7 @@ export function Inbox() {
               aria-selected={tab === info.key}
               onClick={() => setTab(info.key)}
               className={cn(
-                'flex flex-col items-center border-b-2 px-2.5 py-1.5 leading-tight',
+                'flex shrink-0 flex-col items-center border-b-2 px-2.5 py-1.5 leading-tight',
                 tab === info.key
                   ? 'border-brand font-semibold text-ink'
                   : 'border-transparent text-ink-2 hover:text-ink',
@@ -276,9 +285,9 @@ export function Inbox() {
             placeholder="Search title, company, technology…"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            className="min-w-48 flex-1 rounded-md bg-surface-2 px-2.5 py-1.5 text-sm"
+            className="min-w-48 flex-1 rounded-md bg-surface-2 px-2.5 py-1.5 text-sm max-sm:basis-full"
           />
-          <label className="flex items-center gap-1.5 text-xs text-ink-2">
+          <label className="flex items-center gap-1.5 text-xs text-ink-2 max-sm:min-w-[7rem] max-sm:flex-1 max-sm:flex-col max-sm:items-start">
             Sort by
             <select
               value={options.sort}
@@ -287,7 +296,7 @@ export function Inbox() {
                 setOptions({ ...options, sort })
                 store(SORT_KEY, sort)
               }}
-              className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm text-ink"
+              className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm text-ink max-sm:w-full"
             >
               {Object.entries(SORT_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -296,12 +305,12 @@ export function Inbox() {
               ))}
             </select>
           </label>
-          <label className="flex items-center gap-1.5 text-xs text-ink-2">
+          <label className="flex items-center gap-1.5 text-xs text-ink-2 max-sm:min-w-[7rem] max-sm:flex-1 max-sm:flex-col max-sm:items-start">
             Fit
             <select
               value={options.fit}
               onChange={(event) => setOptions({ ...options, fit: event.target.value as FitFilter })}
-              className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm text-ink"
+              className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm text-ink max-sm:w-full"
             >
               {Object.entries(FIT_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -310,14 +319,14 @@ export function Inbox() {
               ))}
             </select>
           </label>
-          <label className="flex items-center gap-1.5 text-xs text-ink-2">
+          <label className="flex items-center gap-1.5 text-xs text-ink-2 max-sm:min-w-[7rem] max-sm:flex-1 max-sm:flex-col max-sm:items-start">
             First seen
             <select
               value={options.seen}
               onChange={(event) =>
                 setOptions({ ...options, seen: event.target.value as SeenFilter })
               }
-              className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm text-ink"
+              className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm text-ink max-sm:w-full"
             >
               {Object.entries(SEEN_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -336,7 +345,7 @@ export function Inbox() {
             </Button>
           )}
           {intentList.length > 1 && (
-            <label className="flex items-center gap-1.5 text-xs text-ink-2">
+            <label className="flex items-center gap-1.5 text-xs text-ink-2 max-sm:min-w-[7rem] max-sm:flex-1 max-sm:flex-col max-sm:items-start">
               Scored for
               <select
                 value={intentId ?? ''}
@@ -344,7 +353,7 @@ export function Inbox() {
                   setIntentChoice(Number(event.target.value))
                   store(INTENT_KEY, event.target.value)
                 }}
-                className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm text-ink"
+                className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm text-ink max-sm:w-full"
               >
                 {intentList.map((intent) => (
                   <option key={intent.search_intent_id} value={intent.search_intent_id}>
@@ -357,7 +366,7 @@ export function Inbox() {
           <div
             role="group"
             aria-label="Density"
-            className="inline-flex rounded-md border border-line-strong"
+            className="inline-flex rounded-md border border-line-strong max-sm:hidden"
           >
             {(['comfortable', 'compact'] as const).map((value) => (
               <button
@@ -426,7 +435,10 @@ export function Inbox() {
               key={item.job_inbox_item_id}
               item={item}
               selected={item.job_inbox_item_id === selected?.job_inbox_item_id}
-              onSelect={() => setSelectedId(item.job_inbox_item_id)}
+              onSelect={() => {
+                setSelectedId(item.job_inbox_item_id)
+                setMobileView('detail')
+              }}
               floor={list.setAsideBelowFit}
             />
           ))}
@@ -442,7 +454,19 @@ export function Inbox() {
         </div>
       </div>
 
-      <div className="min-h-0 overflow-y-auto bg-surface" aria-live="polite">
+      <div
+        className={cn(
+          'min-h-0 overflow-y-auto bg-surface',
+          mobileView === 'list' && 'max-pane:hidden',
+        )}
+        aria-live="polite"
+      >
+        <div className="sticky top-0 z-[5] border-b border-line bg-surface px-3 py-1.5 pane:hidden">
+          <Button variant="ghost" size="sm" onClick={() => setMobileView('list')}>
+            <ArrowLeft aria-hidden="true" />
+            Back to the list
+          </Button>
+        </div>
         {selected && detail.data && (
           <JobDetail
             detail={detail.data}
@@ -462,7 +486,7 @@ export function Inbox() {
       {toast && (
         <div
           role="status"
-          className="fixed bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3.5 rounded-lg bg-ink px-3.5 py-2 text-[13px] text-bg shadow-lg"
+          className="fixed bottom-6 left-1/2 z-20 flex max-w-[calc(100vw-2rem)] -translate-x-1/2 items-center gap-3.5 rounded-lg bg-ink px-3.5 py-2 text-[13px] text-bg shadow-lg max-pane:top-14 max-pane:bottom-auto"
         >
           <span>{toast.message}</span>
           {toast.undo && (

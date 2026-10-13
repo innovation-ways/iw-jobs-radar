@@ -22,7 +22,7 @@ export function Sources() {
   const actionError = [runAll, runSource, setEnabled].find((mutation) => mutation.isError)?.error
 
   return (
-    <div className="mx-auto flex max-w-5xl flex-col gap-4 px-6 py-6">
+    <div className="mx-auto flex max-w-5xl flex-col gap-4 px-4 sm:px-6 py-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <p className="text-ink-2">Company boards and job boards · one run per day by default</p>
         <Button onClick={() => runAll.mutate()} disabled={busy}>
@@ -39,7 +39,7 @@ export function Sources() {
           {actionError.message}
         </p>
       )}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <ScheduleCard />
         <AddBoardCard addBoard={addBoard} />
       </div>

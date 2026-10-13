@@ -65,7 +65,7 @@ function ActionBar({ detail, busy, onAction }: Omit<Props, 'onLinkDecision'>) {
     </Button>
   )
   return (
-    <div className="sticky bottom-0 z-[4] flex flex-wrap items-center gap-2 border-t border-line bg-surface px-5 py-2.5">
+    <div className="sticky bottom-0 z-[4] flex flex-wrap items-center gap-2 border-t border-line bg-surface px-3 py-2.5 sm:px-5">
       {settled ? (
         <Button disabled={busy} onClick={() => onAction('restore')}>
           {detail.state === 'applied' ? '↩ Undo applied' : '↩ Restore'}{' '}
@@ -112,7 +112,7 @@ export function JobDetail({ detail, busy, onAction, onLinkDecision }: Props) {
     detail.state === 'ignored' || detail.state === 'archived' || detail.state === 'applied'
   return (
     <article aria-label={detail.title} className="flex min-h-full flex-col bg-surface text-[15px]">
-      <div className="border-b border-line px-5 pt-4 pb-3.5">
+      <div className="border-b border-line px-4 pt-4 pb-3.5 sm:px-5">
         <h2 className="mb-1 text-lg leading-snug font-semibold tracking-tight">{detail.title}</h2>
         <div className="text-ink-2">
           {/* Opens the Companies screen on this company, to see its other offers. */}

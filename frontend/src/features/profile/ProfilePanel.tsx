@@ -66,7 +66,7 @@ export function ProfilePanel({ profile, onDirtyChange }: Props) {
         </p>
 
         <Card title="Summary">
-          <div className="grid gap-3 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             <label className="flex flex-col gap-1 text-xs text-ink-2">
               Headline
               <input
@@ -191,86 +191,90 @@ export function ProfilePanel({ profile, onDirtyChange }: Props) {
           {draft.skills.length === 0 ? (
             <p className="text-sm text-ink-3">No skills yet.</p>
           ) : (
-            <table className="w-full text-sm">
-              <caption className="sr-only">Skills with level and years</caption>
-              <thead>
-                <tr className="text-left text-[11px] tracking-wider text-ink-3 uppercase">
-                  <th scope="col" className="py-1 font-semibold">
-                    Skill
-                  </th>
-                  <th scope="col" className="py-1 font-semibold">
-                    Level
-                  </th>
-                  <th scope="col" className="py-1 text-right font-semibold">
-                    Years
-                  </th>
-                  <th scope="col" className="py-1">
-                    <span className="sr-only">Remove</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {draft.skills.map((skill, index) => (
-                  <tr key={index} className="border-t border-line">
-                    <td className="py-1.5 pr-2">
-                      <input
-                        aria-label="Skill name"
-                        className={`${field} w-full`}
-                        value={skill.name}
-                        onChange={(event) =>
-                          set({
-                            skills: replaceAt(draft.skills, index, { name: event.target.value }),
-                          })
-                        }
-                      />
-                    </td>
-                    <td className="py-1.5 pr-2">
-                      <select
-                        aria-label="Skill level"
-                        className={field}
-                        value={skill.level}
-                        onChange={(event) =>
-                          set({
-                            skills: replaceAt(draft.skills, index, {
-                              level: event.target.value as (typeof LEVELS)[number],
-                            }),
-                          })
-                        }
-                      >
-                        {LEVELS.map((level) => (
-                          <option key={level}>{level}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="py-1.5 pr-2 text-right">
-                      <input
-                        aria-label="Skill years"
-                        inputMode="decimal"
-                        className={`${field} w-20 text-right`}
-                        value={skill.years}
-                        onChange={(event) =>
-                          set({
-                            skills: replaceAt(draft.skills, index, {
-                              years: numberOf(event.target.value),
-                            }),
-                          })
-                        }
-                      />
-                    </td>
-                    <td className="py-1.5 text-right">
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={`Remove ${skill.name || 'skill'}`}
-                        onClick={() => set({ skills: draft.skills.filter((_, i) => i !== index) })}
-                      >
-                        <Trash2 />
-                      </Button>
-                    </td>
+            <div className="relative overflow-x-auto">
+              <table className="w-full text-sm">
+                <caption className="sr-only">Skills with level and years</caption>
+                <thead>
+                  <tr className="text-left text-[11px] tracking-wider text-ink-3 uppercase">
+                    <th scope="col" className="py-1 font-semibold">
+                      Skill
+                    </th>
+                    <th scope="col" className="py-1 font-semibold">
+                      Level
+                    </th>
+                    <th scope="col" className="py-1 text-right font-semibold">
+                      Years
+                    </th>
+                    <th scope="col" className="py-1">
+                      <span className="sr-only">Remove</span>
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {draft.skills.map((skill, index) => (
+                    <tr key={index} className="border-t border-line">
+                      <td className="py-1.5 pr-2">
+                        <input
+                          aria-label="Skill name"
+                          className={`${field} w-full`}
+                          value={skill.name}
+                          onChange={(event) =>
+                            set({
+                              skills: replaceAt(draft.skills, index, { name: event.target.value }),
+                            })
+                          }
+                        />
+                      </td>
+                      <td className="py-1.5 pr-2">
+                        <select
+                          aria-label="Skill level"
+                          className={field}
+                          value={skill.level}
+                          onChange={(event) =>
+                            set({
+                              skills: replaceAt(draft.skills, index, {
+                                level: event.target.value as (typeof LEVELS)[number],
+                              }),
+                            })
+                          }
+                        >
+                          {LEVELS.map((level) => (
+                            <option key={level}>{level}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="py-1.5 pr-2 text-right">
+                        <input
+                          aria-label="Skill years"
+                          inputMode="decimal"
+                          className={`${field} w-20 text-right`}
+                          value={skill.years}
+                          onChange={(event) =>
+                            set({
+                              skills: replaceAt(draft.skills, index, {
+                                years: numberOf(event.target.value),
+                              }),
+                            })
+                          }
+                        />
+                      </td>
+                      <td className="py-1.5 text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Remove ${skill.name || 'skill'}`}
+                          onClick={() =>
+                            set({ skills: draft.skills.filter((_, i) => i !== index) })
+                          }
+                        >
+                          <Trash2 />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </Card>
 
@@ -297,7 +301,7 @@ export function ProfilePanel({ profile, onDirtyChange }: Props) {
           <ul className="flex flex-col gap-3">
             {draft.experience.map((role, index) => (
               <li key={index} className="rounded-md border border-line p-3">
-                <div className="grid gap-2 md:grid-cols-2">
+                <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
                   <label className="flex flex-col gap-1 text-xs text-ink-2">
                     Title
                     <input

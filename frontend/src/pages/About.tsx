@@ -15,7 +15,7 @@ function Ext({ href, children }: { href: string; children: string }) {
  */
 export function About() {
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4 px-6 py-6 text-sm">
+    <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 sm:px-6 py-6 text-sm">
       <section className="rounded-lg border border-line bg-surface p-4">
         <h2 className="text-sm font-semibold">Jobs Radar</h2>
         <p className="mt-2 text-ink-2">

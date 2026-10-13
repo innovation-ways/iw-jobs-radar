@@ -44,7 +44,7 @@ function factText(value: unknown): string {
 function Fact({ fact }: { fact: Dossier['facts'][number] }) {
   const ai = fact.origin === 'ai_inference'
   return (
-    <li className="grid grid-cols-[130px_1fr] gap-3 border-t border-line py-2 first:border-t-0">
+    <li className="grid grid-cols-1 gap-1 sm:grid-cols-[130px_1fr] sm:gap-3 border-t border-line py-2 first:border-t-0">
       <span className="text-xs text-ink-3">{FACT_LABELS[fact.fact_key] ?? fact.fact_key}</span>
       <div>
         <div>{factText(fact.value)}</div>

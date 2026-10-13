@@ -30,7 +30,7 @@ export function ShortcutsHelp({ onClose }: { onClose: () => void }) {
         role="dialog"
         aria-modal="true"
         aria-label="Keyboard shortcuts"
-        className="w-[360px] rounded-xl border border-line bg-surface p-5 shadow-lg"
+        className="w-[360px] max-w-[calc(100vw-2rem)] rounded-xl border border-line bg-surface p-5 shadow-lg"
       >
         <h3 className="mb-2.5 text-[15px] font-semibold">Keyboard shortcuts</h3>
         <table className="w-full text-sm">

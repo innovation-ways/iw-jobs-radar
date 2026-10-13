@@ -83,75 +83,79 @@ function RevisionTable({
   busy: boolean
 }) {
   return (
-    <table className="w-full text-sm" aria-label={caption}>
-      <thead>
-        <tr className="text-left text-[11px] tracking-wider text-ink-3 uppercase">
-          <th scope="col" className="py-1 font-semibold">
-            Rev
-          </th>
-          <th scope="col" className="py-1 font-semibold">
-            Date
-          </th>
-          <th scope="col" className="py-1 font-semibold">
-            Change
-          </th>
-          <th scope="col" className="py-1">
-            <span className="sr-only">Actions</span>
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row) => {
-          const current = row.number === currentNumber
-          const active = selection?.scope === scope && selection.id === row.id
-          return (
-            <tr key={row.id} className={`border-t border-line ${active ? 'bg-surface-2' : ''}`}>
-              <td className="py-2 pr-3 tabular-nums">
-                <strong>{row.number}</strong>
-                {current && (
-                  <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand-text">
-                    current
-                  </span>
-                )}
-              </td>
-              <td className="py-2 pr-3 text-ink-2">{formatDateTime(row.createdAt)}</td>
-              <td className="py-2 pr-3">{row.summary ?? <span className="text-ink-3">—</span>}</td>
-              <td className="py-2 text-right whitespace-nowrap">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  aria-label={`View revision ${row.number}`}
-                  onClick={() => onSelect({ scope, id: row.id, mode: 'view' })}
-                >
-                  View
-                </Button>
-                {!current && (
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-label={`Compare revision ${row.number} with the current one`}
-                      onClick={() => onSelect({ scope, id: row.id, mode: 'compare' })}
-                    >
-                      Compare
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={busy}
-                      aria-label={`Restore revision ${row.number}`}
-                      onClick={() => onRestore(row)}
-                    >
-                      Restore
-                    </Button>
-                  </>
-                )}
-              </td>
-            </tr>
-          )
-        })}
-      </tbody>
-    </table>
+    <div className="relative overflow-x-auto">
+      <table className="w-full text-sm" aria-label={caption}>
+        <thead>
+          <tr className="text-left text-[11px] tracking-wider text-ink-3 uppercase">
+            <th scope="col" className="py-1 font-semibold">
+              Rev
+            </th>
+            <th scope="col" className="py-1 font-semibold">
+              Date
+            </th>
+            <th scope="col" className="py-1 font-semibold">
+              Change
+            </th>
+            <th scope="col" className="py-1">
+              <span className="sr-only">Actions</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => {
+            const current = row.number === currentNumber
+            const active = selection?.scope === scope && selection.id === row.id
+            return (
+              <tr key={row.id} className={`border-t border-line ${active ? 'bg-surface-2' : ''}`}>
+                <td className="py-2 pr-3 tabular-nums">
+                  <strong>{row.number}</strong>
+                  {current && (
+                    <span className="ml-2 rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand-text">
+                      current
+                    </span>
+                  )}
+                </td>
+                <td className="py-2 pr-3 text-ink-2">{formatDateTime(row.createdAt)}</td>
+                <td className="py-2 pr-3">
+                  {row.summary ?? <span className="text-ink-3">—</span>}
+                </td>
+                <td className="py-2 text-right whitespace-nowrap">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label={`View revision ${row.number}`}
+                    onClick={() => onSelect({ scope, id: row.id, mode: 'view' })}
+                  >
+                    View
+                  </Button>
+                  {!current && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label={`Compare revision ${row.number} with the current one`}
+                        onClick={() => onSelect({ scope, id: row.id, mode: 'compare' })}
+                      >
+                        Compare
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={busy}
+                        aria-label={`Restore revision ${row.number}`}
+                        onClick={() => onRestore(row)}
+                      >
+                        Restore
+                      </Button>
+                    </>
+                  )}
+                </td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
   )
 }
 

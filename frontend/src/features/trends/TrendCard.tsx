@@ -29,36 +29,38 @@ export function TrendCard({
         </p>
       )}
       {data && data.rows.length > 0 && (
-        <table aria-label={title} className="w-full text-sm">
-          <thead className="text-xs text-ink-3">
-            <tr>
-              <th className="px-4 py-2 text-left font-medium">Term</th>
-              <th className="px-2 py-2 text-right font-medium">Open</th>
-              <th className="px-2 py-2 text-right font-medium">Share</th>
-              <th className="px-2 py-2 text-right font-medium">Change</th>
-              <th className="px-4 py-2 text-right font-medium">
-                <span className="sr-only">Trend</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.rows.map((row) => (
-              <tr key={row.term_key} className="border-t border-line">
-                <th scope="row" className="px-4 py-2 text-left font-medium">
-                  {row.label}
+        <div className="relative overflow-x-auto">
+          <table aria-label={title} className="w-full text-sm">
+            <thead className="text-xs text-ink-3">
+              <tr>
+                <th className="px-4 py-2 text-left font-medium">Term</th>
+                <th className="px-2 py-2 text-right font-medium">Open</th>
+                <th className="px-2 py-2 text-right font-medium">Share</th>
+                <th className="px-2 py-2 text-right font-medium">Change</th>
+                <th className="px-4 py-2 text-right font-medium">
+                  <span className="sr-only">Trend</span>
                 </th>
-                <td className="px-2 py-2 text-right tabular-nums">{row.open_now}</td>
-                <td className="px-2 py-2 text-right tabular-nums">{percent(row.share_now)}</td>
-                <td className="px-2 py-2 text-right tabular-nums text-ink-2">
-                  {formatPoints(row.share_change)}
-                </td>
-                <td className="px-4 py-2 text-right">
-                  <Sparkline label={row.label} values={row.series.map((p) => p.share)} />
-                </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data.rows.map((row) => (
+                <tr key={row.term_key} className="border-t border-line">
+                  <th scope="row" className="px-4 py-2 text-left font-medium">
+                    {row.label}
+                  </th>
+                  <td className="px-2 py-2 text-right tabular-nums">{row.open_now}</td>
+                  <td className="px-2 py-2 text-right tabular-nums">{percent(row.share_now)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums text-ink-2">
+                    {formatPoints(row.share_change)}
+                  </td>
+                  <td className="px-4 py-2 text-right">
+                    <Sparkline label={row.label} values={row.series.map((p) => p.share)} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </section>
   )

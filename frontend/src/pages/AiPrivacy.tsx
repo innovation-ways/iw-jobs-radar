@@ -22,10 +22,10 @@ const MODE_TEXT: Record<AiSettings['mode'], string> = {
 export function AiPrivacy() {
   const { data, isPending, isError, refetch } = useAiSettings()
   const actions = useAiActions()
-  if (isPending) return <p className="px-6 py-6 text-ink-3">Loading…</p>
+  if (isPending) return <p className="px-4 sm:px-6 py-6 text-ink-3">Loading…</p>
   if (isError)
     return (
-      <div role="alert" className="flex items-center gap-3 px-6 py-6 text-bad">
+      <div role="alert" className="flex items-center gap-3 px-4 sm:px-6 py-6 text-bad">
         Could not load the settings.
         <Button variant="outline" size="sm" onClick={() => void refetch()}>
           Try again
@@ -41,7 +41,7 @@ export function AiPrivacy() {
   )?.error
 
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4 px-6 py-6">
+    <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 sm:px-6 py-6">
       {!data.key_configured && (
         <p role="alert" className="rounded-md bg-bad-bg px-3.5 py-2 text-sm text-bad">
           JOBS_RADAR_CREDENTIAL_KEY is not configured, so API keys cannot be stored. Run

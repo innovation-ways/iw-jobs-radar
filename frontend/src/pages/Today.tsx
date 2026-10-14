@@ -83,7 +83,11 @@ export function Today() {
           <ul className="flex flex-col gap-2 p-3">
             {data.changed_shortlisted.map((entry) => (
               <li key={entry.item.job_inbox_item_id}>
-                <Link to="/inbox" className="font-semibold hover:underline">
+                {/* Opens the shortlist with this job selected, so its "Updated" note is in view. */}
+                <Link
+                  to={`/inbox?tab=shortlist&item=${entry.item.job_inbox_item_id}`}
+                  className="font-semibold hover:underline"
+                >
                   {entry.item.title}
                 </Link>
                 <span className="block text-[13px] text-ink-2">

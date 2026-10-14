@@ -204,7 +204,8 @@ export function JobDetail({ detail, busy, onAction, onLinkDecision }: Props) {
         )}
         {detail.last_change && (
           <p className="mt-3 rounded-md bg-caution-bg px-3 py-2 text-base text-caution">
-            <strong>Updated:</strong> {detail.last_change.changed_fields.join(', ')}
+            <strong>Updated {formatAge(detail.last_change.created_at)} ago:</strong>{' '}
+            {detail.last_change.changed_fields.join(', ')}
           </p>
         )}
       </div>

@@ -69,20 +69,25 @@ interface LastAction {
  * search intent; jobs without a score are listed as "not evaluated". Every action can be undone.
  */
 export function Inbox() {
-  const [tab, setTab] = useState<TabKey>('unread')
+  // A link (Today) can open a section and a job: ``?tab=shortlist&item=12``.
+  const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState<TabKey>(
+    () => TABS.find((t) => t.key === searchParams.get('tab'))?.key ?? 'unread',
+  )
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [density, setDensity] = useState<Density>(() =>
     readStored(DENSITY_KEY) === 'compact' ? 'compact' : 'comfortable',
   )
   // A link from the pipeline panel can open the inbox already filtered (``?fit=unscored``).
-  const [searchParams] = useSearchParams()
   const [options, setOptions] = useState<ListOptions>(() => ({
     ...DEFAULT_OPTIONS,
     fit: parseFit(searchParams.get('fit')),
     sort: parseSort(readStored(SORT_KEY)),
   }))
-  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [selectedId, setSelectedId] = useState<number | null>(
+    () => Number(searchParams.get('item')) || null,
+  )
   const [helpOpen, setHelpOpen] = useState(false)
   // Below the `pane` breakpoint only one pane fits: the list, or the detail of the tapped job.
   const [mobileView, setMobileView] = useState<'list' | 'detail'>('list')

@@ -81,6 +81,14 @@ describe('Today screen', () => {
     expect(within(health).getByText(/Never run/)).toBeInTheDocument()
   })
 
+  it('links a changed job to its own item in the shortlist', async () => {
+    renderToday()
+    const link = await screen.findByRole('link', { name: /Platform Lead/ })
+    const params = new URL(link.getAttribute('href')!, 'http://x').searchParams
+    expect(params.get('tab')).toBe('shortlist')
+    expect(params.get('item')).toMatch(/^\d+$/)
+  })
+
   it('links each job to the inbox', async () => {
     renderToday()
     const link = await screen.findByRole('link', { name: /Staff ML Engineer/ })

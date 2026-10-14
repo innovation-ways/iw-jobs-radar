@@ -386,6 +386,16 @@ describe('Inbox screen', () => {
       expect(within(detail).getByText(/not open from any of your regions/i)).toBeInTheDocument()
     })
 
+    it('opens the job named in the link and the section it belongs to', async () => {
+      renderInbox('/?tab=shortlist&item=2')
+      expect(await screen.findByRole('tab', { name: /Shortlist/ })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      )
+      const selected = await screen.findByRole('option', { name: /Platform Engineer/ })
+      expect(selected).toHaveAttribute('aria-selected', 'true')
+    })
+
     it('shows what changed when a job was updated', async () => {
       get.mockImplementation(
         (path: string, options?: { params?: { path?: Record<string, number> } }) => {
@@ -405,7 +415,7 @@ describe('Inbox screen', () => {
       expect(
         await screen.findByText(
           (_, el) =>
-            el?.tagName === 'P' && /updated: title, description/i.test(el.textContent ?? ''),
+            el?.tagName === 'P' && /updated .*: title, description/i.test(el.textContent ?? ''),
         ),
       ).toBeInTheDocument()
     })

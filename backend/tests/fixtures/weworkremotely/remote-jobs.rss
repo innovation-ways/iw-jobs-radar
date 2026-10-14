@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:media="http://search.yahoo.com/mrss">
+  <channel>
+    <title>Synthetic We Work Remotely feed</title>
+    <link>https://weworkremotely.com/remote-jobs.rss</link>
+    <description>Synthetic test feed</description>
+    <language>en-US</language>
+    <ttl>60</ttl>
+    <item>
+      <media:content url="https://example.test/logo.gif" type="image/png"/>
+      <title>Acme Robotics: Senior Backend Engineer</title>
+      <region>Anywhere in the World</region>
+      <country></country>
+      <skills>Python, PostgreSQL</skills>
+      <category>Back-End Programming</category>
+      <type>Full-Time</type>
+      <description><![CDATA[<p><strong>Headquarters:</strong> Synthetic Co</p><p>Synthetic description of Acme Robotics: Senior Backend Engineer.</p>]]></description>
+      <pubDate>Thu, 08 Oct 2026 09:00:00 +0000</pubDate>
+      <guid>https://weworkremotely.com/remote-jobs/acme-senior-backend-engineer</guid>
+      <link>https://weworkremotely.com/remote-jobs/acme-senior-backend-engineer</link>
+    </item>
+    <item>
+      <media:content url="https://example.test/logo.gif" type="image/png"/>
+      <title>Globex: Data Engineer</title>
+      <region>Anywhere in the World</region>
+      <country>🇵🇹 Portugal, 🇪🇸 Spain, and 🇩🇪 Germany</country>
+      <skills>Spark</skills>
+      <category>Full-Stack Programming</category>
+      <type>Full-Time</type>
+      <description><![CDATA[<p><strong>Headquarters:</strong> Synthetic Co</p><p>Synthetic description of Globex: Data Engineer.</p>]]></description>
+      <pubDate>Wed, 07 Oct 2026 10:30:00 +0000</pubDate>
+      <guid>https://weworkremotely.com/remote-jobs/globex-data-engineer</guid>
+      <link>https://weworkremotely.com/remote-jobs/globex-data-engineer</link>
+    </item>
+    <item>
+      <media:content url="https://example.test/logo.gif" type="image/png"/>
+      <title>Initech: Account Executive</title>
+      <region>Anywhere in the World</region>
+      <country></country>
+      <skills></skills>
+      <category>Sales and Marketing</category>
+      <type>Full-Time</type>
+      <description><![CDATA[<p><strong>Headquarters:</strong> Synthetic Co</p><p>Synthetic description of Initech: Account Executive.</p>]]></description>
+      <pubDate>Thu, 08 Oct 2026 08:00:00 +0000</pubDate>
+      <guid>https://weworkremotely.com/remote-jobs/initech-account-executive</guid>
+      <link>https://weworkremotely.com/remote-jobs/initech-account-executive</link>
+    </item>
+    <item>
+      <media:content url="https://example.test/logo.gif" type="image/png"/>
+      <title>Hooli: Platform Engineer</title>
+      <region>USA Only</region>
+      <country></country>
+      <skills></skills>
+      <category>DevOps and Sysadmin</category>
+      <type>Full-Time</type>
+      <description><![CDATA[<p><strong>Headquarters:</strong> Synthetic Co</p><p>Synthetic description of Hooli: Platform Engineer.</p>]]></description>
+      <pubDate>Thu, 08 Oct 2026 07:00:00 +0000</pubDate>
+      <guid>https://weworkremotely.com/remote-jobs/hooli-platform-engineer</guid>
+      <link>https://weworkremotely.com/remote-jobs/hooli-platform-engineer</link>
+    </item>
+    <item>
+      <media:content url="https://example.test/logo.gif" type="image/png"/>
+      <title>Umbrella: Backend Developer</title>
+      <region>Anywhere in the World</region>
+      <country></country>
+      <skills></skills>
+      <category>Back-End Programming</category>
+      <type>Full-Time</type>
+      <description><![CDATA[<p><strong>Headquarters:</strong> Synthetic Co</p><p>Synthetic description of Umbrella: Backend Developer.</p>]]></description>
+      <pubDate>Tue, 01 Sep 2026 07:00:00 +0000</pubDate>
+      <guid>https://weworkremotely.com/remote-jobs/umbrella-backend-developer</guid>
+      <link>https://weworkremotely.com/remote-jobs/umbrella-backend-developer</link>
+    </item>
+    <item>
+      <media:content url="https://example.test/logo.gif" type="image/png"/>
+      <title>No company marker here</title>
+      <region>Anywhere in the World</region>
+      <country></country>
+      <skills></skills>
+      <category>Back-End Programming</category>
+      <type>Full-Time</type>
+      <description><![CDATA[<p>No headquarters line either.</p>]]></description>
+      <pubDate>Thu, 08 Oct 2026 07:30:00 +0000</pubDate>
+      <guid>https://weworkremotely.com/remote-jobs/no-company</guid>
+      <link>https://weworkremotely.com/remote-jobs/no-company</link>
+    </item>
+  </channel>
+</rss>

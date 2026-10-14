@@ -95,6 +95,27 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
         rate_limit_per_minute=30,
     ),
     CatalogueEntry(
+        source_type=SourceType.WEWORKREMOTELY,
+        display_name="We Work Remotely",
+        coverage_note="Remote · all roles · eligible countries listed per job",
+        homepage_url="https://weworkremotely.com",
+        endpoint="https://weworkremotely.com/remote-jobs.rss",
+        terms_url="https://weworkremotely.com/api-terms-and-guidelines",
+        terms_note=(
+            "Public RSS feeds, no key. The board's API terms are reported to forbid copying and "
+            "storing its data and to require applying through its site; the owner accepted this "
+            "for personal use only (ADR-072). The terms page blocks automated readers, so it could "
+            "not be read from here."
+        ),
+        attribution_text="Jobs from We Work Remotely (weworkremotely.com).",
+        delay_note="The feeds are refreshed about once an hour.",
+        min_interval_minutes=60,
+        rate_limit_per_minute=10,
+        # The feeds hold only open postings and about 330 in all, so the short window of the big
+        # boards (ADR-063) would drop most of the technical ones (ADR-072.6).
+        default_filters=JobBoardFilters(max_age_days=30),
+    ),
+    CatalogueEntry(
         source_type=SourceType.ITJOBS_PT,
         display_name="ITJobs.pt",
         coverage_note="Portugal · IT",

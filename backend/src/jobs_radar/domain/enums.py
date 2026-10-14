@@ -137,6 +137,7 @@ class SourceType(StrEnum):
     JOBICY = "jobicy"
     HIMALAYAS = "himalayas"
     ITJOBS_PT = "itjobs_pt"
+    WEWORKREMOTELY = "weworkremotely"
     # The company's own careers page, read without a known ATS (ADR-070): structured postings
     # (schema.org JobPosting) or a reader configuration the owner approved.
     PAGE_JSONLD = "page_jsonld"

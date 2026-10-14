@@ -17,6 +17,7 @@ JOB_BOARDS = {
     SourceType.JOBICY,
     SourceType.HIMALAYAS,
     SourceType.ITJOBS_PT,
+    SourceType.WEWORKREMOTELY,
 }
 COMPANY_BOARDS = {
     SourceType.GREENHOUSE,
@@ -117,7 +118,13 @@ def test_boards_with_a_delayed_feed_say_so() -> None:
 def test_every_board_reads_only_the_latest_days_by_default() -> None:
     """ADR-063: the daily runs make older postings duplicates, so the window is short."""
     for entry in CATALOGUE:
-        assert entry.default_filters.max_age_days == 4
+        if entry.catalogue_key != "weworkremotely":
+            assert entry.default_filters.max_age_days == 4
+
+
+def test_a_small_feed_of_open_postings_reads_a_month_back() -> None:
+    """ADR-072: its feeds list only open postings and are small, so a short window loses jobs."""
+    assert get_entry("weworkremotely").default_filters.max_age_days == 30  # type: ignore[union-attr]
 
 
 def test_filter_defaults_follow_adr_049() -> None:

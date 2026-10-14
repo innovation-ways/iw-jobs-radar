@@ -79,6 +79,7 @@ many postings would be kept), then **Add**. Nothing is saved before the check su
 | Arbeitnow | Europe, remote and relocation | none | updated hourly; places are read from the text |
 | Jobicy | remote, Europe filter | none | asks for at most one poll an hour |
 | Himalayas | remote, eligible countries per job | none | refreshes its data every 24 hours |
+| We Work Remotely | remote, all roles; eligible countries per job | none | public RSS feeds (ten requests a run); the board's terms are reported to forbid storing its data, accepted by the owner for personal use (ADR-072); at most one run an hour |
 | ITJobs.pt | Portugal, IT | free key by email (itjobs.pt/api) | checked against the live service with a real key on 2026-10-12 (collection and offer links work); `workModel` codes are observed, not documented |
 
 - **Where a board looks comes from your profile.** The countries are never typed into a source.

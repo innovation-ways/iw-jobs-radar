@@ -109,6 +109,35 @@ export function useSourceReader(sourceId: number) {
   return { propose, approve }
 }
 
+/**
+ * Go back to keeping every posting of a company board and queue a run, so the offers its filters
+ * had left out are collected (a source that never completed a run reads its whole backlog).
+ */
+export function useTurnOffFilters(sourceId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (version: number) => {
+      await unwrap(
+        api.PUT('/api/v1/sources/{source_configuration_id}', {
+          params: { path: { source_configuration_id: sourceId } },
+          body: { expected_version: version, clear_filters: true },
+        }),
+      )
+      return unwrap(
+        api.POST('/api/v1/sources/{source_configuration_id}/run', {
+          params: { path: { source_configuration_id: sourceId } },
+        }),
+      )
+    },
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['dossier'] }),
+        queryClient.invalidateQueries({ queryKey: ['sources'] }),
+        queryClient.invalidateQueries({ queryKey: ['collection-runs'] }),
+      ]),
+  })
+}
+
 const SOURCE_LABELS: Record<string, string> = {
   greenhouse: 'Greenhouse board',
   lever: 'Lever board',

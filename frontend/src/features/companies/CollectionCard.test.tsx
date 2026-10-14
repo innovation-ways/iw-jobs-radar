@@ -27,6 +27,8 @@ function board(overrides: Record<string, unknown> = {}) {
     last_error_class: null,
     last_finished_at: '2026-10-13T07:30:00Z',
     last_collected_count: 61,
+    last_dropped_count: 0,
+    filters_enabled: false,
     ...overrides,
   }
 }
@@ -100,5 +102,30 @@ describe('CollectionCard', () => {
       expected_version: 2,
       proposed_by: proposal.proposed_by,
     })
+  })
+
+  it('says how many postings the filters left out and offers to turn them off', async () => {
+    put.mockResolvedValue({ data: { source_configuration_id: 4 } })
+    post.mockResolvedValue({ data: { collection_run_id: 9 } })
+    const user = setup([
+      board({
+        source_type: 'page_jsonld',
+        last_outcome: 'partial',
+        last_collected_count: 0,
+        last_dropped_count: 200,
+        filters_enabled: true,
+      }),
+    ])
+    expect(screen.getByText(/200 left out by your filters/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /Turn off filters and collect/ }))
+    await waitFor(() => expect(put).toHaveBeenCalled())
+    expect(put.mock.calls[0][1].body).toEqual({ expected_version: 2, clear_filters: true })
+    await waitFor(() => expect(post).toHaveBeenCalled())
+    expect(post.mock.calls[0][0]).toBe('/api/v1/sources/{source_configuration_id}/run')
+  })
+
+  it('does not offer to turn filters off when they are not on', () => {
+    setup([board({ last_dropped_count: 3, filters_enabled: false })])
+    expect(screen.queryByRole('button', { name: /Turn off filters/ })).not.toBeInTheDocument()
   })
 })

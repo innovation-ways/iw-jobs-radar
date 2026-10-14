@@ -1622,8 +1622,15 @@ export interface components {
             display_name: string;
             /** Enabled */
             enabled: boolean;
+            /**
+             * Filters Enabled
+             * @default false
+             */
+            filters_enabled: boolean;
             /** Last Collected Count */
             last_collected_count?: number | null;
+            /** Last Dropped Count */
+            last_dropped_count?: number | null;
             /** Last Error Class */
             last_error_class?: string | null;
             /** Last Finished At */

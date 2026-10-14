@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import type { components } from '@/api/schema'
 import { FollowCompanyDialog } from './FollowCompanyDialog'
-import { sourceLabel, useSourceReader } from './onboarding'
+import { sourceLabel, useSourceReader, useTurnOffFilters } from './onboarding'
 
 type Board = components['schemas']['BoardRead']
 
@@ -76,6 +76,31 @@ function ReaderRepair({ board }: { board: Board }) {
   )
 }
 
+/** What the owner's filters left out of the last run, with a way to turn them off and collect. */
+function FilterNote({ board }: { board: Board }) {
+  const turnOff = useTurnOffFilters(board.source_configuration_id)
+  const dropped = board.last_dropped_count ?? 0
+  if (!board.filters_enabled || dropped === 0) return null
+  return (
+    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">
+      <span className="text-ink-2">{dropped} left out by your filters.</span>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={turnOff.isPending || turnOff.isSuccess}
+        onClick={() => turnOff.mutate(board.version)}
+      >
+        {turnOff.isSuccess ? 'Collecting…' : 'Turn off filters and collect'}
+      </Button>
+      {turnOff.isError && (
+        <span role="alert" className="text-bad">
+          {turnOff.error.message}
+        </span>
+      )}
+    </div>
+  )
+}
+
 /**
  * How the company's offers are collected (ADR-070): each source with its latest result, a message
  * for a company that is followed by hand only, the careers address, and "Detect again", which
@@ -127,6 +152,7 @@ export function CollectionCard({
                   ? `Last run ${RESULT_WORDS[board.last_outcome] ?? board.last_outcome}${board.last_collected_count !== null && board.last_collected_count !== undefined ? ` · ${board.last_collected_count} postings` : ''}`
                   : 'Not run yet'}
               </div>
+              <FilterNote board={board} />
               {note && <p className="text-xs text-bad">{note}</p>}
               {board.source_type === 'page_config' &&
                 board.last_error_class === 'schema_changed' && <ReaderRepair board={board} />}

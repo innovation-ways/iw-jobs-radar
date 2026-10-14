@@ -12,9 +12,15 @@ from jobs_radar.domain.job_board_rules import LocationScope
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 URL = "https://www.workingnomads.com/api/exposed_jobs/"
+SEARCH = "https://www.workingnomads.com/jobsapi/_search"
+PAGE = "https://www.workingnomads.com/jobs?job="
 
 
-def board() -> respx.Route:
+def board(*, search: httpx.Response | None = None) -> respx.Route:
+    """Mock the feed and the site's own search (which holds each posting's page slug)."""
+    respx.get(SEARCH).mock(
+        return_value=search or httpx.Response(200, content=payload("workingnomads", "search.json"))
+    )
     return respx.get(URL).mock(
         return_value=httpx.Response(200, content=payload("workingnomads", "exposed_jobs.json"))
     )
@@ -43,12 +49,10 @@ async def test_a_posting_is_mapped_with_url_text_tags_and_date() -> None:
     result = await build(WorkingNomadsAdapter).collect(checkpoint("workingnomads"))
     posting = result.postings[0]
     # The feed URL redirects to the employer's application form; the page that shows the
-    # posting is /jobs/<title>-<company> (slug built from the two names).
+    # posting is /jobs?job=<slug>, and the slug is the site's own (it is not derivable).
     assert posting.external_job_id == "https://www.workingnomads.com/job/go/1000001/"
     assert posting.apply_url == posting.external_job_id
-    assert posting.source_url == (
-        "https://www.workingnomads.com/jobs/senior-backend-engineer-contract-acme-systems"
-    )
+    assert posting.source_url == PAGE + "senior-python-engineer-acme-systems-1000001"
     assert posting.title == "Senior Backend Engineer (Contract)"
     assert "Day rate EUR 500-600" in posting.description_text
     assert posting.locations == ("Global",)
@@ -93,3 +97,25 @@ async def test_validate_reports_the_matching_count() -> None:
 async def test_another_identifier_is_refused() -> None:
     with pytest.raises(SourceError):
         await build(WorkingNomadsAdapter).collect(checkpoint("jobicy"))
+
+
+@respx.mock
+async def test_the_page_slugs_come_from_one_lookup_for_the_ids_of_the_feed() -> None:
+    board()
+    result = await build(WorkingNomadsAdapter).collect(checkpoint("workingnomads"))
+    assert [p.source_url for p in result.postings] == [
+        PAGE + "senior-python-engineer-acme-systems-1000001",
+        PAGE + "data-engineer-globex",
+        PAGE + "platform-engineer-initech-1000003",
+    ]
+    (call,) = [c for c in respx.calls if c.request.url.path.endswith("/_search")]
+    assert "1000001" in str(call.request.url) and "1000003" in str(call.request.url)
+
+
+@respx.mock
+async def test_a_failed_lookup_keeps_the_run_and_the_feed_address() -> None:
+    """The slug is a courtesy: without it the posting keeps the feed address (apply redirect)."""
+    board(search=httpx.Response(503))
+    result = await build(WorkingNomadsAdapter).collect(checkpoint("workingnomads"))
+    assert [p.company_name for p in result.postings] == ["Acme Systems", "Globex", "Initech"]
+    assert all(p.source_url == p.external_job_id for p in result.postings)

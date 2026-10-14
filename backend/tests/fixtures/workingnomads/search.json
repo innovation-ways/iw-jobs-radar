@@ -1,0 +1,12 @@
+{
+  "took": 3,
+  "timed_out": false,
+  "hits": {
+    "total": {"value": 3, "relation": "eq"},
+    "hits": [
+      {"_id": "1000001", "_source": {"id": 1000001, "slug": "senior-python-engineer-acme-systems-1000001"}},
+      {"_id": "1000002", "_source": {"id": 1000002, "slug": "data-engineer-globex"}},
+      {"_id": "1000003", "_source": {"id": 1000003, "slug": "platform-engineer-initech-1000003"}}
+    ]
+  }
+}

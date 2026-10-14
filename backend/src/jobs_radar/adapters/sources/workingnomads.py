@@ -6,16 +6,19 @@ location and a publication time. There is no identifier (the URL is used) and no
 of its postings are independent-contractor work, which the extraction reads from the text.
 
 The feed's ``url`` (``/job/go/<id>/``) only redirects to the employer's application form, so the
-page that shows the posting is built from the title and company instead: ``/jobs/<title>-<company>``
-(checked against every posting of the feed on 2026-10-14). The feed URL stays the identifier and
-the apply link.
+page that shows the posting is ``/jobs?job=<slug>``. The slug is the site's own and cannot be
+derived from the title (owner, 2026-10-14: ADR-074 amendment); the site's search endpoint, which
+its own pages use, returns it, so one request asks for the slugs of the whole feed. If that
+request fails the run goes on and the posting keeps the feed address. The feed URL stays the
+identifier and the apply link.
 """
 
 import re
-import unicodedata
 from collections.abc import AsyncIterator
+from dataclasses import replace
 from datetime import UTC, datetime
 from typing import Any
+from urllib.parse import quote
 
 from jobs_radar.adapters.sources.base import SourceError, SourcePosting
 from jobs_radar.adapters.sources.catalogue import require_entry
@@ -39,10 +42,17 @@ def _text(value: object) -> str:
     return " ".join(value.split()) if isinstance(value, str) else ""
 
 
-def _slug(value: str) -> str:
-    """Lower-case ASCII words joined by hyphens, as the site writes its page addresses."""
-    ascii_text = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode()
-    return re.sub(r"[^a-z0-9]+", "-", ascii_text.lower()).strip("-")
+_FEED_ID = re.compile(r"/job/go/(\d+)/?$")
+_SEARCH = "https://www.workingnomads.com/jobsapi/_search"
+_PAGE = "https://www.workingnomads.com/jobs?job="
+# A search answer holds at most this many hits; the feed has about fifty postings.
+_LOOKUP_SIZE = 200
+
+
+def _feed_id(url: str) -> str | None:
+    """Return the numeric id inside a feed address, or ``None`` if it has another shape."""
+    match = _FEED_ID.search(url)
+    return match.group(1) if match else None
 
 
 def parse_job(job: object) -> Candidate:
@@ -65,11 +75,11 @@ def parse_job(job: object) -> Candidate:
     eligibility, places = eligibility_from_place_text(_text(job.get("location")))
     # A free-text location is kept as the board wrote it, for the posting detail.
     shown = (_text(job.get("location")),) if _text(job.get("location")) else places
-    slug = f"{_slug(title)}-{_slug(company)}"
     posting = SourcePosting(
         external_job_id=url,
         title=title,
-        source_url=f"https://www.workingnomads.com/jobs/{slug}",
+        # The page address needs the site's slug, added later by one lookup (see the module doc).
+        source_url=url,
         apply_url=url,
         description_text=html_to_text(body if isinstance(body, str) else None),
         locations=shown,
@@ -81,6 +91,16 @@ def parse_job(job: object) -> Candidate:
         company_name=company,
     )
     return Candidate(posting, eligibility, (category, *tags))
+
+
+def _with_page(candidate: Candidate, slugs: dict[str, str]) -> Candidate:
+    """Point the candidate at its posting page when the site gave its slug."""
+    feed_id = _feed_id(candidate.posting.external_job_id)
+    slug = slugs.get(feed_id) if feed_id is not None else None
+    if not slug:
+        return candidate
+    posting = replace(candidate.posting, source_url=_PAGE + slug)
+    return replace(candidate, posting=posting)
 
 
 class WorkingNomadsAdapter(JobBoardAdapter):
@@ -109,6 +129,34 @@ class WorkingNomadsAdapter(JobBoardAdapter):
                     candidates.append(parse_job(job))
                 except MalformedPostingError:
                     skipped += 1
-            yield Page(candidates, skipped=skipped)
+            slugs = await self._slugs(candidates, per_minute)
+            yield Page([_with_page(candidate, slugs) for candidate in candidates], skipped=skipped)
 
         return [pages]
+
+    async def _slugs(self, candidates: list[Candidate], per_minute: int) -> dict[str, str]:
+        """Ask the site for the page slug of every posting; an unusable answer gives none."""
+        ids = sorted(
+            {i for c in candidates if (i := _feed_id(c.posting.external_job_id)) is not None}
+        )
+        if not ids:
+            return {}
+        query = quote("_id:(" + " OR ".join(ids) + ")")
+        url = f"{_SEARCH}?size={_LOOKUP_SIZE}&_source=id,slug&q={query}"
+        try:
+            answer: Any = await self._get_json(url, per_minute=per_minute)
+        # Intentionally broad: the slug only improves the link, so any failure of this one extra
+        # request must not fail the collection run (the posting keeps the feed address).
+        except Exception:
+            return {}
+        hits = answer.get("hits", {}).get("hits", []) if isinstance(answer, dict) else []
+        slugs: dict[str, str] = {}
+        for hit in hits if isinstance(hits, list) else []:
+            source = hit.get("_source") if isinstance(hit, dict) else None
+            if (
+                isinstance(source, dict)
+                and isinstance(source.get("slug"), str)
+                and source.get("id")
+            ):
+                slugs[str(source["id"])] = source["slug"]
+        return slugs

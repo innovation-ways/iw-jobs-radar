@@ -73,13 +73,16 @@ async def test_shortlisted_jobs_that_changed_in_the_window_are_listed_with_what_
 ) -> None:
     s = await scene(db_session)
     day = (NOW - T0).days
-    changed = await s.entry(shortlisted=True, days=day - 5)
-    old_change = await s.entry(shortlisted=True, days=day - 5)
-    not_starred = await s.entry(days=day - 5)
+    changed = await s.entry(shortlisted=True, days=day - 5, state=InboxState.UPDATED_UNREAD)
+    old_change = await s.entry(shortlisted=True, days=day - 5, state=InboxState.UPDATED_UNREAD)
+    not_starred = await s.entry(days=day - 5, state=InboxState.UPDATED_UNREAD)
+    # The owner already marked this change as read: it must leave the digest (it has no button left).
+    acknowledged = await s.entry(shortlisted=True, days=day - 5, state=InboxState.READ)
     for entry, when in (
         (changed, NOW - timedelta(hours=3)),
         (old_change, NOW - timedelta(days=4)),
         (not_starred, NOW - timedelta(hours=1)),
+        (acknowledged, NOW - timedelta(hours=2)),
     ):
         db_session.add(
             JobChangeEvent(
@@ -100,6 +103,7 @@ async def test_shortlisted_jobs_that_changed_in_the_window_are_listed_with_what_
             changed.item.job_inbox_item_id,
             old_change.item.job_inbox_item_id,
             not_starred.item.job_inbox_item_id,
+            acknowledged.item.job_inbox_item_id,
         }
     ]
     assert [c.row.item.job_inbox_item_id for c in mine] == [changed.item.job_inbox_item_id]

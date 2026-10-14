@@ -135,7 +135,9 @@ class DigestService:
         )
         changed: list[ChangedItem] = []
         for row in starred.rows:
-            if row.item.state == "ignored":
+            # Only changes the owner has not acknowledged yet: "Mark as read" (state read) clears
+            # the entry; otherwise it would stay for the whole window with no button to dismiss it.
+            if row.item.state != "updated_unread":
                 continue
             change = await self._queries.latest_change(row.job_posting_id)
             if change is not None and change.created_at >= since:

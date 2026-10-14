@@ -85,6 +85,11 @@ function Row({
               Ignored
             </span>
           )}
+          {c.is_followed && !c.has_source && (
+            <span className="shrink-0 rounded-full bg-caution-bg px-2 text-xs font-medium text-caution">
+              Not collected
+            </span>
+          )}
           {c.pending_candidates > 0 && (
             <span className="shrink-0 rounded-full bg-surface-2 px-2 text-xs font-normal text-ink-2">
               Identify

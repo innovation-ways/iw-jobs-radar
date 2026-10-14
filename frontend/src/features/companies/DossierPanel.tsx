@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { formatAge, formatDateTime } from '@/lib/format'
 import { AnalysisCard, WebsiteForm } from './CompanyAnalysis'
 import { FollowStar } from './CompanyList'
+import { CollectionCard } from './CollectionCard'
 import { HiringChart } from './HiringChart'
 import { OfferList } from './OfferList'
 import { useDossier, useDossierActions, useFollow, useIgnoreCompany, type Dossier } from './queries'
@@ -392,7 +393,15 @@ export function DossierPanel({
         onOlderChange={setIncludeOlder}
       />
 
-      {data.boards.length > 0 && (
+      {data.is_followed && (
+        <CollectionCard
+          name={data.name}
+          websiteUrl={data.homepage_url}
+          careersUrl={data.careers_url}
+          boards={data.boards}
+        />
+      )}
+      {!data.is_followed && data.boards.length > 0 && (
         <p className="text-xs text-ink-3">
           Boards: {data.boards.map((b) => b.display_name).join(', ')}
         </p>

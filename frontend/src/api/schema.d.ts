@@ -48,6 +48,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/onboarding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Follow Company From Addresses
+         * @description Create the company, follow it and, with a chosen board, add it and queue its first run.
+         */
+        post: operations["follow_company_from_addresses_api_v1_companies_onboarding_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/onboarding/detect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Detect Company Boards
+         * @description Find out what a careers page can be collected from; nothing is saved (ADR-070).
+         */
+        post: operations["detect_company_boards_api_v1_companies_onboarding_detect_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/onboarding/propose-reader": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Propose Careers Reader
+         * @description Ask the local model how to read a careers page that has no known board; nothing is saved.
+         */
+        post: operations["propose_careers_reader_api_v1_companies_onboarding_propose_reader_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{company_id}": {
         parameters: {
             query?: never;
@@ -1266,6 +1326,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sources/{source_configuration_id}/reader": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Approve Source Reader
+         * @description Approve a new reader for a careers-page source; the previous one stays in the history.
+         */
+        put: operations["approve_source_reader_api_v1_sources__source_configuration_id__reader_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/sources/{source_configuration_id}/reader/propose": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Propose Source Reader
+         * @description Ask the local model for a new reader of a careers-page source (after ``schema_changed``).
+         */
+        post: operations["propose_source_reader_api_v1_sources__source_configuration_id__reader_propose_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sources/{source_configuration_id}/run": {
         parameters: {
             query?: never;
@@ -1397,7 +1497,7 @@ export interface paths {
         };
         /**
          * Readyz
-         * @description Dependency readiness: database reachable and worker heartbeat fresh.
+         * @description Dependency readiness: database reachable, migrations applied and worker heartbeat fresh.
          */
         get: operations["readyz_readyz_get"];
         put?: never;
@@ -1515,17 +1615,27 @@ export interface components {
         };
         /**
          * BoardRead
-         * @description A job board of the company.
+         * @description A source that collects the company's offers, with the result of its last run.
          */
         BoardRead: {
             /** Display Name */
             display_name: string;
             /** Enabled */
             enabled: boolean;
+            /** Last Collected Count */
+            last_collected_count?: number | null;
+            /** Last Error Class */
+            last_error_class?: string | null;
+            /** Last Finished At */
+            last_finished_at?: string | null;
+            last_outcome?: components["schemas"]["SourceOutcome"] | null;
             /** Source Configuration Id */
             source_configuration_id: number;
+            source_type: components["schemas"]["SourceType"];
             /** Url */
             url: string;
+            /** Version */
+            version: number;
         };
         /**
          * CandidateRead
@@ -1781,6 +1891,8 @@ export interface components {
             company_id: number;
             /** Employer Type */
             employer_type: string | null;
+            /** Has Source */
+            has_source: boolean;
             /** Homepage Url */
             homepage_url: string | null;
             /** Is Followed */
@@ -1955,6 +2067,24 @@ export interface components {
             proposal_item_id: number;
             /** Value */
             value?: unknown | null;
+        };
+        /**
+         * DetectedBoardRead
+         * @description A board the careers page can be collected from, already checked against the real board.
+         */
+        DetectedBoardRead: {
+            /** Display Name */
+            display_name: string;
+            /** Identifier */
+            identifier: string;
+            /**
+             * Layer
+             * @enum {string}
+             */
+            layer: "ats" | "structured_page";
+            /** Postings Count */
+            postings_count: number;
+            source_type: components["schemas"]["SourceType"];
         };
         /**
          * DigestCounts
@@ -2960,6 +3090,82 @@ export interface components {
             version: number | null;
         };
         /**
+         * OnboardingConfirm
+         * @description Create the company, follow it and, when a board is chosen, add and collect it.
+         *
+         *     Without ``source`` the company is followed with its website and careers address and no
+         *     automatic collection (ADR-070.4). ``filters_enabled`` turns on the opt-in area and location
+         *     filters of ADR-051 for the new source.
+         */
+        OnboardingConfirm: {
+            /** Careers Url */
+            careers_url: string;
+            /**
+             * Filters Enabled
+             * @default true
+             */
+            filters_enabled: boolean;
+            /** Name */
+            name: string;
+            reader?: components["schemas"]["PageReaderConfig"] | null;
+            /** Reader Proposed By */
+            reader_proposed_by?: string | null;
+            source?: components["schemas"]["SourceChoice"] | null;
+            /** Website Url */
+            website_url: string;
+        };
+        /**
+         * OnboardingDetectRequest
+         * @description The three things the owner knows about a company; nothing is saved by a detection.
+         */
+        OnboardingDetectRequest: {
+            /** Careers Url */
+            careers_url: string;
+            /** Name */
+            name: string;
+            /** Website Url */
+            website_url: string;
+        };
+        /**
+         * OnboardingDetectionRead
+         * @description What the careers address leads to, with the addresses in the form they would be saved.
+         */
+        OnboardingDetectionRead: {
+            /** Candidates */
+            candidates: components["schemas"]["DetectedBoardRead"][];
+            /** Careers Url */
+            careers_url: string;
+            /** Existing Company Id */
+            existing_company_id: number | null;
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "detected" | "ambiguous" | "unsupported" | "script_only" | "blocked" | "unreachable" | "already_followed";
+            /** Reason */
+            reason: string | null;
+            /** Website Url */
+            website_url: string;
+        };
+        /**
+         * OnboardingResultRead
+         * @description What confirming created.
+         */
+        OnboardingResultRead: {
+            /** Collecting */
+            collecting: boolean;
+            /** Collection Run Id */
+            collection_run_id: number | null;
+            /** Company Id */
+            company_id: number;
+            /** Company Name */
+            company_name: string;
+            /** Is Followed */
+            is_followed: boolean;
+            /** Source Configuration Id */
+            source_configuration_id: number | null;
+        };
+        /**
          * OnsiteAreaRead
          * @description A place and radius where hybrid or on-site work is acceptable.
          */
@@ -2982,6 +3188,46 @@ export interface components {
             longitude: number;
             /** Radius Km */
             radius_km: number;
+        };
+        /**
+         * PageReaderConfig
+         * @description Where the postings are on a company's careers page and which parts mean what.
+         *
+         *     ``item_selector`` matches each posting block of the listing page; the other selectors are
+         *     relative to a block. Without ``link_selector`` the block's own address (or its first link) is
+         *     the posting address. With ``fetch_detail`` each posting page is opened for its description.
+         */
+        PageReaderConfig: {
+            /** Description Selector */
+            description_selector?: string | null;
+            /**
+             * Fetch Detail
+             * @default true
+             */
+            fetch_detail: boolean;
+            /** Item Selector */
+            item_selector: string;
+            /** Link Selector */
+            link_selector?: string | null;
+            /** Listing Url */
+            listing_url: string;
+            /** Location Selector */
+            location_selector?: string | null;
+            /**
+             * Max Pages
+             * @default 3
+             */
+            max_pages: number;
+            /** Next Page Selector */
+            next_page_selector?: string | null;
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /** Title Selector */
+            title_selector?: string | null;
         };
         /**
          * PeriodRead
@@ -3374,6 +3620,43 @@ export interface components {
             waiting: number;
         };
         /**
+         * ReaderPostingRead
+         * @description A posting a proposed reader finds on the careers page.
+         */
+        ReaderPostingRead: {
+            /** Location */
+            location: string;
+            /** Title */
+            title: string;
+            /** Url */
+            url: string;
+        };
+        /**
+         * ReaderProposalRead
+         * @description A reader proposed by the local model, with what it finds, for the owner to review.
+         */
+        ReaderProposalRead: {
+            /** Preview */
+            preview: components["schemas"]["ReaderPostingRead"][];
+            /** Proposed By */
+            proposed_by: string;
+            reader: components["schemas"]["PageReaderConfig"];
+        };
+        /**
+         * ReaderReplace
+         * @description Approve a new reader for an existing careers-page source (the old one stays in history).
+         */
+        ReaderReplace: {
+            /** Expected Version */
+            expected_version: number;
+            /**
+             * Proposed By
+             * @default owner
+             */
+            proposed_by: string;
+            reader: components["schemas"]["PageReaderConfig"];
+        };
+        /**
          * ReadinessResponse
          * @description Body of ``/readyz``.
          */
@@ -3586,6 +3869,15 @@ export interface components {
          * @enum {string}
          */
         SourceCategory: "company_board" | "job_board";
+        /**
+         * SourceChoice
+         * @description The board the owner chose among the detected ones.
+         */
+        SourceChoice: {
+            /** Identifier */
+            identifier: string;
+            source_type: components["schemas"]["SourceType"];
+        };
         /**
          * SourceCreate
          * @description Request to add a source; it is validated against the real source before being saved.
@@ -3806,7 +4098,7 @@ export interface components {
          * @description Kind of job source adapter: ATS company boards first, then job boards (ADR-049).
          * @enum {string}
          */
-        SourceType: "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "eightfold" | "arbeitnow" | "jobicy" | "himalayas" | "itjobs_pt";
+        SourceType: "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "eightfold" | "arbeitnow" | "jobicy" | "himalayas" | "itjobs_pt" | "page_jsonld" | "page_config";
         /**
          * SourceUpdate
          * @description Change a source's settings; ``expected_version`` is the version the client last saw.
@@ -4210,6 +4502,105 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompanyList"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    follow_company_from_addresses_api_v1_companies_onboarding_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OnboardingConfirm"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingResultRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    detect_company_boards_api_v1_companies_onboarding_detect_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OnboardingDetectRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnboardingDetectionRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    propose_careers_reader_api_v1_companies_onboarding_propose_reader_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OnboardingDetectRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReaderProposalRead"];
                 };
             };
             /** @description Validation Error */
@@ -6425,6 +6816,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SourceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_source_reader_api_v1_sources__source_configuration_id__reader_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_configuration_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReaderReplace"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    propose_source_reader_api_v1_sources__source_configuration_id__reader_propose_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_configuration_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReaderProposalRead"];
                 };
             };
             /** @description Validation Error */

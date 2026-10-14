@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jobs Radar — Follow a company mock-up</title>
+<!--
+  Static design mock-up for ADR-070 "Follow a company from its website and careers URLs"
+  (not the real application). All data is synthetic apart from the three example careers addresses
+  the owner gave, which are only text here: this page makes no request.
+  Shows: the entry point on the Companies screen, the form, every detection outcome, the
+  confirmation, and the "Collection" card of a company with "Detect again".
+  Same visual tokens as companies-mock.html. Interactive: the form validates, "Check addresses"
+  runs a scripted detection (the example addresses give their real outcome), the outcome switcher
+  at the top of the dialog shows the other outcomes, theme toggle.
+-->
+<style>
+:root {
+  --font: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radius: 8px;
+  --bg: #fbfbfc; --surface: #ffffff; --surface-2: #f3f4f6; --surface-3: #eaecf0;
+  --border: #e4e6eb; --border-strong: #cfd3da;
+  --text: #15171c; --text-2: #565c69; --text-3: #7a808d;
+  --good: #146c36; --good-bg: #e6f4ec; --caution: #8a4b0a; --caution-bg: #fdf1dc;
+  --bad: #a61b1b; --bad-bg: #fbe8e8; --neutral-band: #4b5160; --neutral-bg: #eceef2;
+  --accent: #4f46e5; --accent-soft: #eceafd; --accent-text: #3730a3; --on-accent: #fff;
+  --star: #b7791f; --scrim: rgba(21, 23, 28, .45);
+}
+html[data-theme="dark"] {
+  --bg: #0d0e11; --surface: #14161a; --surface-2: #1b1e23; --surface-3: #242830;
+  --border: #272a31; --border-strong: #363a44;
+  --text: #ecedf0; --text-2: #a5aab5; --text-3: #7d838f;
+  --good: #8cc9a4; --good-bg: #172a20; --caution: #d9b36a; --caution-bg: #2a2212;
+  --bad: #e9a0a0; --bad-bg: #2c1919; --neutral-band: #a9aeb8; --neutral-bg: #242830;
+  --accent: #8b87f5; --accent-soft: #232146; --accent-text: #c7c4ff; --on-accent: #0d0e11;
+  --star: #e5b84c; --scrim: rgba(0, 0, 0, .6);
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--accent-text); text-decoration: none; } a:hover { text-decoration: underline; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--text-2); } .faint { color: var(--text-3); }
+.ico { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; background: var(--surface-2); padding: 0 5px; border-radius: 4px; }
+
+.app { display: grid; grid-template-columns: 200px 1fr; min-height: 100vh; }
+.sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; }
+.brand { padding: 6px 10px 14px; font-weight: 650; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 6px; color: var(--text-2); }
+.nav-item[aria-current="page"] { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+.main { display: flex; flex-direction: column; min-width: 0; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 10px 20px; border-bottom: 1px solid var(--border); background: var(--surface); }
+.topbar h1 { font-size: 15px; margin: 0; font-weight: 650; flex: 1; }
+.page { padding: 18px 24px 60px; display: flex; flex-direction: column; gap: 20px; max-width: 980px; }
+.section-title { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-3); margin: 0 0 8px; }
+
+.btn { border: 1px solid var(--border-strong); background: var(--surface); padding: 5px 12px; border-radius: 7px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn[disabled] { opacity: .55; cursor: not-allowed; }
+.btn.sm { padding: 2px 9px; font-size: 12px; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--surface-2); color: var(--text-2); white-space: nowrap; }
+.chip.good { background: var(--good-bg); color: var(--good); }
+.chip.caution { background: var(--caution-bg); color: var(--caution); }
+.chip.bad { background: var(--bad-bg); color: var(--bad); }
+.chip.accent { background: var(--accent-soft); color: var(--accent-text); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.card-h { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+.card-h h3 { margin: 0; font-size: 13px; font-weight: 650; flex: 1; }
+.card-b { padding: 12px 14px; }
+
+/* background: the Companies list, faded */
+.co { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 9px 14px; border-bottom: 1px solid var(--border); align-items: center; }
+.co:last-child { border-bottom: 0; }
+.co .name { font-weight: 600; }
+.co .sub { font-size: 12px; color: var(--text-2); }
+
+/* dialog */
+.scrim { position: fixed; inset: 0; background: var(--scrim); display: none; align-items: flex-start; justify-content: center; padding: 40px 16px; overflow-y: auto; z-index: 10; }
+.scrim.open { display: flex; }
+.dialog { background: var(--surface); border: 1px solid var(--border-strong); border-radius: 12px; width: min(620px, 100%); box-shadow: 0 20px 50px rgba(0,0,0,.25); }
+.dialog header { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.dialog header h2 { margin: 0; font-size: 16px; flex: 1; }
+.dialog .body { padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+.dialog footer { display: flex; gap: 8px; justify-content: flex-end; align-items: center; padding: 12px 18px; border-top: 1px solid var(--border); background: var(--surface-2); border-radius: 0 0 12px 12px; }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-weight: 600; font-size: 13px; }
+.field .req { color: var(--bad); }
+.field input[type="text"] { border: 1px solid var(--border-strong); background: var(--bg); border-radius: 7px; padding: 6px 10px; }
+.field input[aria-invalid="true"] { border-color: var(--bad); }
+.hint { font-size: 12px; color: var(--text-3); }
+.err { font-size: 12px; color: var(--bad); display: flex; gap: 6px; align-items: center; }
+.check { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); }
+.check input { margin-top: 3px; }
+.check b { font-weight: 600; }
+.demo-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 18px; background: var(--caution-bg); color: var(--caution); font-size: 12px; border-bottom: 1px solid var(--border); }
+.demo-bar button { border: 1px solid currentColor; background: transparent; border-radius: 999px; padding: 1px 9px; font-size: 12px; color: inherit; }
+.demo-bar button[aria-pressed="true"] { background: var(--caution); color: var(--surface); }
+
+/* outcome */
+.outcome { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.outcome .oh { display: flex; gap: 10px; align-items: center; padding: 10px 14px; font-weight: 600; }
+.outcome.ok .oh { background: var(--good-bg); color: var(--good); }
+.outcome.warn .oh { background: var(--caution-bg); color: var(--caution); }
+.outcome.stop .oh { background: var(--bad-bg); color: var(--bad); }
+.outcome .ob { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.kv { display: grid; grid-template-columns: 150px 1fr; gap: 6px 12px; font-size: 13px; }
+.kv dt { color: var(--text-3); } .kv dd { margin: 0; }
+.cand { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; }
+.cand:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.note { font-size: 12px; color: var(--text-2); padding: 8px 10px; background: var(--surface-2); border-radius: 8px; }
+.spin { width: 14px; height: 14px; border: 2px solid var(--border-strong); border-top-color: var(--accent); border-radius: 50%; animation: s 0.8s linear infinite; }
+@keyframes s { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 8px; display: none; z-index: 20; max-width: 90vw; }
+.toast.show { display: block; }
+
+/* company collection card */
+.coll { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+@media (max-width: 760px) { .app { grid-template-columns: 1fr; } .sidebar { display: none; } .coll { grid-template-columns: 1fr; } .kv { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar" aria-label="Main">
+    <div class="brand">Jobs Radar</div>
+    <a class="nav-item" href="#">Inbox</a>
+    <a class="nav-item" aria-current="page" href="#">Companies</a>
+    <a class="nav-item" href="#">Sources</a>
+    <a class="nav-item" href="#">Trends</a>
+    <a class="nav-item" href="#">Settings</a>
+  </nav>
+  <div class="main">
+    <div class="topbar">
+      <h1>Companies</h1>
+      <button class="btn" id="theme" type="button">Dark theme</button>
+      <button class="btn primary" id="open" type="button">
+        <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Follow a company
+      </button>
+    </div>
+
+    <div class="page">
+      <section aria-labelledby="s1">
+        <h2 class="section-title" id="s1">1 · Entry point: the Companies screen (list shortened)</h2>
+        <div class="card">
+          <div class="co"><div><div class="name">★ Datadog</div><div class="sub">Greenhouse · 3 open · best fit 74</div></div><span class="chip good">Collecting</span></div>
+          <div class="co"><div><div class="name">★ Mistral AI</div><div class="sub">Ashby · 213 open · filters on</div></div><span class="chip good">Collecting</span></div>
+          <div class="co"><div><div class="name">★ Adyen</div><div class="sub">Careers page only · no automatic collection</div></div><span class="chip caution">Not collected</span></div>
+        </div>
+        <p class="hint">The button sits next to the screen title. A followed company without a source is listed like any other, with the state in text, never colour alone.</p>
+      </section>
+
+      <section aria-labelledby="s2">
+        <h2 class="section-title" id="s2">2 · The "Collection" card inside a company</h2>
+        <div class="coll">
+          <div class="card"><div class="card-h"><h3>Mistral AI</h3><span class="chip good">Collecting</span></div><div class="card-b">
+            <dl class="kv" style="grid-template-columns:90px 1fr"><dt>Via</dt><dd>Ashby board <code>mistral.ai</code></dd><dt>Last run</dt><dd class="num">13 Oct 07:30 · 213 postings</dd><dt>Careers</dt><dd><a href="#">jobs.ashbyhq.com/mistral.ai</a></dd></dl></div></div>
+          <div class="card"><div class="card-h"><h3>Wise</h3><span class="chip good">Collecting</span></div><div class="card-b">
+            <dl class="kv" style="grid-template-columns:90px 1fr"><dt>Via</dt><dd>Own site (structured data)</dd><dt>Last run</dt><dd class="num">13 Oct 07:30 · 61 changed of 407</dd><dt>Careers</dt><dd><a href="#">wise.jobs</a></dd></dl></div></div>
+          <div class="card"><div class="card-h"><h3>Adyen</h3><span class="chip caution">Not collected</span></div><div class="card-b">
+            <dl class="kv" style="grid-template-columns:90px 1fr"><dt>Why</dt><dd>The postings load with JavaScript</dd><dt>Checked</dt><dd class="num">13 Oct 10:12</dd><dt>Careers</dt><dd><a href="#">careers.adyen.com</a></dd></dl>
+            <p style="margin:10px 0 0"><button class="btn sm" type="button">Detect again</button></p></div></div>
+        </div>
+      </section>
+
+      <p class="hint">Open the dialog with <b>Follow a company</b>. Try the three example addresses: <code>https://jobs.ashbyhq.com/mistral.ai</code>, <code>https://wise.jobs/</code>, <code>https://careers.adyen.com/</code>.</p>
+    </div>
+  </div>
+</div>
+
+<div class="scrim" id="scrim">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-title">
+    <header>
+      <h2 id="dlg-title">Follow a company</h2>
+      <button class="btn sm" id="close" type="button">Close</button>
+    </header>
+    <div class="demo-bar" aria-label="Mock-up only">
+      <span>Mock-up only · show outcome:</span>
+      <button type="button" data-o="ats" aria-pressed="false">ATS</button>
+      <button type="button" data-o="jsonld" aria-pressed="false">Own site</button>
+      <button type="button" data-o="ambiguous" aria-pressed="false">Ambiguous</button>
+      <button type="button" data-o="script" aria-pressed="false">JavaScript only</button>
+      <button type="button" data-o="unsupported" aria-pressed="false">Unsupported</button>
+      <button type="button" data-o="blocked" aria-pressed="false">Refused</button>
+      <button type="button" data-o="exists" aria-pressed="false">Already followed</button>
+    </div>
+    <form class="body" id="form" novalidate>
+      <div class="field">
+        <label for="name">Company name <span class="req" aria-hidden="true">*</span></label>
+        <input id="name" type="text" autocomplete="off" aria-describedby="name-h">
+        <span class="hint" id="name-h">How it is listed in Jobs Radar. If a company with this name already exists, the new source is attached to it.</span>
+        <span class="err" id="name-e" hidden></span>
+      </div>
+      <div class="field">
+        <label for="site">Company website <span class="req" aria-hidden="true">*</span></label>
+        <input id="site" type="text" inputmode="url" autocomplete="off" placeholder="https://example.com" aria-describedby="site-h">
+        <span class="hint" id="site-h">The company's own site. It is used to analyse the company (dossier) and to identify it in open data.</span>
+        <span class="err" id="site-e" hidden></span>
+      </div>
+      <div class="field">
+        <label for="careers">Careers page <span class="req" aria-hidden="true">*</span></label>
+        <input id="careers" type="text" inputmode="url" autocomplete="off" placeholder="https://example.com/careers" aria-describedby="careers-h">
+        <span class="hint" id="careers-h">Where the company publishes its offers. A board address such as <code>jobs.lever.co/acme</code> works too.</span>
+        <span class="err" id="careers-e" hidden></span>
+      </div>
+      <label class="check">
+        <input type="checkbox" id="filters" checked>
+        <span><b>Keep only postings that match my areas and location</b><br>
+        <span class="hint">Recommended for large employers (hundreds of postings). Uses your profile and Search Intent; you can change it later in Sources.</span></span>
+      </label>
+      <div id="result" aria-live="polite"></div>
+    </form>
+    <footer>
+      <span class="hint" style="flex:1" id="foot-note">Nothing is saved until you confirm.</span>
+      <button class="btn" id="check" type="button">Check addresses</button>
+      <button class="btn primary" id="confirm" type="button" disabled>Follow</button>
+    </footer>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* Mock-up behaviour only: a scripted detection, no network, no storage. */
+const $ = (id) => document.getElementById(id)
+const scrim = $('scrim'), result = $('result'), confirmBtn = $('confirm')
+let outcome = null, chosen = 0
+
+const OUTCOMES = {
+  ats: { cls: 'ok', icon: '✓', title: 'Found a company board',
+    rows: [['Source', 'Ashby board <code>mistral.ai</code>'], ['Open postings', '<span class="num">213</span>'],
+           ['Collected from', 'The board\'s own API, once per scheduled run'], ['Filters', 'On: postings outside your areas and location are not stored']],
+    note: 'The board was checked just now, so this is a real board with postings.', label: 'Follow and collect now' },
+  jsonld: { cls: 'ok', icon: '✓', title: 'Found postings on the company\'s own site',
+    rows: [['Source', 'Own site, structured data (<code>JobPosting</code>)'], ['Posting pages', '<span class="num">407</span> listed in the sitemap'],
+           ['Collected from', 'Posting pages of <code>wise.jobs</code>, changed pages only, at most 200 per run'], ['Filters', 'On']],
+    note: 'No applicant tracking system was found. The site publishes each posting with structured data, so it can be read without AI.', label: 'Follow and collect now' },
+  ambiguous: { cls: 'warn', icon: '!', title: 'More than one board was found',
+    choose: [['Greenhouse board <code>acme</code>', '<span class="num">41</span> open postings'], ['Lever board <code>acme-labs</code>', '<span class="num">6</span> open postings (a subsidiary?)']],
+    note: 'Choose the board that is the company\'s own. You can follow the other one separately.', label: 'Follow and collect now' },
+  script: { cls: 'warn', icon: '!', title: 'The postings are loaded by JavaScript',
+    rows: [['Collected automatically', 'No'], ['Why', 'The page has no postings in its HTML and no structured data; they are searched in the browser.']],
+    note: 'You can still follow the company: its website is analysed and its careers page is linked. "Detect again" repeats the check later (for example when another system is supported).', label: 'Follow without collection' },
+  unsupported: { cls: 'warn', icon: '!', title: 'No supported system found',
+    rows: [['Collected automatically', 'No'], ['Why', 'The careers page uses a system that is not supported yet (for example Workday or Teamtailor).']],
+    note: 'The company is followed with its website and careers page. "Detect again" repeats the check when support is added.', label: 'Follow without collection' },
+  blocked: { cls: 'stop', icon: '✕', title: 'The careers page cannot be read',
+    rows: [['Reason', 'The site\'s <code>robots.txt</code> does not allow automated reading of this page (or it answered 403 or timed out).'], ['Collected automatically', 'No']],
+    note: 'Jobs Radar respects the site\'s rules and does not work around a refusal. You can still follow the company without collection.', label: 'Follow without collection' },
+  exists: { cls: 'warn', icon: '!', title: 'This company is already followed',
+    rows: [['Company', 'Mistral AI'], ['Source', 'Ashby board <code>mistral.ai</code> (enabled)']],
+    note: 'Nothing would change. Open the company to see its collection state or detect again.', label: null }
+}
+
+function show(key) {
+  outcome = key
+  const o = OUTCOMES[key]
+  document.querySelectorAll('.demo-bar button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.o === key)))
+  let html = '<div class="outcome ' + o.cls + '"><div class="oh"><span aria-hidden="true">' + o.icon + '</span><span>' + o.title + '</span></div><div class="ob">'
+  if (o.rows) html += '<dl class="kv">' + o.rows.map((r) => '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>').join('') + '</dl>'
+  if (o.choose) html += o.choose.map((c, i) => '<label class="cand"><input type="radio" name="board" value="' + i + '"' + (i === 0 ? ' checked' : '') + '><span>' + c[0] + '<br><span class="hint">' + c[1] + '</span></span></label>').join('')
+  html += '<div class="note">' + o.note + '</div></div></div>'
+  result.innerHTML = html
+  confirmBtn.textContent = o.label || 'Follow'
+  confirmBtn.disabled = !o.label
+  $('foot-note').textContent = o.label ? 'Nothing is saved until you confirm.' : 'Nothing to do.'
+}
+
+function guess() {
+  const c = $('careers').value.toLowerCase()
+  if (c.includes('ashbyhq.com') || c.includes('lever.co') || c.includes('greenhouse.io')) return 'ats'
+  if (c.includes('wise.jobs')) return 'jsonld'
+  if (c.includes('adyen')) return 'script'
+  return 'unsupported'
+}
+
+function fieldError(id, message) {
+  const input = $(id), e = $(id + '-e')
+  e.hidden = !message
+  e.textContent = message || ''
+  input.setAttribute('aria-invalid', String(Boolean(message)))
+  return !message
+}
+
+function valid() {
+  const url = (v) => { try { const u = new URL(/^https?:\/\//.test(v) ? v : 'https://' + v); return u.hostname.includes('.') } catch { return false } }
+  const site = $('site').value.trim(), careers = $('careers').value.trim()
+  const ok1 = fieldError('name', $('name').value.trim() ? '' : 'Enter the company name.')
+  const ok2 = fieldError('site', !site ? 'Enter the company website.' : !url(site) ? 'Enter a public web address, for example https://example.com.'
+    : /(linkedin|indeed|glassdoor|greenhouse\.io|lever\.co|ashbyhq\.com)/.test(site) ? 'That is a job board or an applicant system, not the company\'s own website.' : '')
+  const ok3 = fieldError('careers', !careers ? 'Enter the careers page address.' : !url(careers) ? 'Enter a public web address.' : '')
+  return ok1 && ok2 && ok3
+}
+
+$('open').addEventListener('click', () => { scrim.classList.add('open'); $('name').focus() })
+$('close').addEventListener('click', () => scrim.classList.remove('open'))
+scrim.addEventListener('keydown', (e) => { if (e.key === 'Escape') scrim.classList.remove('open') })
+document.querySelectorAll('.demo-bar button').forEach((b) => b.addEventListener('click', () => show(b.dataset.o)))
+$('check').addEventListener('click', () => {
+  if (!valid()) { result.innerHTML = ''; confirmBtn.disabled = true; return }
+  result.innerHTML = '<div class="note" style="display:flex;gap:10px;align-items:center"><span class="spin" aria-hidden="true"></span>Checking the careers page…</div>'
+  confirmBtn.disabled = true
+  setTimeout(() => show(guess()), 700)
+})
+confirmBtn.addEventListener('click', () => {
+  scrim.classList.remove('open')
+  const t = $('toast')
+  t.textContent = OUTCOMES[outcome].label && OUTCOMES[outcome].label.includes('collect now')
+    ? 'Followed. A first collection was queued; its result appears under Sources.'
+    : 'Followed without automatic collection. Use "Detect again" in the company to retry.'
+  t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3500)
+})
+$('theme').addEventListener('click', () => {
+  const dark = document.documentElement.dataset.theme !== 'dark'
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+  $('theme').textContent = dark ? 'Light theme' : 'Dark theme'
+})
+</script>
+</body>
+</html>

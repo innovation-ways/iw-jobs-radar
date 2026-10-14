@@ -2607,6 +2607,8 @@ export interface components {
             description_text: string;
             /** Dimensions */
             dimensions: components["schemas"]["DimensionRead"][];
+            /** Engagement Types */
+            engagement_types: string[];
             /** Evaluated */
             evaluated: boolean;
             evaluation: components["schemas"]["EvaluationBrief"] | null;
@@ -2637,6 +2639,7 @@ export interface components {
             locations: string[];
             /** Note */
             note: string | null;
+            pay: components["schemas"]["PayRead"] | null;
             /** Possible Duplicate */
             possible_duplicate: boolean;
             /** Read At */
@@ -2668,6 +2671,8 @@ export interface components {
             company_id: number;
             /** Company Name */
             company_name: string;
+            /** Engagement Types */
+            engagement_types: string[];
             /** Evaluated */
             evaluated: boolean;
             evaluation: components["schemas"]["EvaluationBrief"] | null;
@@ -2693,6 +2698,7 @@ export interface components {
             locations: string[];
             /** Note */
             note: string | null;
+            pay: components["schemas"]["PayRead"] | null;
             /** Possible Duplicate */
             possible_duplicate: boolean;
             /** Signals */
@@ -3235,6 +3241,30 @@ export interface components {
             schema_version: 1;
             /** Title Selector */
             title_selector?: string | null;
+        };
+        /**
+         * PayRead
+         * @description The pay a posting states, as written (no currency conversion, ADR-073).
+         */
+        PayRead: {
+            /** Currency */
+            currency: string;
+            /**
+             * Form
+             * @enum {string}
+             */
+            form: "annual_salary" | "day_rate" | "hourly_rate";
+            /** Max */
+            max: number;
+            /** Min */
+            min: number;
+            /**
+             * Period
+             * @enum {string}
+             */
+            period: "year" | "month" | "day" | "hour";
+            /** Text */
+            text: string;
         };
         /**
          * PeriodRead
@@ -5132,6 +5162,8 @@ export interface operations {
                 fit_max?: number | null;
                 evaluated?: boolean | null;
                 set_aside?: boolean | null;
+                engagement?: ("employee_permanent" | "employee_fixed_term" | "contractor_b2b" | "freelance" | "contractor_agency" | "internship" | "unknown")[] | null;
+                rate?: ("stated" | "not_stated") | null;
                 from?: string | null;
                 to?: string | null;
                 include_closed?: boolean;

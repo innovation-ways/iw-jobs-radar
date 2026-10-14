@@ -1,4 +1,4 @@
-"""The ``extract-v3`` prompt (document 13, section 6.1; ADR-027).
+"""The ``extract-v4`` prompt (document 13, section 6.1; ADR-027, ADR-073).
 
 The prompt is built from the job alone: it never receives a profile or an intent, so one
 extraction serves every intent. The model is told to extract only what the posting states, to
@@ -44,7 +44,14 @@ SYSTEM_PROMPT = "\n".join(
         '"status": "known", "confidence": 0.95, "evidence": "Fully remote within the EU"}; for an '
         'attribute the posting never mentions it is {"value": null, "status": "unknown", '
         '"confidence": 0, "evidence": null}.',
-        "10. Answer with the JSON object only.",
+        "10. employment_types: tell the kinds of work contract apart. employee_permanent is a "
+        "permanent employment contract. employee_fixed_term is a fixed-term or temporary "
+        "employment contract. contractor_b2b is a self-employed contractor invoicing through "
+        "their own company (B2B, limited company, sole trader). freelance is an independent "
+        "freelancer or project-based self-employed work. contractor_agency is a contract placed "
+        "through a recruitment agency or umbrella company, paid by day or hour. A day rate or an "
+        "hourly rate with no mention of employment is a contractor kind, not employee_permanent.",
+        "11. Answer with the JSON object only.",
     ]
 )
 
@@ -112,7 +119,7 @@ def build_prompt(
     taxonomy: Mapping[str, Sequence[str]],
     max_chars: int,
 ) -> PreparedPrompt:
-    """Build the ``extract-v3`` request for one job (no profile or intent data is accepted)."""
+    """Build the ``extract-v4`` request for one job (no profile or intent data is accepted)."""
     used, truncated = truncate_text(description, max_chars)
     allowed = "\n".join(f"- {kind}: {', '.join(keys)}" for kind, keys in sorted(taxonomy.items()))
     parts = [f"Title: {title}"]

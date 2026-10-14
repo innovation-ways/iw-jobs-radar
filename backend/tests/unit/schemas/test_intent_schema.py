@@ -288,3 +288,17 @@ def test_open_groups_may_list_a_subset() -> None:
     data = deepcopy(sample_intent())
     data["stances"]["sectors"] = [{"key": "telecom", "stance": "preferred"}]
     assert validate_intent_against_taxonomy(IntentDefinition.model_validate(data), taxonomy()) == []
+
+
+def test_a_term_added_after_version_one_may_be_missing_from_an_older_intent() -> None:
+    """ADR-073: an intent saved before ``contractor_agency`` existed stays valid."""
+    live = {**taxonomy(), "engagement_type": {*taxonomy()["engagement_type"], "contractor_agency"}}
+    intent = IntentDefinition.model_validate(sample_intent())
+    assert validate_intent_against_taxonomy(intent, live) == []
+
+
+def test_an_intent_may_still_set_a_stance_for_a_later_term() -> None:
+    live = {**taxonomy(), "engagement_type": {*taxonomy()["engagement_type"], "contractor_agency"}}
+    data = deepcopy(sample_intent())
+    data["stances"]["engagement_types"].append({"key": "contractor_agency", "stance": "preferred"})
+    assert validate_intent_against_taxonomy(IntentDefinition.model_validate(data), live) == []

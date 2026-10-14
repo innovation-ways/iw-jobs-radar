@@ -266,3 +266,15 @@ def test_without_source_places_the_job_carries_none() -> None:
     job = job_attributes(stored_regions(["EU"]), "t", "d", "Acme", source_places=[])
     assert job.source_places == ()
     assert job.text_remote_regions == ("EU",)
+
+
+def test_a_term_the_intent_does_not_list_is_acceptable_when_it_was_added_after_version_one() -> (
+    None
+):
+    """ADR-073: an older intent has no stance for ``contractor_agency``; the form shows it as OK."""
+    definition = IntentDefinition.model_validate(sample_intent())
+    assert "contractor_agency" not in {e.key for e in definition.stances.engagement_types}
+    view = intent_view(definition)
+    assert view.stances["engagement_types"]["contractor_agency"] == "acceptable"
+    # A stance the owner did set is never overridden.
+    assert view.stances["engagement_types"]["contractor_b2b"] == "preferred"

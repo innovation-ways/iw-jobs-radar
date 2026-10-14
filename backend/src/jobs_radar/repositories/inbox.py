@@ -22,6 +22,7 @@ from jobs_radar.db.models import (
     InboxEvent,
     IntentRevision,
     JobChangeEvent,
+    JobExtraction,
     JobInboxItem,
     JobOpportunity,
     JobOpportunityLink,
@@ -32,7 +33,12 @@ from jobs_radar.db.models import (
     SearchIntent,
     SourceConfiguration,
 )
-from jobs_radar.domain.enums import Actor, InboxAction, InboxState
+from jobs_radar.domain.enums import (
+    CONTRACTOR_ENGAGEMENT_KINDS,
+    Actor,
+    InboxAction,
+    InboxState,
+)
 
 # Columns a transition may change besides ``state`` and ``version``.
 _CHANGEABLE = frozenset(
@@ -189,6 +195,9 @@ class ListQuery:
     recommended_only: bool = False
     # ADR-060: a recommended job with a fit below this is also set aside; 0 turns the rule off.
     set_aside_below: int = 0
+    # ADR-073: engagement type keys (``unknown`` = none stated) and the stated-rate filter.
+    engagement: tuple[str, ...] = ()
+    rate: str | None = None
 
 
 @dataclass(frozen=True)
@@ -201,6 +210,8 @@ class RawRow:
     posting: JobPosting
     snapshot: JobSnapshot
     evaluation: MatchEvaluation | None
+    # Attributes of the snapshot's latest successful extraction (ADR-073), if there is one.
+    attributes: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -212,15 +223,58 @@ class PostingRow:
     link: JobOpportunityLink
 
 
+def _engagement_conditions(extraction: Any, query: ListQuery) -> list[Any]:
+    """Return the SQL conditions of the engagement and rate filters (ADR-073).
+
+    A kind counts only when the attribute is known. ``unknown`` matches jobs with no known kind
+    (including jobs not extracted yet). "Rate not stated" is a contract offer with no pay: a
+    permanent or unknown offer without pay is not one.
+    """
+    attributes = extraction.attributes_json
+    kinds = attributes["employment_types"]
+    kinds_known = func.coalesce(kinds["status"].astext, "unknown") == "known"
+
+    def has(key: str) -> Any:
+        return and_(kinds_known, kinds["value"].contains([key]))
+
+    pay = attributes["compensation"]
+    pay_stated = and_(
+        func.coalesce(pay["status"].astext, "unknown") == "known",
+        pay["value"]["min"].is_not(None),
+        pay["value"]["max"].is_not(None),
+        func.coalesce(pay["value"]["disclosed"].astext, "true") != "false",
+    )
+    is_contract = or_(*(has(key) for key in CONTRACTOR_ENGAGEMENT_KINDS))
+    conditions: list[Any] = []
+    if query.engagement:
+        options = [~kinds_known if key == "unknown" else has(key) for key in query.engagement]
+        conditions.append(or_(*options))
+    if query.rate == "stated":
+        conditions.append(pay_stated)
+    elif query.rate == "not_stated":
+        conditions += [is_contract, ~pay_stated]
+    return conditions
+
+
 class InboxQueries:
     """Read queries for the inbox list, counts and detail."""
 
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
-    def _select(self, query: ListQuery) -> tuple[Any, Any, Any]:
+    def _select(self, query: ListQuery) -> tuple[Any, Any, Any, Any]:
         snapshot = aliased(JobSnapshot)
         newer_snapshot = aliased(JobSnapshot)
+        extraction = aliased(JobExtraction)
+        newer_extraction = aliased(JobExtraction)
+        latest_extraction = (
+            select(func.max(newer_extraction.job_extraction_id))
+            .where(
+                newer_extraction.job_snapshot_id == snapshot.job_snapshot_id,
+                newer_extraction.status == "succeeded",
+            )
+            .scalar_subquery()
+        )
         evaluation = aliased(MatchEvaluation)
         newer_evaluation = aliased(MatchEvaluation)
         latest_snapshot = (
@@ -252,6 +306,7 @@ class InboxQueries:
                 JobPosting,
                 snapshot,
                 evaluation,
+                extraction.attributes_json,
             )
             .select_from(JobInboxItem)
             .join(
@@ -261,12 +316,13 @@ class InboxQueries:
             .join(JobPosting, JobPosting.job_posting_id == JobOpportunity.primary_job_posting_id)
             .join(snapshot, snapshot.job_snapshot_id == latest_snapshot)
             .outerjoin(evaluation, on_evaluation)
+            .outerjoin(extraction, extraction.job_extraction_id == latest_extraction)
             .where(JobInboxItem.owner_id == query.owner_id)
         )
-        return statement, evaluation, snapshot
+        return statement, evaluation, snapshot, extraction
 
     def _filtered(self, query: ListQuery) -> tuple[Any, Any]:
-        statement, evaluation, snapshot = self._select(query)
+        statement, evaluation, snapshot, extraction = self._select(query)
         if query.state == TO_REVIEW:
             # "To review" holds the unread jobs and those the source changed since (updated).
             statement = statement.where(
@@ -337,6 +393,8 @@ class InboxQueries:
             statement = statement.where(
                 blocked if query.set_aside else ~func.coalesce(blocked, False)
             )
+        if query.engagement or query.rate:
+            statement = statement.where(*_engagement_conditions(extraction, query))
         if query.followed_only:
             followed = (
                 select(CompanyFollow.company_follow_id)
@@ -390,8 +448,8 @@ class InboxQueries:
             statement = statement.where(key < position if descending else key > position)
         rows = (await self._session.execute(statement.order_by(*order).limit(limit))).all()
         return [
-            RawRow(item, opportunity, company, posting, snapshot, ev)
-            for item, opportunity, company, posting, snapshot, ev in rows
+            RawRow(item, opportunity, company, posting, snapshot, ev, attributes)
+            for item, opportunity, company, posting, snapshot, ev, attributes in rows
         ]
 
     async def count(self, query: ListQuery) -> int:
@@ -494,13 +552,13 @@ class InboxQueries:
 
     async def one(self, query: ListQuery, job_inbox_item_id: int) -> RawRow | None:
         """Return one row (same shape as the list) for an item, if it exists."""
-        statement, _evaluation, _snapshot = self._select(query)
+        statement, _evaluation, _snapshot, _extraction = self._select(query)
         statement = statement.where(JobInboxItem.job_inbox_item_id == job_inbox_item_id)
         row = (await self._session.execute(statement)).first()
         if row is None:
             return None
-        item, opportunity, company, posting, snapshot, ev = row
-        return RawRow(item, opportunity, company, posting, snapshot, ev)
+        item, opportunity, company, posting, snapshot, ev, attributes = row
+        return RawRow(item, opportunity, company, posting, snapshot, ev, attributes)
 
     async def events(self, job_inbox_item_id: int, limit: int) -> list[InboxEvent]:
         """Return the item's newest events first."""

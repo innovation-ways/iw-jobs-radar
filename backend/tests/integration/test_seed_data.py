@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from jobs_radar.domain.enums import LOCAL_OWNER_ID
 from jobs_radar.domain.taxonomy_additions import TAXONOMY_V2_ADDITIONS, V2_LABELS
 from jobs_radar.domain.taxonomy_seed import TAXONOMY_SEED_V1, label_for
+from jobs_radar.domain.taxonomy_v3 import TAXONOMY_V3_ADDITIONS, V3_LABELS
 
 pytestmark = pytest.mark.integration
 
@@ -26,7 +27,7 @@ async def test_taxonomy_versions_are_the_seed_and_the_non_technical_families(
         )
     )
     rows = [tuple(row) for row in result]
-    assert [version for version, _ in rows] == [1, 2]
+    assert [version for version, _ in rows] == [1, 2, 3]
     assert rows[0][1] == "seed"
 
 
@@ -46,6 +47,25 @@ async def test_version_two_adds_the_non_technical_role_families_with_their_label
     assert ("role_family", "finance_accounting") in expected
     for (_kind, key), row in rows.items():
         assert row.label == V2_LABELS[key]
+        assert row.origin == "seed"
+
+
+async def test_version_three_adds_the_agency_contract_engagement_type(
+    db_session: AsyncSession,
+) -> None:
+    """ADR-073: a contract placed through an agency is its own engagement type."""
+    result = await db_session.execute(
+        text(
+            "SELECT kind, term_key, label, origin FROM taxonomy_term "
+            "WHERE introduced_in_taxonomy_version_id = 3"
+        )
+    )
+    rows = {(row.kind, row.term_key): row for row in result}
+    expected = {(kind, key) for kind, keys in TAXONOMY_V3_ADDITIONS.items() for key in keys}
+    assert set(rows) == expected
+    assert ("engagement_type", "contractor_agency") in expected
+    for (_kind, key), row in rows.items():
+        assert row.label == V3_LABELS[key]
         assert row.origin == "seed"
 
 
@@ -73,6 +93,6 @@ async def test_seed_sizes_match_the_document(db_session: AsyncSession) -> None:
     )
     counts = dict(result.all())  # type: ignore[arg-type]
     assert counts == {
-        "role_family": 26, "sector": 17, "seniority_level": 7, "engagement_type": 5,
+        "role_family": 26, "sector": 17, "seniority_level": 7, "engagement_type": 6,
         "work_arrangement": 3, "employer_type": 3, "benefit": 9,
     }  # fmt: skip

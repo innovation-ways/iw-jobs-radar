@@ -5,7 +5,7 @@ stays ``None`` or empty so the engine treats it as unknown.
 """
 
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, cast
 
 from jobs_radar.adapters.sources.countries import country_code
 from jobs_radar.domain.matching.types import (
@@ -16,10 +16,11 @@ from jobs_radar.domain.matching.types import (
     JobSkill,
     PayExpectation,
     ProfileView,
+    Stance,
 )
 from jobs_radar.domain.regions import expand_regions
 from jobs_radar.schemas.extraction import Evidenced, ExtractionOutput
-from jobs_radar.schemas.intent import IntentDefinition
+from jobs_radar.schemas.intent import IntentDefinition, later_terms
 from jobs_radar.schemas.profile import ProfileFacts
 from jobs_radar.services.remote_places import source_remote_countries
 
@@ -173,22 +174,37 @@ def profile_view(facts: ProfileFacts) -> ProfileView:
     )
 
 
+# Closed groups of an intent and the taxonomy kind each one lists.
+_CLOSED_GROUPS = {
+    "work_arrangements": "work_arrangement",
+    "engagement_types": "engagement_type",
+    "seniority_levels": "seniority_level",
+    "employer_types": "employer_type",
+}
+_OPEN_GROUPS_VIEW = ("role_families", "sectors")
+
+
 def intent_view(definition: IntentDefinition) -> IntentView:
     """Map an intent revision to what matching needs."""
     stances = definition.stances
     pay = definition.compensation
+    later = later_terms()
+    group_stances: dict[str, dict[str, Stance]] = {}
+    for group, kind in _CLOSED_GROUPS.items():
+        listed: dict[str, Stance] = {
+            entry.key: cast(Stance, entry.stance.value) for entry in getattr(stances, group)
+        }
+        # A term added after the intent was saved is acceptable until the owner chooses (ADR-073).
+        group_stances[group] = {
+            **dict.fromkeys(later.get(kind, ()), "acceptable"),
+            **listed,
+        }
+    for group in _OPEN_GROUPS_VIEW:
+        group_stances[group] = {
+            entry.key: cast(Stance, entry.stance.value) for entry in getattr(stances, group)
+        }
     return IntentView(
-        stances={
-            group: {entry.key: entry.stance.value for entry in getattr(stances, group)}
-            for group in (
-                "role_families",
-                "work_arrangements",
-                "engagement_types",
-                "seniority_levels",
-                "sectors",
-                "employer_types",
-            )
-        },
+        stances=group_stances,
         part_time=stances.hours.part_time.value,
         remote_regions=tuple(definition.work_rules.remote.eligible_regions),
         base_latitude=definition.work_rules.onsite_hybrid.latitude,

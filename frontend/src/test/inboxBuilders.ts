@@ -63,6 +63,8 @@ export function makeItem(overrides: Partial<Item> = {}): Item {
     possible_duplicate: false,
     applied_at: null,
     note: null,
+    engagement_types: [],
+    pay: null,
     ...overrides,
   }
 }

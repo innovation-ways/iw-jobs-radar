@@ -90,3 +90,35 @@ describe('JobRow set-aside reason', () => {
     expect(screen.queryByText(/Cannot apply/)).not.toBeInTheDocument()
   })
 })
+
+describe('JobRow contract kind and pay (ADR-073)', () => {
+  const pay = {
+    form: 'day_rate' as const,
+    currency: 'EUR',
+    min: 450,
+    max: 550,
+    period: 'day' as const,
+    text: 'EUR 450-550 / day',
+  }
+
+  it('shows the contract kind and the stated day rate', () => {
+    const item = makeItem({ engagement_types: ['contractor_b2b'], pay })
+    render(<JobRow item={item} selected={false} onSelect={() => undefined} />)
+    expect(screen.getByText('Contractor (B2B)')).toBeInTheDocument()
+    expect(screen.getByText('EUR 450-550 / day')).toBeInTheDocument()
+  })
+
+  it('spells out "Rate not stated" for a contract offer without a rate', () => {
+    const item = makeItem({ engagement_types: ['contractor_agency'], pay: null })
+    render(<JobRow item={item} selected={false} onSelect={() => undefined} />)
+    expect(screen.getByText('Contract via agency')).toBeInTheDocument()
+    expect(screen.getByText('Rate not stated')).toBeInTheDocument()
+  })
+
+  it('does not claim a missing rate for a permanent offer', () => {
+    const item = makeItem({ engagement_types: ['employee_permanent'], pay: null })
+    render(<JobRow item={item} selected={false} onSelect={() => undefined} />)
+    expect(screen.getByText('Permanent')).toBeInTheDocument()
+    expect(screen.queryByText('Rate not stated')).not.toBeInTheDocument()
+  })
+})

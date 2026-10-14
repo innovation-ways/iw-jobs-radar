@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils'
 import { formatAge } from '@/lib/format'
 import { FitTile } from './FitTile'
 import type { InboxItem } from './queries'
+import { summariseEngagement } from './engagement'
 import { cardSignals } from './signals'
 
 interface Props {
@@ -34,6 +35,7 @@ const SIGNAL_TONE: Record<string, string> = {
  */
 export function JobRow({ item, selected, onSelect, floor = 0 }: Props) {
   const isNew = item.state === 'unread' || item.state === 'updated_unread'
+  const engagement = summariseEngagement(item)
   const settled = item.state === 'ignored' || item.state === 'archived' || item.state === 'applied'
   return (
     <div
@@ -69,6 +71,25 @@ export function JobRow({ item, selected, onSelect, floor = 0 }: Props) {
               <span className="text-ink-3">·</span>
               <span className="truncate">{item.locations.join('; ')}</span>
             </>
+          )}
+          {engagement.badges.map((badge) => (
+            <span
+              key={badge}
+              className="shrink-0 rounded border border-line-strong px-1.5 text-xs font-medium text-ink-2"
+            >
+              {badge}
+            </span>
+          ))}
+          {engagement.pay && (
+            // Text, never colour alone: a stated rate is plain, a missing one is spelled out.
+            <span
+              className={cn(
+                'shrink-0 text-xs tabular-nums',
+                engagement.rateNotStated ? 'text-ink-3' : 'font-semibold text-ink',
+              )}
+            >
+              {engagement.pay}
+            </span>
           )}
           {boardChip(item) && (
             <span className="shrink-0 rounded border border-line px-1.5 text-xs text-ink-3">

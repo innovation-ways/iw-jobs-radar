@@ -7,12 +7,19 @@ import pytest
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from tests.data import SAMPLE_JOB_DESCRIPTION, SAMPLE_JOB_TITLE, sample_extraction_output
-from tests.factories import make_company, make_posting, make_source, session_factory_for
+from tests.factories import (
+    make_company,
+    make_inbox_item,
+    make_opportunity,
+    make_posting,
+    make_source,
+    session_factory_for,
+)
 from tests.fake_provider import FakeProvider
 
 from jobs_radar.adapters.providers.base import ProviderError
 from jobs_radar.db.models import JobExtraction, JobPosting, Skill
-from jobs_radar.domain.enums import ProviderErrorClass
+from jobs_radar.domain.enums import InboxState, ProviderErrorClass
 from jobs_radar.schemas.extraction import ExtractionOutput
 from jobs_radar.services.extraction_queue import ExtractionQueue
 
@@ -84,7 +91,7 @@ async def test_the_latest_snapshot_of_each_open_posting_is_queued_once(
         0,
         "fixture",
         "fixture-model",
-        "extract-v3",
+        "extract-v4",
     )
     assert posting.closed_at is None
 
@@ -118,6 +125,54 @@ async def test_a_snapshot_with_an_accepted_earlier_extraction_is_not_queued_agai
         )
     await db_session.flush()
     assert await q.enqueue_missing() == 2  # only the accepted one is left alone
+
+
+async def test_a_new_prompt_re_extracts_only_jobs_still_in_the_inbox(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ADR-073: ignored and archived jobs keep their old extraction; open ones and new ones queue."""
+    provider = FakeProvider()
+    q = queue(db_session, monkeypatch, provider)
+    taxonomy_id = await q_taxonomy_id(db_session)
+    snapshots = {}
+    for name, state in (
+        ("unread", InboxState.UNREAD),
+        ("ignored", InboxState.IGNORED),
+        ("archived", InboxState.ARCHIVED),
+        ("fresh", None),  # a new job: no extraction of any version, not yet in the inbox
+    ):
+        posting, snapshot = await job(db_session)
+        snapshots[name] = snapshot
+        if name != "fresh":
+            item = await make_inbox_item(db_session, await make_opportunity(db_session, posting))
+            item.state = state.value  # type: ignore[union-attr]
+            db_session.add(
+                JobExtraction(
+                    job_snapshot_id=snapshot.job_snapshot_id,
+                    status="succeeded",
+                    provider=provider.provider,
+                    model=provider.model,
+                    prompt_version="extract-v1",  # neither current nor accepted
+                    taxonomy_version_id=taxonomy_id - 1,
+                    attributes_json={},
+                    attempts=1,
+                )
+            )
+    await db_session.flush()
+    assert await q.enqueue_missing() == 2
+    queued = {
+        name: (
+            await db_session.execute(
+                select(JobExtraction).where(
+                    JobExtraction.job_snapshot_id == snapshot.job_snapshot_id,
+                    JobExtraction.status == "pending",
+                )
+            )
+        ).first()
+        is not None
+        for name, snapshot in snapshots.items()
+    }
+    assert queued == {"unread": True, "ignored": False, "archived": False, "fresh": True}
 
 
 async def q_taxonomy_id(session: AsyncSession) -> int:

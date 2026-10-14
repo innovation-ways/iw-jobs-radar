@@ -72,3 +72,26 @@ def key_facts(output: dict[str, Any]) -> list[str]:
     if isinstance(pay, dict) and (text := _pay(pay)):
         facts.append(text)
     return facts
+
+
+def engagement_kinds(output: dict[str, Any]) -> list[str]:
+    """Return the taxonomy keys of the engagement types the posting states (empty if unknown)."""
+    return [str(kind) for kind in _known(output, "employment_types") or []]
+
+
+def pay(output: dict[str, Any]) -> dict[str, Any] | None:
+    """Return the stated pay as written (form, currency, range, period, text) or ``None``.
+
+    Nothing is converted: an amount in another currency is returned in that currency (ADR-073).
+    """
+    value = _known(output, "compensation")
+    if not isinstance(value, dict) or not (text := _pay(value)):
+        return None
+    return {
+        "form": value.get("form"),
+        "currency": value.get("currency"),
+        "min": float(value["min"]),
+        "max": float(value["max"]),
+        "period": value.get("period"),
+        "text": text,
+    }

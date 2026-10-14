@@ -13,7 +13,15 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 
-from jobs_radar.db.models import JobExtraction, JobPosting, JobSnapshot, TaxonomyVersion
+from jobs_radar.db.models import (
+    JobExtraction,
+    JobInboxItem,
+    JobOpportunityLink,
+    JobPosting,
+    JobSnapshot,
+    TaxonomyVersion,
+)
+from jobs_radar.domain.enums import InboxState
 
 
 class ExtractionRepository:
@@ -44,7 +52,10 @@ class ExtractionRepository:
         "Yet" means for this provider, model, prompt version and taxonomy version, so a new model
         or prompt re-queues the same snapshot, except when the snapshot already has a successful
         extraction of one of ``accepted_prompt_versions`` (same provider, model and taxonomy).
-        Newest postings are queued first.
+        A snapshot that already has a successful extraction of any version is not queued again
+        once the owner has ignored or archived its opportunity, so a new prompt or taxonomy does
+        not spend model time on jobs put away (ADR-073). A snapshot with no successful extraction
+        is always queued. Newest postings are queued first.
         """
         newer = aliased(JobSnapshot)
         latest = (
@@ -69,6 +80,27 @@ class ExtractionRepository:
             )
             .exists()
         )
+        extracted_before = (
+            select(JobExtraction.job_extraction_id)
+            .where(
+                JobExtraction.job_snapshot_id == JobSnapshot.job_snapshot_id,
+                JobExtraction.status == "succeeded",
+            )
+            .exists()
+        )
+        put_away = (
+            select(JobInboxItem.job_inbox_item_id)
+            .join(
+                JobOpportunityLink,
+                JobOpportunityLink.job_opportunity_id == JobInboxItem.job_opportunity_id,
+            )
+            .where(
+                JobOpportunityLink.job_posting_id == JobSnapshot.job_posting_id,
+                JobOpportunityLink.state != "rejected",
+                JobInboxItem.state.in_([InboxState.IGNORED.value, InboxState.ARCHIVED.value]),
+            )
+            .exists()
+        )
         candidates = (
             select(
                 JobSnapshot.job_snapshot_id,
@@ -85,6 +117,7 @@ class ExtractionRepository:
                 JobPosting.closed_at.is_(None),
                 JobSnapshot.job_snapshot_id == latest,
                 ~already,
+                ~and_(extracted_before, put_away),
             )
             .order_by(JobPosting.first_seen_at.desc(), JobSnapshot.job_snapshot_id.desc())
             .limit(limit)

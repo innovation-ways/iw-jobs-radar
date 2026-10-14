@@ -20,6 +20,7 @@ from jobs_radar.schemas.evaluation import (
 )
 from jobs_radar.schemas.inbox import (
     ChangeRead,
+    EngagementFilter,
     EvaluationBrief,
     InboxActionRequest,
     InboxActionResponse,
@@ -31,6 +32,7 @@ from jobs_radar.schemas.inbox import (
     InboxSort,
     InboxStateName,
     LinkDecisionResponse,
+    RateFilter,
     SignalRead,
     SourceRef,
 )
@@ -111,6 +113,8 @@ def summary(row: InboxRowView) -> InboxItemSummary:
         possible_duplicate=any(s.link_state == "possible" for s in sources),
         applied_at=item.applied_at,
         note=item.note,
+        engagement_types=row.engagement_types,
+        pay=cast(Any, row.pay),
     )
 
 
@@ -140,6 +144,8 @@ async def list_inbox(
     fit_max: Annotated[int | None, Query(ge=0, le=100)] = None,
     evaluated: bool | None = None,
     set_aside: bool | None = None,
+    engagement: Annotated[list[EngagementFilter] | None, Query()] = None,
+    rate: RateFilter | None = None,
     first_seen_from: Annotated[datetime | None, Query(alias="from")] = None,
     first_seen_to: Annotated[datetime | None, Query(alias="to")] = None,
     include_closed: bool = False,
@@ -161,6 +167,8 @@ async def list_inbox(
             fit_max=fit_max,
             evaluated=evaluated,
             set_aside=set_aside,
+            engagement=tuple(engagement or ()),
+            rate=rate,
             first_seen_from=first_seen_from,
             first_seen_to=first_seen_to,
             include_closed=include_closed,

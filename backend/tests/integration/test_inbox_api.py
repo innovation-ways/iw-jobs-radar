@@ -482,3 +482,88 @@ async def test_the_text_search_parameter_narrows_the_list(
     s, (match, _other) = await committed(session_factory, build)
     assert await ids(client, s, q="KUBERNETES") == [match.item.job_inbox_item_id]
     assert (await client.get(f"{API}/inbox", params={"q": "x" * 201})).status_code == 422
+
+
+# --- engagement kind, pay and their filters (ADR-073) ------------------------------------------------------------
+
+
+def _known(value: Any) -> dict[str, Any]:
+    return {"value": value, "status": "known", "confidence": 0.9, "evidence": "quote"}
+
+
+def _attributes(kinds: list[str], pay: dict[str, Any] | None = None) -> dict[str, Any]:
+    output: dict[str, Any] = {"employment_types": _known(kinds)}
+    if pay is not None:
+        output["compensation"] = _known(pay)
+    return output
+
+
+_DAY_RATE = {
+    "form": "day_rate",
+    "currency": "EUR",
+    "min": 450,
+    "max": 550,
+    "period": "day",
+    "disclosed": True,
+}
+
+
+async def _engagements(s: Scene) -> list[Entry]:
+    return [
+        await s.entry(title="Permanent", attributes=_attributes(["employee_permanent"])),
+        await s.entry(title="B2B with rate", attributes=_attributes(["contractor_b2b"], _DAY_RATE)),
+        await s.entry(title="Agency no rate", attributes=_attributes(["contractor_agency"])),
+        await s.entry(title="Unknown", attributes={}),
+    ]
+
+
+async def test_the_card_shows_the_engagement_kind_and_the_stated_pay(
+    client: httpx.AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    s, (_permanent, b2b, agency, unknown) = await committed(session_factory, _engagements)
+    response = await client.get(f"{API}/inbox", params=params(s))
+    cards = {item["job_inbox_item_id"]: item for item in response.json()["items"]}
+    with_rate = cards[b2b.item.job_inbox_item_id]
+    assert with_rate["engagement_types"] == ["contractor_b2b"]
+    assert with_rate["pay"] == {
+        "form": "day_rate",
+        "currency": "EUR",
+        "min": 450.0,
+        "max": 550.0,
+        "period": "day",
+        "text": "EUR 450-550 / day",
+    }
+    assert cards[agency.item.job_inbox_item_id]["engagement_types"] == ["contractor_agency"]
+    assert cards[agency.item.job_inbox_item_id]["pay"] is None
+    assert cards[unknown.item.job_inbox_item_id]["engagement_types"] == []
+
+
+async def test_the_inbox_filters_by_engagement_kind_and_by_stated_rate(
+    client: httpx.AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    s, (permanent, b2b, agency, unknown) = await committed(session_factory, _engagements)
+    pid, bid, aid, uid = (
+        permanent.item.job_inbox_item_id,
+        b2b.item.job_inbox_item_id,
+        agency.item.job_inbox_item_id,
+        unknown.item.job_inbox_item_id,
+    )
+    assert await ids(client, s, engagement="employee_permanent") == [pid]
+    assert set(await ids(client, s, engagement=["contractor_b2b", "contractor_agency"])) == {
+        bid,
+        aid,
+    }
+    assert await ids(client, s, engagement="unknown") == [uid]
+    assert await ids(client, s, rate="stated") == [bid]
+    # "Rate not stated" is a contract offer with no pay, never a permanent or unknown one.
+    assert await ids(client, s, rate="not_stated") == [aid]
+    assert await ids(client, s, engagement="contractor_b2b", rate="not_stated") == []
+
+
+async def test_an_unknown_engagement_or_rate_value_is_rejected(
+    client: httpx.AsyncClient, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    s, _ = await committed(session_factory, _engagements)
+    for extra in ({"engagement": "weekend_job"}, {"rate": "maybe"}):
+        response = await client.get(f"{API}/inbox", params=params(s, **extra))
+        assert response.status_code == 422

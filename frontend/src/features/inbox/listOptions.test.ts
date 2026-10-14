@@ -27,9 +27,25 @@ describe('list options', () => {
   })
 
   it('passes the chosen sort and reports active filters', () => {
-    const options = { sort: 'newest', fit: '45', seen: '30d' } as const
+    const options = { ...DEFAULT_OPTIONS, sort: 'newest', fit: '45', seen: '30d' } as const
     expect(toQuery(options, NOW).sort).toBe('newest')
     expect(hasActiveFilters(options)).toBe(true)
     expect(hasActiveFilters({ ...DEFAULT_OPTIONS, sort: 'oldest' })).toBe(false) // sort is not a filter
+  })
+
+  it('asks for the contract kinds and the rate state the owner chose', () => {
+    expect(toQuery({ ...DEFAULT_OPTIONS, contract: 'contract' }, NOW)).toMatchObject({
+      engagement: ['contractor_b2b', 'freelance', 'contractor_agency'],
+    })
+    expect(toQuery({ ...DEFAULT_OPTIONS, contract: 'permanent' }, NOW)).toMatchObject({
+      engagement: ['employee_permanent'],
+    })
+    expect(toQuery({ ...DEFAULT_OPTIONS, rate: 'not_stated' }, NOW)).toMatchObject({
+      rate: 'not_stated',
+    })
+    expect(toQuery(DEFAULT_OPTIONS, NOW)).not.toHaveProperty('engagement')
+    expect(toQuery(DEFAULT_OPTIONS, NOW)).not.toHaveProperty('rate')
+    expect(hasActiveFilters({ ...DEFAULT_OPTIONS, contract: 'freelance' })).toBe(true)
+    expect(hasActiveFilters({ ...DEFAULT_OPTIONS, rate: 'stated' })).toBe(true)
   })
 })

@@ -2879,6 +2879,13 @@
             "title": "Dimensions",
             "type": "array"
           },
+          "engagement_types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Engagement Types",
+            "type": "array"
+          },
           "evaluated": {
             "title": "Evaluated",
             "type": "boolean"
@@ -2965,6 +2972,16 @@
             ],
             "title": "Note"
           },
+          "pay": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "possible_duplicate": {
             "title": "Possible Duplicate",
             "type": "boolean"
@@ -3037,6 +3054,8 @@
           "possible_duplicate",
           "applied_at",
           "note",
+          "engagement_types",
+          "pay",
           "description_text",
           "apply_url",
           "read_at",
@@ -3077,6 +3096,13 @@
           "company_name": {
             "title": "Company Name",
             "type": "string"
+          },
+          "engagement_types": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Engagement Types",
+            "type": "array"
           },
           "evaluated": {
             "title": "Evaluated",
@@ -3135,6 +3161,16 @@
               }
             ],
             "title": "Note"
+          },
+          "pay": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PayRead"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "possible_duplicate": {
             "title": "Possible Duplicate",
@@ -3195,7 +3231,9 @@
           "sources",
           "possible_duplicate",
           "applied_at",
-          "note"
+          "note",
+          "engagement_types",
+          "pay"
         ],
         "title": "InboxItemSummary",
         "type": "object"
@@ -4397,6 +4435,57 @@
           "item_selector"
         ],
         "title": "PageReaderConfig",
+        "type": "object"
+      },
+      "PayRead": {
+        "additionalProperties": false,
+        "description": "The pay a posting states, as written (no currency conversion, ADR-073).",
+        "properties": {
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "form": {
+            "enum": [
+              "annual_salary",
+              "day_rate",
+              "hourly_rate"
+            ],
+            "title": "Form",
+            "type": "string"
+          },
+          "max": {
+            "title": "Max",
+            "type": "number"
+          },
+          "min": {
+            "title": "Min",
+            "type": "number"
+          },
+          "period": {
+            "enum": [
+              "year",
+              "month",
+              "day",
+              "hour"
+            ],
+            "title": "Period",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "form",
+          "currency",
+          "min",
+          "max",
+          "period",
+          "text"
+        ],
+        "title": "PayRead",
         "type": "object"
       },
       "PeriodRead": {
@@ -8699,6 +8788,54 @@
                 }
               ],
               "title": "Set Aside"
+            }
+          },
+          {
+            "in": "query",
+            "name": "engagement",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "items": {
+                    "enum": [
+                      "employee_permanent",
+                      "employee_fixed_term",
+                      "contractor_b2b",
+                      "freelance",
+                      "contractor_agency",
+                      "internship",
+                      "unknown"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Engagement"
+            }
+          },
+          {
+            "in": "query",
+            "name": "rate",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "stated",
+                    "not_stated"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rate"
             }
           },
           {

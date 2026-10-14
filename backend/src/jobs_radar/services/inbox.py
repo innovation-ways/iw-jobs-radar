@@ -27,6 +27,7 @@ from jobs_radar.db.models import (
 )
 from jobs_radar.domain.enums import Actor, InboxAction, InboxState
 from jobs_radar.domain.inbox import InvalidTransitionError, next_state
+from jobs_radar.domain.job_brief import engagement_kinds, pay
 from jobs_radar.repositories.inbox import (
     SORTS,
     InboxQueries,
@@ -64,6 +65,9 @@ class InboxFilters:
     include_closed: bool = False
     sort: str = "fit_desc"
     set_aside: bool | None = None  # ADR-058: True only the set-aside jobs, False without them
+    # ADR-073: engagement type keys (``unknown`` = none stated); rate is stated / not_stated.
+    engagement: tuple[str, ...] = ()
+    rate: str | None = None
 
 
 @dataclass(frozen=True)
@@ -83,6 +87,9 @@ class InboxRowView:
     postings: list[PostingRow]
     job_opportunity_id: int
     job_posting_id: int
+    # ADR-073: engagement kinds and the stated pay, read from the stored extraction.
+    engagement_types: list[str] = field(default_factory=list)
+    pay: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -348,6 +355,8 @@ class InboxService:
             sort=filters.sort,
             set_aside=filters.set_aside,
             set_aside_below=floor,
+            engagement=filters.engagement,
+            rate=filters.rate,
         )
 
     async def _views(self, rows: list[RawRow]) -> list[InboxRowView]:
@@ -379,6 +388,8 @@ class InboxService:
                     postings=postings.get(row.opportunity.job_opportunity_id, []),
                     job_opportunity_id=row.opportunity.job_opportunity_id,
                     job_posting_id=row.posting.job_posting_id,
+                    engagement_types=engagement_kinds(row.attributes or {}),
+                    pay=pay(row.attributes or {}),
                 )
             )
         return views

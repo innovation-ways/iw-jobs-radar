@@ -85,3 +85,57 @@ def test_unknown_facts_are_left_out() -> None:
         )
     )
     assert facts == []
+
+
+# --- engagement kinds and pay for the inbox row (ADR-073) --------------------------------------
+
+
+def _known(value: object) -> dict[str, object]:
+    return {"value": value, "status": "known", "confidence": 0.9, "evidence": "quote"}
+
+
+def test_engagement_kinds_are_the_known_employment_types() -> None:
+    from jobs_radar.domain.job_brief import engagement_kinds
+
+    output = {"employment_types": _known(["contractor_b2b", "contractor_agency"])}
+    assert engagement_kinds(output) == ["contractor_b2b", "contractor_agency"]
+    assert engagement_kinds({"employment_types": {"status": "unknown", "value": None}}) == []
+    assert engagement_kinds({}) == []
+
+
+def test_pay_reports_the_stated_day_rate_in_its_own_currency() -> None:
+    from jobs_radar.domain.job_brief import pay
+
+    output = {
+        "compensation": _known(
+            {
+                "form": "day_rate",
+                "currency": "EUR",
+                "min": 450,
+                "max": 550,
+                "period": "day",
+                "disclosed": True,
+            }
+        )
+    }
+    assert pay(output) == {
+        "form": "day_rate",
+        "currency": "EUR",
+        "min": 450.0,
+        "max": 550.0,
+        "period": "day",
+        "text": "EUR 450-550 / day",
+    }
+
+
+def test_pay_is_none_when_not_stated_or_not_disclosed() -> None:
+    from jobs_radar.domain.job_brief import pay
+
+    assert pay({}) is None
+    hidden = {
+        "compensation": _known(
+            {"form": "day_rate", "currency": "EUR", "min": 1, "max": 2, "period": "day",
+             "disclosed": False}
+        )
+    }  # fmt: skip
+    assert pay(hidden) is None

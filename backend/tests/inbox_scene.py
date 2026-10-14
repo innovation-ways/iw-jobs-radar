@@ -59,6 +59,7 @@ class Scene:
         source_type: SourceType = SourceType.GREENHOUSE,
         shortlisted: bool = False,
         recommendation: Recommendation = Recommendation.RECOMMENDED,
+        attributes: dict[str, Any] | None = None,
     ) -> Entry:
         name = company or f"{self.tag} Co {secrets_suffix()}"
         source = await make_source(
@@ -74,7 +75,7 @@ class Scene:
         item = await make_inbox_item(self.session, opportunity)
         item.state = state.value
         item.is_shortlisted = shortlisted
-        extraction = await make_extraction(self.session, snapshot)
+        extraction = await make_extraction(self.session, snapshot, attributes=attributes)
         if fit is not None:
             await make_evaluation(
                 self.session,

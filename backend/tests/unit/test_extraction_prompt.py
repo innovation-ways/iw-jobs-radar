@@ -1,4 +1,4 @@
-"""The extract-v3 prompt: what the model is told and given (document 13, section 6)."""
+"""The extract-v4 prompt: what the model is told and given (document 13, section 6)."""
 
 import json
 from collections.abc import Iterator
@@ -32,8 +32,17 @@ def prompt(**changes: object):  # type: ignore[no-untyped-def]
     return build_prompt(**options)  # type: ignore[arg-type]
 
 
-def test_the_version_is_extract_v2() -> None:
-    assert EXTRACTION_PROMPT_VERSION == "extract-v3"
+def test_the_version_is_extract_v4() -> None:
+    assert EXTRACTION_PROMPT_VERSION == "extract-v4"
+
+
+def test_the_system_message_tells_the_contractor_kinds_apart() -> None:
+    """ADR-073: B2B, freelance and agency contracts are three different engagement types."""
+    system = prompt().request.system
+    for key in ("contractor_b2b", "freelance", "contractor_agency", "employee_fixed_term"):
+        assert key in system
+    assert "agency" in system.lower()
+    assert "day rate" in system.lower()
 
 
 def test_the_user_message_has_the_title_description_hints_and_allowed_keys() -> None:

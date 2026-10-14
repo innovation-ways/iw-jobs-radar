@@ -5,15 +5,21 @@ import { Button } from '@/components/ui/button'
 import { JobDetail } from '@/features/inbox/JobDetail'
 import { JobRow } from '@/features/inbox/JobRow'
 import {
+  CONTRACT_LABELS,
   DEFAULT_OPTIONS,
   FIT_LABELS,
   hasActiveFilters,
+  parseContract,
   parseFit,
+  parseRate,
   parseSort,
+  RATE_LABELS,
   SEEN_LABELS,
   SORT_LABELS,
+  type ContractFilter,
   type FitFilter,
   type ListOptions,
+  type RateFilter,
   type SeenFilter,
 } from '@/features/inbox/listOptions'
 import {
@@ -83,6 +89,8 @@ export function Inbox() {
   const [options, setOptions] = useState<ListOptions>(() => ({
     ...DEFAULT_OPTIONS,
     fit: parseFit(searchParams.get('fit')),
+    contract: parseContract(searchParams.get('contract')),
+    rate: parseRate(searchParams.get('rate')),
     sort: parseSort(readStored(SORT_KEY)),
   }))
   const [selectedId, setSelectedId] = useState<number | null>(
@@ -334,6 +342,38 @@ export function Inbox() {
               className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm text-ink max-sm:w-full"
             >
               {Object.entries(SEEN_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-ink-2 max-sm:min-w-[7rem] max-sm:flex-1 max-sm:flex-col max-sm:items-start">
+            Contract
+            <select
+              value={options.contract}
+              onChange={(event) =>
+                setOptions({ ...options, contract: event.target.value as ContractFilter })
+              }
+              className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm text-ink max-sm:w-full"
+            >
+              {Object.entries(CONTRACT_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-1.5 text-xs text-ink-2 max-sm:min-w-[7rem] max-sm:flex-1 max-sm:flex-col max-sm:items-start">
+            Rate
+            <select
+              value={options.rate}
+              onChange={(event) =>
+                setOptions({ ...options, rate: event.target.value as RateFilter })
+              }
+              className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm text-ink max-sm:w-full"
+            >
+              {Object.entries(RATE_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
                 </option>

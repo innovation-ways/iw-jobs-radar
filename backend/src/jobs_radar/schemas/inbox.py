@@ -28,6 +28,17 @@ OwnerAction = Literal[
     "record_application",
 ]
 InboxSort = Literal["fit_desc", "newest", "oldest"]
+# Engagement filter values: the taxonomy's engagement types plus ``unknown`` (ADR-073).
+EngagementFilter = Literal[
+    "employee_permanent",
+    "employee_fixed_term",
+    "contractor_b2b",
+    "freelance",
+    "contractor_agency",
+    "internship",
+    "unknown",
+]
+RateFilter = Literal["stated", "not_stated"]
 Reason = Annotated[str, StringConstraints(max_length=100)]
 Note = Annotated[str, StringConstraints(max_length=2000)]
 
@@ -80,6 +91,17 @@ class EvaluationBrief(StrictModel):
     created_at: datetime
 
 
+class PayRead(StrictModel):
+    """The pay a posting states, as written (no currency conversion, ADR-073)."""
+
+    form: Literal["annual_salary", "day_rate", "hourly_rate"]
+    currency: str
+    min: float
+    max: float
+    period: Literal["year", "month", "day", "hour"]
+    text: str
+
+
 class InboxItemSummary(StrictModel):
     """A row of the inbox list."""
 
@@ -103,6 +125,9 @@ class InboxItemSummary(StrictModel):
     possible_duplicate: bool
     applied_at: datetime | None
     note: str | None
+    # Engagement types the posting states (taxonomy keys; empty when unknown) and its stated pay.
+    engagement_types: list[str]
+    pay: PayRead | None
 
 
 class InboxCounts(StrictModel):

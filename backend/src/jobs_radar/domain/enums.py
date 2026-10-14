@@ -340,10 +340,13 @@ class TrendTermKind(StrEnum):
 # Policy versions stored with the results they produced.
 MATCHING_POLICY_VERSION = "matching-v1"
 DEDUP_POLICY_VERSION = "dedup-v1"
-EXTRACTION_PROMPT_VERSION = "extract-v3"
+# Engagement types of self-employed or agency contract work (ADR-073): the offers whose pay is
+# "rate not stated" when no day or hourly rate is given.
+CONTRACTOR_ENGAGEMENT_KINDS = ("contractor_b2b", "freelance", "contractor_agency")
+EXTRACTION_PROMPT_VERSION = "extract-v4"
 # Earlier prompt versions whose successful extractions are kept as they are: a snapshot that has
 # one is not queued again for the current version (ADR-067). Empty the tuple to re-extract them.
-EXTRACTION_ACCEPTED_PROMPT_VERSIONS = ("extract-v2",)
+EXTRACTION_ACCEPTED_PROMPT_VERSIONS = ("extract-v3", "extract-v2")
 DIRECTION_PROMPT_VERSION = "direction-v1"
 SUMMARY_PROMPT_VERSION = "summary-v1"
 APPLICATION_PROMPT_VERSION = "application-v1"

@@ -227,7 +227,7 @@ export function Inbox() {
         if (selected?.state === 'unread' || selected?.state === 'updated_unread') on('open')()
       },
       o: () => {
-        const url = detail.data?.apply_url
+        const url = detail.data?.source_url ?? detail.data?.apply_url
         // Opening the page does not change the job (same as the link): noopener keeps the tab isolated.
         if (url) window.open(url, '_blank', 'noopener,noreferrer')
       },

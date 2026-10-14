@@ -178,6 +178,7 @@ class InboxItemDetail(InboxItemSummary):
 
     description_text: str
     apply_url: str | None
+    source_url: str | None
     read_at: datetime | None
     ignore_reason: str | None
     application_url: str | None

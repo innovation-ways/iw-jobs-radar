@@ -208,6 +208,7 @@ async def get_inbox_item(
         **base.model_dump(),
         description_text=detail.description,
         apply_url=detail.apply_url,
+        source_url=detail.source_url,
         read_at=item.read_at,
         ignore_reason=item.ignore_reason,
         application_url=item.application_url,

@@ -2646,6 +2646,8 @@ export interface components {
             read_at: string | null;
             /** Signals */
             signals: components["schemas"]["SignalRead"][];
+            /** Source Url */
+            source_url: string | null;
             /** Sources */
             sources: components["schemas"]["SourceRef"][];
             /**

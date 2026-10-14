@@ -99,6 +99,7 @@ export function makeDetail(item: Item, overrides: Partial<Detail> = {}): Detail 
     description_text:
       'Design and evaluate LLM-powered features.\nFully remote within EU time zones.',
     apply_url: 'https://careers.example.test/apply/1',
+    source_url: 'https://careers.example.test/jobs/1',
     read_at: null,
     ignore_reason: null,
     application_url: null,

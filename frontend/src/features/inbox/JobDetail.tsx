@@ -55,10 +55,12 @@ function ActionBar({ detail, busy, onAction }: Omit<Props, 'onLinkDecision'>) {
       )}
     </Button>
   )
-  const original = detail.apply_url && (
+  // The posting page; the apply link is only the fallback for a source that gives no page.
+  const originalUrl = detail.source_url ?? detail.apply_url
+  const original = originalUrl && (
     <Button asChild variant={settled ? 'outline' : 'default'}>
       {/* Opening the page does not change the job: only a button moves it out of "To review". */}
-      <a href={detail.apply_url} target="_blank" rel="noopener noreferrer">
+      <a href={originalUrl} target="_blank" rel="noopener noreferrer">
         <Hotkey>Open original</Hotkey>
         <ExternalLink />
       </a>

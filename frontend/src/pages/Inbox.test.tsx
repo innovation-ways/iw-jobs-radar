@@ -636,7 +636,8 @@ describe('Inbox screen', () => {
       renderInbox()
       const detail = await screen.findByRole('article', { name: /Applied AI Architect/ })
       const link = within(detail).getByRole('link', { name: /open original/i })
-      expect(link).toHaveAttribute('href', 'https://careers.example.test/apply/1')
+      // The posting page (source_url), not the apply link.
+      expect(link).toHaveAttribute('href', 'https://careers.example.test/jobs/1')
       expect(link).toHaveAttribute('target', '_blank')
       expect(link).toHaveAttribute('rel', expect.stringContaining('noopener'))
       link.addEventListener('click', (event) => event.preventDefault()) // do not navigate in jsdom

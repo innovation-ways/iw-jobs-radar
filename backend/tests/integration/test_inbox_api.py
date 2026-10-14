@@ -212,6 +212,8 @@ async def test_the_detail_has_the_text_the_evidence_the_sites_and_the_history(
     assert response.status_code == 200, response.text
     detail = response.json()
     assert detail["description_text"] and detail["title"] == "Detailed role"
+    # "Open original" shows the posting page; the apply link is a different field.
+    assert detail["source_url"] == entry.posting.source_url
     assert detail["evaluation"]["fit_score"] == 82
     (dimension,) = detail["dimensions"]
     assert (

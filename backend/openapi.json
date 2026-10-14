@@ -3005,6 +3005,17 @@
             "title": "Signals",
             "type": "array"
           },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
           "sources": {
             "items": {
               "$ref": "#/components/schemas/SourceRef"
@@ -3058,6 +3069,7 @@
           "pay",
           "description_text",
           "apply_url",
+          "source_url",
           "read_at",
           "ignore_reason",
           "application_url",

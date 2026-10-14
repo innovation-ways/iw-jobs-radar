@@ -120,6 +120,7 @@ class InboxDetail:
     row: InboxRowView
     description: str
     apply_url: str | None
+    source_url: str | None
     dimensions: list[ScoreDimension]
     postings: list[PostingRow]
     events: list[InboxEvent]
@@ -488,6 +489,9 @@ class InboxService:
             row=view,
             description=normalised.get("description_text", ""),
             apply_url=source.get("apply_url") or source.get("url"),
+            # The posting row is refreshed on every collection; an older snapshot may still hold
+            # the address the board used before (a redirect to the application form).
+            source_url=row.posting.source_url or source.get("url"),
             dimensions=view.dimensions,
             postings=view.postings,
             events=await self._queries.events(job_inbox_item_id, _EVENT_LIMIT),

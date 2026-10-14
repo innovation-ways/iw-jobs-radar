@@ -1,6 +1,6 @@
 [
   {
-    "url": "https://www.workingnomads.com/jobs/senior-backend-engineer-contract-acme",
+    "url": "https://www.workingnomads.com/job/go/1000001/",
     "title": "Senior Backend Engineer (Contract)",
     "description": "<p>Independent contractor. Day rate EUR 500-600. Build synthetic services.</p>",
     "company_name": "Acme Systems",
@@ -10,7 +10,7 @@
     "pub_date": "2026-10-08T09:00:00+00:00"
   },
   {
-    "url": "https://www.workingnomads.com/jobs/data-engineer-globex",
+    "url": "https://www.workingnomads.com/job/go/1000002/",
     "title": "Data Engineer",
     "description": "<p>Work on synthetic pipelines.</p>",
     "company_name": "Globex",
@@ -20,7 +20,7 @@
     "pub_date": "2026-10-07T09:00:00+00:00"
   },
   {
-    "url": "https://www.workingnomads.com/jobs/platform-engineer-initech",
+    "url": "https://www.workingnomads.com/job/go/1000003/",
     "title": "Platform Engineer",
     "description": "<p>Candidates must work within CET plus or minus three hours.</p>",
     "company_name": "Initech",
@@ -30,7 +30,7 @@
     "pub_date": "2026-10-06T09:00:00+00:00"
   },
   {
-    "url": "https://www.workingnomads.com/jobs/backend-engineer-us-only",
+    "url": "https://www.workingnomads.com/job/go/1000004/",
     "title": "Backend Engineer",
     "description": "<p>US residents only.</p>",
     "company_name": "Umbrella",
@@ -40,7 +40,7 @@
     "pub_date": "2026-10-08T09:00:00+00:00"
   },
   {
-    "url": "https://www.workingnomads.com/jobs/account-executive",
+    "url": "https://www.workingnomads.com/job/go/1000005/",
     "title": "Account Executive",
     "description": "<p>Sell things.</p>",
     "company_name": "Hooli",
@@ -50,7 +50,7 @@
     "pub_date": "2026-10-08T09:00:00+00:00"
   },
   {
-    "url": "https://www.workingnomads.com/jobs/devops-engineer-old",
+    "url": "https://www.workingnomads.com/job/go/1000006/",
     "title": "DevOps Engineer",
     "description": "<p>An old posting.</p>",
     "company_name": "Pied Piper",
@@ -60,7 +60,7 @@
     "pub_date": "2026-08-01T09:00:00+00:00"
   },
   {
-    "url": "https://www.workingnomads.com/jobs/no-company",
+    "url": "https://www.workingnomads.com/job/go/1000007/",
     "title": "Software Engineer",
     "description": "<p>No company named.</p>",
     "company_name": "",

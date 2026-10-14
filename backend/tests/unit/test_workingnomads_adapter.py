@@ -42,8 +42,13 @@ async def test_a_posting_is_mapped_with_url_text_tags_and_date() -> None:
     board()
     result = await build(WorkingNomadsAdapter).collect(checkpoint("workingnomads"))
     posting = result.postings[0]
-    assert posting.external_job_id == posting.source_url
-    assert posting.source_url.endswith("/senior-backend-engineer-contract-acme")
+    # The feed URL redirects to the employer's application form; the page that shows the
+    # posting is /jobs/<title>-<company> (slug built from the two names).
+    assert posting.external_job_id == "https://www.workingnomads.com/job/go/1000001/"
+    assert posting.apply_url == posting.external_job_id
+    assert posting.source_url == (
+        "https://www.workingnomads.com/jobs/senior-backend-engineer-contract-acme-systems"
+    )
     assert posting.title == "Senior Backend Engineer (Contract)"
     assert "Day rate EUR 500-600" in posting.description_text
     assert posting.locations == ("Global",)

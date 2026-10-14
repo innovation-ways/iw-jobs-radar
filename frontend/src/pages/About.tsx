@@ -61,7 +61,8 @@ export function About() {
             <Ext href="https://himalayas.app">Himalayas</Ext>,{' '}
             <Ext href="https://weworkremotely.com">We Work Remotely</Ext>,{' '}
             <Ext href="https://www.workingnomads.com">Working Nomads</Ext>,{' '}
-            <Ext href="https://remoteok.com">Remote OK</Ext> and{' '}
+            <Ext href="https://remoteok.com">Remote OK</Ext>,{' '}
+            <Ext href="https://www.freelancermap.com">freelancermap</Ext> and{' '}
             <Ext href="https://www.itjobs.pt">ITJobs.pt</Ext>. Each posting shows which board it
             came from and links back to it.
           </li>

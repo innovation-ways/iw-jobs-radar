@@ -140,6 +140,7 @@ class SourceType(StrEnum):
     WEWORKREMOTELY = "weworkremotely"
     WORKINGNOMADS = "workingnomads"
     REMOTEOK = "remoteok"
+    FREELANCERMAP = "freelancermap"
     # The company's own careers page, read without a known ATS (ADR-070): structured postings
     # (schema.org JobPosting) or a reader configuration the owner approved.
     PAGE_JSONLD = "page_jsonld"

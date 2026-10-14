@@ -309,6 +309,7 @@ async def test_the_catalogue_lists_the_available_job_boards_without_secrets(
         "weworkremotely",
         "workingnomads",
         "remoteok",
+        "freelancermap",
     }
     assert items["itjobs_pt"]["requires_credential"] is True
     assert items["itjobs_pt"]["credential_label"] == "ITJobs API key"

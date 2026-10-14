@@ -67,6 +67,9 @@ class Page:
     skipped: int = 0
     has_more: bool = False
     declared_total: int | None = None
+    # The stream itself stopped reading before the end of what it found (a page cap): the run
+    # did not see every posting, so it must not close postings (ADR-049.5).
+    capped: bool = False
 
 
 # A stream is a source of pages (for example "jobs open to Europe"); it is closed early when the
@@ -223,6 +226,8 @@ class JobBoardAdapter:
                 scan.declared_total = (scan.declared_total or 0) + page.declared_total
             scan.dropped += page.skipped
             scan.seen += page.skipped
+            if page.capped:
+                scan.truncated = True
             all_old = bool(page.candidates)
             for index, candidate in enumerate(page.candidates):
                 posting = candidate.posting

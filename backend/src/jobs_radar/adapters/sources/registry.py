@@ -4,6 +4,7 @@ from jobs_radar.adapters.sources.arbeitnow import ArbeitnowAdapter
 from jobs_radar.adapters.sources.ashby import AshbyAdapter
 from jobs_radar.adapters.sources.base import JobSourceAdapter
 from jobs_radar.adapters.sources.eightfold import EightfoldAdapter
+from jobs_radar.adapters.sources.freelancermap import FreelancermapAdapter
 from jobs_radar.adapters.sources.greenhouse import GreenhouseAdapter
 from jobs_radar.adapters.sources.himalayas import HimalayasAdapter
 from jobs_radar.adapters.sources.itjobs import ItJobsAdapter
@@ -40,4 +41,5 @@ def build_source_adapters() -> dict[SourceType, JobSourceAdapter]:
         SourceType.WEWORKREMOTELY: WeWorkRemotelyAdapter(client),
         SourceType.WORKINGNOMADS: WorkingNomadsAdapter(client),
         SourceType.REMOTEOK: RemoteOkAdapter(client),
+        SourceType.FREELANCERMAP: FreelancermapAdapter(client),
     }

@@ -150,6 +150,23 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
         default_filters=JobBoardFilters(max_age_days=7),
     ),
     CatalogueEntry(
+        source_type=SourceType.FREELANCERMAP,
+        display_name="freelancermap",
+        coverage_note="Freelance and contract IT projects · DACH, UK, EU · contract type stated",
+        homepage_url="https://www.freelancermap.com",
+        endpoint="https://www.freelancermap.com/sitemaps/projects.xml",
+        terms_url="https://www.freelancermap.com/term-and-conditions.html",
+        terms_note=(
+            "No API or feed: the project pages named in the site's public sitemap are read "
+            "(robots.txt allows it). Its terms do not mention automated access; they ask not to "
+            "overload the service and to use its information for one's own purposes, so reading "
+            "is slow (15 pages a minute, at most 120 a run) and for personal use only (ADR-075)."
+        ),
+        attribution_text="Projects from freelancermap (freelancermap.com).",
+        min_interval_minutes=360,
+        rate_limit_per_minute=15,
+    ),
+    CatalogueEntry(
         source_type=SourceType.ITJOBS_PT,
         display_name="ITJobs.pt",
         coverage_note="Portugal · IT",

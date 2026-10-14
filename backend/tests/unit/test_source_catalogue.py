@@ -20,6 +20,7 @@ JOB_BOARDS = {
     SourceType.WEWORKREMOTELY,
     SourceType.WORKINGNOMADS,
     SourceType.REMOTEOK,
+    SourceType.FREELANCERMAP,
 }
 COMPANY_BOARDS = {
     SourceType.GREENHOUSE,

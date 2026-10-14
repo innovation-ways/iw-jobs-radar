@@ -75,7 +75,9 @@ class Scene:
         item = await make_inbox_item(self.session, opportunity)
         item.state = state.value
         item.is_shortlisted = shortlisted
-        extraction = await make_extraction(self.session, snapshot, attributes=attributes)
+        # A stored extraction wraps the model's answer under ``output`` next to its checks.
+        stored = {"output": attributes} if attributes is not None else None
+        extraction = await make_extraction(self.session, snapshot, attributes=stored)
         if fit is not None:
             await make_evaluation(
                 self.session,

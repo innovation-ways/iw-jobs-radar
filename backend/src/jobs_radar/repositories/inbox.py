@@ -230,7 +230,8 @@ def _engagement_conditions(extraction: Any, query: ListQuery) -> list[Any]:
     (including jobs not extracted yet). "Rate not stated" is a contract offer with no pay: a
     permanent or unknown offer without pay is not one.
     """
-    attributes = extraction.attributes_json
+    # The stored extraction keeps the model's answer under ``output``.
+    attributes = extraction.attributes_json["output"]
     kinds = attributes["employment_types"]
     kinds_known = func.coalesce(kinds["status"].astext, "unknown") == "known"
 
@@ -306,7 +307,7 @@ class InboxQueries:
                 JobPosting,
                 snapshot,
                 evaluation,
-                extraction.attributes_json,
+                extraction.attributes_json["output"],
             )
             .select_from(JobInboxItem)
             .join(

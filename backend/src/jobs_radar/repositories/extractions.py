@@ -19,9 +19,49 @@ from jobs_radar.db.models import (
     JobOpportunityLink,
     JobPosting,
     JobSnapshot,
+    MatchEvaluation,
     TaxonomyVersion,
 )
 from jobs_radar.domain.enums import InboxState
+
+
+def _set_aside(snapshot: Any, *, below: int) -> Any:
+    """Whether the main inbox sets the snapshot's opportunity aside (the same rule as the inbox).
+
+    Set aside = the latest evaluation of the snapshot is not recommended, or its fit is below the
+    owner's floor and the source has not changed the job since (ADR-058, ADR-060); a job without
+    an evaluation is never set aside. ``below`` 0 turns the floor off.
+    """
+    newer = aliased(MatchEvaluation)
+    latest = (
+        select(func.max(newer.match_evaluation_id))
+        .where(newer.job_snapshot_id == snapshot.job_snapshot_id)
+        # Correlate to the snapshot of the enclosing query, or the maximum would be global.
+        .correlate_except(newer)
+        .scalar_subquery()
+    )
+    return (
+        select(MatchEvaluation.match_evaluation_id)
+        .select_from(MatchEvaluation)
+        .join(JobOpportunityLink, JobOpportunityLink.job_posting_id == snapshot.job_posting_id)
+        .join(
+            JobInboxItem,
+            JobInboxItem.job_opportunity_id == JobOpportunityLink.job_opportunity_id,
+        )
+        .where(
+            MatchEvaluation.match_evaluation_id == latest,
+            MatchEvaluation.job_snapshot_id == snapshot.job_snapshot_id,
+            JobOpportunityLink.state != "rejected",
+            or_(
+                MatchEvaluation.recommendation == "not_recommended",
+                and_(
+                    JobInboxItem.state != InboxState.UPDATED_UNREAD.value,
+                    MatchEvaluation.fit_score < below,
+                ),
+            ),
+        )
+        .exists()
+    )
 
 
 class ExtractionRepository:
@@ -46,6 +86,7 @@ class ExtractionRepository:
         taxonomy_version_id: int,
         limit: int,
         accepted_prompt_versions: Collection[str] = (),
+        set_aside_below: int = 0,
     ) -> int:
         """Queue the latest snapshot of every open posting that has no extraction yet.
 
@@ -54,8 +95,9 @@ class ExtractionRepository:
         extraction of one of ``accepted_prompt_versions`` (same provider, model and taxonomy).
         A snapshot that already has a successful extraction of any version is not queued again
         once the owner has ignored or archived its opportunity, so a new prompt or taxonomy does
-        not spend model time on jobs put away (ADR-073). A snapshot with no successful extraction
-        is always queued. Newest postings are queued first.
+        not spend model time on jobs put away (ADR-073); the same holds for jobs the main inbox
+        sets aside (``set_aside_below`` is the owner's low-fit floor). A snapshot with no
+        successful extraction is always queued. Newest postings are queued first.
         """
         newer = aliased(JobSnapshot)
         latest = (
@@ -117,7 +159,9 @@ class ExtractionRepository:
                 JobPosting.closed_at.is_(None),
                 JobSnapshot.job_snapshot_id == latest,
                 ~already,
-                ~and_(extracted_before, put_away),
+                ~and_(
+                    extracted_before, or_(put_away, _set_aside(JobSnapshot, below=set_aside_below))
+                ),
             )
             .order_by(JobPosting.first_seen_at.desc(), JobSnapshot.job_snapshot_id.desc())
             .limit(limit)
@@ -152,12 +196,15 @@ class ExtractionRepository:
         now: datetime,
         stale_before: datetime,
         exclude: Collection[int] = (),
+        set_aside_below: int = 0,
     ) -> tuple[JobExtraction, JobSnapshot] | None:
         """Claim the next waiting extraction for this provider and model, with its snapshot.
 
         A row claimed by a worker that died (claim older than ``stale_before``) is reclaimed.
         Snapshots never extracted come before re-extractions of a newer prompt or taxonomy, so a
-        new job is not stuck behind a backlog of jobs that already have an answer (ADR-073).
+        new job is not stuck behind a backlog of jobs that already have an answer (ADR-073). A
+        re-extraction of a job the main inbox sets aside is left waiting: it was queued before
+        the job was set aside and would only spend model time.
         """
         earlier = aliased(JobExtraction)
         has_earlier_answer = (
@@ -177,6 +224,7 @@ class ExtractionRepository:
                 JobExtraction.model == model,
                 JobExtraction.prompt_version == prompt_version,
                 (JobExtraction.claimed_at.is_(None)) | (JobExtraction.claimed_at < stale_before),
+                ~and_(has_earlier_answer, _set_aside(JobSnapshot, below=set_aside_below)),
             )
             .order_by(has_earlier_answer, JobExtraction.job_extraction_id)
             .limit(1)

@@ -16,8 +16,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.adapters.providers.base import ExtractionProvider
 from jobs_radar.db.models import JobExtraction, JobSnapshot
-from jobs_radar.domain.enums import EXTRACTION_ACCEPTED_PROMPT_VERSIONS, EXTRACTION_PROMPT_VERSION
+from jobs_radar.domain.enums import (
+    EXTRACTION_ACCEPTED_PROMPT_VERSIONS,
+    EXTRACTION_PROMPT_VERSION,
+    LOCAL_OWNER_ID,
+)
 from jobs_radar.repositories.extractions import ExtractionRepository
+from jobs_radar.repositories.schedule import ScheduleRepository
 from jobs_radar.repositories.taxonomy import TaxonomyRepository
 from jobs_radar.services.extraction import (
     ExtractionError,
@@ -102,7 +107,7 @@ class ExtractionQueue:
         """Queue the latest snapshots of open postings that have no extraction yet.
 
         A snapshot with a successful extraction of an accepted earlier prompt version is left
-        alone (ADR-067).
+        alone (ADR-067), and so is one the main inbox sets aside (ADR-073 amendment).
         """
         async with self._session_factory() as session:
             repository = ExtractionRepository(session)
@@ -113,6 +118,9 @@ class ExtractionQueue:
                 taxonomy_version_id=await repository.current_taxonomy_version_id(),
                 limit=limit,
                 accepted_prompt_versions=EXTRACTION_ACCEPTED_PROMPT_VERSIONS,
+                set_aside_below=await ScheduleRepository(session).set_aside_below_fit(
+                    LOCAL_OWNER_ID
+                ),
             )
             await session.commit()
             return queued
@@ -161,6 +169,9 @@ class ExtractionQueue:
                 now=now,
                 stale_before=now - CLAIM_TIMEOUT,
                 exclude=seen,
+                set_aside_below=await ScheduleRepository(session).set_aside_below_fit(
+                    LOCAL_OWNER_ID
+                ),
             )
             await session.commit()
             if claimed is None:

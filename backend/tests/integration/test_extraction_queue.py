@@ -352,6 +352,102 @@ async def test_a_claim_is_not_taken_twice_but_a_stale_one_is_recovered(
     assert (await q.run_batch()).succeeded == 1
 
 
+async def _answered_job_with_score(
+    session: AsyncSession, provider: FakeProvider, *, fit: int, recommendation: str
+) -> Any:
+    """An open job in the inbox that has an old extraction and an evaluation; return its snapshot."""
+    from tests.factories import make_evaluation, make_intent, make_profile
+
+    from jobs_radar.domain.enums import Recommendation
+
+    posting, snapshot = await job(session)
+    await make_inbox_item(session, await make_opportunity(session, posting))
+    old = JobExtraction(
+        job_snapshot_id=snapshot.job_snapshot_id,
+        status="succeeded",
+        provider=provider.provider,
+        model=provider.model,
+        prompt_version="extract-v1",
+        taxonomy_version_id=await q_taxonomy_id(session) - 1,
+        attributes_json={},
+        attempts=1,
+    )
+    session.add(old)
+    await session.flush()
+    profile, profile_revision = await make_profile(session)
+    _intent, intent_revision = await make_intent(session, profile)
+    await make_evaluation(
+        session,
+        snapshot,
+        old,
+        profile_revision,
+        intent_revision,
+        fit_score=fit,
+        recommendation=Recommendation(recommendation),
+    )
+    return snapshot
+
+
+async def test_jobs_set_aside_are_not_extracted_again(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The owner chose to re-extract only what the main inbox shows (ADR-073 amendment)."""
+    provider = FakeProvider()
+    q = queue(db_session, monkeypatch, provider)
+    shown = await _answered_job_with_score(
+        db_session, provider, fit=80, recommendation="recommended"
+    )
+    gated = await _answered_job_with_score(
+        db_session, provider, fit=70, recommendation="not_recommended"
+    )  # a gate fired
+    low = await _answered_job_with_score(db_session, provider, fit=10, recommendation="recommended")
+    await q.enqueue_missing()
+    ids = [shown.job_snapshot_id, gated.job_snapshot_id, low.job_snapshot_id]
+    queued = set(
+        (
+            await db_session.execute(
+                select(JobExtraction.job_snapshot_id).where(
+                    JobExtraction.status == "pending", JobExtraction.job_snapshot_id.in_(ids)
+                )
+            )
+        ).scalars()
+    )
+    assert queued == {shown.job_snapshot_id}  # only the recommended job above the floor
+
+
+async def test_a_waiting_re_extraction_of_a_set_aside_job_is_not_claimed(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Rows queued before the job was set aside stay waiting instead of using model time."""
+    from jobs_radar.repositories.extractions import ExtractionRepository
+
+    provider = FakeProvider()
+    snapshot = await _answered_job_with_score(
+        db_session, provider, fit=70, recommendation="not_recommended"
+    )
+    db_session.add(
+        JobExtraction(
+            job_snapshot_id=snapshot.job_snapshot_id,
+            status="pending",
+            provider=provider.provider,
+            model=provider.model,
+            prompt_version="extract-v4",
+            taxonomy_version_id=await q_taxonomy_id(db_session),
+            attempts=0,
+        )
+    )
+    await db_session.flush()
+    claimed = await ExtractionRepository(db_session).claim_next(
+        provider=provider.provider,
+        model=provider.model,
+        prompt_version="extract-v4",
+        now=T0,
+        stale_before=T0 - timedelta(minutes=30),
+        set_aside_below=30,
+    )
+    assert claimed is None
+
+
 async def test_a_job_never_extracted_is_claimed_before_a_re_extraction(
     db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:

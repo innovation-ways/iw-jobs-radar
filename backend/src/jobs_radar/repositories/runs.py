@@ -145,6 +145,18 @@ class RunRepository:
         )
         return value.scalar_one_or_none()
 
+    async def has_completed_run(self, source_configuration_id: int) -> bool:
+        """Whether a run of the source has ever read everything it was meant to (``success``)."""
+        value = await self._session.execute(
+            select(SourceRunResult.source_run_result_id)
+            .where(
+                SourceRunResult.source_configuration_id == source_configuration_id,
+                SourceRunResult.outcome == SourceOutcome.SUCCESS.value,
+            )
+            .limit(1)
+        )
+        return value.first() is not None
+
     async def list_page(
         self, owner_id: int, *, limit: int, before_id: int | None
     ) -> list[CollectionRun]:

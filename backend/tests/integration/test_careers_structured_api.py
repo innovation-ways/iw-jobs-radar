@@ -104,3 +104,10 @@ async def test_a_site_with_structured_postings_is_detected_followed_and_collecte
     )
     assert mine["last_result"]["outcome"] == "success"
     assert mine["open_postings"] == 2  # the expired and the missing page are not postings
+
+    # The dossier says how many postings the owner's filters left out, and that filters are on.
+    dossier = (await client.get(f"/api/v1/companies/{created.json()['company_id']}")).json()
+    (board,) = dossier["boards"]
+    assert board["filters_enabled"] is True
+    assert board["last_dropped_count"] == mine["last_result"]["dropped_count"]
+    assert board["last_dropped_count"] >= 2  # the expired and the missing page, at least

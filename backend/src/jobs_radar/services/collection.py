@@ -275,6 +275,10 @@ class CollectionService:
                 else None
             )
             filters = scope = next_allowed = credential = problem = company_filters = None
+            # A source that never completed a run reads its whole backlog (ADR-070).
+            backlog = entry is None and not await RunRepository(session).has_completed_run(
+                source.source_configuration_id
+            )
             page_config: dict[str, Any] | None = None
             if source_type is SourceType.PAGE_CONFIG:
                 approved = await PageReaderRepository(session).latest(
@@ -315,6 +319,7 @@ class CollectionService:
                     scope=scope,
                     credential=credential,
                     page_config=page_config,
+                    backlog=backlog,
                 ),
                 is_job_board=entry is not None,
                 next_allowed_at=next_allowed,
@@ -328,8 +333,12 @@ class CollectionService:
         """Apply the owner's opt-in filters to a company board's postings (a 304 has none)."""
         if fetched.outcome == "not_modified" or view.company_filters is None:
             return fetched
+        filters = view.company_filters
+        if view.checkpoint.backlog:
+            # The backlog of a newly added company is kept whole: no per-run limit on what is kept.
+            filters = filters.model_copy(update={"max_postings_per_run": len(fetched.postings) + 1})
         outcome = apply_filters(
-            list(fetched.postings), view.company_filters, view.checkpoint.scope, self._clock()
+            list(fetched.postings), filters, view.checkpoint.scope, self._clock()
         )
         return replace(
             fetched,

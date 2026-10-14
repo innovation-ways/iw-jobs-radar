@@ -224,7 +224,7 @@ class PageConfigAdapter:
         for item in listed:
             description = item.title
             if config.fetch_detail:
-                if details >= MAX_DETAIL_PAGES:
+                if details >= MAX_DETAIL_PAGES and not checkpoint.backlog:
                     incomplete = True
                     continue
                 details += 1

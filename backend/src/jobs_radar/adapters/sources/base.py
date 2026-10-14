@@ -62,6 +62,9 @@ class SourceCheckpoint:
     scope: LocationScope | None = None
     # Careers-page sources read through an approved configuration (ADR-070 layer 3).
     page_config: dict[str, Any] | None = None
+    # True until the source has completed one run: the backlog of a newly added company can be far
+    # larger than a normal run's limits, so a careers-page adapter ignores them then (ADR-070).
+    backlog: bool = False
 
 
 @dataclass(frozen=True)

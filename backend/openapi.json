@@ -271,6 +271,11 @@
             "title": "Enabled",
             "type": "boolean"
           },
+          "filters_enabled": {
+            "default": false,
+            "title": "Filters Enabled",
+            "type": "boolean"
+          },
           "last_collected_count": {
             "anyOf": [
               {
@@ -281,6 +286,17 @@
               }
             ],
             "title": "Last Collected Count"
+          },
+          "last_dropped_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Dropped Count"
           },
           "last_error_class": {
             "anyOf": [

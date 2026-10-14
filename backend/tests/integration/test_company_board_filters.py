@@ -12,6 +12,7 @@ from tests.fake_adapter import FakeAdapter, listing, make_posting
 
 from jobs_radar.db.models import JobPosting, SearchIntent, SourceConfiguration, SourceRunResult
 from jobs_radar.domain.enums import LOCAL_OWNER_ID, SourceOutcome, SourceType
+from jobs_radar.repositories.runs import RunRepository
 from jobs_radar.services.collection import CollectionService
 
 pytestmark = pytest.mark.integration
@@ -40,8 +41,14 @@ def build(session: AsyncSession, monkeypatch: pytest.MonkeyPatch, adapter: FakeA
 
 
 async def collect(
-    session, monkeypatch, adapter, config
+    session, monkeypatch, adapter, config, *, completed_before: bool = False
 ) -> tuple[list[JobPosting], SourceRunResult]:
+    if completed_before:
+        # A source that already completed a run is no longer reading its backlog (ADR-070).
+        async def done(self, source_configuration_id: int) -> bool:
+            return True
+
+        monkeypatch.setattr(RunRepository, "has_completed_run", done)
     source = await make_source(session, await make_company(session))
     source.config_json = config
     await session.flush()
@@ -112,9 +119,28 @@ async def test_the_limit_makes_a_filtered_run_partial(
         ]
     )
     config = {"schema_version": 1, "categories": ["software", "data"], "max_postings_per_run": 1}
-    postings, result = await collect(db_session, monkeypatch, adapter, config)
+    postings, result = await collect(
+        db_session, monkeypatch, adapter, config, completed_before=True
+    )
     assert len(postings) == 1
     assert result.outcome == SourceOutcome.PARTIAL.value
+
+
+async def test_the_first_run_of_a_source_ignores_the_limit_on_kept_postings(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    adapter = FakeAdapter(
+        [
+            listing(
+                make_posting("1", title="Backend Engineer", locations=("Remote - EU",)),
+                make_posting("2", title="Data Engineer", locations=("Remote - EU",)),
+            )
+        ]
+    )
+    config = {"schema_version": 1, "categories": ["software", "data"], "max_postings_per_run": 1}
+    postings, result = await collect(db_session, monkeypatch, adapter, config)
+    assert len(postings) == 2
+    assert result.outcome == SourceOutcome.SUCCESS.value
 
 
 async def test_changing_the_filters_forgets_the_etag_so_the_next_run_fetches_again(

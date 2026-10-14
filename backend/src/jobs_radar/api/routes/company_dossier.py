@@ -58,6 +58,8 @@ def _board(source: SourceConfiguration, result: SourceRunResult | None) -> Board
         last_error_class=result.error_class if result else None,
         last_finished_at=result.finished_at if result else None,
         last_collected_count=result.collected_count if result else None,
+        last_dropped_count=result.dropped_count if result else None,
+        filters_enabled=bool(source.config_json),
     )
 
 

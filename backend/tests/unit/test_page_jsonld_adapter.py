@@ -1,5 +1,6 @@
 """The structured-postings adapter for a company's own careers site (ADR-070 layer 2)."""
 
+from dataclasses import replace
 from datetime import UTC, datetime
 
 import pytest
@@ -7,7 +8,11 @@ import respx
 from tests.job_board_support import Sleeper, ats_checkpoint, build_ats, payload
 
 from jobs_radar.adapters.sources.base import SourceError
-from jobs_radar.adapters.sources.page_jsonld import PageJsonLdAdapter, parse_job_posting
+from jobs_radar.adapters.sources.page_jsonld import (
+    MAX_PAGES_PER_RUN,
+    PageJsonLdAdapter,
+    parse_job_posting,
+)
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
 
 HOST = "careers.synthco.example"
@@ -162,3 +167,43 @@ async def test_without_a_sitemap_the_links_of_the_careers_page_are_used() -> Non
     )
     result = await adapter().collect(ats_checkpoint(f"{HOST}/careers"))
     assert [p.title for p in result.postings] == ["Data Engineer"]
+
+
+def _serve_many(count: int) -> None:
+    """A site whose job sitemap lists ``count`` posting pages, all with the same posting."""
+    respx.get(f"{ORIGIN}/robots.txt").respond(
+        200, text=f"User-agent: *\nSitemap: {ORIGIN}/vacanciessitemap.xml\n"
+    )
+    urls = "".join(
+        f"<url><loc>{ORIGIN}/job/role-{n}</loc><lastmod>2026-10-{1 + n % 9:02d}T00:00:00Z</lastmod></url>"
+        for n in range(count)
+    )
+    respx.get(f"{ORIGIN}/vacanciessitemap.xml").respond(
+        200,
+        content=(
+            '<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+            f"{urls}</urlset>"
+        ).encode(),
+    )
+    respx.get(url__regex=rf"{ORIGIN}/job/role-\d+").respond(
+        200, content=payload("page_jsonld", "posting_wise_like.html")
+    )
+
+
+@respx.mock
+async def test_a_normal_run_reads_at_most_the_page_limit_and_is_then_incomplete() -> None:
+    _serve_many(MAX_PAGES_PER_RUN + 5)
+    result = await adapter().collect(ats_checkpoint(HOST))
+    assert len(result.postings) == MAX_PAGES_PER_RUN
+    assert result.truncated is True
+    assert result.etag is None
+
+
+@respx.mock
+async def test_the_first_run_of_a_source_reads_the_whole_backlog() -> None:
+    _serve_many(MAX_PAGES_PER_RUN + 5)
+    checkpoint = replace(ats_checkpoint(HOST), backlog=True)
+    result = await adapter().collect(checkpoint)
+    assert len(result.postings) == MAX_PAGES_PER_RUN + 5
+    assert result.truncated is False
+    assert result.etag is not None

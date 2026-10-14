@@ -74,6 +74,11 @@ class BoardRead(StrictModel):
     last_error_class: str | None = None
     last_finished_at: datetime | None = None
     last_collected_count: int | None = None
+    # Postings the run read but did not keep: pages that are no postings and, for a board with
+    # filters, those the owner's filters left out.
+    last_dropped_count: int | None = None
+    # Whether the owner's opt-in filters (ADR-051) are on for this company board.
+    filters_enabled: bool = False
 
 
 class CompanyDossierRead(StrictModel):

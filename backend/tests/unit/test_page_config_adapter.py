@@ -181,3 +181,23 @@ def test_the_type_and_the_endpoint() -> None:
     adapter = build_ats(PageConfigAdapter)
     assert adapter.source_type is SourceType.PAGE_CONFIG
     assert adapter.endpoint(f"{HOST}/careers") == LISTING
+
+
+@respx.mock
+async def test_the_first_run_of_a_source_reads_every_detail_page() -> None:
+    respx.get(f"{ORIGIN}/robots.txt").respond(404)
+    items = "".join(
+        f'<li class="position"><a class="position-link" href="/careers/roles/r{n}">'
+        f'<span class="position-title">Role {n}</span></a></li>'
+        for n in range(MAX_DETAIL_PAGES + 5)
+    )
+    respx.get(LISTING).respond(200, html=f"<main><ul>{items}</ul></main>")
+    respx.get(url__regex=rf"{ORIGIN}/careers/roles/r\d+").respond(
+        200, html="<main><div class='role-body'>Text</div></main>"
+    )
+    first = checkpoint(config(next_page_selector=None, location_selector=None))
+    from dataclasses import replace
+
+    result = await build_ats(PageConfigAdapter).collect(replace(first, backlog=True))
+    assert len(result.postings) == MAX_DETAIL_PAGES + 5
+    assert result.truncated is False

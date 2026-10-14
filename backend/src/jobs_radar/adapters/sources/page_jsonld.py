@@ -323,8 +323,10 @@ class PageJsonLdAdapter:
         gate = RobotsGate(self._client)
         postings: list[SourcePosting] = []
         dropped = 0
-        incomplete = len(pages) > MAX_PAGES_PER_RUN
-        for url, _ in pages[:MAX_PAGES_PER_RUN]:
+        # The first run of a source reads the whole backlog; later runs read the newest pages.
+        wanted = pages if checkpoint.backlog else pages[:MAX_PAGES_PER_RUN]
+        incomplete = len(wanted) < len(pages)
+        for url, _ in wanted:
             try:
                 posting = await self._posting(url, key, per_minute, gate)
             except SourceError as error:

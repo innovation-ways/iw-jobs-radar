@@ -48,7 +48,9 @@ What a check can find, from the most to the least reliable:
   schema.org `JobPosting` data. The pages are found in the sitemap (the `Sitemap:` lines of
   `robots.txt`, then `/sitemap.xml`) or, without one, in the links of the careers page. A run reads
   at most 200 posting pages, newest first, so a larger site is `partial` and never closes postings;
-  when the sitemap did not change, no page is read. The default pace is 60 requests a minute.
+  the first run of a newly added company ignores that limit and reads the whole backlog; when the
+  sitemap did not change, no page is read. The Collection card shows how many postings your filters
+  left out and offers **Turn off filters and collect**. The default pace is 60 requests a minute.
 - **A reader proposed by the local model** (`page_config`): for a server-rendered page with
   neither of the above. Press **Propose a reader**; the local model (never a remote one) suggests
   CSS selectors, you see the postings they find on the page, and you approve. Later runs use the

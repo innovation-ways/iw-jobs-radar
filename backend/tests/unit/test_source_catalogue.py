@@ -18,6 +18,8 @@ JOB_BOARDS = {
     SourceType.HIMALAYAS,
     SourceType.ITJOBS_PT,
     SourceType.WEWORKREMOTELY,
+    SourceType.WORKINGNOMADS,
+    SourceType.REMOTEOK,
 }
 COMPANY_BOARDS = {
     SourceType.GREENHOUSE,
@@ -118,8 +120,12 @@ def test_boards_with_a_delayed_feed_say_so() -> None:
 def test_every_board_reads_only_the_latest_days_by_default() -> None:
     """ADR-063: the daily runs make older postings duplicates, so the window is short."""
     for entry in CATALOGUE:
-        if entry.catalogue_key != "weworkremotely":
+        if entry.catalogue_key not in SMALL_FEEDS:
             assert entry.default_filters.max_age_days == 4
+
+
+# Feeds that hold only open or newest postings and are small, so they read further back.
+SMALL_FEEDS = {"weworkremotely", "workingnomads", "remoteok"}
 
 
 def test_a_small_feed_of_open_postings_reads_a_month_back() -> None:

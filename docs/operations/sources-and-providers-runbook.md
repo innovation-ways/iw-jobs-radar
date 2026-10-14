@@ -80,6 +80,8 @@ many postings would be kept), then **Add**. Nothing is saved before the check su
 | Jobicy | remote, Europe filter | none | asks for at most one poll an hour |
 | Himalayas | remote, eligible countries per job | none | refreshes its data every 24 hours |
 | We Work Remotely | remote, all roles; eligible countries per job | none | public RSS feeds (ten requests a run); the board's terms are reported to forbid storing its data, accepted by the owner for personal use (ADR-072); at most one run an hour |
+| Working Nomads | remote; many independent-contractor roles; location as text | none | one JSON answer with every open posting; at most one run an hour (ADR-074) |
+| Remote OK | remote; about 100 newest postings; annual salary when stated | none | one JSON answer, first element is a legal notice; at most one run an hour (ADR-074) |
 | ITJobs.pt | Portugal, IT | free key by email (itjobs.pt/api) | checked against the live service with a real key on 2026-10-12 (collection and offer links work); `workModel` codes are observed, not documented |
 
 - **Where a board looks comes from your profile.** The countries are never typed into a source.

@@ -805,7 +805,7 @@ Configured job sources with their health-relevant settings.
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
 
 - check `ck_source_configuration_rate_limit_positive`: `rate_limit_per_minute >= 1`
-- check `ck_source_configuration_source_type_valid`: `source_type IN ('greenhouse', 'lever', 'ashby', 'smartrecruiters', 'eightfold', 'arbeitnow', 'jobicy', 'himalayas', 'itjobs_pt', 'weworkremotely', 'page_jsonld', 'page_config')`
+- check `ck_source_configuration_source_type_valid`: `source_type IN ('greenhouse', 'lever', 'ashby', 'smartrecruiters', 'eightfold', 'arbeitnow', 'jobicy', 'himalayas', 'itjobs_pt', 'weworkremotely', 'workingnomads', 'remoteok', 'page_jsonld', 'page_config')`
 - foreign key `company_id` → `company.company_id`
 - foreign key `owner_id` → `owner.owner_id`
 - unique `uq_source_configuration_owner_type_identifier` (owner_id, source_type, external_identifier)

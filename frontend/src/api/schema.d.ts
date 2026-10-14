@@ -4135,7 +4135,7 @@ export interface components {
          * @description Kind of job source adapter: ATS company boards first, then job boards (ADR-049).
          * @enum {string}
          */
-        SourceType: "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "eightfold" | "arbeitnow" | "jobicy" | "himalayas" | "itjobs_pt" | "weworkremotely" | "page_jsonld" | "page_config";
+        SourceType: "greenhouse" | "lever" | "ashby" | "smartrecruiters" | "eightfold" | "arbeitnow" | "jobicy" | "himalayas" | "itjobs_pt" | "weworkremotely" | "workingnomads" | "remoteok" | "page_jsonld" | "page_config";
         /**
          * SourceUpdate
          * @description Change a source's settings; ``expected_version`` is the version the client last saw.

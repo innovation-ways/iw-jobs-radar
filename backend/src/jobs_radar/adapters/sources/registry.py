@@ -11,8 +11,10 @@ from jobs_radar.adapters.sources.jobicy import JobicyAdapter
 from jobs_radar.adapters.sources.lever import LeverAdapter
 from jobs_radar.adapters.sources.page_config import PageConfigAdapter
 from jobs_radar.adapters.sources.page_jsonld import PageJsonLdAdapter
+from jobs_radar.adapters.sources.remoteok import RemoteOkAdapter
 from jobs_radar.adapters.sources.smartrecruiters import SmartRecruitersAdapter
 from jobs_radar.adapters.sources.weworkremotely import WeWorkRemotelyAdapter
+from jobs_radar.adapters.sources.workingnomads import WorkingNomadsAdapter
 from jobs_radar.core.http import build_http_client
 from jobs_radar.domain.enums import SourceType
 
@@ -36,4 +38,6 @@ def build_source_adapters() -> dict[SourceType, JobSourceAdapter]:
         SourceType.HIMALAYAS: HimalayasAdapter(client),
         SourceType.ITJOBS_PT: ItJobsAdapter(client),
         SourceType.WEWORKREMOTELY: WeWorkRemotelyAdapter(client),
+        SourceType.WORKINGNOMADS: WorkingNomadsAdapter(client),
+        SourceType.REMOTEOK: RemoteOkAdapter(client),
     }

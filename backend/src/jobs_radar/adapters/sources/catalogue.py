@@ -116,6 +116,40 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
         default_filters=JobBoardFilters(max_age_days=30),
     ),
     CatalogueEntry(
+        source_type=SourceType.WORKINGNOMADS,
+        display_name="Working Nomads",
+        coverage_note="Remote · many independent-contractor roles · location as text",
+        homepage_url="https://www.workingnomads.com",
+        endpoint="https://www.workingnomads.com/api/exposed_jobs/",
+        terms_url="https://www.workingnomads.com",
+        terms_note=(
+            "Free public JSON, no key. No usage terms were found; keep the link to the original "
+            "posting and do not poll more than once an hour."
+        ),
+        attribution_text="Jobs from Working Nomads (workingnomads.com).",
+        min_interval_minutes=60,
+        rate_limit_per_minute=6,
+        # One answer holds every open posting (a few dozen), so a month is read (ADR-074.4).
+        default_filters=JobBoardFilters(max_age_days=30),
+    ),
+    CatalogueEntry(
+        source_type=SourceType.REMOTEOK,
+        display_name="Remote OK",
+        coverage_note="Remote · about a hundred newest postings · salary when stated",
+        homepage_url="https://remoteok.com",
+        endpoint="https://remoteok.com/api",
+        terms_url="https://remoteok.com/legal",
+        terms_note=(
+            "Free public API, no key. Link back to the posting on Remote OK, name it as the "
+            "source and do not use its logo."
+        ),
+        attribution_text="Jobs from Remote OK (remoteok.com).",
+        min_interval_minutes=60,
+        rate_limit_per_minute=6,
+        # The answer holds only the newest postings, so a week is read (ADR-074.4).
+        default_filters=JobBoardFilters(max_age_days=7),
+    ),
+    CatalogueEntry(
         source_type=SourceType.ITJOBS_PT,
         display_name="ITJobs.pt",
         coverage_note="Portugal · IT",

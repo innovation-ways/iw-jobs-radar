@@ -59,7 +59,9 @@ export function About() {
             Job boards you add: <Ext href="https://www.arbeitnow.com">Arbeitnow</Ext>,{' '}
             <Ext href="https://jobicy.com">Jobicy</Ext>,{' '}
             <Ext href="https://himalayas.app">Himalayas</Ext>,{' '}
-            <Ext href="https://weworkremotely.com">We Work Remotely</Ext> and{' '}
+            <Ext href="https://weworkremotely.com">We Work Remotely</Ext>,{' '}
+            <Ext href="https://www.workingnomads.com">Working Nomads</Ext>,{' '}
+            <Ext href="https://remoteok.com">Remote OK</Ext> and{' '}
             <Ext href="https://www.itjobs.pt">ITJobs.pt</Ext>. Each posting shows which board it
             came from and links back to it.
           </li>

@@ -1,0 +1,72 @@
+[
+  {
+    "url": "https://www.workingnomads.com/jobs/senior-backend-engineer-contract-acme",
+    "title": "Senior Backend Engineer (Contract)",
+    "description": "<p>Independent contractor. Day rate EUR 500-600. Build synthetic services.</p>",
+    "company_name": "Acme Systems",
+    "category_name": "Development",
+    "tags": "python,aws",
+    "location": "Global",
+    "pub_date": "2026-10-08T09:00:00+00:00"
+  },
+  {
+    "url": "https://www.workingnomads.com/jobs/data-engineer-globex",
+    "title": "Data Engineer",
+    "description": "<p>Work on synthetic pipelines.</p>",
+    "company_name": "Globex",
+    "category_name": "Development",
+    "tags": "sql,etl",
+    "location": "Europe",
+    "pub_date": "2026-10-07T09:00:00+00:00"
+  },
+  {
+    "url": "https://www.workingnomads.com/jobs/platform-engineer-initech",
+    "title": "Platform Engineer",
+    "description": "<p>Candidates must work within CET plus or minus three hours.</p>",
+    "company_name": "Initech",
+    "category_name": "Development",
+    "tags": "kubernetes",
+    "location": "Time zone: CET +/- 3 hours",
+    "pub_date": "2026-10-06T09:00:00+00:00"
+  },
+  {
+    "url": "https://www.workingnomads.com/jobs/backend-engineer-us-only",
+    "title": "Backend Engineer",
+    "description": "<p>US residents only.</p>",
+    "company_name": "Umbrella",
+    "category_name": "Development",
+    "tags": "java",
+    "location": "USA",
+    "pub_date": "2026-10-08T09:00:00+00:00"
+  },
+  {
+    "url": "https://www.workingnomads.com/jobs/account-executive",
+    "title": "Account Executive",
+    "description": "<p>Sell things.</p>",
+    "company_name": "Hooli",
+    "category_name": "Sales",
+    "tags": "",
+    "location": "Global",
+    "pub_date": "2026-10-08T09:00:00+00:00"
+  },
+  {
+    "url": "https://www.workingnomads.com/jobs/devops-engineer-old",
+    "title": "DevOps Engineer",
+    "description": "<p>An old posting.</p>",
+    "company_name": "Pied Piper",
+    "category_name": "Development",
+    "tags": "terraform",
+    "location": "Global",
+    "pub_date": "2026-08-01T09:00:00+00:00"
+  },
+  {
+    "url": "https://www.workingnomads.com/jobs/no-company",
+    "title": "Software Engineer",
+    "description": "<p>No company named.</p>",
+    "company_name": "",
+    "category_name": "Development",
+    "tags": "python",
+    "location": "Global",
+    "pub_date": "2026-10-08T09:00:00+00:00"
+  }
+]

@@ -3,7 +3,7 @@
 Jobs Radar reads public job data on the owner's own machine. It does not redistribute that data, but
 each source has conditions you must respect. This page records what each source asks for and what
 the application does about it. **Review it again when you add a source or before running the
-application as a service for other people.** Last reviewed: 2026-10-12.
+application as a service for other people.** Last reviewed: 2026-10-13.
 
 ## Job boards (catalogue, `adapters/sources/catalogue.py`)
 
@@ -23,6 +23,16 @@ a board URL: only these catalogue entries exist.
 |---|---|
 | Greenhouse Job Board API, Lever Postings API, Ashby public job-posting API, SmartRecruiters Posting API | Public, unauthenticated endpoints that companies publish so their vacancies can be shown elsewhere |
 | Eightfold careers sites | The site's own JSON API, **not documented** for third parties and subject to change. Use at your own discretion, keep the default pace and prefer the company's terms if they forbid automated access |
+
+## A company's own careers page (ADR-070)
+
+For a company that publishes on no known system, Jobs Radar may read the company's own careers
+site: its sitemap and posting pages (structured `JobPosting` data), or the listing page through
+selectors you approved. Only pages on the company's own domain are read, `robots.txt` is honoured
+(a refusal stops the source and is never worked around), requests are spaced (at most one a second
+by default) and bounded in number per run. Page text is used only to extract the postings; nothing
+is republished. If a site's terms forbid automated reading, do not follow it with a source: follow
+it by hand.
 
 These were checked against each vendor's public documentation during development; re-check them
 before relying on a source commercially. Every outbound request identifies the application in the

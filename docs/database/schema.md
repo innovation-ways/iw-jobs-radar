@@ -518,6 +518,22 @@ Owner of personal data; V1 has one fixed local owner.
 | `updated_at` | DATETIME | no | UTC timestamp of the last modification of the row. |
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
 
+## page_reader_configuration
+
+Approved reader configurations of careers-page sources (append-only).
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `page_reader_configuration_id` | BIGINT | no | Surrogate primary key of the configuration. |
+| `source_configuration_id` | BIGINT | no | Careers-page source the reader belongs to. |
+| `revision` | INTEGER | no | 1 for the first approved reader, then 2, 3, ... |
+| `config_json` | JSONB | no | Selectors and paging rules (PageReaderConfig, with schema_version). |
+| `proposed_by` | VARCHAR(120) | no | Who wrote it: model:<provider>:<model>, or owner. |
+| `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
+
+- foreign key `source_configuration_id` → `source_configuration.source_configuration_id`
+- unique `uq_page_reader_configuration_source_revision` (source_configuration_id, revision)
+
 ## privacy_setting
 
 Privacy policy for remote AI calls; one row per owner.
@@ -789,7 +805,7 @@ Configured job sources with their health-relevant settings.
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
 
 - check `ck_source_configuration_rate_limit_positive`: `rate_limit_per_minute >= 1`
-- check `ck_source_configuration_source_type_valid`: `source_type IN ('greenhouse', 'lever', 'ashby', 'smartrecruiters', 'eightfold', 'arbeitnow', 'jobicy', 'himalayas', 'itjobs_pt')`
+- check `ck_source_configuration_source_type_valid`: `source_type IN ('greenhouse', 'lever', 'ashby', 'smartrecruiters', 'eightfold', 'arbeitnow', 'jobicy', 'himalayas', 'itjobs_pt', 'page_jsonld', 'page_config')`
 - foreign key `company_id` → `company.company_id`
 - foreign key `owner_id` → `owner.owner_id`
 - unique `uq_source_configuration_owner_type_identifier` (owner_id, source_type, external_identifier)

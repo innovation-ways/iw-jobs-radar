@@ -32,6 +32,40 @@
 - If a board stops working: check the token on the company's careers page, run it alone with its
   Run button, read the reason, then disable it until fixed. Other boards are unaffected.
 
+## Following a company from its careers page (Companies screen, ADR-070)
+
+**Follow a company** asks for the company name, its website and its careers page address. **Check
+addresses** looks at the careers page and reports what it can be collected from; nothing is saved
+until you confirm. The website feeds the company dossier and the open-data identification; the
+careers address is shown on the company.
+
+What a check can find, from the most to the least reliable:
+
+- **A company board** (`greenhouse`, `lever`, `ashby`, `smartrecruiters`, `eightfold`): found from
+  the address itself or from links and embeds on the careers page, and always checked against the
+  real board before it is offered. Several boards on one page are listed for you to choose.
+- **Structured postings on the company's own site** (`page_jsonld`): the posting pages carry
+  schema.org `JobPosting` data. The pages are found in the sitemap (the `Sitemap:` lines of
+  `robots.txt`, then `/sitemap.xml`) or, without one, in the links of the careers page. A run reads
+  at most 200 posting pages, newest first, so a larger site is `partial` and never closes postings;
+  when the sitemap did not change, no page is read. The default pace is 60 requests a minute.
+- **A reader proposed by the local model** (`page_config`): for a server-rendered page with
+  neither of the above. Press **Propose a reader**; the local model (never a remote one) suggests
+  CSS selectors, you see the postings they find on the page, and you approve. Later runs use the
+  approved selectors with no AI. If the page changes and stops matching, the source fails with
+  `schema_changed`; propose a new reader from the source and approve it (the old one stays in the
+  history). A run opens at most 100 posting pages.
+- **Nothing collectable**: `unsupported` (another system, for example Workday or Teamtailor),
+  `script_only` (the postings are loaded by JavaScript), `blocked` (`robots.txt` or a refusal; it is
+  respected, never worked around) or `unreachable`. You can still follow the company: it keeps its
+  website, careers address and dossier, shows *Not collected*, and **Detect again** repeats the
+  check later.
+
+Every request goes through the guarded client (HTTPS, no private addresses, bounded size and
+time), only pages of the company's own domain are read, and `robots.txt` is honoured. The *Keep
+only postings that match my areas and location* box (ADR-051) is ticked by default for a new
+source; confirming queues its first run at once.
+
 ## Job boards (Sources screen)
 
 A job board publishes the jobs of many companies. Add one with **Add a job board**: pick it from

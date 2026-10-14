@@ -352,6 +352,43 @@ async def test_a_claim_is_not_taken_twice_but_a_stale_one_is_recovered(
     assert (await q.run_batch()).succeeded == 1
 
 
+async def test_a_job_never_extracted_is_claimed_before_a_re_extraction(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A new job must not wait behind a backlog of re-extractions queued earlier (ADR-073)."""
+    from jobs_radar.repositories.extractions import ExtractionRepository
+
+    provider = FakeProvider()
+    q = queue(db_session, monkeypatch, provider)
+    taxonomy_id = await q_taxonomy_id(db_session)
+    _, old = await job(db_session)
+    db_session.add(
+        JobExtraction(
+            job_snapshot_id=old.job_snapshot_id,
+            status="succeeded",
+            provider=provider.provider,
+            model=provider.model,
+            prompt_version="extract-v1",
+            taxonomy_version_id=taxonomy_id - 1,
+            attributes_json={},
+            attempts=1,
+        )
+    )
+    await db_session.flush()
+    assert await q.enqueue_missing() == 1  # the re-extraction is queued first (lower id)
+    _, fresh = await job(db_session)
+    assert await q.enqueue_missing() == 1
+    claimed = await ExtractionRepository(db_session).claim_next(
+        provider=provider.provider,
+        model=provider.model,
+        prompt_version="extract-v4",
+        now=T0,
+        stale_before=T0 - timedelta(minutes=30),
+    )
+    assert claimed is not None
+    assert claimed[1].job_snapshot_id == fresh.job_snapshot_id
+
+
 async def test_the_batch_stops_at_its_time_budget_and_beats_after_each_job(
     db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
 ) -> None:

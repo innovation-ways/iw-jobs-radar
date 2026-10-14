@@ -156,7 +156,18 @@ class ExtractionRepository:
         """Claim the next waiting extraction for this provider and model, with its snapshot.
 
         A row claimed by a worker that died (claim older than ``stale_before``) is reclaimed.
+        Snapshots never extracted come before re-extractions of a newer prompt or taxonomy, so a
+        new job is not stuck behind a backlog of jobs that already have an answer (ADR-073).
         """
+        earlier = aliased(JobExtraction)
+        has_earlier_answer = (
+            select(earlier.job_extraction_id)
+            .where(
+                earlier.job_snapshot_id == JobExtraction.job_snapshot_id,
+                earlier.status == "succeeded",
+            )
+            .exists()
+        )
         statement = (
             select(JobExtraction, JobSnapshot)
             .join(JobSnapshot, JobSnapshot.job_snapshot_id == JobExtraction.job_snapshot_id)
@@ -167,7 +178,7 @@ class ExtractionRepository:
                 JobExtraction.prompt_version == prompt_version,
                 (JobExtraction.claimed_at.is_(None)) | (JobExtraction.claimed_at < stale_before),
             )
-            .order_by(JobExtraction.job_extraction_id)
+            .order_by(has_earlier_answer, JobExtraction.job_extraction_id)
             .limit(1)
             .with_for_update(of=JobExtraction, skip_locked=True)
         )

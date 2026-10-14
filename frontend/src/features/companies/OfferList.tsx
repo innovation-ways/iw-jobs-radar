@@ -181,7 +181,12 @@ function Row({
         {offer.closed && (
           <span className="rounded-full border border-line-strong px-2">Closed</span>
         )}
-        {offer.state && ['ignored', 'archived', 'applied'].includes(offer.state) && (
+        {offer.state === 'applied' && (
+          <span className="rounded-full bg-brand px-2.5 py-0.5 text-sm font-bold text-on-brand">
+            ✓ applied
+          </span>
+        )}
+        {offer.state && ['ignored', 'archived'].includes(offer.state) && (
           <span className="rounded-full border border-line-strong px-2">{offer.state}</span>
         )}
       </div>
@@ -271,10 +276,25 @@ export function OfferList({
     }
   }
 
-  const shown = sorted(
-    offers.filter((o) => visible(o, on)),
+  const filtered = offers.filter((o) => visible(o, on))
+  // Offers the owner acted on (applied or shortlisted) come first, newest first; the rest follow
+  // in the chosen order. With none of them the first list is not rendered.
+  const isPriority = (o: Offer) => o.state === 'applied' || o.is_shortlisted
+  const priority = sorted(filtered.filter(isPriority), 'newest')
+  const rest = sorted(
+    filtered.filter((o) => !isPriority(o)),
     sortKey,
   )
+  const shown = [...priority, ...rest]
+  const renderRows = (list: Offer[]) =>
+    list.map((o) => (
+      <Row
+        key={o.job_opportunity_id}
+        offer={o}
+        busy={act.isPending}
+        onAction={(action) => void perform(o, action)}
+      />
+    ))
   const chip = (key: Toggle, label: string) => (
     <button
       key={key}
@@ -337,16 +357,21 @@ export function OfferList({
             : 'No offer matches these filters.'}
         </p>
       ) : (
-        <ul className="text-sm">
-          {shown.map((o) => (
-            <Row
-              key={o.job_opportunity_id}
-              offer={o}
-              busy={act.isPending}
-              onAction={(action) => void perform(o, action)}
-            />
-          ))}
-        </ul>
+        <>
+          {priority.length > 0 && (
+            <ul
+              aria-label="Applied and shortlisted"
+              className="mb-3 rounded-lg bg-brand-soft/40 px-2 text-sm"
+            >
+              {renderRows(priority)}
+            </ul>
+          )}
+          {rest.length > 0 && (
+            <ul aria-label="Other offers" className="text-sm">
+              {renderRows(rest)}
+            </ul>
+          )}
+        </>
       )}
     </section>
   )

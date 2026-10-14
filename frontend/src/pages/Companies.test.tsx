@@ -384,14 +384,16 @@ describe('Companies screen', () => {
     const sortBy = (label: string) =>
       user.selectOptions(within(offers).getByRole('combobox', { name: 'Sort by' }), label)
 
-    await sortBy('Oldest first')
-    expect(titles()).toEqual(['Ignored role', 'Senior AI Engineer'])
-    await sortBy('Newest first')
-    expect(titles()).toEqual(['Senior AI Engineer', 'Ignored role'])
-    await sortBy('Lowest fit')
-    expect(titles()).toEqual(['Ignored role', 'Senior AI Engineer'])
-    await sortBy('Highest fit')
-    expect(titles()).toEqual(['Senior AI Engineer', 'Ignored role'])
+    // The shortlisted offer is pinned in its own list above the others, whatever the order.
+    for (const label of ['Oldest first', 'Newest first', 'Lowest fit', 'Highest fit']) {
+      await sortBy(label)
+      expect(titles()).toEqual(['Senior AI Engineer', 'Ignored role'])
+    }
+    const lists = within(offers).getAllByRole('list')
+    expect(lists.map((l) => l.getAttribute('aria-label'))).toEqual([
+      'Applied and shortlisted',
+      'Other offers',
+    ])
   })
 
   describe('triage from the dossier', () => {

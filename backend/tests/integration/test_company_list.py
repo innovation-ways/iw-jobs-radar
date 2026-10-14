@@ -148,7 +148,7 @@ async def test_sort_by_best_fit_or_name_with_followed_companies_first(
     await world.company("Mid", [(1, 60, R)])
     await world.company("Top", [(1, 90, R)])
     await world.company("None", [(1, None, R)])
-    watched = await world.company("Low", [(1, 25, R)])  # above the floor of 20
+    watched = await world.company("Low", [(1, 35, R)])  # above the floor of 30
     assert names(await world.list(sort="fit")) == ["Top", "Mid", "Low", "None"]
     db_session.add(CompanyFollow(owner_id=LOCAL_OWNER_ID, company_id=watched))
     await db_session.flush()

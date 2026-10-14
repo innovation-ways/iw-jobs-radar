@@ -12,7 +12,7 @@ from jobs_radar.domain.enums import RunStatus, RunTrigger
 DEFAULT_RUN_TIMES = [time(7, 30)]
 DEFAULT_TIMEZONE = "Europe/Lisbon"
 DEFAULT_COMPANY_RECENCY_DAYS = 30
-DEFAULT_SET_ASIDE_BELOW_FIT = 20
+DEFAULT_SET_ASIDE_BELOW_FIT = 30
 
 
 class ScheduleRepository:

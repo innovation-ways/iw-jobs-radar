@@ -26,10 +26,6 @@ function Form({ schedule }: { schedule: ScheduleRead }) {
   const [recency, setRecency] = useState(String(schedule.company_recency_days))
   const days = Number(recency)
   const validDays = Number.isInteger(days) && days >= 1 && days <= 365
-  const [floorText, setFloorText] = useState(String(schedule.set_aside_below_fit))
-  const floor = Number(floorText)
-  const validFloor =
-    floorText.trim() !== '' && Number.isInteger(floor) && floor >= 0 && floor <= 100
   const complete = times.every((value) => value !== '')
   const repeated = new Set(times).size !== times.length
   const validTimes = complete && !repeated
@@ -40,8 +36,7 @@ function Form({ schedule }: { schedule: ScheduleRead }) {
     (validTimes && timesChanged) ||
     zone !== schedule.timezone ||
     enabled !== schedule.enabled ||
-    (validDays && days !== schedule.company_recency_days) ||
-    (validFloor && floor !== schedule.set_aside_below_fit)
+    (validDays && days !== schedule.company_recency_days)
   const shown = save.data ?? schedule
 
   return (
@@ -54,7 +49,8 @@ function Form({ schedule }: { schedule: ScheduleRead }) {
           timezone: zone,
           enabled,
           company_recency_days: validDays ? days : schedule.company_recency_days,
-          set_aside_below_fit: validFloor ? floor : schedule.set_aside_below_fit,
+          // The low-fit floor lives in Scoring weights (ADR-071); sending it back keeps it.
+          set_aside_below_fit: schedule.set_aside_below_fit,
           expected_version: schedule.version,
         })
       }}
@@ -135,19 +131,6 @@ function Form({ schedule }: { schedule: ScheduleRead }) {
         />
         {!validDays && <span className="text-bad">Enter a whole number from 1 to 365.</span>}
       </label>
-      <label className="flex flex-col gap-1">
-        Inbox: set aside recommended jobs with a fit below (0 turns it off)
-        <input
-          type="number"
-          min={0}
-          max={100}
-          value={floorText}
-          onChange={(event) => setFloorText(event.target.value)}
-          aria-invalid={!validFloor}
-          className="w-28 rounded-md border border-line bg-surface px-2 py-1.5"
-        />
-        {!validFloor && <span className="text-bad">Enter a whole number from 0 to 100.</span>}
-      </label>
       <p className="text-ink-2">
         {shown.enabled && shown.next_run_local
           ? `Next run: ${shown.next_run_local} (${shown.timezone})`
@@ -162,7 +145,7 @@ function Form({ schedule }: { schedule: ScheduleRead }) {
         <Button
           type="submit"
           size="sm"
-          disabled={!dirty || !validTimes || !validDays || !validFloor || save.isPending}
+          disabled={!dirty || !validTimes || !validDays || save.isPending}
         >
           Save schedule
         </Button>

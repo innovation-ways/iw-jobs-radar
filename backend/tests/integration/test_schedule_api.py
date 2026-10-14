@@ -77,12 +77,12 @@ async def test_the_company_recency_limit_defaults_to_30_and_keeps_its_value_when
     assert reset.json()["company_recency_days"] == 30
 
 
-async def test_the_set_aside_floor_defaults_to_20_and_keeps_its_value_when_omitted(
+async def test_the_set_aside_floor_defaults_to_30_and_keeps_its_value_when_omitted(
     client: httpx.AsyncClient,
 ) -> None:
     """ADR-060: one inbox floor for the whole owner, 0 turns it off."""
     current = (await client.get(URL)).json()
-    assert current["set_aside_below_fit"] == 20
+    assert current["set_aside_below_fit"] == 30
     base = {"run_times_local": ["07:30"], "timezone": "UTC", "enabled": False}
     changed = await client.put(
         URL, json={**base, "set_aside_below_fit": 35, "expected_version": current["version"]}
@@ -101,9 +101,9 @@ async def test_the_set_aside_floor_defaults_to_20_and_keeps_its_value_when_omitt
         )
         assert response.status_code == 422
     reset = await client.put(
-        URL, json={**base, "set_aside_below_fit": 20, "expected_version": off.json()["version"]}
+        URL, json={**base, "set_aside_below_fit": 30, "expected_version": off.json()["version"]}
     )
-    assert reset.json()["set_aside_below_fit"] == 20
+    assert reset.json()["set_aside_below_fit"] == 30
 
 
 async def test_a_stale_version_is_409_and_bad_input_is_422(client: httpx.AsyncClient) -> None:

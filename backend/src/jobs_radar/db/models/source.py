@@ -110,7 +110,7 @@ class ScheduleSetting(TimestampMixin, Base):
     set_aside_below_fit: Mapped[int] = int_column(
         "Recommended jobs with a fit below this value are listed as set aside in the inbox; "
         "0 turns the rule off (ADR-060).",
-        default=20,
+        default=30,
     )
     version: Mapped[int] = version_column()
 

@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { defaultIntentDefinition } from '@/features/intent/defaults'
 import { IntentPanel } from '@/features/intent/IntentPanel'
+import { SetAsideFloorCard } from '@/features/intent/SetAsideFloorCard'
 import { HistoryPanel } from '@/features/history/HistoryPanel'
 import { ImportCvPanel } from '@/features/import/ImportCvPanel'
 import { ProfilePanel } from '@/features/profile/ProfilePanel'
@@ -303,6 +304,7 @@ export function ProfileIntent() {
               </div>
             )
           )}
+          {tab === 'weights' && <SetAsideFloorCard />}
         </div>
         {tab === 'history' && (
           <div role="tabpanel" id="panel-history">

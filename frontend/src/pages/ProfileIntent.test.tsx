@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -52,6 +52,19 @@ describe('Profile & intent screen', () => {
           case '/api/v1/profiles/{career_profile_id}/revisions':
           case '/api/v1/intents/{search_intent_id}/revisions':
             return Promise.resolve({ data: { items: [] } })
+          case '/api/v1/settings/schedule':
+            return Promise.resolve({
+              data: {
+                run_times_local: ['07:30'],
+                timezone: 'Europe/Lisbon',
+                enabled: true,
+                company_recency_days: 30,
+                set_aside_below_fit: 30,
+                version: 4,
+                next_run_at: null,
+                next_run_local: null,
+              },
+            })
           case '/api/v1/settings/ai':
             return Promise.resolve({
               data: {
@@ -115,6 +128,30 @@ describe('Profile & intent screen', () => {
     expect(await screen.findByRole('slider', { name: 'Compensation weight' })).toBeVisible()
     await userEvent.click(screen.getByRole('tab', { name: 'History' }))
     expect(await screen.findByText(/nothing is overwritten/i)).toBeVisible()
+  })
+
+  it('sets the fit below which recommended jobs are set aside from the weights section', async () => {
+    put.mockResolvedValue({ data: {} })
+    renderPage()
+    await screen.findByLabelText('Headline')
+    await userEvent.click(screen.getByRole('tab', { name: 'Scoring weights' }))
+    const slider = await screen.findByRole('slider', { name: 'Set aside below fit' })
+    expect(slider).toHaveValue('30')
+    const save = screen.getByRole('button', { name: 'Save limit' })
+    expect(save).toBeDisabled()
+    fireEvent.change(slider, { target: { value: '45' } })
+    expect(screen.getByText('Below 45')).toBeVisible()
+    await userEvent.click(save)
+    expect(put).toHaveBeenCalledWith('/api/v1/settings/schedule', {
+      body: {
+        run_times_local: ['07:30'],
+        timezone: 'Europe/Lisbon',
+        enabled: true,
+        company_recency_days: 30,
+        set_aside_below_fit: 45,
+        expected_version: 4,
+      },
+    })
   })
 
   it('offers to create an intent when the profile has none, starting from sensible defaults', async () => {

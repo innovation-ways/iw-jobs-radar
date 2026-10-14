@@ -60,6 +60,8 @@ class SourceCheckpoint:
     credential: str | None = field(default=None, repr=False)
     filters: JobBoardFilters | None = None
     scope: LocationScope | None = None
+    # Careers-page sources read through an approved configuration (ADR-070 layer 3).
+    page_config: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)

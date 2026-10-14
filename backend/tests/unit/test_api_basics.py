@@ -22,9 +22,11 @@ from jobs_radar.services.readiness import ComponentStatus, ReadinessReport
 class FakeReadiness:
     """Readiness service stub returning a fixed report."""
 
-    def __init__(self, database: str, worker: str) -> None:
+    def __init__(self, database: str, worker: str, schema: str = "up") -> None:
         self.report = ReadinessReport(
-            database=ComponentStatus(database), worker=ComponentStatus(worker)
+            database=ComponentStatus(database),
+            worker=ComponentStatus(worker),
+            schema=ComponentStatus(schema),
         )
 
     async def check(self) -> ReadinessReport:
@@ -136,17 +138,23 @@ def test_request_id_is_generated_when_missing(client: TestClient) -> None:
 
 
 @pytest.mark.parametrize(
-    ("database", "worker", "status"),
-    [("up", "up", 200), ("down", "up", 503), ("up", "stale", 503), ("up", "missing", 503)],
+    ("database", "worker", "schema", "status"),
+    [
+        ("up", "up", "up", 200),
+        ("down", "up", "up", 503),
+        ("up", "stale", "up", 503),
+        ("up", "missing", "up", 503),
+        ("up", "up", "stale", 503),
+    ],
 )
 def test_readyz_reflects_component_state(
-    client: TestClient, database: str, worker: str, status: int
+    client: TestClient, database: str, worker: str, schema: str, status: int
 ) -> None:
     client.app.dependency_overrides[get_readiness_service] = lambda: FakeReadiness(  # type: ignore[attr-defined]
-        database, worker
+        database, worker, schema
     )
     response = client.get("/readyz")
     assert response.status_code == status
     body = response.json()
-    assert body["components"] == {"database": database, "worker": worker}
+    assert body["components"] == {"database": database, "worker": worker, "schema": schema}
     assert body["status"] == ("ready" if status == 200 else "unavailable")

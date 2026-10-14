@@ -24,6 +24,8 @@ COMPANY_BOARDS = {
     SourceType.ASHBY,
     SourceType.SMARTRECRUITERS,
     SourceType.EIGHTFOLD,
+    SourceType.PAGE_JSONLD,
+    SourceType.PAGE_CONFIG,
 }
 
 

@@ -11,6 +11,8 @@ _COMPANY_BOARDS = frozenset(
         SourceType.ASHBY,
         SourceType.SMARTRECRUITERS,
         SourceType.EIGHTFOLD,
+        SourceType.PAGE_JSONLD,
+        SourceType.PAGE_CONFIG,
     }
 )
 
@@ -28,8 +30,13 @@ def source_category(source_type: SourceType) -> SourceCategory:
 
 _DEFAULT_RATE = 6
 # SmartRecruiters and Eightfold need one request per posting detail, so they are allowed a faster
-# pace.
-_RATE_OVERRIDES = {SourceType.SMARTRECRUITERS: 30, SourceType.EIGHTFOLD: 30}
+# pace; a company's own careers page is read one posting page at a time, at most one a second.
+_RATE_OVERRIDES = {
+    SourceType.SMARTRECRUITERS: 30,
+    SourceType.EIGHTFOLD: 30,
+    SourceType.PAGE_JSONLD: 60,
+    SourceType.PAGE_CONFIG: 60,
+}
 
 
 def default_rate_limit(source_type: SourceType) -> int:

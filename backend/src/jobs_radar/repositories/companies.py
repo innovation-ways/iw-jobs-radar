@@ -23,14 +23,26 @@ class CompanyRepository:
     async def get_or_create(self, name: str) -> Company:
         """Return the company with this (normalised) name or alias, creating it if needed."""
         normalised = normalise_company_name(name)
-        existing = (
+        existing = await self.find_by_name(name)
+        if existing is not None:
+            return existing
+        company = Company(canonical_name=" ".join(name.split()), name_normalised=normalised)
+        self._session.add(company)
+        await self._session.flush()
+        await self._session.refresh(company)
+        return company
+
+    async def find_by_name(self, name: str) -> Company | None:
+        """Return the company with this (normalised) name or alias, or ``None``."""
+        normalised = normalise_company_name(name)
+        by_name = (
             await self._session.execute(
                 select(Company).where(Company.name_normalised == normalised).limit(1)
             )
         ).scalar_one_or_none()
-        if existing is not None:
-            return existing
-        by_alias = (
+        if by_name is not None:
+            return by_name
+        return (
             await self._session.execute(
                 select(Company)
                 .join(CompanyAlias, CompanyAlias.company_id == Company.company_id)
@@ -38,12 +50,13 @@ class CompanyRepository:
                 .limit(1)
             )
         ).scalar_one_or_none()
-        if by_alias is not None:
-            return by_alias
-        company = Company(canonical_name=" ".join(name.split()), name_normalised=normalised)
-        self._session.add(company)
-        await self._session.flush()
-        await self._session.refresh(company)
+
+    async def get(self, company_id: int) -> Company:
+        """Return the company with this id (it must exist)."""
+        company = await self._session.get(Company, company_id)
+        if company is None:  # pragma: no cover - callers pass ids they just read
+            msg = f"Company {company_id} does not exist."
+            raise LookupError(msg)
         return company
 
     async def get_or_create_many(self, names: Iterable[str]) -> dict[str, int]:

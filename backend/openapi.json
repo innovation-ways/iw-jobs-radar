@@ -261,7 +261,7 @@
       },
       "BoardRead": {
         "additionalProperties": false,
-        "description": "A job board of the company.",
+        "description": "A source that collects the company's offers, with the result of its last run.",
         "properties": {
           "display_name": {
             "title": "Display Name",
@@ -271,20 +271,73 @@
             "title": "Enabled",
             "type": "boolean"
           },
+          "last_collected_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Collected Count"
+          },
+          "last_error_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error Class"
+          },
+          "last_finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Finished At"
+          },
+          "last_outcome": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceOutcome"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "source_configuration_id": {
             "title": "Source Configuration Id",
             "type": "integer"
           },
+          "source_type": {
+            "$ref": "#/components/schemas/SourceType"
+          },
           "url": {
             "title": "Url",
             "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
           }
         },
         "required": [
           "source_configuration_id",
           "display_name",
           "enabled",
-          "url"
+          "url",
+          "source_type",
+          "version"
         ],
         "title": "BoardRead",
         "type": "object"
@@ -999,6 +1052,10 @@
             ],
             "title": "Employer Type"
           },
+          "has_source": {
+            "title": "Has Source",
+            "type": "boolean"
+          },
           "homepage_url": {
             "anyOf": [
               {
@@ -1046,7 +1103,8 @@
           "best_fit_score",
           "pending_candidates",
           "is_followed",
-          "is_ignored"
+          "is_ignored",
+          "has_source"
         ],
         "title": "CompanySummary",
         "type": "object"
@@ -1492,6 +1550,44 @@
           "decision"
         ],
         "title": "DecisionRequest",
+        "type": "object"
+      },
+      "DetectedBoardRead": {
+        "additionalProperties": false,
+        "description": "A board the careers page can be collected from, already checked against the real board.",
+        "properties": {
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "identifier": {
+            "title": "Identifier",
+            "type": "string"
+          },
+          "layer": {
+            "enum": [
+              "ats",
+              "structured_page"
+            ],
+            "title": "Layer",
+            "type": "string"
+          },
+          "postings_count": {
+            "title": "Postings Count",
+            "type": "integer"
+          },
+          "source_type": {
+            "$ref": "#/components/schemas/SourceType"
+          }
+        },
+        "required": [
+          "source_type",
+          "identifier",
+          "display_name",
+          "postings_count",
+          "layer"
+        ],
+        "title": "DetectedBoardRead",
         "type": "object"
       },
       "DigestCounts": {
@@ -3903,6 +3999,225 @@
         "title": "OfferRead",
         "type": "object"
       },
+      "OnboardingConfirm": {
+        "additionalProperties": false,
+        "description": "Create the company, follow it and, when a board is chosen, add and collect it.\n\nWithout ``source`` the company is followed with its website and careers address and no\nautomatic collection (ADR-070.4). ``filters_enabled`` turns on the opt-in area and location\nfilters of ADR-051 for the new source.",
+        "properties": {
+          "careers_url": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Careers Url",
+            "type": "string"
+          },
+          "filters_enabled": {
+            "default": true,
+            "title": "Filters Enabled",
+            "type": "boolean"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "reader": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PageReaderConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reader_proposed_by": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reader Proposed By"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceChoice"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "website_url": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Website Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "website_url",
+          "careers_url"
+        ],
+        "title": "OnboardingConfirm",
+        "type": "object"
+      },
+      "OnboardingDetectRequest": {
+        "additionalProperties": false,
+        "description": "The three things the owner knows about a company; nothing is saved by a detection.",
+        "properties": {
+          "careers_url": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Careers Url",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "website_url": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Website Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "website_url",
+          "careers_url"
+        ],
+        "title": "OnboardingDetectRequest",
+        "type": "object"
+      },
+      "OnboardingDetectionRead": {
+        "additionalProperties": false,
+        "description": "What the careers address leads to, with the addresses in the form they would be saved.",
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/DetectedBoardRead"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "careers_url": {
+            "title": "Careers Url",
+            "type": "string"
+          },
+          "existing_company_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Existing Company Id"
+          },
+          "outcome": {
+            "enum": [
+              "detected",
+              "ambiguous",
+              "unsupported",
+              "script_only",
+              "blocked",
+              "unreachable",
+              "already_followed"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "website_url": {
+            "title": "Website Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome",
+          "website_url",
+          "careers_url",
+          "candidates",
+          "reason",
+          "existing_company_id"
+        ],
+        "title": "OnboardingDetectionRead",
+        "type": "object"
+      },
+      "OnboardingResultRead": {
+        "additionalProperties": false,
+        "description": "What confirming created.",
+        "properties": {
+          "collecting": {
+            "title": "Collecting",
+            "type": "boolean"
+          },
+          "collection_run_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collection Run Id"
+          },
+          "company_id": {
+            "title": "Company Id",
+            "type": "integer"
+          },
+          "company_name": {
+            "title": "Company Name",
+            "type": "string"
+          },
+          "is_followed": {
+            "title": "Is Followed",
+            "type": "boolean"
+          },
+          "source_configuration_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Configuration Id"
+          }
+        },
+        "required": [
+          "company_id",
+          "company_name",
+          "is_followed",
+          "source_configuration_id",
+          "collection_run_id",
+          "collecting"
+        ],
+        "title": "OnboardingResultRead",
+        "type": "object"
+      },
       "OnsiteAreaRead": {
         "additionalProperties": false,
         "description": "A place and radius where hybrid or on-site work is acceptable.",
@@ -3959,6 +4274,113 @@
           "radius_km"
         ],
         "title": "OnsiteHybridRule",
+        "type": "object"
+      },
+      "PageReaderConfig": {
+        "additionalProperties": false,
+        "description": "Where the postings are on a company's careers page and which parts mean what.\n\n``item_selector`` matches each posting block of the listing page; the other selectors are\nrelative to a block. Without ``link_selector`` the block's own address (or its first link) is\nthe posting address. With ``fetch_detail`` each posting page is opened for its description.",
+        "properties": {
+          "description_selector": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description Selector"
+          },
+          "fetch_detail": {
+            "default": true,
+            "title": "Fetch Detail",
+            "type": "boolean"
+          },
+          "item_selector": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Item Selector",
+            "type": "string"
+          },
+          "link_selector": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Selector"
+          },
+          "listing_url": {
+            "maxLength": 500,
+            "minLength": 8,
+            "title": "Listing Url",
+            "type": "string"
+          },
+          "location_selector": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location Selector"
+          },
+          "max_pages": {
+            "default": 3,
+            "maximum": 10.0,
+            "minimum": 1.0,
+            "title": "Max Pages",
+            "type": "integer"
+          },
+          "next_page_selector": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Page Selector"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "title_selector": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title Selector"
+          }
+        },
+        "required": [
+          "listing_url",
+          "item_selector"
+        ],
+        "title": "PageReaderConfig",
         "type": "object"
       },
       "PeriodRead": {
@@ -4960,6 +5382,84 @@
         "title": "QueueRead",
         "type": "object"
       },
+      "ReaderPostingRead": {
+        "additionalProperties": false,
+        "description": "A posting a proposed reader finds on the careers page.",
+        "properties": {
+          "location": {
+            "title": "Location",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "url",
+          "location"
+        ],
+        "title": "ReaderPostingRead",
+        "type": "object"
+      },
+      "ReaderProposalRead": {
+        "additionalProperties": false,
+        "description": "A reader proposed by the local model, with what it finds, for the owner to review.",
+        "properties": {
+          "preview": {
+            "items": {
+              "$ref": "#/components/schemas/ReaderPostingRead"
+            },
+            "title": "Preview",
+            "type": "array"
+          },
+          "proposed_by": {
+            "title": "Proposed By",
+            "type": "string"
+          },
+          "reader": {
+            "$ref": "#/components/schemas/PageReaderConfig"
+          }
+        },
+        "required": [
+          "reader",
+          "preview",
+          "proposed_by"
+        ],
+        "title": "ReaderProposalRead",
+        "type": "object"
+      },
+      "ReaderReplace": {
+        "additionalProperties": false,
+        "description": "Approve a new reader for an existing careers-page source (the old one stays in history).",
+        "properties": {
+          "expected_version": {
+            "minimum": 1.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "proposed_by": {
+            "default": "owner",
+            "maxLength": 120,
+            "title": "Proposed By",
+            "type": "string"
+          },
+          "reader": {
+            "$ref": "#/components/schemas/PageReaderConfig"
+          }
+        },
+        "required": [
+          "expected_version",
+          "reader"
+        ],
+        "title": "ReaderReplace",
+        "type": "object"
+      },
       "ReadinessResponse": {
         "description": "Body of ``/readyz``.",
         "properties": {
@@ -5499,6 +5999,27 @@
         ],
         "title": "SourceCategory",
         "type": "string"
+      },
+      "SourceChoice": {
+        "additionalProperties": false,
+        "description": "The board the owner chose among the detected ones.",
+        "properties": {
+          "identifier": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Identifier",
+            "type": "string"
+          },
+          "source_type": {
+            "$ref": "#/components/schemas/SourceType"
+          }
+        },
+        "required": [
+          "source_type",
+          "identifier"
+        ],
+        "title": "SourceChoice",
+        "type": "object"
       },
       "SourceCreate": {
         "additionalProperties": false,
@@ -6125,7 +6646,9 @@
           "arbeitnow",
           "jobicy",
           "himalayas",
-          "itjobs_pt"
+          "itjobs_pt",
+          "page_jsonld",
+          "page_config"
         ],
         "title": "SourceType",
         "type": "string"
@@ -7126,6 +7649,132 @@
           }
         },
         "summary": "List Companies",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
+    "/api/v1/companies/onboarding": {
+      "post": {
+        "description": "Create the company, follow it and, with a chosen board, add it and queue its first run.",
+        "operationId": "follow_company_from_addresses_api_v1_companies_onboarding_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingConfirm"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingResultRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Follow Company From Addresses",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
+    "/api/v1/companies/onboarding/detect": {
+      "post": {
+        "description": "Find out what a careers page can be collected from; nothing is saved (ADR-070).",
+        "operationId": "detect_company_boards_api_v1_companies_onboarding_detect_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingDetectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OnboardingDetectionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Detect Company Boards",
+        "tags": [
+          "companies"
+        ]
+      }
+    },
+    "/api/v1/companies/onboarding/propose-reader": {
+      "post": {
+        "description": "Ask the local model how to read a careers page that has no known board; nothing is saved.",
+        "operationId": "propose_careers_reader_api_v1_companies_onboarding_propose_reader_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OnboardingDetectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReaderProposalRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Propose Careers Reader",
         "tags": [
           "companies"
         ]
@@ -10553,6 +11202,102 @@
         ]
       }
     },
+    "/api/v1/sources/{source_configuration_id}/reader": {
+      "put": {
+        "description": "Approve a new reader for a careers-page source; the previous one stays in the history.",
+        "operationId": "approve_source_reader_api_v1_sources__source_configuration_id__reader_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_configuration_id",
+            "required": true,
+            "schema": {
+              "title": "Source Configuration Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReaderReplace"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Approve Source Reader",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
+    "/api/v1/sources/{source_configuration_id}/reader/propose": {
+      "post": {
+        "description": "Ask the local model for a new reader of a careers-page source (after ``schema_changed``).",
+        "operationId": "propose_source_reader_api_v1_sources__source_configuration_id__reader_propose_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "source_configuration_id",
+            "required": true,
+            "schema": {
+              "title": "Source Configuration Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReaderProposalRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Propose Source Reader",
+        "tags": [
+          "sources"
+        ]
+      }
+    },
     "/api/v1/sources/{source_configuration_id}/run": {
       "post": {
         "description": "Queue a manual run of one source (even if it is disabled).",
@@ -10852,7 +11597,7 @@
     },
     "/readyz": {
       "get": {
-        "description": "Dependency readiness: database reachable and worker heartbeat fresh.",
+        "description": "Dependency readiness: database reachable, migrations applied and worker heartbeat fresh.",
         "operationId": "readyz_readyz_get",
         "responses": {
           "200": {

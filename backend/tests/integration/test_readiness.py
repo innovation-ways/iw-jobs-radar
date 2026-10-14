@@ -83,5 +83,29 @@ async def test_readyz_over_http_follows_the_heartbeat(
     assert response.status_code == 200
     assert response.json() == {
         "status": "ready",
-        "components": {"database": "up", "worker": "up"},
+        "components": {"database": "up", "worker": "up", "schema": "up"},
     }
+
+
+async def test_a_database_behind_the_code_is_reported_stale(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    await _clear(session_factory)
+    await _beat(session_factory, datetime.now(UTC))
+    service = ReadinessService(session_factory, 60, expected_revision="99999999_9999")
+    report = await service.check()
+    assert report.database is ComponentStatus.UP
+    assert report.schema is ComponentStatus.STALE
+    assert not report.ready
+
+
+async def test_a_database_at_the_code_revision_is_up(
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    from jobs_radar.services.readiness import migration_head
+
+    await _clear(session_factory)
+    await _beat(session_factory, datetime.now(UTC))
+    report = await ReadinessService(session_factory, 60, expected_revision=migration_head()).check()
+    assert report.schema is ComponentStatus.UP
+    assert report.ready

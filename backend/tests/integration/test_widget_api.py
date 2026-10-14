@@ -50,7 +50,7 @@ async def test_it_reports_the_readiness_without_failing_when_a_part_is_down(
 ) -> None:
     body = (await client.get(URL)).json()
     # Always 200 (the widget shows the state); the values are the same as /readyz.
-    assert set(body["components"]) == {"database", "worker"}
+    assert set(body["components"]) == {"database", "worker", "schema"}
     assert body["status"] in {"ready", "unavailable"}
 
 

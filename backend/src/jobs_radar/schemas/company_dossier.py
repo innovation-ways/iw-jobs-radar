@@ -3,6 +3,7 @@
 from datetime import date, datetime
 from typing import Any, Literal
 
+from jobs_radar.domain.enums import SourceOutcome, SourceType
 from jobs_radar.schemas.common import StrictModel
 from jobs_radar.schemas.evaluation import FitBand
 
@@ -60,12 +61,19 @@ class HiringWeekRead(StrictModel):
 
 
 class BoardRead(StrictModel):
-    """A job board of the company."""
+    """A source that collects the company's offers, with the result of its last run."""
 
     source_configuration_id: int
     display_name: str
     enabled: bool
     url: str
+    source_type: SourceType
+    version: int
+    # The latest run of this source (all null before its first run).
+    last_outcome: SourceOutcome | None = None
+    last_error_class: str | None = None
+    last_finished_at: datetime | None = None
+    last_collected_count: int | None = None
 
 
 class CompanyDossierRead(StrictModel):

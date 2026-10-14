@@ -15,6 +15,7 @@ from jobs_radar.db.models import (
     CompanyEnrichmentCandidate,
     CompanyFact,
     SourceConfiguration,
+    SourceRunResult,
 )
 from jobs_radar.domain.domains import is_job_board_host, registered_domain
 from jobs_radar.repositories.companies import CompanyFollowRepository, CompanyIgnoreRepository
@@ -26,6 +27,7 @@ from jobs_radar.repositories.company_list import (
     Sort,
 )
 from jobs_radar.repositories.schedule import ScheduleRepository
+from jobs_radar.repositories.sources import SourceRepository
 from jobs_radar.services.inbox import InboxService
 
 Clock = Callable[[], datetime]
@@ -69,6 +71,7 @@ class Dossier:
     offers: list[OfferRow]
     hiring: list[HiringWeek]
     boards: list[SourceConfiguration]
+    board_results: dict[int, SourceRunResult]
     stale: bool
     is_followed: bool
     is_ignored: bool
@@ -144,6 +147,10 @@ class CompanyService:
             await self._follows.follow(owner_id, company_id)
         else:
             await self._follows.unfollow(owner_id, company_id)
+
+    async def is_followed(self, owner_id: int, company_id: int) -> bool:
+        """Whether the owner follows the company."""
+        return await self._dossier.is_followed(owner_id, company_id)
 
     async def set_ignored(self, owner_id: int, company_id: int, *, ignored: bool) -> None:
         """Ignore or stop ignoring a company and move its offers at once (ADR-061).
@@ -224,13 +231,15 @@ class CompanyService:
                 .order_by(CompanyEnrichmentCandidate.company_enrichment_candidate_id)
             )
         ).scalars()
-        boards = (
-            await self._session.execute(
-                select(SourceConfiguration)
-                .where(SourceConfiguration.company_id == company_id)
-                .order_by(SourceConfiguration.source_configuration_id)
-            )
-        ).scalars()
+        board_rows = list(
+            (
+                await self._session.execute(
+                    select(SourceConfiguration)
+                    .where(SourceConfiguration.company_id == company_id)
+                    .order_by(SourceConfiguration.source_configuration_id)
+                )
+            ).scalars()
+        )
         # One more than the limit tells whether the list was cut.
         offers = await self._dossier.offers(
             owner_id,
@@ -263,7 +272,10 @@ class CompanyService:
             is_followed=await self._dossier.is_followed(owner_id, company_id),
             is_ignored=await self._dossier.is_ignored(owner_id, company_id),
             hiring=self._hiring(await self._dossier.lifespans(company_id), now),
-            boards=list(boards),
+            boards=board_rows,
+            board_results=await SourceRepository(self._session).latest_results(
+                [b.source_configuration_id for b in board_rows]
+            ),
             stale=company.enriched_at is None or now - company.enriched_at > REFRESH_AFTER,
         )
 

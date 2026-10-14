@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 import httpx
 import pytest
-from sqlalchemy import delete
+from sqlalchemy import delete, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from tests.evaluation_world import World, world
 from tests.factories import unique
@@ -140,6 +140,9 @@ async def test_work_waiting_while_a_collection_runs_is_collecting_not_stuck(
     # An hour later, so that work other tests left behind is outside the 15-minute window.
     later = now + timedelta(hours=1)
     db_session.add(WorkerHeartbeat(worker_name=unique("w"), started_at=later, beat_at=later))
+    # Earlier tests may have left run results (append-only); the audited bypass is local to this
+    # test's transaction, which is rolled back.
+    await db_session.execute(text("SET LOCAL jobs_radar.allow_mutation = 'on'"))
     await db_session.execute(delete(CollectionRun))
 
     async def state() -> str:

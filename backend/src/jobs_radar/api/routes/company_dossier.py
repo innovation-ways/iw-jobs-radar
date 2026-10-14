@@ -13,7 +13,8 @@ from jobs_radar.api.deps import (
     get_inbox_default_intent,
     get_session,
 )
-from jobs_radar.domain.enums import LOCAL_OWNER_ID
+from jobs_radar.db.models import SourceConfiguration, SourceRunResult
+from jobs_radar.domain.enums import LOCAL_OWNER_ID, SourceOutcome, SourceType
 from jobs_radar.domain.matching.engine import band_of
 from jobs_radar.schemas.company import CompanyWebsiteSet
 from jobs_radar.schemas.company_dossier import (
@@ -42,6 +43,22 @@ _LABELS = {
     "ai_inference": "AI inference",
     "user": "You",
 }
+
+
+def _board(source: SourceConfiguration, result: SourceRunResult | None) -> BoardRead:
+    """Map a source of the company with the outcome of its latest run."""
+    return BoardRead(
+        source_configuration_id=source.source_configuration_id,
+        display_name=source.display_name,
+        enabled=source.enabled,
+        url=source.url,
+        source_type=SourceType(source.source_type),
+        version=source.version,
+        last_outcome=SourceOutcome(result.outcome) if result else None,
+        last_error_class=result.error_class if result else None,
+        last_finished_at=result.finished_at if result else None,
+        last_collected_count=result.collected_count if result else None,
+    )
 
 
 def dossier_read(dossier: Dossier, warnings: list[str] | None = None) -> CompanyDossierRead:
@@ -98,13 +115,7 @@ def dossier_read(dossier: Dossier, warnings: list[str] | None = None) -> Company
         ],
         hiring=[HiringWeekRead.model_validate(w, from_attributes=True) for w in dossier.hiring],
         boards=[
-            BoardRead(
-                source_configuration_id=b.source_configuration_id,
-                display_name=b.display_name,
-                enabled=b.enabled,
-                url=b.url,
-            )
-            for b in dossier.boards
+            _board(b, dossier.board_results.get(b.source_configuration_id)) for b in dossier.boards
         ],
         warnings=warnings or [],
     )

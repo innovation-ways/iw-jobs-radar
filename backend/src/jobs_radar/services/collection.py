@@ -11,6 +11,7 @@ from collections.abc import Awaitable, Callable, Mapping
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,7 +39,7 @@ from jobs_radar.domain.sources import next_run_allowed_at, source_category
 from jobs_radar.repositories.companies import CompanyRepository
 from jobs_radar.repositories.jobs import JobRepository
 from jobs_radar.repositories.runs import RunRepository
-from jobs_radar.repositories.sources import SourceRepository
+from jobs_radar.repositories.sources import PageReaderRepository, SourceRepository
 from jobs_radar.schemas.job import NormalisedJob
 from jobs_radar.schemas.source_filters import JobBoardFilters
 from jobs_radar.services.inbox import InboxService
@@ -274,6 +275,12 @@ class CollectionService:
                 else None
             )
             filters = scope = next_allowed = credential = problem = company_filters = None
+            page_config: dict[str, Any] | None = None
+            if source_type is SourceType.PAGE_CONFIG:
+                approved = await PageReaderRepository(session).latest(
+                    source.source_configuration_id
+                )
+                page_config = approved.config_json if approved is not None else None
             if entry is not None:
                 # The countries are never typed into a source: they come from the profile and the
                 # enabled intents (ADR-049.11).
@@ -307,6 +314,7 @@ class CollectionService:
                     filters=filters or company_filters,
                     scope=scope,
                     credential=credential,
+                    page_config=page_config,
                 ),
                 is_job_board=entry is not None,
                 next_allowed_at=next_allowed,

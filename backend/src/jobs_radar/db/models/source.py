@@ -210,3 +210,35 @@ class SourceRunResult(CreatedAtMixin, Base):
         "Safe human-readable failure message.", nullable=True
     )
     duration_ms: Mapped[int] = int_column("Duration of the collection in milliseconds.")
+
+
+class PageReaderConfiguration(CreatedAtMixin, Base):
+    """An approved reader configuration of a careers-page source (ADR-070 layer 3, append-only).
+
+    The newest revision of a source is the one its runs use; a proposal the owner approves later
+    appends a new revision, so earlier configurations stay available as history.
+    """
+
+    __tablename__ = "page_reader_configuration"
+    __table_args__ = (
+        UniqueConstraint(
+            "source_configuration_id",
+            "revision",
+            name="uq_page_reader_configuration_source_revision",
+        ),
+        {"comment": "Approved reader configurations of careers-page sources (append-only)."},
+    )
+
+    page_reader_configuration_id: Mapped[int] = pk_column(
+        "Surrogate primary key of the configuration."
+    )
+    source_configuration_id: Mapped[int] = fk_column(
+        "source_configuration.source_configuration_id", "Careers-page source the reader belongs to."
+    )
+    revision: Mapped[int] = int_column("1 for the first approved reader, then 2, 3, ...")
+    config_json: Mapped[dict[str, Any]] = json_column(
+        "Selectors and paging rules (PageReaderConfig, with schema_version)."
+    )
+    proposed_by: Mapped[str] = text_column(
+        "Who wrote it: model:<provider>:<model>, or owner.", length=120
+    )

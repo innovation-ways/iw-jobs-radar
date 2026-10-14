@@ -137,6 +137,10 @@ class SourceType(StrEnum):
     JOBICY = "jobicy"
     HIMALAYAS = "himalayas"
     ITJOBS_PT = "itjobs_pt"
+    # The company's own careers page, read without a known ATS (ADR-070): structured postings
+    # (schema.org JobPosting) or a reader configuration the owner approved.
+    PAGE_JSONLD = "page_jsonld"
+    PAGE_CONFIG = "page_config"
 
 
 class SourceCategory(StrEnum):
@@ -188,6 +192,8 @@ class SourceErrorClass(StrEnum):
     HTTP_ERROR = "http_error"
     CONFIGURATION = "configuration"
     AUTHENTICATION = "authentication"
+    # A careers page no longer matches the reader the owner approved for it (ADR-070 layer 3).
+    SCHEMA_CHANGED = "schema_changed"
     UNKNOWN = "unknown"
 
 

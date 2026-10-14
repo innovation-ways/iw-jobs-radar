@@ -21,6 +21,8 @@ class CompanySummary(StrictModel):
     pending_candidates: int
     is_followed: bool
     is_ignored: bool
+    # Whether an enabled source collects the company's own offers (false: followed by hand only).
+    has_source: bool
 
 
 class CompanyList(StrictModel):

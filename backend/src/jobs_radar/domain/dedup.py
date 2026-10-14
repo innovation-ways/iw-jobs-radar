@@ -26,7 +26,9 @@ POSSIBLE_THRESHOLD = 0.75
 SAME_SOURCE_POSSIBLE_THRESHOLD = 0.95
 SHINGLE_WORDS = 5
 # Sources that are the employer's own applicant tracking system (preferred as the primary listing).
-EMPLOYER_SOURCES = frozenset({"greenhouse", "lever", "ashby", "smartrecruiters", "eightfold"})
+EMPLOYER_SOURCES = frozenset(
+    {"greenhouse", "lever", "ashby", "smartrecruiters", "eightfold", "page_jsonld", "page_config"}
+)
 
 Location = Literal["identical", "overlap", "none"]
 Decision = Literal["auto", "possible", "distinct"]

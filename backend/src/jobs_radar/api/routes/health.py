@@ -49,10 +49,14 @@ async def healthz() -> LivenessResponse:
 async def readyz(
     service: Annotated[ReadinessService, Depends(get_readiness_service)],
 ) -> JSONResponse:
-    """Dependency readiness: database reachable and worker heartbeat fresh."""
+    """Dependency readiness: database reachable, migrations applied and worker heartbeat fresh."""
     report = await service.check()
     body = ReadinessResponse(
         status="ready" if report.ready else "unavailable",
-        components={"database": report.database.value, "worker": report.worker.value},
+        components={
+            "database": report.database.value,
+            "worker": report.worker.value,
+            "schema": report.schema.value,
+        },
     )
     return JSONResponse(body.model_dump(), status_code=200 if report.ready else 503)

@@ -8,14 +8,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.adapters.enrichment.registry import build_enrichment_adapters, build_website_reader
 from jobs_radar.adapters.sources.base import JobSourceAdapter
+from jobs_radar.adapters.sources.detector import CareersDetector
+from jobs_radar.adapters.sources.page_config import PageConfigAdapter
+from jobs_radar.core.errors import DependencyUnavailableError
+from jobs_radar.core.http import build_http_client
 from jobs_radar.core.settings import Settings
 from jobs_radar.domain.enums import LOCAL_OWNER_ID, SourceType
+from jobs_radar.repositories.companies import CompanyRepository
 from jobs_radar.repositories.inbox import InboxQueries
+from jobs_radar.repositories.sources import SourceRepository
 from jobs_radar.services.ai_settings import AiSettingsService, build_credential_box
 from jobs_radar.services.application_draft import ApplicationDraftService
 from jobs_radar.services.collection import CollectionService
 from jobs_radar.services.companies import CompanyService
 from jobs_radar.services.company_analysis import CompanyAnalysisService, SiteReader
+from jobs_radar.services.company_onboarding import CompanyOnboardingService
 from jobs_radar.services.company_summary import CompanySummaryService
 from jobs_radar.services.dedup import DedupService
 from jobs_radar.services.direction_assess import DirectionAssessService
@@ -27,12 +34,13 @@ from jobs_radar.services.inbox import InboxService
 from jobs_radar.services.integrations import IntegrationService
 from jobs_radar.services.intents import IntentService
 from jobs_radar.services.location_scope import LocationScopeService
+from jobs_radar.services.page_reader_proposal import PageReaderProposalService
 from jobs_radar.services.pipeline import PipelineService
 from jobs_radar.services.profile_data import ProfileDataService
 from jobs_radar.services.profiles import ProfileService
 from jobs_radar.services.proposal_review import ReviewService
 from jobs_radar.services.proposals import ProposalService
-from jobs_radar.services.readiness import ReadinessService
+from jobs_radar.services.readiness import ReadinessService, migration_head
 from jobs_radar.services.schedule import ScheduleService
 from jobs_radar.services.sources import SourceService
 from jobs_radar.services.summary_assess import SummaryAssessService
@@ -50,7 +58,9 @@ def get_readiness_service(request: Request) -> ReadinessService:
     """Build the readiness service for the current request."""
     settings: Settings = request.app.state.settings
     return ReadinessService(
-        request.app.state.session_factory, settings.worker_heartbeat_max_age_seconds
+        request.app.state.session_factory,
+        settings.worker_heartbeat_max_age_seconds,
+        migration_head(),
     )
 
 
@@ -73,6 +83,30 @@ def get_source_service(
 ) -> SourceService:
     """Build the source service on the request's session (with the credential box, if any)."""
     return SourceService(session, adapters, box=build_credential_box(request.app.state.settings))
+
+
+def get_careers_detector(request: Request) -> CareersDetector:
+    """Return the careers-page detector, built once; tests may replace it on ``app.state``."""
+    detector: CareersDetector | None = getattr(request.app.state, "careers_detector", None)
+    if detector is None:
+        detector = CareersDetector(build_http_client(), get_adapters(request))
+        request.app.state.careers_detector = detector
+    return detector
+
+
+def get_company_onboarding_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+    sources: Annotated[SourceService, Depends(get_source_service)],
+    detector: Annotated[CareersDetector, Depends(get_careers_detector)],
+) -> CompanyOnboardingService:
+    """Build the follow-a-company use case on the request's session."""
+    return CompanyOnboardingService(
+        CompanyService(session),
+        sources,
+        CompanyRepository(session),
+        SourceRepository(session),
+        detector,
+    )
 
 
 def get_location_scope_service(
@@ -271,3 +305,15 @@ def get_application_draft_service(
     """Build the service that writes pre-application drafts with the local jobs model."""
     settings: Settings = request.app.state.settings
     return ApplicationDraftService(session, ai, max_chars=settings.extraction_max_chars)
+
+
+def get_page_reader_proposal_service(
+    request: Request,
+    ai: Annotated[AiSettingsService, Depends(get_ai_settings_service)],
+) -> PageReaderProposalService:
+    """Build the careers-page reader proposal (local model only, ADR-070)."""
+    adapter = get_adapters(request).get(SourceType.PAGE_CONFIG)
+    if not isinstance(adapter, PageConfigAdapter):
+        msg = "Reading careers pages is not available in this build."
+        raise DependencyUnavailableError(msg)
+    return PageReaderProposalService(ai, adapter)

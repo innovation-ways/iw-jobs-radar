@@ -34,6 +34,8 @@ async def test_the_company_list_has_counts_total_and_the_threshold(
             "best_fit_score",
             "pending_candidates",
             "is_followed",
+            "is_ignored",
+            "has_source",
         }
 
 

@@ -27,6 +27,7 @@ from jobs_radar.db.models import (
     JobOpportunity,
     JobSnapshot,
     MatchEvaluation,
+    SourceConfiguration,
 )
 from jobs_radar.domain.enums import InboxState, Recommendation
 
@@ -48,6 +49,7 @@ class CompanyRow:
     pending_candidates: int
     is_followed: bool
     is_ignored: bool
+    has_source: bool
     latest_offer_at: datetime | None
 
 
@@ -185,6 +187,13 @@ class CompanyListQueries:
                     CompanyIgnore.company_id == Company.company_id,
                 )
                 .label("is_ignored"),
+                # Whether any enabled source collects this company's own offers (ADR-070.4).
+                exists()
+                .where(
+                    SourceConfiguration.company_id == Company.company_id,
+                    SourceConfiguration.enabled.is_(True),
+                )
+                .label("has_source"),
             )
             .select_from(Company)
             .outerjoin(JobOpportunity, counted)

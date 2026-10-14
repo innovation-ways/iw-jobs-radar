@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.adapters.sources.base import BoardInfo, JobSourceAdapter, SourceError
 from jobs_radar.adapters.sources.catalogue import CatalogueEntry, get_entry
+from jobs_radar.adapters.sources.page_config import PageConfigAdapter, company_label
 from jobs_radar.core.crypto import CredentialBox
 from jobs_radar.core.errors import (
     ConflictError,
@@ -15,12 +16,15 @@ from jobs_radar.core.errors import (
     InputValidationError,
 )
 from jobs_radar.db.models import Company, SourceConfiguration, SourceRunResult
+from jobs_radar.domain.careers_markers import page_identifier
+from jobs_radar.domain.domains import registered_domain
 from jobs_radar.domain.enums import SourceCategory, SourceErrorClass, SourceType
 from jobs_radar.domain.sources import default_rate_limit, next_run_allowed_at, source_category
 from jobs_radar.repositories.companies import CompanyRepository
 from jobs_radar.repositories.jobs import JobRepository
 from jobs_radar.repositories.runs import RunRepository
-from jobs_radar.repositories.sources import SourceRepository
+from jobs_radar.repositories.sources import PageReaderRepository, SourceRepository
+from jobs_radar.schemas.page_reader import PageReaderConfig
 from jobs_radar.schemas.source_filters import JobBoardFilters
 from jobs_radar.services.location_scope import LocationScopeService
 
@@ -133,6 +137,110 @@ class SourceService:
             enabled=enabled,
             rate_limit_per_minute=default_rate_limit(source_type),
         )
+
+    # --- careers pages read through an approved configuration (ADR-070 layer 3) -----------------
+
+    def _page_adapter(self) -> PageConfigAdapter:
+        adapter = self._adapters.get(SourceType.PAGE_CONFIG)
+        if not isinstance(adapter, PageConfigAdapter):
+            msg = "Reading careers pages is not available in this build."
+            raise DependencyUnavailableError(msg)
+        return adapter
+
+    async def _approved_preview(
+        self, identifier: str, config: PageReaderConfig, rate_limit: int
+    ) -> None:
+        """Refuse a configuration that is off the company's domain or finds no posting."""
+        if registered_domain(config.listing_url) != registered_domain(f"https://{identifier}"):
+            msg = "The listing page must be on the same site as the careers page."
+            raise InputValidationError(msg, details={"field": "reader"})
+        try:
+            found = await self._page_adapter().preview(
+                config, key=identifier, per_minute=rate_limit
+            )
+        except SourceError as error:
+            raise translate_source_error(error) from error
+        if not found:
+            msg = "The reader finds no posting on the careers page."
+            raise InputValidationError(msg, details={"field": "reader"})
+
+    async def add_page_reader(
+        self,
+        *,
+        owner_id: int,
+        careers_url: str,
+        display_name: str,
+        config: PageReaderConfig,
+        proposed_by: str,
+    ) -> SourceConfiguration:
+        """Create a careers-page source from a reader configuration the owner approved.
+
+        The configuration is checked against the live page again (the form's preview is not
+        trusted): it must be on the careers site and find at least one posting.
+
+        Raises:
+            ConflictError: the careers page is already a source.
+            InputValidationError: the reader is off the site or finds nothing.
+            DependencyUnavailableError: the page cannot be read right now.
+        """
+        identifier = page_identifier(careers_url)
+        if await self._sources.find(owner_id, SourceType.PAGE_CONFIG, identifier) is not None:
+            msg = "This careers page is already configured."
+            raise ConflictError(msg, details={"external_identifier": identifier})
+        rate = default_rate_limit(SourceType.PAGE_CONFIG)
+        await self._approved_preview(identifier, config, rate)
+        name = display_name.strip() or company_label(identifier)
+        company = await CompanyRepository(self._session).get_or_create(name)
+        source = await self._sources.create(
+            owner_id=owner_id,
+            company_id=company.company_id,
+            source_type=SourceType.PAGE_CONFIG,
+            external_identifier=identifier,
+            display_name=name,
+            url=self._page_adapter().endpoint(identifier),
+            enabled=True,
+            rate_limit_per_minute=rate,
+        )
+        await PageReaderRepository(self._session).append(
+            source.source_configuration_id, config.model_dump(mode="json"), proposed_by
+        )
+        return source
+
+    async def replace_page_reader(
+        self,
+        owner_id: int,
+        source_configuration_id: int,
+        *,
+        config: PageReaderConfig,
+        proposed_by: str,
+        expected_version: int,
+    ) -> SourceConfiguration:
+        """Approve a new reader for a careers-page source; the old one stays in the history.
+
+        Raises:
+            NotFoundError: unknown source.
+            ConflictError: ``expected_version`` is stale.
+            InputValidationError: not a careers-page source, or the reader finds nothing.
+        """
+        source = await self._sources.get(owner_id, source_configuration_id, for_update=True)
+        if source.source_type != SourceType.PAGE_CONFIG.value:
+            msg = "Only a careers-page source has a reader."
+            raise InputValidationError(msg)
+        if source.version != expected_version:
+            msg = "The source changed since it was loaded."
+            raise ConflictError(
+                msg, details={"expected": expected_version, "actual": source.version}
+            )
+        await self._approved_preview(
+            source.external_identifier, config, source.rate_limit_per_minute
+        )
+        await PageReaderRepository(self._session).append(
+            source_configuration_id, config.model_dump(mode="json"), proposed_by
+        )
+        source.etag = None
+        source.version += 1
+        await self._session.flush()
+        return source
 
     # --- job boards (ADR-049) ------------------------------------------------------------------
 

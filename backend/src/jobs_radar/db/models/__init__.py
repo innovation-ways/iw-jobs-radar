@@ -35,6 +35,7 @@ from jobs_radar.db.models.provider import IntegrationCredential, PrivacySetting,
 from jobs_radar.db.models.skills import Skill, SkillAlias, SkillCandidate, SkillRelation
 from jobs_radar.db.models.source import (
     CollectionRun,
+    PageReaderConfiguration,
     ScheduleSetting,
     SourceConfiguration,
     SourceRunResult,
@@ -70,6 +71,7 @@ __all__ = [
     "JobSummary",
     "MatchEvaluation",
     "Owner",
+    "PageReaderConfiguration",
     "PrivacySetting",
     "ProfileProposal",
     "ProfileRevision",

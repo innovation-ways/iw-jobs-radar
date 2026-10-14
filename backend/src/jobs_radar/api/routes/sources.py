@@ -9,9 +9,11 @@ from jobs_radar.adapters.sources.catalogue import available_entries, get_entry
 from jobs_radar.api.deps import (
     get_collection_service,
     get_location_scope_service,
+    get_page_reader_proposal_service,
     get_session,
     get_source_service,
 )
+from jobs_radar.core.errors import InputValidationError
 from jobs_radar.db.models import CollectionRun, SourceRunResult
 from jobs_radar.domain.enums import (
     LOCAL_OWNER_ID,
@@ -23,6 +25,11 @@ from jobs_radar.domain.enums import (
 )
 from jobs_radar.domain.sources import source_category
 from jobs_radar.schemas.ai_settings import CredentialWrite
+from jobs_radar.schemas.company_onboarding import (
+    ReaderPostingRead,
+    ReaderProposalRead,
+    ReaderReplace,
+)
 from jobs_radar.schemas.source import (
     CatalogueEntryRead,
     CatalogueList,
@@ -41,6 +48,7 @@ from jobs_radar.schemas.source import (
 from jobs_radar.schemas.source_filters import JobBoardFilters
 from jobs_radar.services.collection import CollectionService
 from jobs_radar.services.location_scope import LocationScopeService
+from jobs_radar.services.page_reader_proposal import PageReaderProposalService
 from jobs_radar.services.sources import SourceService, SourceStatusRow
 
 router = APIRouter(tags=["sources"])
@@ -313,3 +321,43 @@ async def list_collection_runs(
     return CollectionRunPage(
         items=[_run(run, results) for run, results in page], next_before_collection_run_id=cursor
     )
+
+
+@router.post("/sources/{source_configuration_id}/reader/propose", response_model=ReaderProposalRead)
+async def propose_source_reader(
+    source_configuration_id: int,
+    service: Annotated[SourceService, Depends(get_source_service)],
+    proposals: Annotated[PageReaderProposalService, Depends(get_page_reader_proposal_service)],
+) -> ReaderProposalRead:
+    """Ask the local model for a new reader of a careers-page source (after ``schema_changed``)."""
+    source = await service.get(LOCAL_OWNER_ID, source_configuration_id)
+    if source.source_type != SourceType.PAGE_CONFIG.value:
+        raise InputValidationError("Only a careers-page source has a reader.")
+    proposal = await proposals.propose(LOCAL_OWNER_ID, source.url)
+    return ReaderProposalRead(
+        reader=proposal.config,
+        preview=[
+            ReaderPostingRead(title=p.title, url=p.url, location=p.location)
+            for p in proposal.preview
+        ],
+        proposed_by=proposal.proposed_by,
+    )
+
+
+@router.put("/sources/{source_configuration_id}/reader", response_model=SourceRead)
+async def approve_source_reader(
+    source_configuration_id: int,
+    body: ReaderReplace,
+    service: Annotated[SourceService, Depends(get_source_service)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SourceRead:
+    """Approve a new reader for a careers-page source; the previous one stays in the history."""
+    await service.replace_page_reader(
+        LOCAL_OWNER_ID,
+        source_configuration_id,
+        config=body.reader,
+        proposed_by=body.proposed_by,
+        expected_version=body.expected_version,
+    )
+    await session.commit()
+    return await _one(service, source_configuration_id)

@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.core.errors import NotFoundError
-from jobs_radar.db.models import SourceConfiguration, SourceRunResult
+from jobs_radar.db.models import PageReaderConfiguration, SourceConfiguration, SourceRunResult
 from jobs_radar.domain.enums import SourceType
 
 
@@ -102,3 +102,37 @@ class SourceRepository:
             select(SourceRunResult).where(SourceRunResult.source_run_result_id.in_(latest))
         )
         return {row.source_configuration_id: row for row in rows.scalars()}
+
+
+class PageReaderRepository:
+    """Approved reader configurations of careers-page sources (append-only revisions)."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def latest(self, source_configuration_id: int) -> PageReaderConfiguration | None:
+        """Return the newest approved configuration of the source, if any."""
+        return (
+            await self._session.execute(
+                select(PageReaderConfiguration)
+                .where(PageReaderConfiguration.source_configuration_id == source_configuration_id)
+                .order_by(PageReaderConfiguration.revision.desc())
+                .limit(1)
+            )
+        ).scalar_one_or_none()
+
+    async def append(
+        self, source_configuration_id: int, config_json: dict[str, Any], proposed_by: str
+    ) -> PageReaderConfiguration:
+        """Store an approved configuration as the next revision."""
+        current = await self.latest(source_configuration_id)
+        row = PageReaderConfiguration(
+            source_configuration_id=source_configuration_id,
+            revision=(current.revision + 1) if current else 1,
+            config_json=config_json,
+            proposed_by=proposed_by,
+        )
+        self._session.add(row)
+        await self._session.flush()
+        await self._session.refresh(row)
+        return row

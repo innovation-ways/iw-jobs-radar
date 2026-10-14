@@ -33,5 +33,9 @@ async def widget_summary(
         best_fit=summary.best_fit,
         followed_recommended=summary.followed_recommended,
         status="ready" if report.ready else "unavailable",
-        components={"database": report.database.value, "worker": report.worker.value},
+        components={
+            "database": report.database.value,
+            "worker": report.worker.value,
+            "schema": report.schema.value,
+        },
     )

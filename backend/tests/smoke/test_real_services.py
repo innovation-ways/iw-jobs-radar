@@ -139,3 +139,25 @@ async def test_a_real_cloud_provider_lists_models() -> None:
         )
     provider = build_provider(ProviderSpec("compatible", url, "unused", key), settings())
     assert await provider.available_models()  # a model list only: no document or job text is sent
+
+
+async def test_real_careers_addresses_are_detected() -> None:
+    """ADR-070: a board address resolves to its board, and an own site to structured postings."""
+    from jobs_radar.adapters.sources.detector import CareersDetector, DetectionOutcome
+    from jobs_radar.adapters.sources.page_jsonld import PageJsonLdAdapter
+    from jobs_radar.domain.enums import SourceType
+
+    client = build_http_client()
+    detector = CareersDetector(
+        client,
+        {SourceType.ASHBY: AshbyAdapter(client), SourceType.PAGE_JSONLD: PageJsonLdAdapter(client)},
+    )
+    board = await detector.detect("https://jobs.ashbyhq.com/mistral.ai")
+    assert board.outcome is DetectionOutcome.DETECTED
+    assert board.candidates[0].identifier == "mistral.ai"
+    assert board.candidates[0].postings_count > 0
+
+    own_site = await detector.detect("https://wise.jobs/", website_url="https://wise.com/")
+    assert own_site.outcome is DetectionOutcome.DETECTED
+    assert own_site.candidates[0].source_type is SourceType.PAGE_JSONLD
+    assert own_site.candidates[0].postings_count > 0

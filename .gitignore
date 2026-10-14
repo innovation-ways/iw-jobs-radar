@@ -57,9 +57,9 @@ db-start-guard-*/
 # iw-fix-gates session logs (per-run developer artefact — not committed)
 ai-dev/work/fix-gates-*.md
 
-# Maintainer workspace, kept local and not published: design documents, ADRs, work items, brand
-# assets and the AI-agent workflow files.
-ai-dev/
+# Maintainer workspace: design documents, ADRs, work items, brand assets and the AI-agent workflow
+# files. Tracked again on 2026-10-13 (owner's decision); only the per-run logs above stay ignored.
+# ai-dev/
 .claude/
 .opencode/
 .pi/

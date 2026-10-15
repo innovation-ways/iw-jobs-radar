@@ -96,6 +96,44 @@ async def test_only_the_newest_pages_are_read_within_the_page_cap(
 
 
 @respx.mock
+async def test_a_page_that_fails_after_others_were_read_keeps_what_was_read() -> None:
+    site()
+    respx.get(f"{BASE}/project/billing-consultant-1002").mock(
+        side_effect=httpx.ConnectError("down")
+    )
+    result = await build(FreelancermapAdapter).collect(
+        checkpoint("freelancermap", JobBoardFilters(max_age_days=30))
+    )
+    assert [p.external_job_id for p in result.postings] == ["1001"]
+    # The run did not see every page, so it must not close postings.
+    assert result.truncated is True
+
+
+@respx.mock
+async def test_the_first_page_failing_fails_the_run() -> None:
+    site()
+    respx.get(f"{BASE}/project/senior-data-engineer-1001").mock(
+        side_effect=httpx.ConnectError("down")
+    )
+    with pytest.raises(SourceError) as error:
+        await build(FreelancermapAdapter).collect(
+            checkpoint("freelancermap", JobBoardFilters(max_age_days=30))
+        )
+    assert error.value.error_class is SourceErrorClass.NETWORK_ERROR
+
+
+@respx.mock
+async def test_a_page_removed_since_the_sitemap_is_skipped() -> None:
+    site()
+    respx.get(f"{BASE}/project/billing-consultant-1002").mock(return_value=httpx.Response(404))
+    result = await build(FreelancermapAdapter).collect(
+        checkpoint("freelancermap", JobBoardFilters(max_age_days=30))
+    )
+    assert [p.external_job_id for p in result.postings] == ["1001", "1006"]
+    assert result.truncated is False
+
+
+@respx.mock
 async def test_a_site_whose_robots_txt_refuses_is_not_read() -> None:
     routes = site(robots=b"User-agent: *\nDisallow: /\n")
     with pytest.raises(SourceError) as error:

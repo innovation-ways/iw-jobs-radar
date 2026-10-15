@@ -1,7 +1,8 @@
 """Rate-limited GET with bounded retries, shared by the source adapters (ADR-042.5, ADR-049.8).
 
 A request is spaced by the source's rate limit, retried at most three times in total on 429 and 5xx
-(honouring ``Retry-After``, capped), and every failure becomes a classified :class:`SourceError`
+(honouring ``Retry-After``, capped) and on a connection failure or timeout (a blip must not cost a
+run that has already read many pages), and every failure becomes a classified :class:`SourceError`
 whose message never contains an address or a payload.
 """
 
@@ -15,6 +16,9 @@ from jobs_radar.domain.enums import SourceErrorClass
 
 MAX_ATTEMPTS = 3
 MAX_BACKOFF_SECONDS = 60.0
+
+# Transport failures that are retried (see ``FetchError.error_class``).
+_RETRIED_FETCH_CLASSES = frozenset({"timeout", "network_error"})
 
 Sleep = Callable[[float], Awaitable[None]]
 
@@ -49,6 +53,11 @@ class PoliteGetter:
             try:
                 response = await self._client.get(url, headers=headers)
             except FetchError as exc:
+                # Only transport hiccups are worth another try; a blocked address, an oversized
+                # body or too many redirects would fail again the same way.
+                if exc.error_class in _RETRIED_FETCH_CLASSES and attempt < MAX_ATTEMPTS:
+                    await self._sleep(float(min(2**attempt, MAX_BACKOFF_SECONDS)))
+                    continue
                 raise source_error_from_fetch(exc) from exc
             status = response.status
             if status in (200, 304):

@@ -210,7 +210,19 @@ class FreelancermapAdapter(JobBoardAdapter):
                 if not await self._robots.allowed(address):
                     skipped += 1
                     continue
-                response = await self._getter.get(address, {}, key, per_minute=per_minute)
+                try:
+                    response = await self._getter.get(address, {}, key, per_minute=per_minute)
+                except SourceError as exc:
+                    if exc.error_class is SourceErrorClass.NOT_FOUND:
+                        # The page was removed after the sitemap was written: nothing to read.
+                        skipped += 1
+                        continue
+                    if parsed == 0:
+                        raise
+                    # A page failed after others were read: keep them, and say the run was cut
+                    # short so that it never closes postings it did not see.
+                    capped = True
+                    break
                 project = project_data(response.body.decode("utf-8", "replace"))
                 if project is None:
                     skipped += 1

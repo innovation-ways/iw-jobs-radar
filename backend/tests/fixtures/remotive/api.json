@@ -1,0 +1,72 @@
+{
+  "0-legal-notice": "Synthetic notice: link back to Remotive and mention it as the source.",
+  "job-count": 5,
+  "total-job-count": 5,
+  "jobs": [
+    {
+      "id": 2001,
+      "url": "https://remotive.com/remote-jobs/software-development/senior-python-engineer-2001",
+      "title": "Senior Python Engineer",
+      "company_name": "Acme Systems",
+      "category": "Software Development",
+      "tags": ["python", "aws"],
+      "job_type": "contract",
+      "publication_date": "2026-10-08T09:00:00",
+      "candidate_required_location": "Worldwide",
+      "salary": "$60k - $90k",
+      "description": "<p>Contract role. Build synthetic services.</p>"
+    },
+    {
+      "id": 2002,
+      "url": "https://remotive.com/remote-jobs/data/data-engineer-2002",
+      "title": "Data Engineer",
+      "company_name": "Globex",
+      "category": "Data",
+      "tags": ["sql", "etl"],
+      "job_type": "full_time",
+      "publication_date": "2026-10-07T09:00:00",
+      "candidate_required_location": "Europe",
+      "salary": "",
+      "description": "<p>Synthetic pipelines.</p>"
+    },
+    {
+      "id": 2003,
+      "url": "https://remotive.com/remote-jobs/software-development/backend-engineer-2003",
+      "title": "Backend Engineer",
+      "company_name": "Umbrella",
+      "category": "Software Development",
+      "tags": ["java"],
+      "job_type": "full_time",
+      "publication_date": "2026-10-08T09:00:00",
+      "candidate_required_location": "USA",
+      "salary": "",
+      "description": "<p>US only.</p>"
+    },
+    {
+      "id": 2004,
+      "url": "https://remotive.com/remote-jobs/marketing/content-writer-2004",
+      "title": "Content Writer",
+      "company_name": "Initech",
+      "category": "Marketing",
+      "tags": ["writing"],
+      "job_type": "full_time",
+      "publication_date": "2026-10-08T09:00:00",
+      "candidate_required_location": "Worldwide",
+      "salary": "",
+      "description": "<p>Words.</p>"
+    },
+    {
+      "id": 2005,
+      "url": "https://remotive.com/remote-jobs/software-development/old-role-2005",
+      "title": "Old Platform Engineer",
+      "company_name": "Hooli",
+      "category": "DevOps / Sysadmin",
+      "tags": ["kubernetes"],
+      "job_type": "full_time",
+      "publication_date": "2026-08-01T09:00:00",
+      "candidate_required_location": "Worldwide",
+      "salary": "",
+      "description": "<p>Old.</p>"
+    }
+  ]
+}

@@ -150,6 +150,26 @@ CATALOGUE: tuple[CatalogueEntry, ...] = (
         default_filters=JobBoardFilters(max_age_days=7),
     ),
     CatalogueEntry(
+        source_type=SourceType.REMOTIVE,
+        display_name="Remotive",
+        coverage_note="Remote · small curated feed · contract type and location requirement stated",
+        homepage_url="https://remotive.com",
+        endpoint="https://remotive.com/api/remote-jobs",
+        terms_url="https://remotive.com/api-documentation",
+        terms_note=(
+            "Free public API, no key. Link back to the posting on Remotive and name it as the "
+            "source; its data is delayed by 24 hours and it asks for at most four requests a day. "
+            "Do not submit its jobs to third-party job sites."
+        ),
+        attribution_text="Jobs from Remotive (remotive.com).",
+        delay_note="The board delays its postings by 24 hours.",
+        # At most four requests a day are asked for (ADR-076), so six hours between runs.
+        min_interval_minutes=360,
+        rate_limit_per_minute=2,
+        # The free feed holds only a few open postings, so a month is read (ADR-076).
+        default_filters=JobBoardFilters(max_age_days=30),
+    ),
+    CatalogueEntry(
         source_type=SourceType.FREELANCERMAP,
         display_name="freelancermap",
         coverage_note="Freelance and contract IT projects · DACH, UK, EU · contract type stated",

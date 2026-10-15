@@ -3,7 +3,7 @@
 Jobs Radar reads public job data on the owner's own machine. It does not redistribute that data, but
 each source has conditions you must respect. This page records what each source asks for and what
 the application does about it. **Review it again when you add a source or before running the
-application as a service for other people.** Last reviewed: 2026-10-13.
+application as a service for other people.** Last reviewed: 2026-10-15.
 
 ## Job boards (catalogue, `adapters/sources/catalogue.py`)
 
@@ -16,6 +16,7 @@ application as a service for other people.** Last reviewed: 2026-10-13.
 | Working Nomads | Free public JSON, no key | No usage terms were found on the site or the feed | Minimum 60 minutes between runs, link to the original posting and attribution text kept; one extra request per run to the site's own search endpoint for the page slug (ADR-074.6) |
 | Remote OK | Free public API, no key | API notice: link back to the posting on Remote OK with a follow link, name Remote OK as the source, do not use its logo without permission | Minimum 60 minutes between runs, attribution text and original link shown, no logo (ADR-074) |
 | freelancermap | No API or feed; the public project pages named in its sitemap | `robots.txt` allows everything. The terms do not mention automated access; they ask users not to overload the service (§4(1)(a)) and to use its information for their own purposes (§4(5)) | Slow reading (15 pages a minute, at most 120 a run, minimum 6 hours between runs), only pages of the sitemap, attribution and original link kept, personal use only (ADR-075) |
+| Remotive | Free public API, no key | API notice: link back to the posting on Remotive and name it as the source; data delayed by 24 hours; at most four requests a day; do not submit its jobs to third-party job sites; no sign-up harvesting | Minimum 6 hours between runs, attribution text and original link shown, postings never exported or submitted elsewhere (ADR-076) |
 | ITJobs.pt | Free API key requested by email | The published pages state no usage terms, rate limit or attribution rule (contact `itjobs@itjobs.pt`) | Key is encrypted and write-only; minimum 6 hours between runs. **Confirm the terms with ITJobs.pt when you receive your key** |
 
 The application enforces the minimum interval between runs (`409 too_soon`) and never lets you type

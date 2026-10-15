@@ -13,6 +13,7 @@ from jobs_radar.adapters.sources.lever import LeverAdapter
 from jobs_radar.adapters.sources.page_config import PageConfigAdapter
 from jobs_radar.adapters.sources.page_jsonld import PageJsonLdAdapter
 from jobs_radar.adapters.sources.remoteok import RemoteOkAdapter
+from jobs_radar.adapters.sources.remotive import RemotiveAdapter
 from jobs_radar.adapters.sources.smartrecruiters import SmartRecruitersAdapter
 from jobs_radar.adapters.sources.weworkremotely import WeWorkRemotelyAdapter
 from jobs_radar.adapters.sources.workingnomads import WorkingNomadsAdapter
@@ -41,5 +42,6 @@ def build_source_adapters() -> dict[SourceType, JobSourceAdapter]:
         SourceType.WEWORKREMOTELY: WeWorkRemotelyAdapter(client),
         SourceType.WORKINGNOMADS: WorkingNomadsAdapter(client),
         SourceType.REMOTEOK: RemoteOkAdapter(client),
+        SourceType.REMOTIVE: RemotiveAdapter(client),
         SourceType.FREELANCERMAP: FreelancermapAdapter(client),
     }

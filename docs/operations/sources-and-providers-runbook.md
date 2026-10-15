@@ -83,6 +83,7 @@ many postings would be kept), then **Add**. Nothing is saved before the check su
 | Working Nomads | remote; many independent-contractor roles; location as text | none | one JSON answer with every open posting; at most one run an hour (ADR-074) |
 | Remote OK | remote; about 100 newest postings; annual salary when stated | none | one JSON answer, first element is a legal notice; at most one run an hour (ADR-074) |
 | freelancermap | freelance and contract IT projects (DACH, UK, EU); contract type stated per project | none | reads project pages from the public sitemap, 15 a minute, at most 120 a run; a layout change fails as `schema_changed`; at most one run every 6 hours (ADR-075) |
+| Remotive | remote; small curated feed; contract type and location requirement per job | none | one JSON answer, delayed 24 hours by the board; at most four requests a day, so one run every 6 hours (ADR-076) |
 | ITJobs.pt | Portugal, IT | free key by email (itjobs.pt/api) | checked against the live service with a real key on 2026-10-12 (collection and offer links work); `workModel` codes are observed, not documented |
 
 - **Where a board looks comes from your profile.** The countries are never typed into a source.

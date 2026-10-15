@@ -21,6 +21,7 @@ JOB_BOARDS = {
     SourceType.WORKINGNOMADS,
     SourceType.REMOTEOK,
     SourceType.FREELANCERMAP,
+    SourceType.REMOTIVE,
 }
 COMPANY_BOARDS = {
     SourceType.GREENHOUSE,
@@ -126,7 +127,7 @@ def test_every_board_reads_only_the_latest_days_by_default() -> None:
 
 
 # Feeds that hold only open or newest postings and are small, so they read further back.
-SMALL_FEEDS = {"weworkremotely", "workingnomads", "remoteok"}
+SMALL_FEEDS = {"weworkremotely", "workingnomads", "remoteok", "remotive"}
 
 
 def test_a_small_feed_of_open_postings_reads_a_month_back() -> None:

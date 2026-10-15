@@ -1,11 +1,14 @@
 """The company list with counted offers, best fit and follow state (document 13 s.9, ADR-053).
 
-For every company: the *counted* offers (open, first seen within the recency limit and not ignored
-by the owner), how many of them are recommended, the best fit among them, whether the owner follows
-the company and how many identification candidates wait for a decision. A recommended offer is one
-whose latest evaluation of the primary posting under the chosen intent has a fit at or above the
-threshold and is not ``not_recommended``. Everything is computed in one grouped query so the list
-scales with the number of companies, not offers.
+For every company: the *counted* offers (open, first seen within the recency limit and not yet
+handled by the owner: ignored, applied, archived or shortlisted), how many of them are
+recommended, the best fit among them, whether the owner follows the company and how many
+identification candidates wait for a decision.
+
+A recommended offer is one whose latest evaluation of the primary posting under the chosen intent
+has a fit at or above the threshold and is not ``not_recommended``.
+Everything is computed in one grouped query so the list scales with the number of companies, not
+offers.
 """
 
 from dataclasses import dataclass
@@ -106,6 +109,24 @@ def ignored_by(owner_id: int) -> Any:
     )
 
 
+def handled_by(owner_id: int) -> Any:
+    """Condition: the owner already dealt with the (correlated) opportunity.
+
+    Ignored, applied, archived and shortlisted offers are not "open" any more: the owner has seen
+    them and decided, so they must not keep the company looking like it has something to review.
+    """
+    return exists().where(
+        JobInboxItem.owner_id == owner_id,
+        JobInboxItem.job_opportunity_id == JobOpportunity.job_opportunity_id,
+        or_(
+            JobInboxItem.state.in_(
+                [InboxState.IGNORED.value, InboxState.APPLIED.value, InboxState.ARCHIVED.value]
+            ),
+            JobInboxItem.is_shortlisted.is_(True),
+        ),
+    )
+
+
 def set_aside_by(evaluation: Any, floor: int) -> Any:
     """Predicate: the latest evaluation is "Set aside" in the inbox (ADR-058, ADR-060).
 
@@ -143,13 +164,14 @@ class CompanyListQueries:
             evaluation.fit_score >= relevance_min_score,
             evaluation.recommendation != Recommendation.NOT_RECOMMENDED.value,
         )
-        # Old, closed and ignored offers are left out of the join so that the company stays in the
-        # list with zero counted offers (a followed company must not disappear).
+        # Old, closed and handled (ignored, applied, archived, shortlisted) offers are left out of
+        # the join so that the company stays in the list with zero counted offers (a followed
+        # company must not disappear).
         counted = and_(
             JobOpportunity.company_id == Company.company_id,
             JobOpportunity.closed_at.is_(None),
             JobOpportunity.first_seen_at >= now - timedelta(days=recency_days),
-            ~ignored_by(owner_id),
+            ~handled_by(owner_id),
         )
         # The evaluation is joined after the opportunity, so the set-aside rule (same as the
         # inbox tab) is applied to the aggregates below instead of the join.
@@ -349,8 +371,9 @@ class CompanyDossierQueries:
     ) -> list[OfferRow]:
         """Return the company's opportunities: actionable ones first, then best fit, then newest.
 
-        Ignored and closed opportunities sort last, so that when ``limit`` cuts the list they are
-        the ones left out: the cut must never hide offers the owner can still act on.
+        Ignored, applied, archived, shortlisted and closed opportunities sort last, so that when
+        ``limit`` cuts the list they are the ones left out: the cut must never hide offers the owner
+        can still act on.
 
         ``not_before`` leaves out opportunities first seen earlier than that time (``None`` keeps
         all). Each row carries the owner's inbox state so the screen can dim ignored offers.
@@ -395,6 +418,9 @@ class CompanyDossierQueries:
             statement.order_by(
                 case(
                     (JobInboxItem.state == InboxState.IGNORED.value, 1),
+                    (JobInboxItem.state == InboxState.APPLIED.value, 1),
+                    (JobInboxItem.state == InboxState.ARCHIVED.value, 1),
+                    (JobInboxItem.is_shortlisted.is_(True), 1),
                     (JobOpportunity.closed_at.is_not(None), 1),
                     else_=0,
                 ),

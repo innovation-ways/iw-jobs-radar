@@ -48,10 +48,13 @@ class World:
         offers: list[tuple[int, int | None, Recommendation]],
         *,
         ignored: tuple[int, ...] = (),
+        applied: tuple[int, ...] = (),
+        shortlisted: tuple[int, ...] = (),
+        archived: tuple[int, ...] = (),
     ) -> int:
         """A company with one opportunity per ``(age in days, fit or None, recommendation)``.
 
-        ``ignored`` lists the indexes of offers the owner ignored.
+        ``ignored``, ``applied`` and ``shortlisted`` list the indexes of offers the owner handled.
         """
         company = await make_company(self.session, f"{self.tag} {name}")
         source = await make_source(self.session, company)
@@ -60,12 +63,18 @@ class World:
                 self.session, source, first_seen_at=NOW - timedelta(days=age)
             )
             opportunity = await make_opportunity(self.session, posting)
-            if index in ignored:
+            if index in ignored or index in applied or index in shortlisted or index in archived:
+                state = InboxState.IGNORED if index in ignored else InboxState.APPLIED
+                if index in archived:
+                    state = InboxState.ARCHIVED
+                if index in shortlisted:
+                    state = InboxState.READ
                 self.session.add(
                     JobInboxItem(
                         owner_id=LOCAL_OWNER_ID,
                         job_opportunity_id=opportunity.job_opportunity_id,
-                        state=InboxState.IGNORED.value,
+                        state=state.value,
+                        is_shortlisted=index in shortlisted,
                     )
                 )
             if fit is not None:
@@ -129,6 +138,17 @@ async def test_recommended_offers_and_the_best_fit_use_the_threshold(
 async def test_ignored_offers_do_not_count(db_session: AsyncSession) -> None:
     world = await (World(db_session)).setup()
     await world.company("Gamma", [(1, 95, R), (2, 70, R)], ignored=(0,))
+    row = (await world.list()).rows[0]
+    assert (row.open_offers, row.recommended_offers, row.best_fit_score) == (1, 1, 70)
+
+
+async def test_applied_archived_and_shortlisted_offers_do_not_count(
+    db_session: AsyncSession,
+) -> None:
+    world = await (World(db_session)).setup()
+    await world.company(
+        "Delta", [(1, 95, R), (2, 70, R), (3, 80, R)], applied=(0,), shortlisted=(2,)
+    )
     row = (await world.list()).rows[0]
     assert (row.open_offers, row.recommended_offers, row.best_fit_score) == (1, 1, 70)
 

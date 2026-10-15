@@ -143,7 +143,7 @@ export function Companies() {
             {data && (
               <p className="text-xs text-ink-3">
                 {data.total} companies · counting open offers from the last {data.recency_days}{' '}
-                days, without the ones you ignored.{' '}
+                days, without the ones you ignored, archived, shortlisted or applied to.{' '}
                 <Link to="/sources" className="underline">
                   Change the limit
                 </Link>

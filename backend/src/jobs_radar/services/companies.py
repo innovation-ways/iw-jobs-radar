@@ -113,7 +113,8 @@ class CompanyService:
     ) -> CompanyPage:
         """Return companies with counted offers; followed ones come first (ADR-053).
 
-        Only open offers first seen within the owner's recency limit and not ignored are counted.
+        Only open offers first seen within the owner's recency limit and not ignored, applied,
+        archived or shortlisted are counted.
         """
         return await self._queries.page(
             owner_id=owner_id,

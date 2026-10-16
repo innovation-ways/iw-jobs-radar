@@ -113,7 +113,10 @@ class JobsAiLoader:
         embedder = build_ollama_embedder(self._settings, model=embedding_model)
         return JobsAi(
             extraction=ExtractionQueue(
-                self._session_factory, provider, max_chars=self._settings.extraction_max_chars
+                self._session_factory,
+                provider,
+                max_chars=self._settings.extraction_max_chars,
+                concurrency=self._settings.extraction_concurrency,
             ),
             evaluation=EvaluationRunner(self._session_factory, provider),
             directions=DirectionRunner(

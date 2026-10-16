@@ -6,6 +6,7 @@ heartbeat stays fresh. Every job is its own short transaction; the model call ha
 transaction. Without a reachable model the jobs simply stay waiting ("not evaluated").
 """
 
+import asyncio
 from collections.abc import Awaitable, Callable
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
@@ -96,12 +97,19 @@ class ExtractionQueue:
         max_chars: int,
         clock: Clock = _utc_now,
         max_attempts: int = MAX_ATTEMPTS,
+        concurrency: int = 1,
     ) -> None:
+        if concurrency < 1:
+            raise ValueError("concurrency must be at least 1")
         self._session_factory = session_factory
         self._provider = provider
         self._max_chars = max_chars
         self._clock = clock
         self._max_attempts = max_attempts
+        self._concurrency = concurrency
+        # The model call is the slow part and runs outside it; the short database steps (claim,
+        # save, release) take turns, so concurrent jobs never use one session at the same time.
+        self._database = asyncio.Lock()
 
     async def enqueue_missing(self, limit: int = 500) -> int:
         """Queue the latest snapshots of open postings that have no extraction yet.
@@ -136,32 +144,46 @@ class ExtractionQueue:
         async with self._session_factory() as session:
             taxonomy = await TaxonomyRepository(session).keys_by_kind()
         extractor = JobExtractor(self._provider, taxonomy, max_chars=self._max_chars)
-        succeeded = failed = 0
+        counts = {"succeeded": 0, "failed": 0}
         seen: set[int] = set()
-        backlog = False
-        while True:
-            if self._clock() >= deadline:
-                backlog = True
-                break
-            claimed = await self._claim(seen)
-            if claimed is None:
-                break
-            extraction_id, job, hints = claimed
-            seen.add(extraction_id)
-            outcome = await self._process(extractor, extraction_id, job, hints)
-            if outcome == "stopped":
-                return BatchSummary(succeeded, failed, stopped=True)
-            succeeded += outcome == "succeeded"
-            failed += outcome == "failed"
-            if heartbeat is not None:
-                await heartbeat()
-        return BatchSummary(succeeded, failed, stopped=False, backlog=backlog)
+        state = {"backlog": False, "stopped": False}
+
+        async def lane() -> None:
+            """Claim and process jobs one after another until the batch must end."""
+            while not state["stopped"]:
+                if self._clock() >= deadline:
+                    state["backlog"] = True
+                    return
+                claimed = await self._claim(seen)
+                if claimed is None:
+                    return
+                extraction_id, job, hints = claimed
+                seen.add(extraction_id)
+                outcome = await self._process(extractor, extraction_id, job, hints)
+                if outcome == "stopped":
+                    # The model is down: the other lanes claim nothing new; their jobs in flight
+                    # finish (or are released) on their own.
+                    state["stopped"] = True
+                    return
+                counts["succeeded"] += outcome == "succeeded"
+                counts["failed"] += outcome == "failed"
+                if heartbeat is not None:
+                    await heartbeat()
+
+        # Several lanes keep the model busy: a local server that handles parallel requests
+        # (OLLAMA_NUM_PARALLEL) generates for all of them at nearly the cost of one.
+        await asyncio.gather(*(lane() for _ in range(self._concurrency)))
+        if state["stopped"]:
+            return BatchSummary(counts["succeeded"], counts["failed"], stopped=True)
+        return BatchSummary(
+            counts["succeeded"], counts["failed"], stopped=False, backlog=state["backlog"]
+        )
 
     async def _claim(
         self, seen: set[int]
     ) -> tuple[int, ExtractionInput, dict[str, list[str]]] | None:
         now = self._clock()
-        async with self._session_factory() as session:
+        async with self._database, self._session_factory() as session:
             claimed = await ExtractionRepository(session).claim_next(
                 provider=self._provider.provider,
                 model=self._provider.model,
@@ -169,6 +191,7 @@ class ExtractionQueue:
                 now=now,
                 stale_before=now - CLAIM_TIMEOUT,
                 exclude=seen,
+                accepted_prompt_versions=EXTRACTION_ACCEPTED_PROMPT_VERSIONS,
                 set_aside_below=await ScheduleRepository(session).set_aside_below_fit(
                     LOCAL_OWNER_ID
                 ),
@@ -196,7 +219,7 @@ class ExtractionQueue:
             result = await extractor.extract(job)
         except ExtractionError as error:
             return await self._record_failure(extraction_id, error)
-        async with self._session_factory() as session:
+        async with self._database, self._session_factory() as session:
             repository = ExtractionRepository(session)
             extraction = await repository.get(extraction_id)
             attributes = result.stored_attributes()
@@ -217,7 +240,7 @@ class ExtractionQueue:
         return "succeeded"
 
     async def _record_failure(self, extraction_id: int, error: ExtractionError) -> str:
-        async with self._session_factory() as session:
+        async with self._database, self._session_factory() as session:
             repository = ExtractionRepository(session)
             extraction: JobExtraction = await repository.get(extraction_id)
             if not error.counts_as_attempt:

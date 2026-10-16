@@ -79,10 +79,14 @@ class Worker:
         await self._heartbeat.beat()
         self.beats += 1
 
-    async def run_once(self) -> None:
-        """Perform one iteration of the loop."""
+    async def run_once(self) -> bool:
+        """Perform one iteration of the loop; return whether extraction still has a backlog.
+
+        A backlog means the time budget, not an empty queue, ended the extraction batch, so the
+        loop starts the next iteration at once instead of letting the model idle.
+        """
         if self._lock is not None and not await self._lock.acquire():
-            return  # another worker is active: stay on standby
+            return False  # another worker is active: stay on standby
         await self._beat()
         if self._collection is not None:
             if not self._recovered:
@@ -171,17 +175,21 @@ class Worker:
                     scored=scored,
                     provider_unavailable=summary.stopped,
                 )
+        return extraction_busy
 
     async def run(self, stop: asyncio.Event) -> None:
         """Loop until ``stop`` is set; a stop request interrupts the wait between iterations."""
         logger.info("worker_started", poll_seconds=self._settings.worker_poll_seconds)
         while not stop.is_set():
+            busy = False
             try:
-                await self.run_once()
+                busy = await self.run_once()
             # Intentionally broad: one failing iteration (for example a database outage) must not
             # kill the worker; it is logged and retried on the next poll.
             except Exception:
                 logger.exception("worker_iteration_failed")
+            if busy:
+                continue  # waiting jobs: no pause, so the model is never left idle
             with contextlib.suppress(TimeoutError):
                 await asyncio.wait_for(stop.wait(), timeout=self._settings.worker_poll_seconds)
         logger.info("worker_stopped")

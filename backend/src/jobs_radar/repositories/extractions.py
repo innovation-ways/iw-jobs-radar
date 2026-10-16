@@ -92,7 +92,8 @@ class ExtractionRepository:
 
         "Yet" means for this provider, model, prompt version and taxonomy version, so a new model
         or prompt re-queues the same snapshot, except when the snapshot already has a successful
-        extraction of one of ``accepted_prompt_versions`` (same provider, model and taxonomy).
+        extraction of one of ``accepted_prompt_versions`` (same provider and model, any taxonomy
+        version: a new taxonomy never re-extracts what has been answered).
         A snapshot that already has a successful extraction of any version is not queued again
         once the owner has ignored or archived its opportunity, so a new prompt or taxonomy does
         not spend model time on jobs put away (ADR-073); the same holds for jobs the main inbox
@@ -111,9 +112,12 @@ class ExtractionRepository:
                 JobExtraction.job_snapshot_id == JobSnapshot.job_snapshot_id,
                 JobExtraction.provider == provider,
                 JobExtraction.model == model,
-                JobExtraction.taxonomy_version_id == taxonomy_version_id,
                 or_(
-                    JobExtraction.prompt_version == prompt_version,
+                    and_(
+                        JobExtraction.prompt_version == prompt_version,
+                        JobExtraction.taxonomy_version_id == taxonomy_version_id,
+                    ),
+                    # An answer already given is kept whatever the taxonomy version has become.
                     and_(
                         JobExtraction.prompt_version.in_(accepted_prompt_versions),
                         JobExtraction.status == "succeeded",
@@ -197,6 +201,7 @@ class ExtractionRepository:
         stale_before: datetime,
         exclude: Collection[int] = (),
         set_aside_below: int = 0,
+        accepted_prompt_versions: Collection[str] = (),
     ) -> tuple[JobExtraction, JobSnapshot] | None:
         """Claim the next waiting extraction for this provider and model, with its snapshot.
 
@@ -204,9 +209,24 @@ class ExtractionRepository:
         Snapshots never extracted come before re-extractions of a newer prompt or taxonomy, so a
         new job is not stuck behind a backlog of jobs that already have an answer (ADR-073). A
         re-extraction of a job the main inbox sets aside is left waiting: it was queued before
-        the job was set aside and would only spend model time.
+        the job was set aside and would only spend model time. So is a row whose snapshot already
+        has a successful extraction of the current or an accepted prompt version by this provider
+        and model (a row queued before that rule, or before a prompt or taxonomy upgrade): it stays
+        waiting, unused, and the job keeps its answer.
         """
         earlier = aliased(JobExtraction)
+        answered = aliased(JobExtraction)
+        already_answered = (
+            select(answered.job_extraction_id)
+            .where(
+                answered.job_snapshot_id == JobExtraction.job_snapshot_id,
+                answered.status == "succeeded",
+                answered.provider == provider,
+                answered.model == model,
+                answered.prompt_version.in_([prompt_version, *accepted_prompt_versions]),
+            )
+            .exists()
+        )
         has_earlier_answer = (
             select(earlier.job_extraction_id)
             .where(
@@ -224,6 +244,7 @@ class ExtractionRepository:
                 JobExtraction.model == model,
                 JobExtraction.prompt_version == prompt_version,
                 (JobExtraction.claimed_at.is_(None)) | (JobExtraction.claimed_at < stale_before),
+                ~already_answered,
                 ~and_(has_earlier_answer, _set_aside(JobSnapshot, below=set_aside_below)),
             )
             .order_by(has_earlier_answer, JobExtraction.job_extraction_id)

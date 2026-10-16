@@ -354,3 +354,83 @@ async def test_directions_and_summaries_wait_while_extraction_has_a_backlog(
         summaries=summaries,  # type: ignore[arg-type]
     ).run_once()
     assert (directions.calls, summaries.calls) == (expected_calls, expected_calls)
+
+
+class _Counting:
+    """A stand-in extraction queue that reports a backlog for the first ``busy_runs`` batches."""
+
+    def __init__(self, busy_runs: int) -> None:
+        self.busy_runs = busy_runs
+        self.batches = 0
+
+    async def enqueue_missing(self) -> int:
+        return 0
+
+    async def run_batch(self, **_kwargs: object) -> object:
+        from jobs_radar.services.extraction_queue import BatchSummary
+
+        self.batches += 1
+        return BatchSummary(1, 0, stopped=False, backlog=self.batches <= self.busy_runs)
+
+
+@pytest.mark.parametrize(("busy_runs", "expected"), [(1, True), (0, False)])
+async def test_an_iteration_reports_whether_extraction_still_has_a_backlog(
+    settings: Settings,
+    session_factory: async_sessionmaker[AsyncSession],
+    busy_runs: int,
+    expected: bool,
+) -> None:
+    worker = Worker(
+        settings,
+        session_factory,
+        name="w-test",
+        extraction=_Counting(busy_runs),  # type: ignore[arg-type]
+    )
+    assert await worker.run_once() is expected
+
+
+async def test_the_loop_does_not_sleep_while_extraction_has_a_backlog(
+    settings: Settings, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    """With a 60 s poll, three back-to-back batches inside a second prove there is no wait."""
+    slow_poll = settings.model_copy(update={"worker_poll_seconds": 60})
+    extraction = _Counting(busy_runs=2)
+    worker = Worker(
+        slow_poll,
+        session_factory,
+        name="w-test",
+        extraction=extraction,  # type: ignore[arg-type]
+    )
+    stop = asyncio.Event()
+    task = asyncio.create_task(worker.run(stop))
+    await asyncio.sleep(1.0)
+    stop.set()
+    await asyncio.wait_for(task, timeout=5)
+    assert extraction.batches >= 3  # the third batch (no backlog) was reached without waiting
+
+
+async def test_a_failing_iteration_still_waits_before_the_next_one(
+    settings: Settings, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    """An error must not turn the loop into a busy loop."""
+
+    class _Broken:
+        batches = 0
+
+        async def enqueue_missing(self) -> int:
+            _Broken.batches += 1
+            raise RuntimeError("database outage")
+
+    slow_poll = settings.model_copy(update={"worker_poll_seconds": 60})
+    worker = Worker(
+        slow_poll,
+        session_factory,
+        name="w-test",
+        extraction=_Broken(),  # type: ignore[arg-type]
+    )
+    stop = asyncio.Event()
+    task = asyncio.create_task(worker.run(stop))
+    await asyncio.sleep(0.5)
+    stop.set()
+    await asyncio.wait_for(task, timeout=5)
+    assert _Broken.batches == 1

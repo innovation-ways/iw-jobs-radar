@@ -524,3 +524,168 @@ async def test_the_batch_reports_a_backlog_only_when_the_budget_cut_it_short(
 
     assert (await q.run_batch(budget_seconds=45)).backlog is True  # one job is still waiting
     assert (await q.run_batch(budget_seconds=45)).backlog is False  # the queue ran dry
+
+
+# --- concurrency -----------------------------------------------------------------------------------
+
+
+class _SlowProvider(FakeProvider):
+    """A provider that takes time per call and records how many calls overlap."""
+
+    def __init__(self, *, fail: ProviderError | None = None) -> None:
+        super().__init__()
+        self.fail = fail
+        self.in_flight = 0
+        self.max_in_flight = 0
+
+    async def extract(self, request: Any) -> Any:
+        import asyncio
+
+        from jobs_radar.adapters.providers.base import ProviderOutput
+
+        self.requests.append(request)
+        self.in_flight += 1
+        self.max_in_flight = max(self.max_in_flight, self.in_flight)
+        try:
+            await asyncio.sleep(0.05)
+            if self.fail is not None:
+                raise self.fail
+            import json
+
+            return ProviderOutput(content=json.dumps(sample_extraction_output()), latency_ms=7)
+        finally:
+            self.in_flight -= 1
+
+
+async def test_with_concurrency_several_jobs_are_sent_to_the_model_at_once(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    snapshots = [(await job(db_session))[1] for _ in range(5)]
+    provider = _SlowProvider()
+    q = queue(db_session, monkeypatch, provider, concurrency=3)
+    await q.enqueue_missing()
+
+    summary = await q.run_batch()
+
+    assert provider.max_in_flight == 3
+    assert (summary.succeeded, summary.failed, summary.backlog) == (5, 0, False)
+    for snapshot in snapshots:  # every job was extracted exactly once
+        assert (await extraction_of(db_session, snapshot.job_snapshot_id)).status == "succeeded"
+    assert len(provider.requests) == 5
+
+
+async def test_by_default_jobs_go_to_the_model_one_at_a_time(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for _ in range(3):
+        await job(db_session)
+    provider = _SlowProvider()
+    q = queue(db_session, monkeypatch, provider)
+    await q.enqueue_missing()
+
+    assert (await q.run_batch()).succeeded == 3
+    assert provider.max_in_flight == 1
+
+
+async def test_a_model_that_is_down_ends_the_whole_concurrent_batch_and_loses_no_job(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    snapshots = [(await job(db_session))[1] for _ in range(6)]
+    provider = _SlowProvider(fail=ProviderError(ProviderErrorClass.UNAVAILABLE, "down"))
+    q = queue(db_session, monkeypatch, provider, concurrency=3)
+    await q.enqueue_missing()
+
+    summary = await q.run_batch()
+
+    assert summary.stopped is True
+    assert len(provider.requests) <= 3  # nothing new is claimed once the model is known to be down
+    for snapshot in snapshots:  # all rows wait, unclaimed and with no attempt used
+        row = await extraction_of(db_session, snapshot.job_snapshot_id)
+        assert (row.status, row.attempts, row.claimed_at) == ("pending", 0, None)
+
+
+async def test_the_time_budget_still_ends_a_concurrent_batch_with_a_backlog(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    for _ in range(6):
+        await job(db_session)
+    clock = Clock()
+
+    def slow(_request: Any) -> object:
+        clock.now += timedelta(seconds=30)
+        return sample_extraction_output()
+
+    q = queue(db_session, monkeypatch, FakeProvider(responder=slow), clock, concurrency=2)
+    await q.enqueue_missing()
+
+    summary = await q.run_batch(budget_seconds=45)
+
+    assert summary.backlog is True
+    assert 0 < summary.succeeded < 6
+
+
+# --- no re-extraction of jobs already extracted ---------------------------------------------------
+
+
+async def _answer(
+    session: AsyncSession, snapshot: Any, *, prompt: str, taxonomy_offset: int = 0, **fields: Any
+) -> JobExtraction:
+    """Store a finished or waiting extraction by the fake provider for ``snapshot``."""
+    provider = FakeProvider()
+    row = JobExtraction(
+        job_snapshot_id=snapshot.job_snapshot_id,
+        provider=provider.provider,
+        model=provider.model,
+        prompt_version=prompt,
+        taxonomy_version_id=await q_taxonomy_id(session) - taxonomy_offset,
+        **fields,
+    )
+    session.add(row)
+    await session.flush()
+    return row
+
+
+async def test_a_new_taxonomy_version_does_not_re_extract_jobs_with_an_accepted_answer(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, snapshot = await job(db_session)
+    await _answer(
+        db_session,
+        snapshot,
+        prompt="extract-v2",
+        taxonomy_offset=1,  # an older taxonomy than the current one
+        status="succeeded",
+        attributes_json={},
+        attempts=1,
+    )
+    q = queue(db_session, monkeypatch, FakeProvider())
+    assert await q.enqueue_missing() == 0
+
+
+async def test_a_waiting_row_of_a_job_with_an_accepted_answer_is_never_sent_to_the_model(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Rows queued before the rule existed must not spend model time either."""
+    _, answered = await job(db_session)
+    _, fresh = await job(db_session)
+    await _answer(
+        db_session,
+        answered,
+        prompt="extract-v2",
+        taxonomy_offset=1,
+        status="succeeded",
+        attributes_json={},
+        attempts=1,
+    )
+    stale = await _answer(db_session, answered, prompt="extract-v4", status="pending")
+    provider = FakeProvider([sample_extraction_output()])
+    q = queue(db_session, monkeypatch, provider)
+    assert await q.enqueue_missing() == 1  # only the fresh job
+
+    summary = await q.run_batch()
+
+    assert (summary.succeeded, len(provider.requests)) == (1, 1)
+    assert (await extraction_of(db_session, fresh.job_snapshot_id)).status == "succeeded"
+    await db_session.refresh(stale)
+    assert (stale.status, stale.claimed_at) == ("pending", None)
+    assert summary.backlog is False  # the skipped row is not a backlog

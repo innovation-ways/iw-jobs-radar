@@ -31,7 +31,7 @@ and secret mistakes without printing a secret. Defaults below are the applicatio
 | `JOBS_RADAR_EXTRACTION_MAX_CHARS` | `12000` | Longest description sent to the model; longer text is truncated and flagged. |
 | `JOBS_RADAR_OLLAMA_TIMEOUT_SECONDS` | `180` | Seconds one local-model call may take. |
 | `JOBS_RADAR_WORKER_POLL_SECONDS` | `15` | How often the worker looks for work. |
-| `JOBS_RADAR_EXTRACTION_CONCURRENCY` | `1` | Extractions run at once. |
+| `JOBS_RADAR_EXTRACTION_CONCURRENCY` | `1` | Extractions sent to the model at once (ADR-077). Raise it (for example 3) together with `OLLAMA_NUM_PARALLEL` on the Ollama server; with a server that handles one request at a time it only queues them. |
 | `JOBS_RADAR_WORKER_HEARTBEAT_MAX_AGE_SECONDS` | `90` | The API reports the worker as stale after this many seconds without a heartbeat. |
 
 Settings stored in the database (not environment): the daily schedule, the AI connections and

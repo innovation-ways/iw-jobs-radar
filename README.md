@@ -8,9 +8,6 @@ extracts what matters with an AI model (local by default), scores each job again
 profile and search intent with an explainable deterministic rule set, and keeps a personal inbox,
 company dossiers and market trends. Your data stays on your machine.
 
-> **Status: beta.** Version 1 works end to end but has had a single user. Expect rough edges and read
-> `docs/operations/known-limitations.md`.
-
 ## What it does
 
 - **Sources**: company boards (Greenhouse, Lever, Ashby, SmartRecruiters, Eightfold) and job boards

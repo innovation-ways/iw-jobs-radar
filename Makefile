@@ -14,7 +14,7 @@ PNPM := PATH="$$HOME/.local/bin:$$PATH" pnpm --dir $(FRONTEND)
         test-frontend test-frontend-watch fe-coverage test-e2e \
         lint format format-check typecheck arch-check security license-check docs-check quality \
         fe-lint fe-format fe-format-check fe-typecheck fe-license-check quality-frontend check check-all \
-        security-sast secret-scan config-check security-audit docs-schema openapi api-client seed-dev-sources backup restore-drill backup-list restore config-check security-audit smoke fe-install clean
+        security-sast secret-scan config-check security-audit docs-schema openapi api-client seed-dev-sources demo-seed demo-worker demo-api demo-frontend backup restore-drill backup-list restore config-check security-audit smoke fe-install clean
 
 ##@ Run the app
 
@@ -193,6 +193,22 @@ api-client: openapi ## Regenerate the typed frontend API client after an API cha
 
 seed-dev-sources: ## Add the 14 research boards as DISABLED sources to the dev database (no network)
 	cd $(BACKEND) && uv run python -m jobs_radar.tools.seed_dev_sources
+
+##@ Demo (fictional data for screenshots and trials; the real database is never touched)
+
+DEMO_ENV := JOBS_RADAR_DB_NAME=jobs_radar_demo JOBS_RADAR_API_PORT=8101 JOBS_RADAR_FRONTEND_PORT=5181
+
+demo-seed: ## Build the fictional demo database jobs_radar_demo (drops it first; needs make up for PostgreSQL)
+	cd $(BACKEND) && $(DEMO_ENV) uv run python -m jobs_radar.tools.demo_seed --reset
+
+demo-worker: ## Keep the demo worker heartbeat alive (no collection; stop with Ctrl+C)
+	cd $(BACKEND) && $(DEMO_ENV) uv run python -m jobs_radar.demo.idle_worker
+
+demo-api: ## Run the API on port 8101 against the demo database (stop with Ctrl+C)
+	cd $(BACKEND) && $(DEMO_ENV) JOBS_RADAR_CORS_ORIGINS='["http://127.0.0.1:5181","http://localhost:5181"]' uv run uvicorn jobs_radar.api.app:create_app --factory --host 127.0.0.1 --port 8101
+
+demo-frontend: ## Run the UI on port 5181 against the demo API (stop with Ctrl+C)
+	$(DEMO_ENV) $(PNPM) dev --port 5181 --strictPort
 
 ##@ Backup and restore
 

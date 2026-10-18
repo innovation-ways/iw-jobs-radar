@@ -86,6 +86,8 @@ vulnerability.
 
 - Operations (configuration, backup and restore, sources and providers, known limitations):
   [`docs/operations/`](docs/operations/)
+- Architecture decisions (why things are the way they are):
+  [`docs/decisions/architecture-decision-log.md`](docs/decisions/architecture-decision-log.md)
 - Data-source terms and obligations: [`docs/legal/data-sources.md`](docs/legal/data-sources.md)
 - Database data dictionary: [`docs/database/schema.md`](docs/database/schema.md)
 - UI mock-ups: [`docs/design/`](docs/design/)

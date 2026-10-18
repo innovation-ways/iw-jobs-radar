@@ -1,4 +1,6 @@
-name: OSS Compliance Scan
+# Secret scan over the whole git history with the repository's gitleaks configuration
+# (.gitleaks.toml: the default rules plus allowlists, .gitleaksignore: reviewed false positives).
+name: Secret scan
 
 on:
   push:
@@ -6,16 +8,18 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
-  oss-scan:
+  gitleaks:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install tools
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # the scan covers every commit, not only the latest
+      - name: Run gitleaks (same pinned image as `make secret-scan`)
         run: |
-          bash .claude/skills/iw-oss-publish/scripts/install_tools.sh
-
-      - name: Run OSS scan
-        run: |
-          uv run iw oss scan --project .
+          docker run --rm -v "$PWD:/repo" -w /repo ghcr.io/gitleaks/gitleaks:v8.30.1 \
+            git --redact --no-banner --verbose --config .gitleaks.toml .

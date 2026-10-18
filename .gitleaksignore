@@ -3,4 +3,4 @@
 #
 # The test key of the ITJobs.pt adapter tests (ADR-049) is a made-up constant, not a credential:
 # the adapter tests never call the real service.
-2d1ca01f545621192300e3e32060e466b927c08b:backend/tests/unit/test_itjobs_adapter.py:generic-api-key:17
+d676ad68e6c3879a9f4333c7061b052e9d7b7f1d:backend/tests/unit/test_itjobs_adapter.py:generic-api-key:17

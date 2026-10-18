@@ -83,6 +83,8 @@ vulnerability.
 
 - Operations (configuration, backup and restore, sources and providers, known limitations):
   [`docs/operations/`](docs/operations/)
+- Scoring rules and data shapes (taxonomies, profile, intent, gates, weights):
+  [`docs/design/domain-schemas-and-matching-rules.md`](docs/design/domain-schemas-and-matching-rules.md)
 - Architecture decisions (why things are the way they are):
   [`docs/decisions/architecture-decision-log.md`](docs/decisions/architecture-decision-log.md)
 - Data-source terms and obligations: [`docs/legal/data-sources.md`](docs/legal/data-sources.md)

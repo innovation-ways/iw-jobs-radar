@@ -2,9 +2,10 @@
 # Jobs Radar — Architecture Decision Log
 
 > **About this published copy.** This is the maintainer's decision log, published with the code.
-> References to numbered documents (for example "document 13", "doc 13", "document 07") point to the
-> maintainer's design pack, which is not part of this repository; the decisions here are meant to be
-> readable on their own. The owner is the maintainer. Personal details and the owner's chat
+> "Document 13" and "doc 13" are published as
+> [`docs/design/domain-schemas-and-matching-rules.md`](../design/domain-schemas-and-matching-rules.md).
+> The other numbered documents (for example "document 07") belong to the maintainer's design pack,
+> which is not part of this repository; the decisions here are meant to be readable on their own. The owner is the maintainer. Personal details and the owner's chat
 > approvals were removed or translated when the log was published; the decisions are unchanged
 > except for ODR-007 and ADR-048 item 6, which were updated to the licence now in use.
 

@@ -23,11 +23,11 @@ jobs:
       - name: Run Scorecard
         uses: ossf/scorecard-action@2d1146689b8cda280b9bc96326124645441f03bc # v2.4.4
         with:
-          results-file: results.sarif
-          results-file-flag: scorecard-results
-          publish-results: true
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
 
-      - name: Upload to CodeSec
+      - name: Upload to code scanning
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: results.sarif

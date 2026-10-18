@@ -1,0 +1,21 @@
+name: OSS Compliance Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  oss-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install tools
+        run: |
+          bash .claude/skills/iw-oss-publish/scripts/install_tools.sh
+
+      - name: Run OSS scan
+        run: |
+          uv run iw oss scan --project .

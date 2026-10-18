@@ -16,4 +16,6 @@ jobs:
       - uses: googleapis/release-please-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          release-type: node
+          # The repository has no package.json at its root (backend and frontend are separate); the plain
+          # "simple" type keeps the changelog and a version file.
+          release-type: simple

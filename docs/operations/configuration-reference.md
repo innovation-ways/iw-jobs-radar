@@ -33,6 +33,10 @@ and secret mistakes without printing a secret. Defaults below are the applicatio
 | `JOBS_RADAR_WORKER_POLL_SECONDS` | `15` | How often the worker looks for work. |
 | `JOBS_RADAR_EXTRACTION_CONCURRENCY` | `1` | Extractions sent to the model at once (ADR-077). Raise it (for example 3) together with `OLLAMA_NUM_PARALLEL` on the Ollama server; with a server that handles one request at a time it only queues them. |
 | `JOBS_RADAR_WORKER_HEARTBEAT_MAX_AGE_SECONDS` | `90` | The API reports the worker as stale after this many seconds without a heartbeat. |
+| `JOBS_RADAR_MCP_ENABLED` | `false` | Master switch of the MCP server for AI agents (ADR-078). Only the word `true` turns it on; anything else, or no value, and the server refuses to start. See [mcp-server.md](mcp-server.md). The API ignores it; it is declared so the shared `.env` is accepted. |
+| `JOBS_RADAR_MCP_ALLOW_WRITES` | `false` | Also register the MCP tools that change the inbox (shortlist, ignore, archive...) and queue collections. Needs `JOBS_RADAR_MCP_ENABLED=true`. |
+| `JOBS_RADAR_MCP_API_URL` | `http://127.0.0.1:<API port>` | Where the MCP server finds the API (http or https, no credentials in the URL). |
+| `JOBS_RADAR_MCP_TIMEOUT_SECONDS` | `15` | Seconds the MCP server waits for one API answer (up to 120). |
 
 Settings stored in the database (not environment): the daily schedule, the AI connections and
 their credentials, the privacy policy, sources and their rate limits (Sources and AI & privacy

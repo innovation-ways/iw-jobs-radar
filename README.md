@@ -24,6 +24,9 @@ Everything runs on your machine, and your data stays with you.
   sum to 100). No model is involved in the last step.
 - **Inbox**: one item per real opportunity (duplicates across sources are linked), keyboard-first
   triage, a daily digest, company dossiers and weekly market trends.
+- **AI agents (optional, off by default)**: an MCP server lets Claude Code or another agent read your
+  inbox, explain a score, show trends and, if you allow it, shortlist or ignore jobs.
+  See [docs/operations/mcp-server.md](docs/operations/mcp-server.md).
 - **Privacy**: "No AI" is the default. Job analysis is local only (Ollama); remote AI is limited to
   CV import, after per-document consent and with contact details redacted.
 
@@ -96,9 +99,16 @@ Version 1 has **no authentication**. The API and database listen on loopback by 
 there or on a trusted LAN, never on the public internet. See [SECURITY.md](SECURITY.md) to report a
 vulnerability.
 
+The optional **MCP server** for AI agents is off unless `JOBS_RADAR_MCP_ENABLED=true` in `.env`. It
+adds no network port and no authentication, and **everything an agent reads, your full profile
+included, goes to the model behind it**: to the provider with a cloud agent, nowhere with a local
+one. Job text is passed to the agent as marked untrusted data, and the tools that change anything
+need a second switch. Read [docs/operations/mcp-server.md](docs/operations/mcp-server.md) first.
+
 ## Documentation
 
-- Operations (configuration, backup and restore, sources and providers, known limitations):
+- Operations (configuration, backup and restore, sources and providers, the MCP server for AI
+  agents, known limitations):
   [`docs/operations/`](docs/operations/)
 - Scoring rules and data shapes (taxonomies, profile, intent, gates, weights):
   [`docs/design/domain-schemas-and-matching-rules.md`](docs/design/domain-schemas-and-matching-rules.md)

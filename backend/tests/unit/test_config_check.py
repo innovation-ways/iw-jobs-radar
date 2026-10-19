@@ -76,3 +76,28 @@ def test_a_short_database_password_fails_outside_development() -> None:
 def test_local_providers_are_reported() -> None:
     found = check({**GOOD, "JOBS_RADAR_ALLOW_LOCAL_PROVIDERS": "true"}, env_file_mode=0o600)
     assert levels(found)["local_providers"] == "info"
+
+
+def test_the_mcp_server_is_reported_off_unless_the_switch_is_true() -> None:
+    for value in (None, "false", "1", "yes"):
+        env = dict(GOOD) if value is None else {**GOOD, "JOBS_RADAR_MCP_ENABLED": value}
+        found = next(f for f in check(env, env_file_mode=0o600) if f.code == "mcp")
+        assert found.level == "info" and "off" in found.message
+
+
+def test_the_mcp_server_enabled_read_only_is_informational() -> None:
+    found = next(
+        f
+        for f in check({**GOOD, "JOBS_RADAR_MCP_ENABLED": "true"}, env_file_mode=0o600)
+        if f.code == "mcp"
+    )
+    assert found.level == "info" and "read-only" in found.message
+
+
+def test_mcp_writes_are_a_warning_and_need_the_master_switch() -> None:
+    on = {**GOOD, "JOBS_RADAR_MCP_ENABLED": "true", "JOBS_RADAR_MCP_ALLOW_WRITES": "true"}
+    found = next(f for f in check(on, env_file_mode=0o600) if f.code == "mcp")
+    assert found.level == "warn" and "change" in found.message
+    alone = {**GOOD, "JOBS_RADAR_MCP_ALLOW_WRITES": "true"}
+    found = next(f for f in check(alone, env_file_mode=0o600) if f.code == "mcp")
+    assert found.level == "info" and "off" in found.message

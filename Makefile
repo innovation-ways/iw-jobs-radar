@@ -14,7 +14,7 @@ PNPM := PATH="$$HOME/.local/bin:$$PATH" pnpm --dir $(FRONTEND)
         test-frontend test-frontend-watch fe-coverage test-e2e \
         lint format format-check typecheck arch-check security license-check docs-check quality \
         fe-lint fe-format fe-format-check fe-typecheck fe-license-check quality-frontend check check-all \
-        security-sast secret-scan config-check security-audit docs-schema openapi api-client seed-dev-sources demo demo-stop demo-seed demo-worker demo-api demo-frontend backup restore-drill backup-list restore config-check security-audit smoke fe-install clean
+        security-sast secret-scan config-check security-audit docs-schema openapi api-client seed-dev-sources demo demo-stop demo-seed demo-worker demo-api demo-frontend backup restore-drill backup-list restore config-check security-audit smoke mcp-config test-mcp fe-install clean
 
 ##@ Run the app
 
@@ -179,6 +179,14 @@ GITLEAKS_RUN := docker run --rm -v "$(CURDIR):/repo:ro" \
 secret-scan: ## Look for committed secrets in history and staged changes (gitleaks, Docker)
 	$(GITLEAKS_RUN) git /repo --no-banner --redact --exit-code 1
 	$(GITLEAKS_RUN) git /repo --staged --no-banner --redact --exit-code 1
+
+##@ AI agents (MCP server, ADR-078)
+
+mcp-config: ## MCP server for AI agents: is it on, and the command to connect Claude Code or another agent
+	$(LAUNCHER) --mcp
+
+test-mcp: ## MCP server tests: unit (no Docker) and integration (needs Docker)
+	cd $(BACKEND) && uv run pytest tests/unit/mcp_server tests/integration/test_mcp_server.py -q
 
 ##@ Data & contracts
 

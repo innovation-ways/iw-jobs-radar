@@ -120,6 +120,29 @@ def check(env: Mapping[str, str], *, env_file_mode: int | None) -> list[Finding]
                 f"The database password is shorter than {minimum} characters.",
             )
         )
+    # Same rule as the MCP server itself: only the word "true" turns it on (ADR-078).
+    mcp_on = get("MCP_ENABLED").strip().lower() == "true"
+    mcp_writes = mcp_on and get("MCP_ALLOW_WRITES").strip().lower() == "true"
+    if mcp_writes:
+        found.append(
+            Finding(
+                "mcp",
+                "warn",
+                "The MCP server is on and an agent may change your inbox (shortlist, ignore, "
+                "archive) and queue collections. Keep your client's confirmation prompts on.",
+            )
+        )
+    elif mcp_on:
+        found.append(
+            Finding(
+                "mcp",
+                "info",
+                "The MCP server is on, read-only: an agent can read everything in Jobs Radar, "
+                "including your profile (a cloud agent sends it to its provider).",
+            )
+        )
+    else:
+        found.append(Finding("mcp", "info", "The MCP server is off (JOBS_RADAR_MCP_ENABLED)."))
     if get("ALLOW_LOCAL_PROVIDERS").lower() in {"1", "true", "yes"}:
         found.append(
             Finding(

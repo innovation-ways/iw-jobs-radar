@@ -39,8 +39,17 @@ dependency audit and `make test-e2e`; needs network, Docker and the app running;
 with a message if the stack is not healthy, and CI never runs it),
 `make config-check` (exposure and secrets), `make smoke` (real services, opt-in).
 
+## AI agents (MCP server)
+
+`./jobs-radar.sh --mcp` (or `make mcp-config`) shows whether the MCP server is on and how to
+connect Claude Code or another agent. It is **off** until `JOBS_RADAR_MCP_ENABLED=true` is set in
+`.env`, and the tools that change the inbox need a second switch, `JOBS_RADAR_MCP_ALLOW_WRITES`.
+An agent sees your whole profile; read [mcp-server.md](mcp-server.md) before enabling it.
+`make test-mcp` runs its tests.
+
 ## Exposure
 
 The API has no authentication in this version. `JOBS_RADAR_API_BIND` and `JOBS_RADAR_DB_BIND`
 default to loopback; `make config-check` warns when either is reachable from the network. If you
-expose the API, do it only on a trusted network.
+expose the API, do it only on a trusted network. The MCP server adds no listener (it runs over
+stdio, started by the agent's client) and no authentication of its own.

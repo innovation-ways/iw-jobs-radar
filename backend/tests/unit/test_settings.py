@@ -81,3 +81,18 @@ def test_test_environment_accepts_a_test_database() -> None:
 def test_unknown_values_are_rejected() -> None:
     with pytest.raises(ValidationError):
         make(not_a_setting=1)
+
+
+def test_mcp_variables_in_the_env_file_do_not_stop_the_api(tmp_path: object) -> None:
+    from pathlib import Path
+
+    env_file = Path(str(tmp_path)) / ".env"
+    env_file.write_text(
+        "JOBS_RADAR_DB_PASSWORD=x\n"
+        "JOBS_RADAR_MCP_ENABLED=maybe\n"  # a typo must never take the API down
+        "JOBS_RADAR_MCP_ALLOW_WRITES=false\n"
+        "JOBS_RADAR_MCP_API_URL=http://127.0.0.1:8100\n"
+        "JOBS_RADAR_MCP_TIMEOUT_SECONDS=15\n"
+    )
+    settings = Settings(_env_file=str(env_file))  # type: ignore[call-arg]
+    assert settings.mcp_enabled == "maybe"

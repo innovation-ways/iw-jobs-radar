@@ -146,6 +146,40 @@ show_urls() {
   fi
 }
 
+# --- MCP server for AI agents (ADR-078) ----------------------------------------
+# True only for the word "true", exactly like the server itself (anything else is off).
+mcp_flag() { local v="${!1:-}"; v="${v//[[:space:]]/}"; [[ "${v,,}" == "true" ]]; }
+
+show_mcp() {
+  load_env
+  header "MCP server (AI agents)"
+  if ! mcp_flag JOBS_RADAR_MCP_ENABLED; then
+    info "Off: no agent can use it."
+    echo -e "  To turn it on, set ${BOLD}JOBS_RADAR_MCP_ENABLED=true${NC} in .env, then run this again."
+    dim "Add JOBS_RADAR_MCP_ALLOW_WRITES=true as well to let an agent change your inbox (shortlist, ignore, ...)."
+    dim "Read docs/operations/mcp-server.md first: an agent that reads Jobs Radar sees your profile."
+    return 0
+  fi
+  local api="${JOBS_RADAR_MCP_API_URL:-http://127.0.0.1:$(api_port)}"
+  ok "On. The server reads the API at ${api}"
+  if mcp_flag JOBS_RADAR_MCP_ALLOW_WRITES; then
+    warn "Write tools are ON: an agent can change your inbox and queue collections."
+  else
+    ok "Read-only: the write tools do not exist (JOBS_RADAR_MCP_ALLOW_WRITES is not true)."
+  fi
+  warn "No authentication. What a tool returns goes to the model behind your agent: your profile too."
+  local dir="$SCRIPT_DIR/backend"
+  echo ""
+  echo -e "  ${BOLD}Claude Code${NC} (stored in your own Claude settings, not in this repository):"
+  echo -e "    ${CYAN}claude mcp add jobs-radar --scope local -- uv run --directory ${dir} --extra mcp python -m jobs_radar.mcp_server${NC}"
+  echo ""
+  echo -e "  ${BOLD}Any other MCP client${NC} (stdio): command and arguments"
+  echo -e "    ${CYAN}uv run --directory ${dir} --extra mcp python -m jobs_radar.mcp_server${NC}"
+  echo -e "    ${DIM}JSON: {\"mcpServers\": {\"jobs-radar\": {\"command\": \"uv\", \"args\": [\"run\", \"--directory\", \"${dir}\", \"--extra\", \"mcp\", \"python\", \"-m\", \"jobs_radar.mcp_server\"]}}}${NC}"
+  echo ""
+  dim "The API must be running (./jobs-radar.sh --quick-start). Details: docs/operations/mcp-server.md"
+}
+
 # --- docker services ---------------------------------------------------------
 valid_service() { local s; for s in "${SERVICES[@]}"; do [[ "$s" == "$1" ]] && return 0; done; return 1; }
 
@@ -444,6 +478,8 @@ usage() {
   echo -e "\n${title}Demo${n} (invented data, own database and ports 8101/5181; no network, no AI needed)"
   echo -e "  ${c}--demo${n}                    Start PostgreSQL, build the demo database, start worker/API/UI"
   echo -e "  ${c}--demo-stop${n}               Stop the demo processes"
+  echo -e "\n${title}AI agents${n}"
+  echo -e "  ${c}--mcp${n}                     MCP server: is it on, and how to connect Claude Code or another agent"
   echo -e "\n${title}Danger${n}"
   echo -e "  ${c}--nuclear-reset [--yes]${n}   Remove containers and the database volume"
   echo -e "  ${c}--help${n}"
@@ -566,12 +602,13 @@ menu_main() {
     echo -e "  ${CYAN}5)${NC} Logs"
     echo -e "  ${CYAN}6)${NC} Tests & quality"
     echo -e "  ${CYAN}7)${NC} Addresses (URLs)"
+    echo -e "  ${CYAN}8)${NC} AI agents (MCP server)"
     echo -e "  ${CYAN}0)${NC} Exit"
     echo ""
     read -r -p "  Choice: " choice
     case "$choice" in
       1) menu_stack ;; 2) menu_health ;; 3) menu_frontend ;; 4) menu_database ;;
-      5) menu_logs ;; 6) menu_tests ;; 7) show_urls; pause ;;
+      5) menu_logs ;; 6) menu_tests ;; 7) show_urls; pause ;; 8) show_mcp; pause ;;
       0|q|Q|exit|quit) echo ""; exit 0 ;;
       *) warn "Invalid choice" ;;
     esac
@@ -595,6 +632,7 @@ main() {
     --status)         show_status ;;
     --health)         health_deep ;;
     --urls)           show_urls ;;
+    --mcp)            show_mcp ;;
     --wait-healthy)
       local t="$DEFAULT_WAIT_TIMEOUT"
       [[ "${1:-}" == "--timeout" ]] && t="${2:-$DEFAULT_WAIT_TIMEOUT}"

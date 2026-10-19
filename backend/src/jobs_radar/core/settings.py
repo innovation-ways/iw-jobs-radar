@@ -61,6 +61,14 @@ class Settings(BaseSettings):
     # Seconds a single local-model call may take.
     ollama_timeout_seconds: int = Field(default=180, ge=5)
 
+    # MCP server (ADR-078). The server is a separate process with its own small parser
+    # (jobs_radar.mcp_server.settings) and validates these itself; they are declared here, as plain
+    # text, only so that the shared .env is accepted (strict mode) and a typo cannot stop the API.
+    mcp_enabled: str = "false"
+    mcp_allow_writes: str = "false"
+    mcp_api_url: str = ""
+    mcp_timeout_seconds: str = ""
+
     # Worker
     worker_poll_seconds: int = Field(default=15, ge=1)
     extraction_concurrency: int = Field(default=1, ge=1)

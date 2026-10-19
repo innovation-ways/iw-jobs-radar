@@ -60,6 +60,7 @@ def test_the_script_is_valid_bash() -> None:
         "--tests",
         "--demo",
         "--demo-stop",
+        "--mcp",
         "--nuclear-reset",
         "--help",
     ],
@@ -136,3 +137,38 @@ def test_a_trailing_comment_leaves_no_spaces_in_the_value(tmp_path: Path) -> Non
     env_file.write_text("JOBS_RADAR_API_PORT=9333      # the API port\n")
     result = launcher("--urls", env_file=str(env_file))
     assert "http://127.0.0.1:9333/docs" in result.stdout
+
+
+def test_mcp_says_it_is_off_and_how_to_turn_it_on() -> None:
+    result = launcher("--mcp")
+    assert result.returncode == 0
+    assert "off" in result.stdout.lower()
+    assert "JOBS_RADAR_MCP_ENABLED=true" in result.stdout
+    assert "claude mcp add" not in result.stdout  # nothing to connect while it is off
+
+
+def test_mcp_shows_the_state_and_the_connection_commands(tmp_path: Path) -> None:
+    env = tmp_path / ".env"
+    env.write_text(
+        "JOBS_RADAR_MCP_ENABLED=true\nJOBS_RADAR_DB_PASSWORD=decoy-password-123\n"
+        "JOBS_RADAR_CREDENTIAL_KEY=decoy-key-456\n"
+    )
+    result = launcher("--mcp", env_file=str(env))
+    assert result.returncode == 0
+    assert "read-only" in result.stdout.lower()
+    assert "write tools are on" not in result.stdout.lower()
+    assert "jobs_radar.mcp_server" in result.stdout
+    assert "claude mcp add" in result.stdout
+    assert str(ROOT) in result.stdout  # the real path of this checkout, not a placeholder
+    assert "decoy-password-123" not in result.stdout + result.stderr
+    assert "decoy-key-456" not in result.stdout + result.stderr
+
+
+def test_mcp_reports_writes_only_with_both_switches(tmp_path: Path) -> None:
+    env = tmp_path / ".env"
+    env.write_text("JOBS_RADAR_MCP_ALLOW_WRITES=true\n")
+    # The write switch means nothing without the master switch.
+    assert "write tools are on" not in launcher("--mcp", env_file=str(env)).stdout.lower()
+    env.write_text("JOBS_RADAR_MCP_ENABLED=true\nJOBS_RADAR_MCP_ALLOW_WRITES=true\n")
+    result = launcher("--mcp", env_file=str(env))
+    assert "write tools are on" in result.stdout.lower()

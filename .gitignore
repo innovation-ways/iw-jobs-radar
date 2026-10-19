@@ -152,3 +152,6 @@ backend/htmlcov/
 
 # Database backups and the credential key (never commit)
 /backups/
+
+# Local MCP client configuration (may hold paths and tokens of other servers)
+.mcp.json

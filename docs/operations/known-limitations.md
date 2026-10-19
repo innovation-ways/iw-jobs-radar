@@ -30,3 +30,8 @@
   skill taxonomies such as ESCO are not included.
 - Licence: Apache-2.0 (`LICENSE`, `NOTICE`). Terms of the job sources are in `docs/legal/data-sources.md`;
   the project is for personal use and collected postings must not be republished.
+- MCP server (ADR-078): stdio only, no authentication and no remote transport; an agent sees the
+  whole profile and intents, and a cloud agent sends them to its provider. It has no tool to edit
+  the profile, intents, sources or settings, to upload a CV or to delete anything. MCP prompts and
+  resources are not provided, only tools. Job text is wrapped as untrusted, but a title or company
+  name can still carry text aimed at an agent.

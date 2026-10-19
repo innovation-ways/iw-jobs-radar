@@ -12,15 +12,19 @@ import httpx
 import pytest
 from fastapi import FastAPI
 from mcp import Client
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from tests.factories import unique
+from tests.fake_adapter import FakeAdapter, listing, make_posting
 from tests.inbox_scene import scene
 
-from jobs_radar.db.models import InboxEvent
+from jobs_radar.db.models import InboxEvent, SourceConfiguration
+from jobs_radar.domain.enums import SourceType
 from jobs_radar.mcp_server.api_client import ApiClient
 from jobs_radar.mcp_server.server import build_server
 from jobs_radar.mcp_server.settings import McpSettings
 from jobs_radar.mcp_server.untrusted import CLOSE, OPEN
+from jobs_radar.services.collection import CollectionService
 
 pytestmark = pytest.mark.integration
 
@@ -151,12 +155,42 @@ async def test_inbox_action_follows_the_same_rules_as_the_ui(
         assert await events() == before + 1
 
 
-async def test_start_collection_queues_a_run_the_worker_will_execute(app: FastAPI) -> None:
-    async with agent(app, writes=True) as mcp:
-        run = await structured(mcp, "start_collection")
-        assert run["status"] == "queued"
-        runs = await structured(mcp, "list_collection_runs", {"limit": 5})
-    assert run["collection_run_id"] in [r["collection_run_id"] for r in runs["items"]]
+async def test_start_collection_queues_a_run_the_worker_will_execute(
+    app: FastAPI,
+    client: httpx.AsyncClient,
+    session_factory: async_sessionmaker[AsyncSession],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A scripted adapter and no other enabled source: the run is executed here, as the worker
+    # would, so nothing queued is left behind for the tests that follow.
+    async with session_factory() as session:
+        await session.execute(update(SourceConfiguration).values(enabled=False))
+        await session.commit()
+    adapter = FakeAdapter([listing(make_posting("1"))])
+    monkeypatch.setattr(app.state, "adapters", {SourceType.GREENHOUSE: adapter})
+    added = await client.post(
+        "/api/v1/sources",
+        json={"source_type": "greenhouse", "external_identifier": unique("mcpboard")},
+    )
+    assert added.status_code == 201, added.text
+    source_id = added.json()["source_configuration_id"]
+    try:
+        async with agent(app, writes=True) as mcp:
+            run = await structured(mcp, "start_collection")
+            assert run["status"] == "queued"
+            await CollectionService(app.state.session_factory, app.state.adapters).run_queued()
+            runs = await structured(mcp, "list_collection_runs", {"limit": 5})
+        done = next(r for r in runs["items"] if r["collection_run_id"] == run["collection_run_id"])
+        assert done["status"] == "succeeded"
+        assert done["sources"]["new"] == 1
+    finally:
+        async with session_factory() as session:
+            await session.execute(
+                update(SourceConfiguration)
+                .where(SourceConfiguration.source_configuration_id == source_id)
+                .values(enabled=False)
+            )
+            await session.commit()
 
 
 async def test_a_read_only_server_has_no_way_to_write(app: FastAPI) -> None:

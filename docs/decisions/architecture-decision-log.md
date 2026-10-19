@@ -1048,7 +1048,7 @@ Zon is now NOS (merged with Optimus in 2013) and Nowo belongs to Digi (2024), so
 
 ### ADR-078 — An MCP server so that agents can use Jobs Radar
 
-**Status:** accepted by the owner on 2026-10-19 (the owner answered every open question, see the end of this entry); implemented as task T13. The implementation plan is `docs/design/mcp-server.md`.
+**Status:** accepted by the owner on 2026-10-19 (the owner answered every open question, see the end of this entry); implemented as task T13 on 2026-10-19 (differences from the plan: `docs/design/mcp-server.md`, section 12). The implementation plan is `docs/design/mcp-server.md`.
 
 **Context:** the owner wants coding and chat agents (for example Claude Code, or a local agent on Ollama) to read the inbox, explain a score, look at trends and, later, triage jobs by conversation. The Model Context Protocol (MCP) is the open standard those clients use to call tools. Jobs Radar already has a versioned REST API with validation, optimistic concurrency and error contracts; the interface is the missing piece, not the capability. The API has no authentication in V1 (ADR-009) and the MCP server inherits that: it adds no login and no new network exposure of its own.
 

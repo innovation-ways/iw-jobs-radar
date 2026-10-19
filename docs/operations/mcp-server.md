@@ -128,5 +128,13 @@ With the second switch off the tools do not exist at all.
 | The first start is slow | `uv run` installs the extra on first use; later starts are quick |
 | Check the configuration | `make config-check` reports whether the server is on, and warns when writes are allowed |
 
+## Test it
+
+- `make test-mcp`: unit tests (no Docker) and the integration tests over the real application
+  (a throw-away PostgreSQL container).
+- With the fictional demo running (`make demo`, API on port 8101), `make smoke` also runs the
+  real stdio server against it (`JOBS_RADAR_SMOKE_MCP_API_URL` to use another API). For your own
+  trials with a cloud agent, prefer the demo: it holds invented data only.
+
 Logs go to the client's log of the server (stderr). They contain the tool name and errors, never
 your job text, profile or tool arguments.

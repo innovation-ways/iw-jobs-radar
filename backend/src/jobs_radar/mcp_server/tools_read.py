@@ -5,14 +5,15 @@ errors become tool errors the agent can read (code and message, never a raw body
 """
 
 import asyncio
+import json
 from collections.abc import Awaitable, Callable
 from functools import wraps
 from typing import Annotated, Any, Literal
 
 from mcp.server import MCPServer
 from mcp.server.mcpserver.exceptions import ToolError
-from mcp.types import ToolAnnotations
-from pydantic import Field
+from mcp.types import CallToolResult, TextContent, ToolAnnotations
+from pydantic import BaseModel, Field
 
 from jobs_radar.mcp_server import views
 from jobs_radar.mcp_server.api_client import ApiClient, ApiError
@@ -39,15 +40,28 @@ EngagementType = Literal[
 ]
 
 
-def api_errors_as_tool_errors[**P, R](
-    function: Callable[P, Awaitable[R]],
-) -> Callable[P, Awaitable[R]]:
-    """Turn :class:`ApiError` into a :class:`ToolError` whose message the agent sees."""
+def compact_result(value: Any) -> CallToolResult:
+    """Return ``value`` as a tool result whose text is compact JSON.
+
+    The SDK pretty-prints the text copy of a result with indentation; for the large replies of
+    this server that costs a third more tokens. The structured content is unchanged.
+    """
+    structured = value.model_dump(mode="json") if isinstance(value, BaseModel) else value
+    text = json.dumps(structured, ensure_ascii=False, separators=(",", ":"))
+    return CallToolResult(
+        content=[TextContent(type="text", text=text)], structured_content=structured
+    )
+
+
+def api_errors_as_tool_errors[**P](
+    function: Callable[P, Awaitable[Any]],
+) -> Callable[P, Awaitable[CallToolResult]]:
+    """Run a tool: compact result on success, :class:`ToolError` (readable) on an API error."""
 
     @wraps(function)
-    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+    async def wrapper(*args: P.args, **kwargs: P.kwargs) -> CallToolResult:
         try:
-            return await function(*args, **kwargs)
+            return compact_result(await function(*args, **kwargs))
         except ApiError as error:
             suffix = f" (request {error.request_id})" if error.request_id else ""
             raise ToolError(f"{error.code}: {error.message}{suffix}") from error
@@ -182,10 +196,26 @@ def register_read_tools(server: MCPServer, api: ApiClient) -> None:
         return views.prune_mapping({"items": [item for page in pages for item in page["items"]]})
 
     @read_tool
-    async def list_sources() -> dict[str, Any]:
-        """List every configured source with its status (never a key, only whether one is saved)."""
+    async def list_sources(
+        enabled_only: bool = False,
+        problems_only: Annotated[
+            bool, Field(description="Only sources whose latest run failed or was partial.")
+        ] = False,
+        limit: Annotated[int, Field(ge=1, le=100)] = 25,
+        offset: Annotated[int, Field(ge=0)] = 0,
+    ) -> dict[str, Any]:
+        """List the configured sources with their status (never a key, only if one is saved)."""
         raw = await api.get("/sources")
-        return {"items": [views.source_view(s) for s in raw["items"]]}
+        rows = [
+            s
+            for s in raw["items"]
+            if (s["enabled"] or not enabled_only)
+            and (views.source_has_problem(s) or not problems_only)
+        ]
+        return {
+            "total": len(rows),
+            "items": [views.source_view(s) for s in rows[offset : offset + limit]],
+        }
 
     @read_tool
     async def list_collection_runs(

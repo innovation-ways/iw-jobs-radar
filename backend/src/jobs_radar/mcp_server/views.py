@@ -19,6 +19,9 @@ EVIDENCE_MAX_CHARS = 600
 SUMMARY_MAX_CHARS = 3000
 MAX_OFFERS = 20
 MAX_FACTS = 40
+MAX_DIGEST_ITEMS = 15
+MAX_RUN_PROBLEMS = 20
+PROBLEM_OUTCOMES = frozenset({"failed", "partial"})
 FACT_MAX_CHARS = 500
 
 # A key that looks like a secret is never returned, whatever the API sends (defence in depth).
@@ -242,24 +245,45 @@ def job_view(raw: dict[str, Any], *, max_chars: int) -> JobView:
 
 
 def digest_view(raw: dict[str, Any]) -> dict[str, Any]:
-    """Shape the daily digest: new high-fit jobs, changed shortlisted jobs, source problems."""
+    """Shape the daily digest; each list is capped (``counts`` keeps the real totals)."""
+    changed = raw["changed_shortlisted"][:MAX_DIGEST_ITEMS]
+    health = raw["source_health"]
     return {
         "since": raw["since"],
         "generated_at": raw["generated_at"],
         "alert_threshold": raw["alert_threshold"],
         "search_intent_id": raw.get("search_intent_id"),
         "counts": raw["counts"],
-        "last_run": prune_secrets(raw.get("last_run")),
-        "new_high_fit": [inbox_row(i).model_dump() for i in raw["new_high_fit"]],
+        "last_run": run_view(raw["last_run"]) if raw.get("last_run") else None,
+        "new_high_fit": [inbox_row(i).model_dump() for i in raw["new_high_fit"][:MAX_DIGEST_ITEMS]],
         "changed_shortlisted": [
             {
                 "changed_at": c["changed_at"],
                 "changed_fields": c["changed_fields"],
                 "item": inbox_row(c["item"]).model_dump(),
             }
-            for c in raw["changed_shortlisted"]
+            for c in changed
         ],
-        "source_health": prune_secrets(raw["source_health"]),
+        "source_health": prune_secrets(health[:MAX_DIGEST_ITEMS]),
+        "source_health_total": len(health),
+    }
+
+
+def source_last_result(raw: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Return the outcome of a source's latest run, without the bookkeeping."""
+    if raw is None:
+        return None
+    return {
+        k: raw.get(k)
+        for k in (
+            "outcome",
+            "collected_count",
+            "new_count",
+            "dropped_count",
+            "error_class",
+            "error_message",
+            "finished_at",
+        )
     }
 
 
@@ -278,12 +302,23 @@ def source_view(raw: dict[str, Any]) -> dict[str, Any]:
         "needs_key": raw["credential_status"] != "not_needed",
         "key_saved": raw["credential_status"] == "saved",
         "filters": prune_secrets(raw.get("filters")),
-        "last_result": prune_secrets(raw.get("last_result")),
+        "last_result": source_last_result(raw.get("last_result")),
     }
 
 
+def source_has_problem(raw: dict[str, Any]) -> bool:
+    """Say whether the latest run of the source failed or was partial."""
+    result = raw.get("last_result") or {}
+    return bool(result.get("outcome") in PROBLEM_OUTCOMES)
+
+
 def run_view(raw: dict[str, Any]) -> dict[str, Any]:
-    """Shape one collection run with its per-source outcomes."""
+    """Shape one collection run: totals per outcome plus only the sources that had a problem."""
+    results = raw.get("results", [])
+    outcomes: dict[str, int] = {}
+    for result in results:
+        outcomes[result["outcome"]] = outcomes.get(result["outcome"], 0) + 1
+    problems = [r for r in results if r["outcome"] in PROBLEM_OUTCOMES]
     return prune_mapping(
         {
             "collection_run_id": raw["collection_run_id"],
@@ -294,24 +329,26 @@ def run_view(raw: dict[str, Any]) -> dict[str, Any]:
             "started_at": raw.get("started_at"),
             "finished_at": raw.get("finished_at"),
             "error_class": raw.get("error_class"),
-            "results": [
+            "sources": {
+                "total": len(results),
+                "by_outcome": outcomes,
+                "new": sum(r.get("new_count", 0) for r in results),
+                "updated": sum(r.get("updated_count", 0) for r in results),
+                "closed": sum(r.get("closed_count", 0) for r in results),
+            },
+            "problems": [
                 {
                     k: r.get(k)
                     for k in (
                         "source_configuration_id",
                         "outcome",
-                        "collected_count",
-                        "new_count",
-                        "updated_count",
-                        "closed_count",
-                        "dropped_count",
                         "error_class",
                         "error_message",
-                        "duration_ms",
                     )
                 }
-                for r in raw.get("results", [])
+                for r in problems[:MAX_RUN_PROBLEMS]
             ],
+            "problems_total": len(problems),
         }
     )
 

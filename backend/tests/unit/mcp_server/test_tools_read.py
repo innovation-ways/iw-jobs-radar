@@ -146,7 +146,7 @@ async def test_sources_show_key_state_never_the_key(api: FakeApi) -> None:
 
 async def test_collection_runs(api: FakeApi) -> None:
     data = await call(api, "list_collection_runs", {"limit": 5})
-    assert data["items"][0]["results"][0]["new_count"] == 2
+    assert data["items"][0]["sources"]["new"] == 2
     assert data["next_before_collection_run_id"] == 29
     assert api.calls[0]["params"]["limit"] == 5
 
@@ -184,3 +184,71 @@ async def test_unexpected_failures_do_not_leak_internals(api: FakeApi) -> None:
     result = await raw(api, "get_trends", {"kind": "skill"})
     assert result.is_error
     assert "postgresql" not in result.content[0].text  # type: ignore[union-attr]
+
+
+async def test_a_big_run_is_summarised_with_only_its_problems(api: FakeApi) -> None:
+    big = support.run()
+    template = big["results"][0]
+    big["results"] = [
+        {
+            **template,
+            "source_configuration_id": n,
+            "outcome": "failed" if n % 50 == 0 else "success",
+            "error_class": "http_error" if n % 50 == 0 else None,
+            "error_message": "HTTP 500" if n % 50 == 0 else None,
+        }
+        for n in range(1, 201)
+    ]
+    api.routes[("GET", "/collection-runs")] = {
+        "items": [big],
+        "next_before_collection_run_id": None,
+    }
+    data = await call(api, "list_collection_runs")
+    run = data["items"][0]
+    assert run["sources"]["total"] == 200
+    assert run["sources"]["by_outcome"] == {"success": 196, "failed": 4}
+    assert [p["source_configuration_id"] for p in run["problems"]] == [50, 100, 150, 200]
+    assert run["problems"][0]["error_message"] == "HTTP 500"
+    assert "results" not in run
+
+
+async def test_list_sources_filters_and_pages(api: FakeApi) -> None:
+    rows = []
+    for n in range(1, 121):
+        row = support.source(n)
+        row["enabled"] = n % 2 == 0
+        row["last_result"]["outcome"] = "failed" if n % 10 == 0 else "success"
+        rows.append(row)
+    api.routes[("GET", "/sources")] = {"items": rows}
+    page = await call(api, "list_sources")
+    assert page["total"] == 120 and len(page["items"]) == 25
+    enabled = await call(api, "list_sources", {"enabled_only": True, "limit": 100})
+    assert enabled["total"] == 60 and all(i["enabled"] for i in enabled["items"])
+    problems = await call(api, "list_sources", {"problems_only": True})
+    assert [i["source_configuration_id"] for i in problems["items"]] == list(range(10, 121, 10))
+    later = await call(api, "list_sources", {"limit": 50, "offset": 100})
+    assert len(later["items"]) == 20
+
+
+async def test_the_digest_caps_each_list_and_keeps_the_totals(api: FakeApi) -> None:
+    digest = support.digest()
+    digest["new_high_fit"] = [support.inbox_item(n) for n in range(100, 140)]
+    digest["counts"]["new_high_fit"] = 40
+    digest["source_health"] = [
+        dict(digest["source_health"][0], source_configuration_id=n) for n in range(60)
+    ]
+    api.routes[("GET", "/digests/daily")] = digest
+    data = await call(api, "get_daily_digest")
+    assert len(data["new_high_fit"]) == 15
+    assert data["counts"]["new_high_fit"] == 40
+    assert len(data["source_health"]) == 15
+    assert data["source_health_total"] == 60
+
+
+async def test_the_text_copy_is_compact_json_equal_to_the_structured_content(
+    api: FakeApi,
+) -> None:
+    result = await raw(api, "list_inbox", {"limit": 5})
+    text = result.content[0].text
+    assert "\n" not in text and ": " not in text.split('"title"')[0]
+    assert json.loads(text) == result.structured_content

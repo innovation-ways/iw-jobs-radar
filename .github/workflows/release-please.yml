@@ -6,15 +6,17 @@ on:
       - main
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # tag and release
+      pull-requests: write # open the release pull request
     steps:
-      - uses: actions/checkout@v7
-      - uses: googleapis/release-please-action@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # The repository has no package.json at its root (backend and frontend are separate); the plain

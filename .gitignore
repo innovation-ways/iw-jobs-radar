@@ -142,6 +142,7 @@ docs/research/
 
 # Jobs Radar launcher
 .frontend.pid
+.demo/
 .worker.pid
 frontend/coverage/
 frontend/test-results/

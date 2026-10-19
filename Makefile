@@ -14,7 +14,7 @@ PNPM := PATH="$$HOME/.local/bin:$$PATH" pnpm --dir $(FRONTEND)
         test-frontend test-frontend-watch fe-coverage test-e2e \
         lint format format-check typecheck arch-check security license-check docs-check quality \
         fe-lint fe-format fe-format-check fe-typecheck fe-license-check quality-frontend check check-all \
-        security-sast secret-scan config-check security-audit docs-schema openapi api-client seed-dev-sources demo-seed demo-worker demo-api demo-frontend backup restore-drill backup-list restore config-check security-audit smoke fe-install clean
+        security-sast secret-scan config-check security-audit docs-schema openapi api-client seed-dev-sources demo demo-stop demo-seed demo-worker demo-api demo-frontend backup restore-drill backup-list restore config-check security-audit smoke fe-install clean
 
 ##@ Run the app
 
@@ -195,6 +195,12 @@ seed-dev-sources: ## Add the 14 research boards as DISABLED sources to the dev d
 	cd $(BACKEND) && uv run python -m jobs_radar.tools.seed_dev_sources
 
 ##@ Demo (fictional data for screenshots and trials; the real database is never touched)
+
+demo: ## Start the whole demo with one command: database, fictional data, worker, API and UI (http://localhost:5181)
+	./jobs-radar.sh --demo
+
+demo-stop: ## Stop the demo processes started by make demo
+	./jobs-radar.sh --demo-stop
 
 DEMO_ENV := JOBS_RADAR_DB_NAME=jobs_radar_demo JOBS_RADAR_API_PORT=8101 JOBS_RADAR_FRONTEND_PORT=5181
 

@@ -58,6 +58,8 @@ def test_the_script_is_valid_bash() -> None:
         "--frontend-stop",
         "--frontend-clean",
         "--tests",
+        "--demo",
+        "--demo-stop",
         "--nuclear-reset",
         "--help",
     ],
@@ -111,3 +113,26 @@ def test_logs_needs_a_service() -> None:
     result = launcher("--logs")
     assert result.returncode == 1
     assert "needs a service" in result.stderr
+
+
+def test_demo_uses_its_own_database_and_ports() -> None:
+    """The demo must never share the real database or the real ports (README: demo section)."""
+    text = SCRIPT.read_text()
+    assert "JOBS_RADAR_DB_NAME=jobs_radar_demo" in text
+    assert "JOBS_RADAR_API_PORT=8101" in text
+    assert "JOBS_RADAR_FRONTEND_PORT=5181" in text
+    # The idle worker is the only worker allowed against the demo database.
+    assert "jobs_radar.demo.idle_worker" in text
+
+
+def test_demo_stop_is_harmless_when_nothing_runs() -> None:
+    result = launcher("--demo-stop")
+    assert result.returncode == 0
+
+
+def test_a_trailing_comment_leaves_no_spaces_in_the_value(tmp_path: Path) -> None:
+    """`.env.example` has `KEY=value   # comment`; the value must reach the app without spaces."""
+    env_file = tmp_path / ".env"
+    env_file.write_text("JOBS_RADAR_API_PORT=9333      # the API port\n")
+    result = launcher("--urls", env_file=str(env_file))
+    assert "http://127.0.0.1:9333/docs" in result.stdout

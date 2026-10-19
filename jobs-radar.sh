@@ -56,7 +56,7 @@ load_env() {
   while IFS= read -r line || [[ -n "$line" ]]; do
     line="${line%$'\r'}"
     [[ "$line" =~ ^[[:space:]]*(#|$) ]] && continue
-    line="$(echo "$line" | sed 's/[[:space:]]#.*$//')"
+    line="$(echo "$line" | sed 's/[[:space:]]*#.*$//')"
     [[ "$line" =~ ^([A-Za-z_][A-Za-z_0-9]*)=(.*)$ ]] || continue
     key="${BASH_REMATCH[1]}"; value="${BASH_REMATCH[2]}"
     [[ -v "$key" ]] || export "$key=$value"
@@ -317,6 +317,69 @@ frontend_clean() {
   frontend_start
 }
 
+# --- demo (fictional data, own database and ports; the real data is never touched) ---------
+# One command starts everything the demo needs: PostgreSQL (Docker), the demo database, an idle
+# worker (heartbeat only: the real worker must never run against the demo database, it would try
+# to collect the invented boards), the API on 8101 and the UI on 5181. Processes run detached with
+# their own session so --demo-stop can stop the whole tree.
+DEMO_DIR="$SCRIPT_DIR/.demo"
+DEMO_ENV=(JOBS_RADAR_DB_NAME=jobs_radar_demo JOBS_RADAR_API_PORT=8101 JOBS_RADAR_FRONTEND_PORT=5181)
+DEMO_PROCESSES=(worker api frontend)
+
+# demo_spawn <name> <directory> <command...>: start one detached demo process and record its PID.
+demo_spawn() {
+  local name="$1" dir="$2"; shift 2
+  mkdir -p "$DEMO_DIR" "$SCRIPT_DIR/logs"
+  (cd "$dir" && exec env "${DEMO_ENV[@]}" setsid "$@") \
+      >"$SCRIPT_DIR/logs/demo-$name.log" 2>&1 </dev/null &
+  echo $! >"$DEMO_DIR/$name.pid"
+}
+
+demo_stop() {
+  local name pid i stopped=0
+  for name in "${DEMO_PROCESSES[@]}"; do
+    [[ -f "$DEMO_DIR/$name.pid" ]] || continue
+    pid="$(cat "$DEMO_DIR/$name.pid")"
+    if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+      kill -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null
+      for i in 1 2 3 4 5 6 7 8 9 10; do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done
+      kill -0 "$pid" 2>/dev/null && kill -9 -- "-$pid" 2>/dev/null
+      stopped=1
+    fi
+    rm -f "$DEMO_DIR/$name.pid"
+  done
+  if (( stopped )); then ok "demo stopped (PostgreSQL keeps running; --quick-stop stops it)."; else info "demo not running."; fi
+}
+
+demo_start() {
+  init_env; load_env
+  check_dependencies || return 1
+  command -v uv >/dev/null 2>&1 || { err "uv is required (https://docs.astral.sh/uv/)."; return 1; }
+  command -v pnpm >/dev/null 2>&1 || { err "pnpm not found. Run: corepack enable --install-directory ~/.local/bin pnpm"; return 1; }
+  demo_stop >/dev/null
+  info "starting PostgreSQL ..."
+  compose up -d --wait db || { err "PostgreSQL did not become healthy."; return 1; }
+  info "building the demo database (jobs_radar_demo is dropped and recreated) ..."
+  (cd "$SCRIPT_DIR/backend" && env "${DEMO_ENV[@]}" uv run python -m jobs_radar.tools.demo_seed --reset) \
+    || { err "demo seed failed."; return 1; }
+  [[ -d "$FRONTEND_DIR/node_modules" ]] || (cd "$FRONTEND_DIR" && pnpm install --frozen-lockfile) || return 1
+  demo_spawn worker "$SCRIPT_DIR/backend" uv run python -m jobs_radar.demo.idle_worker
+  demo_spawn api "$SCRIPT_DIR/backend" env \
+    'JOBS_RADAR_CORS_ORIGINS=["http://127.0.0.1:5181","http://localhost:5181"]' \
+    uv run uvicorn jobs_radar.api.app:create_app --factory --host 127.0.0.1 --port 8101
+  demo_spawn frontend "$FRONTEND_DIR" pnpm dev --host 127.0.0.1 --port 5181 --strictPort
+  local i
+  for i in $(seq 1 60); do
+    http_ok "http://127.0.0.1:8101/healthz" && http_ok "http://127.0.0.1:5181/" && {
+      ok "demo running: ${BOLD}http://localhost:5181${NC}  (invented persona, companies and postings)"
+      dim "Stop it with: ./jobs-radar.sh --demo-stop      Logs: logs/demo-*.log"
+      return 0
+    }
+    sleep 1
+  done
+  err "the demo did not come up; see logs/demo-*.log"; return 1
+}
+
 # --- tests and quality (thin wrappers around `make`, see `make help`) ----------
 run_make() { header "make $*"; make "$@"; local rc=$?; echo ""; if (( rc == 0 )); then ok "make $* passed"; else err "make $* failed (exit $rc)"; fi; return $rc; }
 
@@ -378,6 +441,9 @@ usage() {
   echo -e "  ${c}--frontend-start${n}  ${c}--frontend-stop${n}  ${c}--frontend-clean${n}"
   echo -e "\n${title}Tests and quality${n} (same as the make targets; see 'make help')"
   echo -e "  ${c}--tests [unit|integration|backend|frontend|e2e|quality|all]${n}   No scope: pick from a menu"
+  echo -e "\n${title}Demo${n} (invented data, own database and ports 8101/5181; no network, no AI needed)"
+  echo -e "  ${c}--demo${n}                    Start PostgreSQL, build the demo database, start worker/API/UI"
+  echo -e "  ${c}--demo-stop${n}               Stop the demo processes"
   echo -e "\n${title}Danger${n}"
   echo -e "  ${c}--nuclear-reset [--yes]${n}   Remove containers and the database volume"
   echo -e "  ${c}--help${n}"
@@ -550,6 +616,8 @@ main() {
     --frontend-start) frontend_start ;;
     --frontend-stop)  frontend_stop ;;
     --frontend-clean) frontend_clean ;;
+    --demo)           demo_start ;;
+    --demo-stop)      demo_stop ;;
     --nuclear-reset)  nuclear_reset "${1:-}" ;;
     *) err "Unknown option: $cmd"; usage; exit 1 ;;
   esac

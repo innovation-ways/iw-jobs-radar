@@ -3,10 +3,15 @@
 [![CI](https://github.com/innovation-ways/iw-jobs-radar/actions/workflows/ci.yml/badge.svg)](https://github.com/innovation-ways/iw-jobs-radar/actions/workflows/ci.yml)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
-A **local-first, single-user job-market radar**. It collects jobs from permitted public sources,
-extracts what matters with an AI model (local by default), scores each job against your career
-profile and search intent with an explainable deterministic rule set, and keeps a personal inbox,
-company dossiers and market trends. Your data stays on your machine.
+Jobs Radar helps you separate the job offers that matter to you from everything else.
+
+Follow the companies you care about and Jobs Radar checks their careers pages, as well as public job boards, for new offers. Every new offer is read, scored against your own career profile and search intent, and ranked in a personal inbox, so you are told when a company you follow publishes something relevant and you can see at a glance why it fits or why it does not. Offers that break a rule you set (for example, on-site only, or the wrong role family) are set aside with the reason and you dont need to waste time with them.
+
+Every score can be explained. A local AI model reads each offer and quotes the passages that matter, such as the stack, the location or the pay. Fixed rules then turn those findings into a score, using the weights you chose. The AI never decides the final number, so the same offer always gets the same score, and you can see exactly why.
+
+A trends view shows how the offers relevant to you change over time: which technologies and role families are growing, week by week.
+
+Everything runs on your machine, and your data stays with you.
 
 ## What it does
 
@@ -60,18 +65,30 @@ company and job-board names are invented, and the board names shown (for example
 label the demo sources.
 
 ```bash
-./jobs-radar.sh --quick-start     # PostgreSQL must be running
-make demo-seed                    # builds the demo database (drops and recreates it)
-make demo-worker                  # in a terminal of its own: keeps the "worker up" signal alive
-make demo-api                     # in another: API on http://127.0.0.1:8101
-make demo-frontend                # in another: open http://localhost:5181
+make demo                         # or: ./jobs-radar.sh --demo
+# open http://localhost:5181
+make demo-stop                    # or: ./jobs-radar.sh --demo-stop
 ```
+
+One command creates `.env` if needed, starts PostgreSQL (Docker), builds the demo database, and
+starts an idle worker, the API (port 8101) and the UI (port 5181). Logs are in `logs/demo-*.log`.
+The step-by-step targets (`make demo-seed`, `demo-worker`, `demo-api`, `demo-frontend`) still exist
+if you want to run the parts in separate terminals.
 
 Never start the real worker against the demo database: it would try to collect the invented boards.
 
 AI extraction is off until you turn it on in `.env` (`JOBS_RADAR_EXTRACTION_ENABLED`,
 `JOBS_RADAR_ALLOW_LOCAL_PROVIDERS`) and choose a local model in the *AI & privacy* screen. Without
 it, jobs are still collected and shown as "not evaluated".
+
+## How it was built
+
+Jobs Radar was developed with AI assistance (Claude Code). The architecture, the decisions
+([ADR log](docs/decisions/architecture-decision-log.md)) and the verification are the maintainer's
+work: changes are written test-first and must pass the quality gates (`make check`: lint, strict
+types, import boundaries, security linting, licences, unit and integration tests; `make coverage`
+enforces 80%). Read the code
+and the tests as you would any other project, and open an issue if something looks wrong.
 
 ## Security
 

@@ -26,6 +26,11 @@ dependencies = [
     "python-multipart>=0.0.32",
 ]
 
+[project.optional-dependencies]
+mcp = [
+    "mcp>=2.3,<3",
+]
+
 [dependency-groups]
 dev = [
     "pytest",
@@ -46,6 +51,7 @@ dev = [
     "httpx2>=2.13.1",
     "reportlab>=5.0.1",
     "pip-audit>=2.10.1",
+    "mcp>=2.3,<3",
 ]
 
 [build-system]
@@ -146,4 +152,20 @@ forbidden_modules = [
     "jobs_radar.services",
     "jobs_radar.api",
     "jobs_radar.worker",
+]
+
+[[tool.importlinter.contracts]]
+name = "The MCP server only talks to the API"
+type = "forbidden"
+source_modules = ["jobs_radar.mcp_server"]
+forbidden_modules = [
+    "jobs_radar.api",
+    "jobs_radar.schemas",
+    "jobs_radar.services",
+    "jobs_radar.repositories",
+    "jobs_radar.db",
+    "jobs_radar.domain",
+    "jobs_radar.adapters",
+    "jobs_radar.worker",
+    "jobs_radar.core",
 ]

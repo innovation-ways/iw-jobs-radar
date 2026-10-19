@@ -1,6 +1,7 @@
 """Gate: no AGPL, SSPL or proprietary runtime dependency (ADR-034, ``make license-check``).
 
-Runtime dependencies are taken from ``uv export --no-dev``. Weak-copyleft licences (LGPL) and
+Runtime dependencies, optional extras included (the MCP server, ADR-078), are taken from
+``uv export --no-dev --all-extras``. Weak-copyleft licences (LGPL) and
 anything unknown are reported for human review without failing the gate; AGPL, SSPL and
 proprietary or commercial licences fail it.
 """
@@ -50,7 +51,7 @@ def runtime_packages() -> list[str]:
     """Return the names of the pinned runtime dependencies (excluding development groups)."""
     uv = shutil.which("uv") or "uv"
     result = subprocess.run(  # noqa: S603  # fixed command, no user input
-        [uv, "export", "--no-dev", "--no-hashes", "--no-emit-project", "--quiet"],
+        [uv, "export", "--no-dev", "--all-extras", "--no-hashes", "--no-emit-project", "--quiet"],
         capture_output=True,
         text=True,
         check=True,

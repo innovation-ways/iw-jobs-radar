@@ -40,7 +40,7 @@ pass before a pull request is merged.
 ## Commits and pull requests
 
 - Conventional Commits: `<type>(<scope>): <description>` with types `feat|fix|docs|refactor|test|chore`
-  and scopes `api|db|worker|frontend|ci|config`.
+  and scopes `api|db|worker|frontend|mcp|ci|config`.
 - Keep pull requests focused and describe what changed and why.
 
 ## Developer Certificate of Origin (DCO)

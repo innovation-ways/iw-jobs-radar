@@ -6,6 +6,11 @@ from pathlib import Path
 SRC = Path(__file__).resolve().parents[2] / "src" / "jobs_radar"
 
 
+# The one documented exception (ADR-078 point 9): the MCP server's client of the owner's own API,
+# which the guarded client cannot serve because it refuses private addresses.
+MCP_API_CLIENT = "mcp_server/api_client.py"
+
+
 def test_only_the_guarded_client_imports_the_http_library() -> None:
     offenders = [
         str(path.relative_to(SRC))
@@ -16,6 +21,7 @@ def test_only_the_guarded_client_imports_the_http_library() -> None:
             re.M,
         )
         and path.name != "http.py"
+        and path.relative_to(SRC).as_posix() != MCP_API_CLIENT
     ]
     assert offenders == [], f"outbound calls must go through core/http.py: {offenders}"
 

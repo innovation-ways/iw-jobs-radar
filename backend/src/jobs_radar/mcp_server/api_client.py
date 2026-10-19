@@ -24,7 +24,6 @@ READ_ROUTES: frozenset[tuple[str, str]] = frozenset(
         ("GET", "/inbox/{job_inbox_item_id}"),
         ("GET", "/digests/daily"),
         ("GET", "/profiles"),
-        ("GET", "/profiles/{career_profile_id}"),
         ("GET", "/profiles/{career_profile_id}/intents"),
         ("GET", "/sources"),
         ("GET", "/collection-runs"),

@@ -67,6 +67,15 @@ async def test_no_tool_takes_a_url_path_secret_or_bare_id() -> None:
         assert not names & FORBIDDEN_PARAMETERS, (tool.name, names & FORBIDDEN_PARAMETERS)
 
 
+async def test_write_surface_is_exactly_the_documented_tools_and_obeys_the_same_rules() -> None:
+    tools = await list_tools(writes=True)
+    assert {t.name for t in tools} == READ_TOOLS | WRITE_TOOLS
+    for tool in tools:
+        names = set(tool.input_schema.get("properties", {}))
+        assert not names & FORBIDDEN_PARAMETERS, tool.name
+        assert tool.annotations is not None and tool.annotations.destructive_hint is False
+
+
 async def test_server_instructions_warn_about_untrusted_text() -> None:
     server = build_server(support.settings(), FakeApi())  # type: ignore[arg-type]
     async with Client(server) as client:

@@ -29,7 +29,7 @@ them; they need the `version` from a fresh read and change only the owner's own 
 
 
 def build_server(settings: McpSettings, api: ApiClient) -> MCPServer:
-    """Create the server with the read tools (write tools are added in a later step)."""
+    """Create the server with the read tools, plus the write tools when the owner allowed them."""
 
     @asynccontextmanager
     async def lifespan(_server: MCPServer) -> AsyncIterator[None]:
@@ -40,4 +40,9 @@ def build_server(settings: McpSettings, api: ApiClient) -> MCPServer:
 
     server = MCPServer(SERVER_NAME, instructions=INSTRUCTIONS, lifespan=lifespan)
     register_read_tools(server, api)
+    if settings.allow_writes:
+        # Imported lazily so that a read-only server never even loads the write tools.
+        from jobs_radar.mcp_server.tools_write import register_write_tools
+
+        register_write_tools(server, api)
     return server

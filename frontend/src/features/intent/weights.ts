@@ -81,6 +81,12 @@ export const OPTIONAL_DIMENSIONS: Dimension[] = [
     description:
       'Optional. How well the job fits the directions you wrote in your profile, judged by the local model for jobs first seen after you added them. The best fit among your directions counts; a job that has not been assessed is left out instead of counting as zero. Off by default.',
   },
+  {
+    key: 'schedule_travel',
+    label: 'Schedule & travel',
+    description:
+      'Optional. The working pattern (day, night, rotating shifts, weekends, on call) and how much travel the posting states, against your stances in the Schedule & travel section. The weaker of the two counts. Off by default; a pattern or travel level you reject rules the job out whatever the weight.',
+  },
 ]
 
 export const DEFAULT_WEIGHTS: Weights = {
@@ -95,6 +101,7 @@ export const DEFAULT_WEIGHTS: Weights = {
   benefits_flexibility: 0,
   qualifications: 0,
   career_direction: 0,
+  schedule_travel: 0,
 }
 
 export const MAX_WEIGHT = 40

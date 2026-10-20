@@ -2483,10 +2483,10 @@ export interface components {
             intent_revision_id: number;
             /**
              * Policy Version
-             * @default matching-v1.8
+             * @default matching-v1.9
              * @constant
              */
-            policy_version: "matching-v1.8";
+            policy_version: "matching-v1.9";
             /** Profile Revision Id */
             profile_revision_id: number;
         };
@@ -2958,6 +2958,7 @@ export interface components {
              *       "engagement_terms": 10,
              *       "qualifications": 0,
              *       "role_responsibilities": 25,
+             *       "schedule_travel": 0,
              *       "seniority_experience": 8,
              *       "skills_technology": 15,
              *       "work_arrangement_location": 15
@@ -3020,6 +3021,7 @@ export interface components {
              *       "engagement_terms": 10,
              *       "qualifications": 0,
              *       "role_responsibilities": 25,
+             *       "schedule_travel": 0,
              *       "seniority_experience": 8,
              *       "skills_technology": 15,
              *       "work_arrangement_location": 15
@@ -3137,6 +3139,7 @@ export interface components {
              *       "engagement_terms": 10,
              *       "qualifications": 0,
              *       "role_responsibilities": 25,
+             *       "schedule_travel": 0,
              *       "seniority_experience": 8,
              *       "skills_technology": 15,
              *       "work_arrangement_location": 15
@@ -4419,10 +4422,14 @@ export interface components {
             hours: components["schemas"]["HoursStances"];
             /** Role Families */
             role_families: components["schemas"]["StanceEntry"][];
+            /** Schedules */
+            schedules?: components["schemas"]["StanceEntry"][];
             /** Sectors */
             sectors?: components["schemas"]["StanceEntry"][];
             /** Seniority Levels */
             seniority_levels: components["schemas"]["StanceEntry"][];
+            /** Travel Levels */
+            travel_levels?: components["schemas"]["StanceEntry"][];
             /** Work Arrangements */
             work_arrangements: components["schemas"]["StanceEntry"][];
         };
@@ -4693,6 +4700,11 @@ export interface components {
              * @default 25
              */
             role_responsibilities: number;
+            /**
+             * Schedule Travel
+             * @default 0
+             */
+            schedule_travel: number;
             /**
              * Seniority Experience
              * @default 8

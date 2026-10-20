@@ -53,6 +53,20 @@ export const TAXONOMY: TaxonomyRead = {
       ],
     },
     { kind: 'benefit', terms: [{ term_key: 'equity', label: 'Equity' }] },
+    {
+      kind: 'schedule',
+      terms: [
+        { term_key: 'day', label: 'Day work' },
+        { term_key: 'night', label: 'Night work' },
+      ],
+    },
+    {
+      kind: 'travel_level',
+      terms: [
+        { term_key: 'none', label: 'No travel' },
+        { term_key: 'frequent', label: 'Frequent travel' },
+      ],
+    },
   ],
 }
 

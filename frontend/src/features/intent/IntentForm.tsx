@@ -275,6 +275,27 @@ export function IntentForm({ value, onChange, taxonomy }: Props) {
       </Card>
 
       <Card
+        title="Schedule & travel"
+        hint="Working patterns and travel a job may involve. Terms you leave as OK are acceptable; Reject rules a job out."
+      >
+        <StanceGroup
+          label="Schedule"
+          terms={termsOf(taxonomy, 'schedule')}
+          value={value.stances.schedules ?? []}
+          onChange={(schedules) => stances({ schedules })}
+          optional
+        />
+        <p className="mt-4 mb-1 text-xs font-semibold text-ink-2">Travel</p>
+        <StanceGroup
+          label="Travel"
+          terms={termsOf(taxonomy, 'travel_level')}
+          value={value.stances.travel_levels ?? []}
+          onChange={(travel_levels) => stances({ travel_levels })}
+          optional
+        />
+      </Card>
+
+      <Card
         title="Domain & sector"
         hint="Sectors without opinion are neither preferred nor rejected."
       >

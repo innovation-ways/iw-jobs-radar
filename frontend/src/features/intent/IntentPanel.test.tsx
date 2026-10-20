@@ -43,6 +43,7 @@ describe('IntentPanel', () => {
       'Engagement',
       'Compensation',
       'Seniority',
+      'Schedule & travel',
       'Domain & sector',
       'Employer',
       'Languages',

@@ -30,6 +30,8 @@ export function defaultIntentDefinition(
       seniority_levels: entries(taxonomy, 'seniority_level'),
       sectors: [],
       employer_types: entries(taxonomy, 'employer_type'),
+      schedules: entries(taxonomy, 'schedule'),
+      travel_levels: entries(taxonomy, 'travel_level'),
     },
     work_rules: {
       remote: { eligible_regions: ['EU'], timezone: location?.timezone ?? 'UTC' },

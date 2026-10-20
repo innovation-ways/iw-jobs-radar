@@ -26,6 +26,7 @@ const EXAMPLE_STRENGTHS: Record<WeightKey, number | null> = {
   benefits_flexibility: null,
   qualifications: null,
   career_direction: null,
+  schedule_travel: null,
 }
 
 interface Props {

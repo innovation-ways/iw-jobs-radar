@@ -20,6 +20,11 @@ interface Props {
   onChange: (value: StanceEntry[]) => void
   /** Open groups (role families, sectors) allow an option to have no opinion (not listed). */
   allowNoOpinion?: boolean
+  /**
+   * An optional group (schedule, travel): a term the intent does not list counts as OK, so there is
+   * no "no opinion" option and an empty list is not an error.
+   */
+  optional?: boolean
   /** Terms merged into another: old key → replacing key. Their stances move to the replacement. */
   replacements?: Record<string, string>
 }
@@ -37,10 +42,12 @@ export function StanceGroup({
   onChange,
   allowNoOpinion = false,
   replacements = {},
+  optional = false,
 }: Props) {
   const value = resolveStances(saved, replacements)
   const stanceOf = (key: string): Stance | 'none' =>
-    value.find((entry) => entry.key === key)?.stance ?? (allowNoOpinion ? 'none' : 'acceptable')
+    value.find((entry) => entry.key === key)?.stance ??
+    (allowNoOpinion && !optional ? 'none' : 'acceptable')
 
   function choose(key: string, stance: Stance | 'none') {
     const others = value.filter((entry) => entry.key !== key)
@@ -54,7 +61,7 @@ export function StanceGroup({
     ? [...OPTIONS, { value: 'none' as const, label: 'No opinion' }]
     : OPTIONS
   const allRejected = value.length > 0 && value.every((entry) => entry.stance === 'rejected')
-  const empty = !allowNoOpinion && value.length === 0
+  const empty = !allowNoOpinion && !optional && value.length === 0
 
   return (
     <div>

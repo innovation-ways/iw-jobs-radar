@@ -20,6 +20,17 @@ describe('defaultIntentDefinition', () => {
     expect(definition.stances.seniority_levels).toHaveLength(2)
   })
 
+  it('lists every working pattern and travel level as acceptable', () => {
+    expect(definition.stances.schedules).toEqual([
+      { key: 'day', stance: 'acceptable' },
+      { key: 'night', stance: 'acceptable' },
+    ])
+    expect(definition.stances.travel_levels).toEqual([
+      { key: 'none', stance: 'acceptable' },
+      { key: 'frequent', stance: 'acceptable' },
+    ])
+  })
+
   it('starts with every role family acceptable (the group may not be empty) and no sector opinion', () => {
     expect(definition.stances.role_families.map((r) => r.stance)).toEqual([
       'acceptable',

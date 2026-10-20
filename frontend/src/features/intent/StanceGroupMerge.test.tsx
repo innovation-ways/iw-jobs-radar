@@ -44,3 +44,42 @@ describe('StanceGroup after a merge', () => {
     ])
   })
 })
+
+describe('StanceGroup with an optional group (schedule, travel)', () => {
+  const options = [
+    { term_key: 'day', label: 'Day work' },
+    { term_key: 'night', label: 'Night work' },
+  ]
+
+  it('shows terms the intent does not list as OK, without warning about an empty group', () => {
+    render(<StanceGroup label="Schedule" terms={options} value={[]} onChange={vi.fn()} optional />)
+    const night = screen.getByRole('radiogroup', { name: 'Night work' })
+    expect(night.querySelector('input[value="acceptable"]')).toBeChecked()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.queryByRole('radio', { name: 'No opinion' })).not.toBeInTheDocument()
+  })
+
+  it('stores the choice made for one term', async () => {
+    const onChange = vi.fn()
+    render(<StanceGroup label="Schedule" terms={options} value={[]} onChange={onChange} optional />)
+    const night = screen.getByRole('radiogroup', { name: 'Night work' })
+    await userEvent.click(night.querySelector('input[value="rejected"]')!)
+    expect(onChange).toHaveBeenCalledWith([{ key: 'night', stance: 'rejected' }])
+  })
+
+  it('still warns when every listed option is rejected', () => {
+    render(
+      <StanceGroup
+        label="Schedule"
+        terms={options}
+        value={[
+          { key: 'day', stance: 'rejected' },
+          { key: 'night', stance: 'rejected' },
+        ]}
+        onChange={vi.fn()}
+        optional
+      />,
+    )
+    expect(screen.getByRole('alert')).toHaveTextContent(/at least one option/i)
+  })
+})

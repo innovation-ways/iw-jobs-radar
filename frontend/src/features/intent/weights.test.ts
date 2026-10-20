@@ -10,9 +10,9 @@ import {
 } from './weights'
 
 describe('weight dimensions', () => {
-  it('lists the 8 active dimensions summing to 100 and 3 optional ones at 0', () => {
+  it('lists the 8 active dimensions summing to 100 and 4 optional ones at 0', () => {
     expect(DIMENSIONS).toHaveLength(8)
-    expect(OPTIONAL_DIMENSIONS).toHaveLength(3)
+    expect(OPTIONAL_DIMENSIONS).toHaveLength(4)
     expect(OPTIONAL_DIMENSIONS.map((d) => d.key)).toContain('career_direction')
     const active = DIMENSIONS.reduce((sum, d) => sum + DEFAULT_WEIGHTS[d.key], 0)
     expect(active).toBe(100)
@@ -71,6 +71,7 @@ describe('worked example of document 13 section 7', () => {
     benefits_flexibility: null,
     qualifications: null,
     career_direction: null,
+    schedule_travel: null,
   }
 
   it('scores 82 with the default weights', () => {
@@ -84,5 +85,15 @@ describe('worked example of document 13 section 7', () => {
   it('has no score without any weight', () => {
     const zero = Object.fromEntries(Object.keys(DEFAULT_WEIGHTS).map((k) => [k, 0])) as Weights
     expect(scoreWith(strengths, zero)).toBeNull()
+  })
+})
+
+describe('schedule and travel', () => {
+  it('is an optional dimension, off by default so it changes no existing score', () => {
+    expect(DEFAULT_WEIGHTS.schedule_travel).toBe(0)
+    expect(OPTIONAL_DIMENSIONS.map((d) => d.key)).toContain('schedule_travel')
+    expect(OPTIONAL_DIMENSIONS.find((d) => d.key === 'schedule_travel')?.label).toBe(
+      'Schedule & travel',
+    )
   })
 })

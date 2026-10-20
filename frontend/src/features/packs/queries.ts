@@ -28,9 +28,14 @@ export function usePackActions() {
       ),
     onSuccess: async () => {
       await Promise.all(
-        [PACKS, ['taxonomy'], ['taxonomy-terms']].map((queryKey) =>
-          queryClient.invalidateQueries({ queryKey }),
-        ),
+        [
+          PACKS,
+          ['taxonomy'],
+          ['taxonomy-terms'],
+          ['prefilter-areas'],
+          ['intent-defaults'],
+          ['setup-status'],
+        ].map((queryKey) => queryClient.invalidateQueries({ queryKey })),
       )
     },
   })

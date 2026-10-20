@@ -191,4 +191,17 @@ describe('Setup', () => {
     await user.click(await screen.findByRole('button', { name: /create my profile and search/i }))
     expect(await screen.findByRole('alert')).toHaveTextContent(/title is taken/i)
   })
+
+  it('asks for the suggestions again after a pack is switched on', async () => {
+    const user = userEvent.setup()
+    renderSetup()
+    await screen.findByRole('heading', { name: 'Construction and skilled trades' })
+    const before = get.mock.calls.filter((c) => c[0] === '/api/v1/setup/intent-defaults').length
+    await chooseTheTrades(user)
+    await vi.waitFor(() =>
+      expect(
+        get.mock.calls.filter((c) => c[0] === '/api/v1/setup/intent-defaults').length,
+      ).toBeGreaterThan(before),
+    )
+  })
 })

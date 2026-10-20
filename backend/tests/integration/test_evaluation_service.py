@@ -63,17 +63,17 @@ async def test_an_evaluation_is_persisted_with_every_input_and_all_dimensions(
         w.profile_revision_id,
         w.intent_revision_id,
     )
-    assert evaluation.policy_version == "matching-v1.8"
+    assert evaluation.policy_version == "matching-v1.9"
     assert evaluation.job_source_hash.startswith("sha256:")
     assert 0 <= evaluation.fit_score <= 100 and evaluation.recommendation in {
         "recommended",
         "not_recommended",
     }
     assert evaluation.weights_json["role_responsibilities"] == 25
-    assert len(record.dimensions) == 11
+    assert len(record.dimensions) == 12
     assert (
         await count(db_session, ScoreDimension, match_evaluation_id=evaluation.match_evaluation_id)
-        == 11
+        == 12
     )
     by_key = {d.dimension_key: d for d in record.dimensions}
     assert (
@@ -371,7 +371,7 @@ async def test_get_returns_a_persisted_evaluation_and_hides_other_owners(
         )
     ).scalar_one()
     record = await service.get(LOCAL_OWNER_ID, evaluation.match_evaluation_id)
-    assert len(record.dimensions) == 11
+    assert len(record.dimensions) == 12
     with pytest.raises(NotFoundError):
         await service.get(LOCAL_OWNER_ID, 987654321)
 
@@ -530,3 +530,56 @@ async def test_a_missing_licence_is_a_mismatch_and_a_gate_only_when_asked(
     strict = await evaluate_with_licence(db_session, hold_it=False, reject_missing=True)
     assert [g["code"] for g in strict.evaluation.gates_json] == ["G12"]
     assert strict.evaluation.recommendation == "not_recommended"
+
+
+# --- working patterns and travel (ADR-080, phase 6b) ------------------------------------------------------
+
+
+async def evaluate_with_schedule(
+    session: AsyncSession, schedules: dict[str, str], **job_kwargs: Any
+):  # type: ignore[no-untyped-def]
+    w = await world(session, **job_kwargs)
+    data = deepcopy(sample_intent())
+    data["weights"]["schedule_travel"] = 10
+    data["stances"]["schedules"] = [{"key": k, "stance": v} for k, v in schedules.items()]
+    saved = await IntentService(session).save(
+        LOCAL_OWNER_ID,
+        w.intent_id,
+        IntentDefinition.model_validate(data),
+        expected_current_revision=1,
+    )
+    assert saved.view.current is not None
+    return await EvaluationService(session, provider=None).evaluate(
+        LOCAL_OWNER_ID,
+        job_snapshot_id=w.snapshot_id,
+        job_extraction_id=w.extraction_id,
+        profile_revision_id=w.profile_revision_id,
+        intent_revision_id=saved.view.current.intent_revision_id,
+        judge=False,
+    )
+
+
+async def test_a_preferred_working_pattern_scores_and_is_stored_as_a_dimension(
+    db_session: AsyncSession,
+) -> None:
+    record = await evaluate_with_schedule(
+        db_session, {"day": "preferred", "night": "acceptable"}, schedule=["day"]
+    )
+    by_key = {d.dimension_key: d for d in record.dimensions}
+    assert (by_key["schedule_travel"].status, float(by_key["schedule_travel"].strength)) == (
+        "match",
+        1.0,
+    )
+    assert record.evaluation.policy_version == "matching-v1.9"
+
+
+async def test_a_rejected_working_pattern_is_a_gate(db_session: AsyncSession) -> None:
+    record = await evaluate_with_schedule(
+        db_session,
+        {"day": "acceptable", "night": "rejected"},
+        schedule=["night"],
+        travel="frequent",
+    )
+    codes = [g["code"] for g in record.evaluation.gates_json]
+    assert codes == ["G13"]  # travel was not rejected: the older default is acceptable
+    assert record.evaluation.recommendation == "not_recommended"

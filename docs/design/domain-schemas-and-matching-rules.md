@@ -40,6 +40,8 @@ Unique on `(kind, term_key)`. The global `taxonomy_version` is an integer that i
 | `seniority_level` | `intern`, `junior`, `mid`, `senior`, `staff_principal`, `management`, `executive` |
 | `engagement_type` | `employee_permanent`, `employee_fixed_term`, `contractor_b2b`, `freelance`, `internship` (hours are a separate attribute, see 5) |
 | `work_arrangement` | `remote`, `hybrid`, `onsite` |
+| `schedule` | (taxonomy v4, ADR-080) `day`, `night`, `rotating_shifts`, `weekends`, `on_call` |
+| `travel_level` | (taxonomy v4, ADR-080) `none`, `occasional`, `frequent` |
 | `employer_type` | `direct_employer`, `agency_recruiter`, `consultancy_outsourcer` |
 | `benefit` | `equity`, `bonus`, `learning_budget`, `flexible_hours`, `four_day_week`, `health_insurance`, `extra_leave`, `relocation_support`, `home_office_budget` |
 
@@ -158,7 +160,7 @@ An `IntentRevision.intent_json` has this shape (the values below are an invented
     "role_responsibilities": 25, "skills_technology": 15, "work_arrangement_location": 15,
     "engagement_terms": 10, "compensation": 10, "seniority_experience": 8,
     "domain_sector": 10, "company_profile": 7, "benefits_flexibility": 0, "qualifications": 0,
-    "career_direction": 0
+    "career_direction": 0, "schedule_travel": 0
   },
   "alert_threshold": 65
 }
@@ -299,6 +301,7 @@ Input: a `job_extraction` (`succeeded`), the profile revision, the intent revisi
 | Company profile | Stance of the employer type; `unknown` if not determined; `rejected` → gate |
 | Benefits & flexibility (optional) | Fraction of `benefits_wanted` mentioned in the job; none stated → `unknown`; if `benefits_wanted` is empty the dimension is `unknown` |
 | Career direction (optional, ADR-057, `matching-v1.3`) | The career directions (profile facts: up to 5 texts of up to 1,000 characters) are each judged by the local model against the job: `strong` 1.0, `partial` 0.5, `weak` 0.2, `none` 0 (mismatch, no gate), `unknown` = could not tell. The **best known level** among the enabled directions counts, chosen by the engine; all `unknown` → `unknown` (contributes 0, weight counts). A job with no judgement at all is **not assessed**: the dimension is left out and the other weights are renormalised, so old and new jobs stay comparable. Default weight 0. Evidence: winning direction, level, `job_quote` (verbatim from the posting), `direction_quote` (verbatim from the direction text) |
+| Schedule & travel (optional, ADR-080, `matching-v1.9`) | The working patterns the posting offers (a list: day, night, rotating shifts, weekends, on call) and the travel level it states, against the intent's `schedules` and `travel_levels` stances (terms the intent does not list count as acceptable). Patterns: the best non-rejected one counts. The result is the weaker of the stated parts; neither stated → `unknown`. Default weight 0 |
 | Qualifications (optional) | The mean of the parts the posting states. Education: the required level vs the profile's (met → 1.0, lower → 0). Credentials (ADR-080): the licences and certifications the posting asks for, each a skill of kind `credential`; share held, a required one weighing 2 and a preferred one 1, no judging of equivalents. Missing parts are left out; neither stated → `unknown`. A shortfall is `mismatch`, never a gate by itself (see G12) |
 
 ### 7.5 Compensation
@@ -328,6 +331,8 @@ Input: a `job_extraction` (`succeeded`), the profile revision, the intent revisi
 | G10 pay | stated pay is below the minimum and `reject_below_minimum` is on |
 | G11 visa | the user needs visa/relocation help and the job states it is not offered |
 | G12 credential (ADR-080) | `filters.reject_missing_credentials` is on (default off) and a required (`must`) licence or certification of the posting is not among the profile's credentials |
+| G13 schedule (ADR-080) | every working pattern the job offers is `rejected` |
+| G14 travel (ADR-080) | the travel level the job states is `rejected` |
 
 A gate never fires on `unknown` data. All fired gates are listed with their reason and evidence; `recommendation` is `not_recommended` if any fired, otherwise `recommended`. The raw weighted score is still computed and shown.
 

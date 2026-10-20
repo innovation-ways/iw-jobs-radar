@@ -38,6 +38,8 @@ _QUOTED = (
     "benefits_mentioned",
     "languages_required",
     "visa_sponsorship",
+    "schedule",
+    "travel",
 )
 
 
@@ -130,6 +132,7 @@ def job_attributes(
             note = f"limited by the source location: {', '.join(source_places)}"
             evidence["remote_regions"] = f"{quote} ({note})" if quote else note
     employment = _known(output.employment_types)
+    schedule = _known(output.schedule)
     seniority = _known(output.seniority_levels)
     benefits = _known(output.benefits_mentioned)
     return JobAttributes(
@@ -167,6 +170,8 @@ def job_attributes(
             JobSkill(s["skill_id"], s["name"], s["importance"])
             for s in attributes.get("skills_resolved", [])
         ),
+        schedules=tuple(schedule) if schedule is not None else None,
+        travel=_known(output.travel),
         credentials=tuple(
             JobSkill(c["skill_id"], c["name"], c["importance"])
             for c in attributes.get("credentials_resolved", [])
@@ -206,6 +211,8 @@ _CLOSED_GROUPS = {
     "engagement_types": "engagement_type",
     "seniority_levels": "seniority_level",
     "employer_types": "employer_type",
+    "schedules": "schedule",
+    "travel_levels": "travel_level",
 }
 _OPEN_GROUPS_VIEW = {"role_families": "role_family", "sectors": "sector"}
 

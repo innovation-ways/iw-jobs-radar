@@ -319,3 +319,74 @@ def test_rejecting_missing_credentials_is_an_option_that_is_off_by_default() -> 
     assert IntentDefinition.model_validate(data).filters.reject_missing_credentials is False
     data["filters"]["reject_missing_credentials"] = True
     assert IntentDefinition.model_validate(data).filters.reject_missing_credentials is True
+
+
+# --- schedule and travel (ADR-080, phase 6b) ---------------------------------------------------------------
+
+
+def taxonomy_with_new_kinds() -> dict[str, set[str]]:
+    return {
+        **taxonomy(),
+        "schedule": {"day", "night", "rotating_shifts", "weekends", "on_call"},
+        "travel_level": {"none", "occasional", "frequent"},
+    }
+
+
+def later_terms() -> dict[str, frozenset[str]]:
+    return {
+        "schedule": frozenset({"day", "night", "rotating_shifts", "weekends", "on_call"}),
+        "travel_level": frozenset({"none", "occasional", "frequent"}),
+    }
+
+
+def test_the_schedule_and_travel_groups_are_optional_and_older_intents_have_none() -> None:
+    data = sample_intent()
+    del data["stances"]["schedules"], data["stances"]["travel_levels"]
+    stances = IntentDefinition.model_validate(data).stances
+    assert stances.schedules == [] and stances.travel_levels == []
+
+
+def test_schedule_and_travel_take_stances_like_every_other_group() -> None:
+    data = sample_intent()
+    data["stances"]["schedules"] = [
+        {"key": "day", "stance": "preferred"},
+        {"key": "night", "stance": "rejected"},
+    ]
+    data["stances"]["travel_levels"] = [{"key": "none", "stance": "acceptable"}]
+    intent = IntentDefinition.model_validate(data)
+    assert [e.key for e in intent.stances.schedules] == ["day", "night"]
+    assert validate_intent_against_taxonomy(intent, taxonomy_with_new_kinds(), later_terms()) == []
+
+
+def test_a_group_that_rejects_everything_is_incoherent() -> None:
+    data = sample_intent()
+    data["stances"]["schedules"] = [{"key": "day", "stance": "rejected"}]
+    with pytest.raises(ValidationError, match="at least one option"):
+        IntentDefinition.model_validate(data)
+
+
+def test_an_unknown_working_pattern_is_reported() -> None:
+    data = sample_intent()
+    data["stances"]["schedules"] = [{"key": "graveyard", "stance": "preferred"}]
+    errors = validate_intent_against_taxonomy(
+        IntentDefinition.model_validate(data), taxonomy_with_new_kinds(), later_terms()
+    )
+    assert any("schedules" in e and "graveyard" in e for e in errors), errors
+
+
+def test_the_new_terms_are_optional_so_an_older_intent_stays_valid() -> None:
+    intent = IntentDefinition.model_validate(sample_intent())
+    assert validate_intent_against_taxonomy(intent, taxonomy_with_new_kinds(), later_terms()) == []
+    # Without being told they are optional, the missing options would be an error.
+    errors = validate_intent_against_taxonomy(intent, taxonomy_with_new_kinds(), {})
+    assert any("schedules: missing options" in e for e in errors)
+
+
+def test_the_weight_of_schedule_and_travel_is_off_unless_chosen() -> None:
+    assert IntentDefinition.model_validate(sample_intent()).weights.schedule_travel == 0
+    data = sample_intent()
+    data["weights"]["schedule_travel"] = 12
+    assert IntentDefinition.model_validate(data).weights.schedule_travel == 12
+    data["weights"]["schedule_travel"] = 41
+    with pytest.raises(ValidationError):
+        IntentDefinition.model_validate(data)

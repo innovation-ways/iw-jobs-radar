@@ -377,3 +377,56 @@ def test_the_intent_says_whether_a_missing_credential_rules_a_job_out() -> None:
     )
     data["filters"]["reject_missing_credentials"] = True
     assert intent_view(IntentDefinition.model_validate(data), {}).reject_missing_credentials is True
+
+
+# --- schedule and travel (ADR-080, phase 6b) ---------------------------------------------------------------
+
+
+def test_an_older_intent_counts_every_working_pattern_and_travel_level_as_acceptable() -> None:
+    optional = {
+        "schedule": frozenset({"day", "night"}),
+        "travel_level": frozenset({"none", "frequent"}),
+    }
+    view = intent_view(IntentDefinition.model_validate(sample_intent()), optional)
+    assert view.stances["schedules"] == {"day": "acceptable", "night": "acceptable"}
+    assert view.stances["travel_levels"] == {"none": "acceptable", "frequent": "acceptable"}
+
+
+def test_a_chosen_stance_beats_the_default() -> None:
+    data = sample_intent()
+    data["stances"]["schedules"] = [
+        {"key": "day", "stance": "preferred"},
+        {"key": "night", "stance": "rejected"},
+    ]
+    optional = {"schedule": frozenset({"day", "night", "on_call"})}
+    view = intent_view(IntentDefinition.model_validate(data), optional)
+    assert view.stances["schedules"] == {
+        "day": "preferred",
+        "night": "rejected",
+        "on_call": "acceptable",
+    }
+
+
+def test_the_working_patterns_and_travel_a_job_states_are_read_with_their_quotes() -> None:
+    output = sample_extraction_output()
+    output["schedule"] = {
+        "value": ["rotating_shifts", "weekends"],
+        "status": "known",
+        "confidence": 0.9,
+        "evidence": "rotating shifts including weekends",
+    }
+    output["travel"] = {
+        "value": "frequent",
+        "status": "known",
+        "confidence": 0.8,
+        "evidence": "travel across the region",
+    }
+    job = job_attributes(stored(output=output), "t", "d", "Acme")
+    assert job.schedules == ("rotating_shifts", "weekends") and job.travel == "frequent"
+    assert job.evidence["schedule"] == "rotating shifts including weekends"
+    assert job.evidence["travel"] == "travel across the region"
+
+
+def test_a_job_that_states_neither_has_neither() -> None:
+    job = job_attributes(stored(output=sample_extraction_output()), "t", "d", "Acme")
+    assert job.schedules is None and job.travel is None

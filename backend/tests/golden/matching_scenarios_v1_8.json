@@ -1,0 +1,3518 @@
+{
+  "benefits_weighted": {
+    "band": "strong",
+    "dimensions": [
+      {
+        "contribution": "22.7",
+        "effective_weight": "22.73",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "13.64",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "13.6",
+        "effective_weight": "13.64",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "9.1",
+        "effective_weight": "9.09",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "9.09",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "7.3",
+        "effective_weight": "7.27",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "4.5",
+        "effective_weight": "9.09",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "6.4",
+        "effective_weight": "6.36",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "4.5",
+        "effective_weight": "9.09",
+        "excluded": false,
+        "key": "benefits_flexibility",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 68,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "career_direction_not_assessed": {
+    "band": "strong",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 70,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "career_direction_strong": {
+    "band": "strong",
+    "dimensions": [
+      {
+        "contribution": "22.7",
+        "effective_weight": "22.73",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "13.64",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "13.6",
+        "effective_weight": "13.64",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "9.1",
+        "effective_weight": "9.09",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "9.09",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "7.3",
+        "effective_weight": "7.27",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "4.5",
+        "effective_weight": "9.09",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "6.4",
+        "effective_weight": "6.36",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "9.1",
+        "effective_weight": "9.09",
+        "excluded": false,
+        "key": "career_direction",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      }
+    ],
+    "fit_score": 73,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "contractor_day_rate_below_minimum_is_gated": {
+    "band": "not_recommended",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "mismatch",
+        "strength": "0.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 70,
+    "gates": [
+      {
+        "code": "G10",
+        "reason": "The stated pay is below your minimum."
+      }
+    ],
+    "policy_version": "matching-v1.8",
+    "recommendation": "not_recommended"
+  },
+  "contractor_day_rate_in_range": {
+    "band": "strong",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "8.1",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": "strong",
+        "status": "match",
+        "strength": "0.8125",
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 78,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "employee_salary_between_minimum_and_target": {
+    "band": "low",
+    "dimensions": [
+      {
+        "contribution": "0.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "6.3",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.6250",
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 34,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "excluded_company_is_gated": {
+    "band": "not_recommended",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 70,
+    "gates": [
+      {
+        "code": "G8",
+        "reason": "The company is on your ignore list."
+      }
+    ],
+    "policy_version": "matching-v1.8",
+    "recommendation": "not_recommended"
+  },
+  "excluded_word_is_gated": {
+    "band": "not_recommended",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 70,
+    "gates": [
+      {
+        "code": "G9",
+        "reason": "The posting contains a word you excluded."
+      }
+    ],
+    "policy_version": "matching-v1.8",
+    "recommendation": "not_recommended"
+  },
+  "hybrid_inside_the_radius": {
+    "band": "average",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "7.5",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 63,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "internship_is_gated": {
+    "band": "not_recommended",
+    "dimensions": [
+      {
+        "contribution": "0.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": null,
+        "status": "mismatch",
+        "strength": "0.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 8
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 15,
+    "gates": [
+      {
+        "code": "G3",
+        "reason": "Every engagement type offered is one you rejected."
+      }
+    ],
+    "policy_version": "matching-v1.8",
+    "recommendation": "not_recommended"
+  },
+  "junior_is_gated": {
+    "band": "not_recommended",
+    "dimensions": [
+      {
+        "contribution": "0.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": null,
+        "status": "mismatch",
+        "strength": "0.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 15,
+    "gates": [
+      {
+        "code": "G4",
+        "reason": "Every level the job allows is one you rejected."
+      }
+    ],
+    "policy_version": "matching-v1.8",
+    "recommendation": "not_recommended"
+  },
+  "mid_to_senior_takes_the_best": {
+    "band": "low",
+    "dimensions": [
+      {
+        "contribution": "0.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 23,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "monthly_pay_is_converted_with_14_payments": {
+    "band": "low",
+    "dimensions": [
+      {
+        "contribution": "0.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.5",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": "strong",
+        "status": "match",
+        "strength": "0.7500",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 8
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 28,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "nothing_is_known": {
+    "band": "low",
+    "dimensions": [
+      {
+        "contribution": "0.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 8
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 0,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "onsite_lisbon": {
+    "band": "average",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "7.5",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 63,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "onsite_outside_the_radius_is_gated": {
+    "band": "not_recommended",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": null,
+        "status": "mismatch",
+        "strength": "0.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 55,
+    "gates": [
+      {
+        "code": "G2",
+        "reason": "Every job location is outside your distance."
+      }
+    ],
+    "policy_version": "matching-v1.8",
+    "recommendation": "not_recommended"
+  },
+  "part_time_rejected_is_gated": {
+    "band": "not_recommended",
+    "dimensions": [
+      {
+        "contribution": "0.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": null,
+        "status": "mismatch",
+        "strength": "0.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 8
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 15,
+    "gates": [
+      {
+        "code": "G3",
+        "reason": "The job is part-time and you rejected part-time work."
+      }
+    ],
+    "policy_version": "matching-v1.8",
+    "recommendation": "not_recommended"
+  },
+  "pay_in_another_currency_is_unknown": {
+    "band": "low",
+    "dimensions": [
+      {
+        "contribution": "0.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 8
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 20,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "qualifications_weighted": {
+    "band": "strong",
+    "dimensions": [
+      {
+        "contribution": "22.7",
+        "effective_weight": "22.73",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "13.64",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "13.6",
+        "effective_weight": "13.64",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "9.1",
+        "effective_weight": "9.09",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "9.09",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "7.3",
+        "effective_weight": "7.27",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "4.5",
+        "effective_weight": "9.09",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "6.4",
+        "effective_weight": "6.36",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "9.1",
+        "effective_weight": "9.09",
+        "excluded": false,
+        "key": "qualifications",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 73,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "rejected_employer_type_is_gated": {
+    "band": "not_recommended",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": null,
+        "status": "mismatch",
+        "strength": "0.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 63,
+    "gates": [
+      {
+        "code": "G6",
+        "reason": "You rejected this employer type."
+      }
+    ],
+    "policy_version": "matching-v1.8",
+    "recommendation": "not_recommended"
+  },
+  "rejected_role_family_is_gated": {
+    "band": "not_recommended",
+    "dimensions": [
+      {
+        "contribution": "0.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": null,
+        "status": "mismatch",
+        "strength": "0.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 23,
+    "gates": [
+      {
+        "code": "G1",
+        "reason": "Every identified role family is one you rejected."
+      }
+    ],
+    "policy_version": "matching-v1.8",
+    "recommendation": "not_recommended"
+  },
+  "rejected_sector_is_gated": {
+    "band": "not_recommended",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": null,
+        "status": "mismatch",
+        "strength": "0.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 65,
+    "gates": [
+      {
+        "code": "G5",
+        "reason": "You rejected this primary sector."
+      }
+    ],
+    "policy_version": "matching-v1.8",
+    "recommendation": "not_recommended"
+  },
+  "remote_eu_preferred_everything": {
+    "band": "excellent",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 85,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "remote_only_us_is_gated": {
+    "band": "not_recommended",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": null,
+        "status": "mismatch",
+        "strength": "0.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 55,
+    "gates": [
+      {
+        "code": "G2",
+        "reason": "Remote work is not open from any of your regions."
+      }
+    ],
+    "policy_version": "matching-v1.8",
+    "recommendation": "not_recommended"
+  },
+  "remote_worldwide": {
+    "band": "strong",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 70,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "required_language_not_spoken_is_gated": {
+    "band": "not_recommended",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 70,
+    "gates": [
+      {
+        "code": "G7",
+        "reason": "The job requires a language you do not work in."
+      }
+    ],
+    "policy_version": "matching-v1.8",
+    "recommendation": "not_recommended"
+  },
+  "skills_with_equivalents_and_gaps": {
+    "band": "strong",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.4643",
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 77,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "unlisted_role_family_is_a_mismatch": {
+    "band": "low",
+    "dimensions": [
+      {
+        "contribution": "0.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": null,
+        "status": "mismatch",
+        "strength": "0.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 23,
+    "gates": [],
+    "policy_version": "matching-v1.8",
+    "recommendation": "recommended"
+  },
+  "visa_not_offered_is_gated": {
+    "band": "not_recommended",
+    "dimensions": [
+      {
+        "contribution": "25.0",
+        "effective_weight": "25.00",
+        "excluded": false,
+        "key": "role_responsibilities",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 25
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "skills_technology",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 15
+      },
+      {
+        "contribution": "15.0",
+        "effective_weight": "15.00",
+        "excluded": false,
+        "key": "work_arrangement_location",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 15
+      },
+      {
+        "contribution": "10.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "engagement_terms",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "compensation",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 10
+      },
+      {
+        "contribution": "8.0",
+        "effective_weight": "8.00",
+        "excluded": false,
+        "key": "seniority_experience",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 8
+      },
+      {
+        "contribution": "5.0",
+        "effective_weight": "10.00",
+        "excluded": false,
+        "key": "domain_sector",
+        "quality": "partial",
+        "status": "match",
+        "strength": "0.5000",
+        "weight": 10
+      },
+      {
+        "contribution": "7.0",
+        "effective_weight": "7.00",
+        "excluded": false,
+        "key": "company_profile",
+        "quality": "strong",
+        "status": "match",
+        "strength": "1.0000",
+        "weight": 7
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "benefits_flexibility",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "qualifications",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "career_direction",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
+      }
+    ],
+    "fit_score": 70,
+    "gates": [
+      {
+        "code": "G11",
+        "reason": "You need visa or relocation help and the posting says it is not offered."
+      }
+    ],
+    "policy_version": "matching-v1.8",
+    "recommendation": "not_recommended"
+  }
+}

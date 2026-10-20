@@ -638,6 +638,78 @@
       "seed",
       3,
       null
+    ],
+    [
+      72,
+      "schedule",
+      "day",
+      "Day work",
+      "seed",
+      4,
+      null
+    ],
+    [
+      73,
+      "schedule",
+      "night",
+      "Night work",
+      "seed",
+      4,
+      null
+    ],
+    [
+      74,
+      "schedule",
+      "rotating_shifts",
+      "Rotating shifts",
+      "seed",
+      4,
+      null
+    ],
+    [
+      75,
+      "schedule",
+      "weekends",
+      "Weekend work",
+      "seed",
+      4,
+      null
+    ],
+    [
+      76,
+      "schedule",
+      "on_call",
+      "On call",
+      "seed",
+      4,
+      null
+    ],
+    [
+      77,
+      "travel_level",
+      "none",
+      "No travel",
+      "seed",
+      4,
+      null
+    ],
+    [
+      78,
+      "travel_level",
+      "occasional",
+      "Occasional travel",
+      "seed",
+      4,
+      null
+    ],
+    [
+      79,
+      "travel_level",
+      "frequent",
+      "Frequent travel",
+      "seed",
+      4,
+      null
     ]
   ],
   "versions": [
@@ -652,6 +724,10 @@
     [
       3,
       "agency contract engagement type (ADR-073)"
+    ],
+    [
+      4,
+      "schedule and travel vocabularies (ADR-080)"
     ]
   ]
 }

@@ -36,8 +36,10 @@ from jobs_radar.domain.regions import regions_intersect
 # matching-v1.5 (ADR-057): the career-direction dimension (the best judged direction counts).
 # matching-v1.6 (ADR-066): gate G1 also fires when the primary role family is rejected.
 # matching-v1.7 (ADR-068): a bare country or region next to a remote marker limits remote work.
+# matching-v1.9 (ADR-080): the dimension for working patterns and travel (weight 0 unless chosen),
+# gates G12 (a required credential, off), G13 and G14 (rejected working pattern or travel level).
 # matching-v1.8 (ADR-069): the location evidence names the source's places and the text's regions.
-POLICY_VERSION = "matching-v1.8"
+POLICY_VERSION = "matching-v1.9"
 
 ZERO, HALF, ONE = Fraction(0), Fraction(1, 2), Fraction(1)
 _STANCE = {"preferred": ONE, "acceptable": HALF, "rejected": ZERO}
@@ -281,6 +283,49 @@ def _engagement(job: JobAttributes, intent: IntentView, gates: list[Gate]) -> _R
             )
         hours = _STANCE[intent.part_time]
     return _scored(min(strength, hours), evidence, "Best engagement type, limited by the hours.")
+
+
+def _schedule_travel(job: JobAttributes, intent: IntentView, gates: list[Gate]) -> _Raw:
+    """Working patterns and travel: the weaker of the two parts the posting states.
+
+    A job may offer several working patterns (day or night): the best one the owner has not rejected
+    counts, and only when every pattern offered is rejected does the gate fire. Travel is one level.
+    """
+    parts: list[Fraction] = []
+    evidence: dict[str, Any] = {}
+    if job.schedules:
+        strength, all_rejected, stances = _best_stance(intent, "schedules", job.schedules)
+        evidence["schedule"] = {"job_quote": _quote(job, "schedule"), "compared": stances}
+        if all_rejected:
+            gates.append(
+                Gate(
+                    "G13",
+                    "Every working pattern the job offers is one you rejected.",
+                    {"job_quote": _quote(job, "schedule"), "compared": stances},
+                )
+            )
+        parts.append(ZERO if all_rejected else strength)
+    if job.travel:
+        stance = _stance(intent, "travel_levels", job.travel)
+        evidence["travel"] = {
+            "job_quote": _quote(job, "travel"),
+            "level": job.travel,
+            "yours": stance,
+        }
+        if stance == "rejected":
+            gates.append(
+                Gate(
+                    "G14",
+                    "The job involves a level of travel you rejected.",
+                    {"job_quote": _quote(job, "travel"), "level": job.travel},
+                )
+            )
+        parts.append(_STANCE[stance] if stance and stance != "rejected" else ZERO)
+    if not parts:
+        return _unknown("The posting states no working pattern or travel.")
+    return _scored(
+        min(parts), evidence, "The weaker of your stances on the working pattern and travel."
+    )
 
 
 def _pay_form(job: JobAttributes) -> str | None:
@@ -630,6 +675,7 @@ def evaluate(
         "benefits_flexibility": _benefits(job, intent),
         "qualifications": _qualifications(job, profile),
         "career_direction": _direction(job),
+        "schedule_travel": _schedule_travel(job, intent, gates),
     }
     gates.extend(_extra_gates(job, intent, profile))
 

@@ -292,3 +292,35 @@ def test_a_credential_whose_quote_is_not_in_the_posting_is_dropped_and_named() -
     result = verify_evidence(changed, SAMPLE_JOB_TITLE, SAMPLE_JOB_DESCRIPTION)
     assert [c.name for c in result.output.credentials] == ["Python licence"]
     assert result.unverified == ["credentials:Gas Safe"]
+
+
+# --- schedule and travel (ADR-080, phase 6b) ---------------------------------------------------------------
+
+
+def test_working_patterns_and_travel_are_parsed_and_unknown_keys_are_dropped() -> None:
+    answer = sample_extraction_output()
+    answer["schedule"] = known(["rotating_shifts", "graveyard"], "rotating shifts")
+    answer["travel"] = known("everywhere", "travel everywhere")
+    parsed = parse_lenient(json.dumps(answer))
+    taxonomy = {
+        **TAXONOMY,
+        "schedule": {"day", "rotating_shifts"},
+        "travel_level": {"none", "occasional", "frequent"},
+    }
+    result = keep_known_keys(parsed.output, taxonomy)
+    assert result.output.schedule.value == ["rotating_shifts"]
+    assert result.output.travel.status == "unknown"
+    assert result.dropped == ["schedule:graveyard", "travel:everywhere"]
+
+
+def test_a_known_pattern_without_a_quote_is_set_aside() -> None:
+    answer = sample_extraction_output()
+    answer["schedule"] = {"value": ["day"], "status": "known", "confidence": 0.9, "evidence": None}
+    parsed = parse_lenient(json.dumps(answer))
+    assert parsed.output.schedule.status == "unknown" and "schedule" in parsed.notes
+
+
+def test_a_pattern_whose_quote_is_not_in_the_posting_is_downgraded() -> None:
+    changed = output(schedule=known(["night"], "night shifts only"))
+    result = verify_evidence(changed, SAMPLE_JOB_TITLE, SAMPLE_JOB_DESCRIPTION)
+    assert result.output.schedule.status == "unknown" and "schedule" in result.unverified

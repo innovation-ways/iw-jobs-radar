@@ -1,4 +1,4 @@
-"""The extract-v4 prompt: what the model is told and given (document 13, section 6)."""
+"""The extract-v5 prompt: what the model is told and given (document 13, section 6)."""
 
 import json
 from collections.abc import Iterator
@@ -6,7 +6,10 @@ from typing import Any
 
 from tests.data import SAMPLE_JOB_DESCRIPTION, SAMPLE_JOB_TITLE
 
-from jobs_radar.domain.enums import EXTRACTION_PROMPT_VERSION
+from jobs_radar.domain.enums import (
+    EXTRACTION_ACCEPTED_PROMPT_VERSIONS,
+    EXTRACTION_PROMPT_VERSION,
+)
 from jobs_radar.schemas.extraction import ExtractedSkill
 from jobs_radar.services.extraction_prompt import build_prompt
 
@@ -32,8 +35,8 @@ def prompt(**changes: object):  # type: ignore[no-untyped-def]
     return build_prompt(**options)  # type: ignore[arg-type]
 
 
-def test_the_version_is_extract_v4() -> None:
-    assert EXTRACTION_PROMPT_VERSION == "extract-v4"
+def test_the_version_is_extract_v5() -> None:
+    assert EXTRACTION_PROMPT_VERSION == "extract-v5"
 
 
 def test_the_system_message_tells_the_contractor_kinds_apart() -> None:
@@ -155,7 +158,16 @@ def test_the_lists_are_required_in_the_schema_sent_to_the_model() -> None:
     assert {"role_families", "skills"} <= set(_prompt_schema()["required"])
 
 
-def test_the_model_is_not_asked_for_credentials_before_the_prompt_that_explains_them() -> None:
-    """Phase 6a adds the field to the contract; the prompt and its schema change once, in 6b."""
-    properties = prompt().request.json_schema["properties"]
-    assert "credentials" not in properties
+def test_the_model_is_asked_for_credentials_working_patterns_and_travel() -> None:
+    """ADR-080, phase 6b: the prompt explains them and the schema sent to the model has them."""
+    request = prompt().request
+    for name in ("credentials", "schedule", "travel"):
+        assert name in request.json_schema["properties"]
+        assert name in request.system
+    for key in ("rotating_shifts", "on_call", "occasional"):
+        assert key in request.system
+
+
+def test_extract_v4_answers_are_still_accepted() -> None:
+    """Nothing is re-extracted by itself: the owner asks for it (ADR-077)."""
+    assert "extract-v4" in EXTRACTION_ACCEPTED_PROMPT_VERSIONS

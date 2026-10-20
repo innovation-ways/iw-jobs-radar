@@ -111,11 +111,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 68,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "career_direction_not_assessed": {
@@ -230,11 +240,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 70,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "career_direction_strong": {
@@ -349,11 +369,21 @@
         "status": "match",
         "strength": "1.0000",
         "weight": 10
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 73,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "contractor_day_rate_below_minimum_is_gated": {
@@ -468,6 +498,16 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 70,
@@ -477,7 +517,7 @@
         "reason": "The stated pay is below your minimum."
       }
     ],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "not_recommended"
   },
   "contractor_day_rate_in_range": {
@@ -592,11 +632,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 78,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "employee_salary_between_minimum_and_target": {
@@ -711,11 +761,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 34,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "excluded_company_is_gated": {
@@ -830,6 +890,16 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 70,
@@ -839,7 +909,7 @@
         "reason": "The company is on your ignore list."
       }
     ],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "not_recommended"
   },
   "excluded_word_is_gated": {
@@ -954,6 +1024,16 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 70,
@@ -963,7 +1043,7 @@
         "reason": "The posting contains a word you excluded."
       }
     ],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "not_recommended"
   },
   "hybrid_inside_the_radius": {
@@ -1078,11 +1158,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 63,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "internship_is_gated": {
@@ -1197,6 +1287,16 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 15,
@@ -1206,7 +1306,7 @@
         "reason": "Every engagement type offered is one you rejected."
       }
     ],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "not_recommended"
   },
   "junior_is_gated": {
@@ -1321,6 +1421,16 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 15,
@@ -1330,7 +1440,7 @@
         "reason": "Every level the job allows is one you rejected."
       }
     ],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "not_recommended"
   },
   "mid_to_senior_takes_the_best": {
@@ -1445,11 +1555,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 23,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "monthly_pay_is_converted_with_14_payments": {
@@ -1564,11 +1684,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 28,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "nothing_is_known": {
@@ -1683,11 +1813,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 0,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "onsite_lisbon": {
@@ -1802,11 +1942,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 63,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "onsite_outside_the_radius_is_gated": {
@@ -1921,6 +2071,16 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 55,
@@ -1930,7 +2090,7 @@
         "reason": "Every job location is outside your distance."
       }
     ],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "not_recommended"
   },
   "part_time_rejected_is_gated": {
@@ -2045,6 +2205,16 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 15,
@@ -2054,7 +2224,7 @@
         "reason": "The job is part-time and you rejected part-time work."
       }
     ],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "not_recommended"
   },
   "pay_in_another_currency_is_unknown": {
@@ -2169,11 +2339,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 20,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "qualifications_weighted": {
@@ -2288,11 +2468,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 73,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "rejected_employer_type_is_gated": {
@@ -2407,6 +2597,16 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 63,
@@ -2416,7 +2616,7 @@
         "reason": "You rejected this employer type."
       }
     ],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "not_recommended"
   },
   "rejected_role_family_is_gated": {
@@ -2531,6 +2731,16 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 23,
@@ -2540,7 +2750,7 @@
         "reason": "Every identified role family is one you rejected."
       }
     ],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "not_recommended"
   },
   "rejected_sector_is_gated": {
@@ -2655,6 +2865,16 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 65,
@@ -2664,7 +2884,7 @@
         "reason": "You rejected this primary sector."
       }
     ],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "not_recommended"
   },
   "remote_eu_preferred_everything": {
@@ -2779,11 +2999,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 85,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "remote_only_us_is_gated": {
@@ -2898,6 +3128,16 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 55,
@@ -2907,7 +3147,7 @@
         "reason": "Remote work is not open from any of your regions."
       }
     ],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "not_recommended"
   },
   "remote_worldwide": {
@@ -3022,11 +3262,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 70,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "required_language_not_spoken_is_gated": {
@@ -3141,6 +3391,16 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 70,
@@ -3150,7 +3410,7 @@
         "reason": "The job requires a language you do not work in."
       }
     ],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "not_recommended"
   },
   "skills_with_equivalents_and_gaps": {
@@ -3265,11 +3525,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 77,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "unlisted_role_family_is_a_mismatch": {
@@ -3384,11 +3654,21 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 23,
     "gates": [],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "recommended"
   },
   "visa_not_offered_is_gated": {
@@ -3503,6 +3783,16 @@
         "status": "unknown",
         "strength": null,
         "weight": 0
+      },
+      {
+        "contribution": "0.0",
+        "effective_weight": "0.00",
+        "excluded": true,
+        "key": "schedule_travel",
+        "quality": null,
+        "status": "unknown",
+        "strength": null,
+        "weight": 0
       }
     ],
     "fit_score": 70,
@@ -3512,7 +3802,7 @@
         "reason": "You need visa or relocation help and the posting says it is not offered."
       }
     ],
-    "policy_version": "matching-v1.8",
+    "policy_version": "matching-v1.9",
     "recommendation": "not_recommended"
   }
 }

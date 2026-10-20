@@ -197,6 +197,31 @@
       ]
     },
     {
+      "kind": "schedule",
+      "terms": [
+        {
+          "label": "Day work",
+          "term_key": "day"
+        },
+        {
+          "label": "Night work",
+          "term_key": "night"
+        },
+        {
+          "label": "On call",
+          "term_key": "on_call"
+        },
+        {
+          "label": "Rotating shifts",
+          "term_key": "rotating_shifts"
+        },
+        {
+          "label": "Weekend work",
+          "term_key": "weekends"
+        }
+      ]
+    },
+    {
       "kind": "sector",
       "terms": [
         {
@@ -299,6 +324,23 @@
         {
           "label": "Staff / Principal",
           "term_key": "staff_principal"
+        }
+      ]
+    },
+    {
+      "kind": "travel_level",
+      "terms": [
+        {
+          "label": "Frequent travel",
+          "term_key": "frequent"
+        },
+        {
+          "label": "No travel",
+          "term_key": "none"
+        },
+        {
+          "label": "Occasional travel",
+          "term_key": "occasional"
         }
       ]
     },

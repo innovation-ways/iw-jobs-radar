@@ -1,4 +1,4 @@
-"""The ``extract-v4`` prompt (document 13, section 6.1; ADR-027, ADR-073).
+"""The ``extract-v5`` prompt (document 13, section 6.1; ADR-027, ADR-073, ADR-080).
 
 The prompt is built from the job alone: it never receives a profile or an intent, so one
 extraction serves every intent. The model is told to extract only what the posting states, to
@@ -25,9 +25,9 @@ SYSTEM_PROMPT = "\n".join(
         "posting title or description (at most 200 characters). Never paraphrase, translate or "
         "invent a quote.",
         '3. "confidence" is a number from 0 to 1.',
-        "4. For role families, sectors, seniority, employment types, employer type and benefits, "
-        "use only the allowed keys listed in the message. If none fits, leave the attribute "
-        "unknown.",
+        "4. For role families, sectors, seniority, employment types, employer type, benefits, "
+        "working patterns and travel, use only the allowed keys listed in the message. If none "
+        "fits, leave the attribute unknown.",
         "5. Compensation exactly as stated: form (annual_salary, day_rate or hourly_rate), ISO "
         "currency code, min, max (equal when one figure is given) and period (year, month, day "
         "or hour). Do not convert.",
@@ -51,7 +51,16 @@ SYSTEM_PROMPT = "\n".join(
         "freelancer or project-based self-employed work. contractor_agency is a contract placed "
         "through a recruitment agency or umbrella company, paid by day or hour. A day rate or an "
         "hourly rate with no mention of employment is a contractor kind, not employee_permanent.",
-        "11. Answer with the JSON object only.",
+        "11. credentials lists the licences, certificates or registrations the posting requires "
+        '(importance "must") or prefers (importance "nice"), named as written (for example '
+        '"driving licence B", "Gas Safe registration", "nursing registration"), each with a quote. '
+        "A degree is not a credential. Leave it empty when the posting names none.",
+        "12. schedule lists every working pattern the posting states, using only the allowed "
+        "schedule keys (day, night, rotating_shifts, weekends, on_call). The evidence is a quote "
+        'that states it, for example "rotating shifts" or "weekend work required".',
+        "13. travel is how much travelling the job involves, one of the allowed travel_level keys "
+        "(none, occasional, frequent). Use none only when the posting says there is no travel.",
+        "14. Answer with the JSON object only.",
     ]
 )
 
@@ -91,9 +100,6 @@ def bounded_schema() -> dict[str, Any]:
     schema["required"] = [*schema["required"], "role_families", "skills"]
     schema["properties"]["skills"]["maxItems"] = _MAX_SKILLS
     schema["properties"]["role_families"]["maxItems"] = _MAX_ROLE_FAMILIES
-    # The contract has `credentials` (ADR-080, phase 6a), but the prompt does not explain them yet,
-    # so the model is not asked for them. The prompt and this line change together, in phase 6b.
-    schema["properties"].pop("credentials", None)
     return schema
 
 
@@ -122,7 +128,7 @@ def build_prompt(
     taxonomy: Mapping[str, Sequence[str]],
     max_chars: int,
 ) -> PreparedPrompt:
-    """Build the ``extract-v4`` request for one job (no profile or intent data is accepted)."""
+    """Build the ``extract-v5`` request for one job (no profile or intent data is accepted)."""
     used, truncated = truncate_text(description, max_chars)
     allowed = "\n".join(f"- {kind}: {', '.join(keys)}" for kind, keys in sorted(taxonomy.items()))
     parts = [f"Title: {title}"]

@@ -42,6 +42,8 @@ _EVIDENCED_FIELDS = (
     "education_required",
     "benefits_mentioned",
     "visa_sponsorship",
+    "schedule",
+    "travel",
 )
 
 # Evidenced list attributes of taxonomy keys, and the taxonomy kind each is checked against.
@@ -49,6 +51,7 @@ _KEY_LISTS = {
     "employment_types": "engagement_type",
     "seniority_levels": "seniority_level",
     "benefits_mentioned": "benefit",
+    "schedule": "schedule",
 }
 
 
@@ -207,6 +210,11 @@ def keep_known_keys(output: ExtractionOutput, taxonomy: Mapping[str, set[str]]) 
     if employer.status == "known" and employer.value not in taxonomy.get("employer_type", set()):
         dropped.append(f"employer_type:{employer.value}")
         updates["employer_type"] = Evidenced[Any].unknown()
+
+    travel = output.travel
+    if travel.status == "known" and travel.value not in taxonomy.get("travel_level", set()):
+        dropped.append(f"travel:{travel.value}")
+        updates["travel"] = Evidenced[Any].unknown()
 
     sectors = output.sectors
     if sectors.status == "known" and sectors.value is not None:

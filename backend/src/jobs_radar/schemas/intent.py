@@ -54,6 +54,10 @@ class Stances(StrictModel):
     seniority_levels: list[StanceEntry]
     sectors: list[StanceEntry] = Field(default_factory=list)
     employer_types: list[StanceEntry]
+    # Optional groups (ADR-080, phase 6b): an intent saved before they existed has none, and a term
+    # the owner has not chosen a stance for counts as acceptable.
+    schedules: list[StanceEntry] = Field(default_factory=list)
+    travel_levels: list[StanceEntry] = Field(default_factory=list)
 
     @field_validator(
         "role_families",
@@ -66,11 +70,12 @@ class Stances(StrictModel):
     def _required_groups(cls, entries: list[StanceEntry], info: object) -> list[StanceEntry]:
         return _check_group(getattr(info, "field_name", "group"), entries)
 
-    @field_validator("sectors")
+    @field_validator("sectors", "schedules", "travel_levels")
     @classmethod
-    def _sectors(cls, entries: list[StanceEntry]) -> list[StanceEntry]:
-        # No sector preference at all is legitimate; a non-empty list must still be coherent.
-        return _check_group("sectors", entries) if entries else entries
+    def _optional_groups(cls, entries: list[StanceEntry], info: object) -> list[StanceEntry]:
+        # No preference at all is legitimate; a non-empty list must still be coherent.
+        name = getattr(info, "field_name", "group")
+        return _check_group(name, entries) if entries else entries
 
 
 class RemoteRule(StrictModel):
@@ -191,6 +196,9 @@ class Weights(StrictModel):
     qualifications: Weight = 0
     # Optional like the two above; 0 leaves the career directions out of the score (ADR-057).
     career_direction: Weight = 0
+    # Working patterns and travel (ADR-080, phase 6b): 0 leaves them out of the score; the gates for
+    # a rejected pattern or level fire whatever the weight.
+    schedule_travel: Weight = 0
 
     @model_validator(mode="after")
     def _at_least_one_weight(self) -> Self:
@@ -228,6 +236,8 @@ _GROUP_KINDS = {
     "seniority_levels": "seniority_level",
     "sectors": "sector",
     "employer_types": "employer_type",
+    "schedules": "schedule",
+    "travel_levels": "travel_level",
 }
 _OPEN_GROUPS = {"role_families", "sectors"}
 

@@ -2182,8 +2182,8 @@
             "type": "integer"
           },
           "policy_version": {
-            "const": "matching-v1.8",
-            "default": "matching-v1.8",
+            "const": "matching-v1.9",
+            "default": "matching-v1.9",
             "title": "Policy Version",
             "type": "string"
           },
@@ -3428,6 +3428,7 @@
               "engagement_terms": 10,
               "qualifications": 0,
               "role_responsibilities": 25,
+              "schedule_travel": 0,
               "seniority_experience": 8,
               "skills_technology": 15,
               "work_arrangement_location": 15
@@ -3525,6 +3526,7 @@
               "engagement_terms": 10,
               "qualifications": 0,
               "role_responsibilities": 25,
+              "schedule_travel": 0,
               "seniority_experience": 8,
               "skills_technology": 15,
               "work_arrangement_location": 15
@@ -3763,6 +3765,7 @@
               "engagement_terms": 10,
               "qualifications": 0,
               "role_responsibilities": 25,
+              "schedule_travel": 0,
               "seniority_experience": 8,
               "skills_technology": 15,
               "work_arrangement_location": 15
@@ -7093,6 +7096,13 @@
             "title": "Role Families",
             "type": "array"
           },
+          "schedules": {
+            "items": {
+              "$ref": "#/components/schemas/StanceEntry"
+            },
+            "title": "Schedules",
+            "type": "array"
+          },
           "sectors": {
             "items": {
               "$ref": "#/components/schemas/StanceEntry"
@@ -7105,6 +7115,13 @@
               "$ref": "#/components/schemas/StanceEntry"
             },
             "title": "Seniority Levels",
+            "type": "array"
+          },
+          "travel_levels": {
+            "items": {
+              "$ref": "#/components/schemas/StanceEntry"
+            },
+            "title": "Travel Levels",
             "type": "array"
           },
           "work_arrangements": {
@@ -7728,6 +7745,13 @@
             "maximum": 40.0,
             "minimum": 0.0,
             "title": "Role Responsibilities",
+            "type": "integer"
+          },
+          "schedule_travel": {
+            "default": 0,
+            "maximum": 40.0,
+            "minimum": 0.0,
+            "title": "Schedule Travel",
             "type": "integer"
           },
           "seniority_experience": {

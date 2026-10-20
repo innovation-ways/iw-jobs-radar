@@ -92,7 +92,7 @@ async def test_the_latest_snapshot_of_each_open_posting_is_queued_once(
         0,
         "fixture",
         "fixture-model",
-        "extract-v4",
+        "extract-v5",
     )
     assert posting.closed_at is None
 
@@ -432,7 +432,7 @@ async def test_a_waiting_re_extraction_of_a_set_aside_job_is_not_claimed(
             status="pending",
             provider=provider.provider,
             model=provider.model,
-            prompt_version="extract-v4",
+            prompt_version="extract-v5",
             taxonomy_version_id=await q_taxonomy_id(db_session),
             attempts=0,
         )
@@ -441,7 +441,7 @@ async def test_a_waiting_re_extraction_of_a_set_aside_job_is_not_claimed(
     claimed = await ExtractionRepository(db_session).claim_next(
         provider=provider.provider,
         model=provider.model,
-        prompt_version="extract-v4",
+        prompt_version="extract-v5",
         now=T0,
         stale_before=T0 - timedelta(minutes=30),
         set_aside_below=30,
@@ -478,7 +478,7 @@ async def test_a_job_never_extracted_is_claimed_before_a_re_extraction(
     claimed = await ExtractionRepository(db_session).claim_next(
         provider=provider.provider,
         model=provider.model,
-        prompt_version="extract-v4",
+        prompt_version="extract-v5",
         now=T0,
         stale_before=T0 - timedelta(minutes=30),
     )
@@ -678,7 +678,7 @@ async def test_a_waiting_row_of_a_job_with_an_accepted_answer_is_never_sent_to_t
         attributes_json={},
         attempts=1,
     )
-    stale = await _answer(db_session, answered, prompt="extract-v4", status="pending")
+    stale = await _answer(db_session, answered, prompt="extract-v5", status="pending")
     provider = FakeProvider([sample_extraction_output()])
     q = queue(db_session, monkeypatch, provider)
     assert await q.enqueue_missing() == 1  # only the fresh job

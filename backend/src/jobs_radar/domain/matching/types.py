@@ -24,6 +24,8 @@ GROUPS = (
     "seniority_levels",
     "sectors",
     "employer_types",
+    "schedules",
+    "travel_levels",
 )
 DIMENSION_KEYS = (
     "role_responsibilities",
@@ -37,6 +39,7 @@ DIMENSION_KEYS = (
     "benefits_flexibility",
     "qualifications",
     "career_direction",
+    "schedule_travel",
 )
 
 
@@ -102,6 +105,10 @@ class JobAttributes:
     skills: tuple[JobSkill, ...] = ()
     # Licences and certifications the posting asks for, mapped to canonical skills (ADR-080).
     credentials: tuple[JobSkill, ...] = ()
+    # Working patterns the posting offers (day, night, rotating_shifts, ...) and how much travel it
+    # involves (none, occasional, frequent); ``None`` when not stated (ADR-080, phase 6b).
+    schedules: tuple[str, ...] | None = None
+    travel: str | None = None
     languages_required: tuple[str, ...] | None = None
     employer_type: str | None = None
     education_required: str | None = None

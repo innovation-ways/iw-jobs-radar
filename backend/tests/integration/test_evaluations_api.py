@@ -26,7 +26,7 @@ def body(w: World, **changes: Any) -> dict[str, Any]:
     return {
         "profile_revision_id": w.profile_revision_id,
         "intent_revision_id": w.intent_revision_id,
-        "policy_version": "matching-v1.8",
+        "policy_version": "matching-v1.9",
         **changes,
     }
 
@@ -38,7 +38,7 @@ async def test_evaluating_a_posting_returns_the_score_with_its_dimensions_and_in
     response = await client.post(f"{API}/jobs/{w.posting.job_posting_id}/evaluations", json=body(w))
     assert response.status_code == 201, response.text
     result = response.json()
-    assert result["policy_version"] == "matching-v1.8"
+    assert result["policy_version"] == "matching-v1.9"
     assert result["job_source_hash"].startswith("sha256:")
     assert (result["profile_revision_id"], result["intent_revision_id"]) == (
         w.profile_revision_id,
@@ -49,7 +49,7 @@ async def test_evaluating_a_posting_returns_the_score_with_its_dimensions_and_in
     assert result["recommendation"] in {"recommended", "not_recommended"}
     keys = [d["dimension_key"] for d in result["dimensions"]]
     assert keys[:3] == ["role_responsibilities", "skills_technology", "work_arrangement_location"]
-    assert len(keys) == 11
+    assert len(keys) == 12
     work = next(
         d for d in result["dimensions"] if d["dimension_key"] == "work_arrangement_location"
     )

@@ -18,6 +18,8 @@ class TaxonomyKind(StrEnum):
     WORK_ARRANGEMENT = "work_arrangement"
     EMPLOYER_TYPE = "employer_type"
     BENEFIT = "benefit"
+    SCHEDULE = "schedule"
+    TRAVEL_LEVEL = "travel_level"
 
 
 class TermOrigin(StrEnum):
@@ -351,10 +353,12 @@ DEDUP_POLICY_VERSION = "dedup-v1"
 # Engagement types of self-employed or agency contract work (ADR-073): the offers whose pay is
 # "rate not stated" when no day or hourly rate is given.
 CONTRACTOR_ENGAGEMENT_KINDS = ("contractor_b2b", "freelance", "contractor_agency")
-EXTRACTION_PROMPT_VERSION = "extract-v4"
+EXTRACTION_PROMPT_VERSION = "extract-v5"
 # Earlier prompt versions whose successful extractions are kept as they are: a snapshot that has
 # one is not queued again for the current version (ADR-067). Empty the tuple to re-extract them.
-EXTRACTION_ACCEPTED_PROMPT_VERSIONS = ("extract-v3", "extract-v2")
+# extract-v4 stays accepted (ADR-080): v5 only adds credentials, working patterns and travel, so
+# the owner decides when to analyse the open jobs again (an explicit action, ADR-077).
+EXTRACTION_ACCEPTED_PROMPT_VERSIONS = ("extract-v4", "extract-v3", "extract-v2")
 DIRECTION_PROMPT_VERSION = "direction-v1"
 SUMMARY_PROMPT_VERSION = "summary-v1"
 APPLICATION_PROMPT_VERSION = "application-v1"

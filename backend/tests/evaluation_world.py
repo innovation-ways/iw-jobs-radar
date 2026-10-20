@@ -50,10 +50,13 @@ async def world(
     with_extraction: bool = True,
     locations: list[str] | None = None,
     credentials: list[str] | None = None,
+    schedule: list[str] | None = None,
+    travel: str | None = None,
 ) -> World:
     """Build the world; ``extracted_by`` is the ``(provider, model)`` that extracted the job.
 
     ``locations`` are the board's own places for the job (the sample job's when omitted).
+    ``schedule`` and ``travel`` are the working patterns and travel level the job states.
     ``credentials`` are licences or certifications the job requires (all ``must``), stored as the
     extraction would (ADR-080, phase 6a).
     """
@@ -115,6 +118,20 @@ async def world(
     w.credential_names = [c.name for c in held_credentials]
     output = sample_extraction_output()
     output["credentials"] = [r.model_dump() for r in required]
+    if schedule:
+        output["schedule"] = {
+            "value": schedule,
+            "status": "known",
+            "confidence": 0.9,
+            "evidence": "shift work",
+        }
+    if travel:
+        output["travel"] = {
+            "value": travel,
+            "status": "known",
+            "confidence": 0.9,
+            "evidence": "travel",
+        }
     extraction = JobExtraction(
         job_snapshot_id=w.snapshot_id,
         status="succeeded",

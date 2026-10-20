@@ -98,6 +98,8 @@ def sample_intent() -> dict[str, Any]:
                 {"key": "gambling", "stance": "rejected"},
             ],
             "employer_types": _stances("employer_type", {"direct_employer": "preferred"}),
+            "schedules": [],
+            "travel_levels": [],
         },
         "work_rules": {
             "remote": {
@@ -143,6 +145,7 @@ def sample_intent() -> dict[str, Any]:
             "benefits_flexibility": 0,
             "qualifications": 0,
             "career_direction": 0,
+            "schedule_travel": 0,
         },
         "alert_threshold": 65,
     }

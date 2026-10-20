@@ -115,3 +115,9 @@ class ExtractionOutput(StrictModel):
     education_required: Evidenced[str]
     benefits_mentioned: Evidenced[list[TaxonomyKey]]
     visa_sponsorship: Evidenced[bool]
+    # Working patterns (day, night, rotating_shifts, weekends, on_call) and how much travel the job
+    # involves (ADR-080, phase 6b). Optional, so older extractions stay valid.
+    schedule: Evidenced[list[TaxonomyKey]] = Field(
+        default_factory=Evidenced[list[TaxonomyKey]].unknown
+    )
+    travel: Evidenced[TaxonomyKey] = Field(default_factory=Evidenced[TaxonomyKey].unknown)

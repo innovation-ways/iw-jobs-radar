@@ -870,7 +870,7 @@ Controlled-vocabulary terms (role families, sectors, seniority, ...).
 | `updated_at` | DATETIME | no | UTC timestamp of the last modification of the row. |
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
 
-- check `ck_taxonomy_term_kind_valid`: `kind IN ('role_family', 'sector', 'seniority_level', 'engagement_type', 'work_arrangement', 'employer_type', 'benefit')`
+- check `ck_taxonomy_term_kind_valid`: `kind IN ('role_family', 'sector', 'seniority_level', 'engagement_type', 'work_arrangement', 'employer_type', 'benefit', 'schedule', 'travel_level')`
 - check `ck_taxonomy_term_origin_valid`: `origin IN ('seed', 'user', 'ai_proposal_accepted')`
 - foreign key `introduced_in_taxonomy_version_id` → `taxonomy_version.taxonomy_version_id`
 - foreign key `replaced_by_taxonomy_term_id` → `taxonomy_term.taxonomy_term_id`

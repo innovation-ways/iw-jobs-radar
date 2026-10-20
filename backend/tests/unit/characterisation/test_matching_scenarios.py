@@ -6,12 +6,13 @@ that must leave all of this unchanged for existing intents (weight 0, gate off);
 neutrality check (C5) on these same scenarios.
 """
 
+import json
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
 import pytest
-from tests.golden import check_golden
+from tests.golden import check_golden, load_golden
 from tests.unit.matching.builders import (
     BERLIN,
     DEFAULT_WEIGHTS,
@@ -224,3 +225,26 @@ def test_c4_matching_results_are_unchanged() -> None:
 def test_run_helper_is_the_same_engine() -> None:
     """Guards the builders: ``run`` is ``evaluate`` with defaults, so the scenarios mean what they say."""
     assert _describe(run()) == _describe(evaluate(job(), profile(), intent(), {}))
+
+
+# --- C5: the new dimension changes no existing score (ADR-080, phase 6b) -----------------------------------
+
+
+def test_c5_schedule_and_travel_change_no_existing_result() -> None:
+    """The v1.8 golden is kept as it was. With the dimension for schedule and travel at weight 0
+    (and the credential gate off), every scenario gives the same score, band, recommendation, gates
+    and the same result for every other dimension. Only the policy version and the new, excluded
+    dimension are new."""
+    old = load_golden("matching_scenarios_v1_8")
+    for name in sorted(SCENARIOS):
+        scenario = SCENARIOS[name]()
+        fresh = _describe(
+            evaluate(scenario.job, scenario.profile, scenario.intent, scenario.relations)
+        )
+        new_dimensions = [d for d in fresh["dimensions"] if d["key"] == "schedule_travel"]
+        for dimension in new_dimensions:
+            assert dimension["excluded"] is True and dimension["weight"] == 0, name
+            assert dimension["status"] == "unknown" and dimension["contribution"] == "0.0", name
+        fresh["dimensions"] = [d for d in fresh["dimensions"] if d["key"] != "schedule_travel"]
+        fresh["policy_version"] = old[name]["policy_version"]
+        assert json.loads(json.dumps(fresh)) == old[name], name

@@ -158,3 +158,14 @@ def test_readyz_reflects_component_state(
     body = response.json()
     assert body["components"] == {"database": database, "worker": worker, "schema": schema}
     assert body["status"] == ("ready" if status == 200 else "unavailable")
+
+
+def test_a_browser_on_another_origin_may_use_patch(client: TestClient) -> None:
+    """The vocabulary screen edits terms with PATCH; the dev UI runs on another port (CORS)."""
+    origin = "http://127.0.0.1:5180"  # the default allowed origin
+    response = client.options(
+        "/api/v1/taxonomy/terms/sector/energy_utilities",
+        headers={"Origin": origin, "Access-Control-Request-Method": "PATCH"},
+    )
+    assert response.status_code == 200, response.text
+    assert "PATCH" in response.headers["access-control-allow-methods"]

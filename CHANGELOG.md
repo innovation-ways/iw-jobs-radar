@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0](https://github.com/innovation-ways/iw-jobs-radar/compare/v1.1.0...v1.2.0) (2026-10-20)
+
+
+### Features
+
+* **api:** job-board pre-filter areas and noise come from the packs (ADR-080 phase 5) ([e6abb6b](https://github.com/innovation-ways/iw-jobs-radar/commit/e6abb6b64c24dd5e64ccbe4b2bafddb6c651da5a))
+* **api:** licences and certifications as credentials (ADR-080 phase 6a) ([a017213](https://github.com/innovation-ways/iw-jobs-radar/commit/a01721369d91831fd20da1350661394d3fbd18e2))
+* **api:** merge taxonomy terms; scoring and saved intents follow the merge (ADR-080 phase 3) ([42f0b49](https://github.com/innovation-ways/iw-jobs-radar/commit/42f0b49cfc1fa3d2a75e40d3e4ec98e010868c4a))
+* **api:** the owner can add, rename and switch off role families and sectors (ADR-080 phase 3) ([6ba367f](https://github.com/innovation-ways/iw-jobs-radar/commit/6ba367f80dc38a171812e290713bf374d6e378fc))
+* **api:** working patterns and travel; matching-v1.9 and extract-v5 (ADR-080 phase 6b) ([425ce2e](https://github.com/innovation-ways/iw-jobs-radar/commit/425ce2eeb72d4b7a4571cf5d488af534ec7b51e7))
+* **ci:** publish multi-arch images to GHCR on release (ADR-079) ([9402525](https://github.com/innovation-ways/iw-jobs-radar/commit/940252599014561cdf72a761c034992244b91738))
+* **config:** frontend image served by nginx with an API proxy (ADR-079) ([e48cd50](https://github.com/innovation-ways/iw-jobs-radar/commit/e48cd50c872cb8a66ab63c8b2d8bb1003162bcc5))
+* **config:** release and demo compose files with generated secrets (ADR-079) ([816e6d6](https://github.com/innovation-ways/iw-jobs-radar/commit/816e6d6bd639943daca0b70b3e461d85c653303c))
+* **db:** domain packs with per-owner activation, loader and ten shipped packs (ADR-080 phase 4) ([e1de0b5](https://github.com/innovation-ways/iw-jobs-radar/commit/e1de0b5ba4aa2be87e7c1f684c762303ca8cd756))
+* **frontend:** areas of work in board filters come from the owner's packs (ADR-080 phase 5) ([b203e4a](https://github.com/innovation-ways/iw-jobs-radar/commit/b203e4a6f3d5bd17b978eeb3140fe8a4840bf414))
+* **frontend:** licences and certifications in the profile and an intent option (ADR-080 phase 6a) ([93b85de](https://github.com/innovation-ways/iw-jobs-radar/commit/93b85deab1279b9ba5f22ea836a0a02715bc6b42))
+* **frontend:** Packs screen and a notice while no pack is on (ADR-080 phase 4) ([37986fe](https://github.com/innovation-ways/iw-jobs-radar/commit/37986fe3e030ade7e50dbdb7e3a074b5cc7e5ac6))
+* **frontend:** schedule and travel in the search intent and the weights (ADR-080 phase 6b) ([8846edb](https://github.com/innovation-ways/iw-jobs-radar/commit/8846edb53ba1c8311261a306d6c37029c8ae6e36))
+* **frontend:** Vocabulary screen to manage role families and sectors (ADR-080 phase 3) ([f6aed72](https://github.com/innovation-ways/iw-jobs-radar/commit/f6aed72346afc5b0d4c455d2d613086f03c21a7f))
+* pack defaults, first-run setup and "analyse open jobs again" (ADR-080 phase 6c) ([b1a65fb](https://github.com/innovation-ways/iw-jobs-radar/commit/b1a65fb7426b3950f71100dd6a0b52e463757a35))
+
+
+### Bug Fixes
+
+* **api:** allow PATCH in CORS so the vocabulary screen works on the dev server ([38fe62b](https://github.com/innovation-ways/iw-jobs-radar/commit/38fe62b81498ffed07aac812a74c77c78cac75e0))
+* **frontend:** refresh the setup suggestions and status when a pack is switched on or off ([5e8e9fa](https://github.com/innovation-ways/iw-jobs-radar/commit/5e8e9fa7e5feca40e400a282fbe4402b11cd2f54))
+
 ## [1.1.0](https://github.com/innovation-ways/iw-jobs-radar/compare/v1.0.0...v1.1.0) (2026-10-19)
 
 

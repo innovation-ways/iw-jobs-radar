@@ -1,6 +1,6 @@
 # Domain packs: plan and characterisation tests (ADR-080)
 
-Status: proposed, waiting for the owner's approval. No code has been written.
+Status: approved on 2026-10-20 (ADR-080). Phases 0 to 4 are implemented; the later phases follow.
 
 Goal: the job domain (vocabulary, pre-filter, skills, requirements) becomes data that ships in packs, so Jobs
 Radar serves any occupation, and the current owner's installation keeps every term, revision, score and
@@ -98,3 +98,19 @@ Existing tests that must stay green unchanged (they already exercise the contrac
   per owner, consistent with the rest of the model.
 - How a pack declares suggested stances for the global kinds (arrangement, seniority); proposal: a small
   `defaults` block in the pack file.
+
+## 7. Progress and decisions taken on the way
+
+| Phase | State | Notes |
+|---|---|---|
+| 0 | done | characterisation tests and golden files in `backend/tests/golden` |
+| 2 | done | seeds are for migrations only (import-linter contract) |
+| 3 | done | editable vocabulary, merge (survivor's stance wins), Vocabulary screen |
+| 4 | done | ten packs as package data, loader at start-up, per-owner activation, Packs screen; guide in `docs/packs.md` |
+| 5, 6a, 6b, 6c | to do | pre-filter as data; skill kinds; credentials, schedule and travel; setup assistant |
+
+Decisions of phase 4: a term in no pack is always offered (`other`, user terms, the global kinds);
+an installation that already has a profile gets the software pack switched on by migration `0030`, a
+fresh one chooses; the loader never rewrites a label and only switches off what a loaded pack stopped
+listing; a stored intent is validated against every term, whatever packs are on. A pack file must
+list at least 10 role families and 5 sectors, and a key has one label in every pack.

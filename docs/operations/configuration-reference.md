@@ -25,6 +25,7 @@ and secret mistakes without printing a secret. Defaults below are the applicatio
 | `JOBS_RADAR_CREDENTIAL_KEY` | none | Fernet key that encrypts stored credentials (AI keys, GitHub token). Back it up **separately** from database backups; without it stored credentials cannot be read and must be entered again. |
 | `JOBS_RADAR_OLLAMA_URL` | `http://host.docker.internal:11434` | The one local model server that may be used. |
 | `JOBS_RADAR_ALLOW_LOCAL_PROVIDERS` | `false` | Allow connecting to a local model server (Ollama). |
+| `JOBS_RADAR_LOAD_PACKS` | `true` | Load the domain packs that ship with the application into the vocabulary when the API starts (ADR-080). Only the test suite turns it off. |
 | `JOBS_RADAR_EXTRACTION_ENABLED` | `false` | Seeds the first local AI connection once; afterwards the AI & privacy screen decides (ADR-046). |
 | `JOBS_RADAR_EXTRACTION_MODEL` | `qwen3:8b` | Model for the seeded connection. |
 | `JOBS_RADAR_EMBEDDING_MODEL` | `qwen3-embedding:8b` | Embedding model used to compare descriptions. |

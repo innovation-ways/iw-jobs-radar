@@ -4402,6 +4402,89 @@
         "title": "OnsiteHybridRule",
         "type": "object"
       },
+      "PackActivation": {
+        "additionalProperties": false,
+        "description": "Switch a pack on or off.",
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "active"
+        ],
+        "title": "PackActivation",
+        "type": "object"
+      },
+      "PackList": {
+        "additionalProperties": false,
+        "description": "Every shipped pack; ``active_count`` is how many the owner switched on.",
+        "properties": {
+          "active_count": {
+            "title": "Active Count",
+            "type": "integer"
+          },
+          "packs": {
+            "items": {
+              "$ref": "#/components/schemas/PackRead"
+            },
+            "title": "Packs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "packs",
+          "active_count"
+        ],
+        "title": "PackList",
+        "type": "object"
+      },
+      "PackRead": {
+        "additionalProperties": false,
+        "description": "A domain pack as the owner sees it.",
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role_family_count": {
+            "title": "Role Family Count",
+            "type": "integer"
+          },
+          "sector_count": {
+            "title": "Sector Count",
+            "type": "integer"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "name",
+          "description",
+          "version",
+          "role_family_count",
+          "sector_count",
+          "active"
+        ],
+        "title": "PackRead",
+        "type": "object"
+      },
       "PageReaderConfig": {
         "additionalProperties": false,
         "description": "Where the postings are on a company's careers page and which parts mean what.\n\n``item_selector`` matches each posting block of the listing page; the other selectors are\nrelative to a block. Without ``link_selector`` the block's own address (or its first link) is\nthe posting address. With ``fetch_detail`` each posting page is opened for its description.",
@@ -10066,6 +10149,81 @@
         "summary": "Reject Link",
         "tags": [
           "inbox"
+        ]
+      }
+    },
+    "/api/v1/packs": {
+      "get": {
+        "description": "List the packs that ship with the application and which ones are switched on.",
+        "operationId": "list_packs_api_v1_packs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Packs",
+        "tags": [
+          "packs"
+        ]
+      }
+    },
+    "/api/v1/packs/{pack_key}": {
+      "put": {
+        "description": "Switch a pack on or off; a repeated request changes nothing. No terms are deleted.",
+        "operationId": "set_pack_active_api_v1_packs__pack_key__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "pack_key",
+            "required": true,
+            "schema": {
+              "title": "Pack Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PackActivation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PackRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Set Pack Active",
+        "tags": [
+          "packs"
         ]
       }
     },

@@ -34,6 +34,7 @@ from jobs_radar.services.inbox import InboxService
 from jobs_radar.services.integrations import IntegrationService
 from jobs_radar.services.intents import IntentService
 from jobs_radar.services.location_scope import LocationScopeService
+from jobs_radar.services.packs import PackService
 from jobs_radar.services.page_reader_proposal import PageReaderProposalService
 from jobs_radar.services.pipeline import PipelineService
 from jobs_radar.services.profile_data import ProfileDataService
@@ -133,6 +134,13 @@ def get_profile_service(session: Annotated[AsyncSession, Depends(get_session)]) 
 def get_intent_service(session: Annotated[AsyncSession, Depends(get_session)]) -> IntentService:
     """Build the intent service on the request's session."""
     return IntentService(session)
+
+
+def get_pack_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> PackService:
+    """Build the pack service on the request's session."""
+    return PackService(session)
 
 
 def get_taxonomy_service(

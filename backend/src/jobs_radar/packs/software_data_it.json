@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "key": "software_data_it",
+  "version": 1,
+  "name": "Software, data and IT",
+  "description": "Software engineering, data, AI, DevOps, security and IT consulting roles.",
+  "role_families": [
+    {
+      "key": "ai_solutions_engineering",
+      "label": "AI solutions engineering"
+    },
+    {
+      "key": "ai_ml_engineering",
+      "label": "AI / ML engineering"
+    },
+    {
+      "key": "data_engineering",
+      "label": "Data engineering"
+    },
+    {
+      "key": "data_analysis",
+      "label": "Data analysis"
+    },
+    {
+      "key": "software_engineering_general",
+      "label": "Software engineering general"
+    },
+    {
+      "key": "backend_engineering",
+      "label": "Backend engineering"
+    },
+    {
+      "key": "frontend_engineering",
+      "label": "Frontend engineering"
+    },
+    {
+      "key": "devops_platform",
+      "label": "DevOps / platform"
+    },
+    {
+      "key": "solutions_architecture",
+      "label": "Solutions architecture"
+    },
+    {
+      "key": "enterprise_architecture",
+      "label": "Enterprise architecture"
+    },
+    {
+      "key": "telecom_billing_bss_oss",
+      "label": "Telecom billing (BSS/OSS)"
+    },
+    {
+      "key": "product_management",
+      "label": "Product management"
+    },
+    {
+      "key": "project_programme_management",
+      "label": "Project and programme management"
+    },
+    {
+      "key": "consulting_integration",
+      "label": "Consulting integration"
+    },
+    {
+      "key": "ai_governance_risk",
+      "label": "AI governance and risk"
+    },
+    {
+      "key": "security",
+      "label": "Security"
+    },
+    {
+      "key": "qa_testing",
+      "label": "QA and testing"
+    },
+    {
+      "key": "sales_account_management",
+      "label": "Sales account management"
+    },
+    {
+      "key": "customer_support",
+      "label": "Customer support"
+    },
+    {
+      "key": "finance_accounting",
+      "label": "Finance and accounting"
+    },
+    {
+      "key": "legal_compliance",
+      "label": "Legal and compliance"
+    },
+    {
+      "key": "hr_recruiting",
+      "label": "HR and recruiting"
+    },
+    {
+      "key": "marketing_communications",
+      "label": "Marketing and communications"
+    },
+    {
+      "key": "operations_admin",
+      "label": "Operations and administration"
+    },
+    {
+      "key": "design_creative",
+      "label": "Design and creative"
+    }
+  ],
+  "sectors": [
+    {
+      "key": "telecom",
+      "label": "Telecom"
+    },
+    {
+      "key": "enterprise_it",
+      "label": "Enterprise IT"
+    },
+    {
+      "key": "software_saas",
+      "label": "Software / SaaS"
+    },
+    {
+      "key": "finance_banking",
+      "label": "Finance and banking"
+    },
+    {
+      "key": "insurance",
+      "label": "Insurance"
+    },
+    {
+      "key": "public_sector",
+      "label": "Public sector"
+    },
+    {
+      "key": "healthcare",
+      "label": "Healthcare"
+    },
+    {
+      "key": "retail_ecommerce",
+      "label": "Retail and e-commerce"
+    },
+    {
+      "key": "manufacturing_industrial",
+      "label": "Manufacturing and industrial"
+    },
+    {
+      "key": "energy_utilities",
+      "label": "Energy and utilities"
+    },
+    {
+      "key": "logistics_transport",
+      "label": "Logistics and transport"
+    },
+    {
+      "key": "media_entertainment",
+      "label": "Media and entertainment"
+    },
+    {
+      "key": "education",
+      "label": "Education"
+    },
+    {
+      "key": "consulting_services",
+      "label": "Consulting services"
+    },
+    {
+      "key": "gambling",
+      "label": "Gambling"
+    },
+    {
+      "key": "defence_aerospace",
+      "label": "Defence and aerospace"
+    }
+  ]
+}

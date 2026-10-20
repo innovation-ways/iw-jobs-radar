@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "key": "education_public_services",
+  "version": 1,
+  "name": "Education and public services",
+  "description": "Teaching, training, public administration, public safety and community work.",
+  "role_families": [
+    {
+      "key": "primary_school_teacher",
+      "label": "Primary school teacher"
+    },
+    {
+      "key": "secondary_school_teacher",
+      "label": "Secondary school teacher"
+    },
+    {
+      "key": "early_years_educator",
+      "label": "Early years educator"
+    },
+    {
+      "key": "teaching_assistant",
+      "label": "Teaching assistant"
+    },
+    {
+      "key": "lecturer_researcher",
+      "label": "Lecturer / researcher"
+    },
+    {
+      "key": "trainer_instructor",
+      "label": "Trainer / instructor"
+    },
+    {
+      "key": "librarian_archivist",
+      "label": "Librarian / archivist"
+    },
+    {
+      "key": "public_administrator",
+      "label": "Public administrator / civil servant"
+    },
+    {
+      "key": "police_public_safety",
+      "label": "Police and public safety"
+    },
+    {
+      "key": "firefighter_emergency_services",
+      "label": "Firefighter / emergency services"
+    },
+    {
+      "key": "security_guard",
+      "label": "Security guard"
+    },
+    {
+      "key": "cleaner_caretaker",
+      "label": "Cleaner / caretaker"
+    },
+    {
+      "key": "youth_community_worker",
+      "label": "Youth and community worker"
+    },
+    {
+      "key": "sports_fitness_instructor",
+      "label": "Sports and fitness instructor"
+    }
+  ],
+  "sectors": [
+    {
+      "key": "education",
+      "label": "Education"
+    },
+    {
+      "key": "public_sector",
+      "label": "Public sector"
+    },
+    {
+      "key": "non_profit",
+      "label": "Non-profit and charities"
+    },
+    {
+      "key": "sports_recreation",
+      "label": "Sports and recreation"
+    },
+    {
+      "key": "defence_aerospace",
+      "label": "Defence and aerospace"
+    }
+  ]
+}

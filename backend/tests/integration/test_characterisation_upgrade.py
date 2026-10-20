@@ -220,3 +220,48 @@ def test_the_fingerprint_notices_a_change(scratch: str) -> None:
     engine.dispose()
     assert before["company"] != after["company"]
     assert before["profile_revision"] == after["profile_revision"]
+
+
+# --- domain packs (ADR-080, phase 4) -------------------------------------------------------------
+
+
+def _scalar(engine, sql: str):  # type: ignore[no-untyped-def]
+    with engine.connect() as connection:
+        return connection.execute(text(sql)).scalar_one()
+
+
+def test_an_installation_with_data_gets_the_software_pack_active(scratch: str) -> None:
+    """Phase 4: the owner keeps every term, now members of the software pack, and it is switched on."""
+    command.upgrade(_config(), BASELINE)
+    engine = create_engine(get_settings().database_url)
+    with engine.begin() as connection:
+        _load_scene(connection)
+    command.upgrade(_config(), "head")
+
+    packs = _scalar(engine, "SELECT string_agg(pack_key, ',') FROM owner_pack WHERE owner_id = 1")
+    assert packs == "software_data_it"
+    # Every role family and sector except `other` belongs to the pack; nothing else does.
+    members = _scalar(
+        engine,
+        "SELECT count(*) FROM taxonomy_term_pack p JOIN taxonomy_term t USING (taxonomy_term_id) "
+        "WHERE p.pack_key = 'software_data_it' AND t.kind IN ('role_family', 'sector') "
+        "AND t.term_key <> 'other'",
+    )
+    expected = _scalar(
+        engine,
+        "SELECT count(*) FROM taxonomy_term WHERE kind IN ('role_family', 'sector') "
+        "AND term_key <> 'other'",
+    )
+    assert members == expected == 41
+    assert _scalar(engine, "SELECT count(*) FROM taxonomy_term_pack") == 41
+    engine.dispose()
+
+
+def test_a_fresh_installation_has_no_pack_switched_on(scratch: str) -> None:
+    """Nothing is chosen for someone who has not used the application yet."""
+    command.upgrade(_config(), "head")
+    engine = create_engine(get_settings().database_url)
+    assert _scalar(engine, "SELECT count(*) FROM owner_pack") == 0
+    # The software terms still belong to the pack, so choosing it later offers all of them.
+    assert _scalar(engine, "SELECT count(*) FROM taxonomy_term_pack") == 41
+    engine.dispose()

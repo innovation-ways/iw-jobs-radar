@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     credential_key: SecretStr | None = None
     ollama_url: str = "http://host.docker.internal:11434"
     allow_local_providers: bool = False
+    # Load the domain packs shipped in the image into the vocabulary at start-up (ADR-080). Only
+    # the test suite turns this off, so that it keeps a fixed vocabulary.
+    load_packs: bool = True
     # AI extraction is opt-in: the default is No AI and jobs stay "not evaluated" (ADR-004).
     extraction_enabled: bool = False
     # Local model defaults (owner decision, ODR-006); the AI & privacy screen overrides them later.

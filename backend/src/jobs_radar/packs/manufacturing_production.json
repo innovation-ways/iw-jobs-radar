@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "key": "manufacturing_production",
+  "version": 1,
+  "name": "Manufacturing and production",
+  "description": "Production, machine operation, assembly, quality and process roles.",
+  "role_families": [
+    {
+      "key": "production_operator",
+      "label": "Production operator"
+    },
+    {
+      "key": "machine_operator",
+      "label": "Machine operator (press, packaging line)"
+    },
+    {
+      "key": "cnc_machinist",
+      "label": "CNC machinist"
+    },
+    {
+      "key": "assembler",
+      "label": "Assembler"
+    },
+    {
+      "key": "quality_inspector",
+      "label": "Quality inspector / technician"
+    },
+    {
+      "key": "production_supervisor",
+      "label": "Production supervisor"
+    },
+    {
+      "key": "process_industrial_engineer",
+      "label": "Process / industrial engineer"
+    },
+    {
+      "key": "packaging_operator",
+      "label": "Packaging operator"
+    },
+    {
+      "key": "food_production_worker",
+      "label": "Food production worker"
+    },
+    {
+      "key": "textile_garment_worker",
+      "label": "Textile and garment worker"
+    },
+    {
+      "key": "chemical_process_operator",
+      "label": "Chemical and process plant operator"
+    },
+    {
+      "key": "laboratory_technician",
+      "label": "Laboratory technician"
+    },
+    {
+      "key": "maintenance_technician",
+      "label": "Maintenance technician"
+    }
+  ],
+  "sectors": [
+    {
+      "key": "manufacturing_industrial",
+      "label": "Manufacturing and industrial"
+    },
+    {
+      "key": "food_beverage",
+      "label": "Food and beverage"
+    },
+    {
+      "key": "automotive",
+      "label": "Automotive"
+    },
+    {
+      "key": "textiles_apparel",
+      "label": "Textiles and apparel"
+    },
+    {
+      "key": "chemicals_pharma",
+      "label": "Chemicals and pharmaceuticals"
+    },
+    {
+      "key": "electronics_manufacturing",
+      "label": "Electronics manufacturing"
+    },
+    {
+      "key": "energy_utilities",
+      "label": "Energy and utilities"
+    }
+  ]
+}

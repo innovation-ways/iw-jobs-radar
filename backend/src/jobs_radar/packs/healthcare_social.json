@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "key": "healthcare_social",
+  "version": 1,
+  "name": "Healthcare and social care",
+  "description": "Nursing, medicine, therapy, pharmacy, care work and social services.",
+  "role_families": [
+    {
+      "key": "registered_nurse",
+      "label": "Registered nurse"
+    },
+    {
+      "key": "nursing_healthcare_assistant",
+      "label": "Nursing / healthcare assistant"
+    },
+    {
+      "key": "physician_doctor",
+      "label": "Physician / doctor"
+    },
+    {
+      "key": "dentist_dental_assistant",
+      "label": "Dentist / dental assistant"
+    },
+    {
+      "key": "pharmacist_technician",
+      "label": "Pharmacist / pharmacy technician"
+    },
+    {
+      "key": "physiotherapist_rehabilitation",
+      "label": "Physiotherapist / rehabilitation"
+    },
+    {
+      "key": "medical_laboratory_technician",
+      "label": "Medical laboratory technician"
+    },
+    {
+      "key": "radiographer_imaging",
+      "label": "Radiographer / imaging technician"
+    },
+    {
+      "key": "paramedic_emergency_care",
+      "label": "Paramedic / emergency care"
+    },
+    {
+      "key": "psychologist_therapist",
+      "label": "Psychologist / therapist"
+    },
+    {
+      "key": "care_worker",
+      "label": "Care worker / carer"
+    },
+    {
+      "key": "social_worker",
+      "label": "Social worker"
+    },
+    {
+      "key": "veterinary_professional",
+      "label": "Veterinary professional"
+    },
+    {
+      "key": "healthcare_administrator",
+      "label": "Healthcare administrator / receptionist"
+    }
+  ],
+  "sectors": [
+    {
+      "key": "healthcare",
+      "label": "Healthcare"
+    },
+    {
+      "key": "social_care",
+      "label": "Social care"
+    },
+    {
+      "key": "elderly_residential_care",
+      "label": "Elderly and residential care"
+    },
+    {
+      "key": "pharma_medical_devices",
+      "label": "Pharmaceuticals and medical devices"
+    },
+    {
+      "key": "public_sector",
+      "label": "Public sector"
+    }
+  ]
+}

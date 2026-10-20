@@ -14,6 +14,7 @@ from jobs_radar.api.routes import (
     inbox,
     intents,
     locations,
+    packs,
     pipeline,
     profiles,
     proposals,
@@ -31,6 +32,7 @@ v1_router.include_router(sources.router)
 v1_router.include_router(profiles.router)
 v1_router.include_router(intents.router)
 v1_router.include_router(taxonomy.router)
+v1_router.include_router(packs.router)
 v1_router.include_router(locations.router)
 v1_router.include_router(evaluations.router)
 v1_router.include_router(directions.router)

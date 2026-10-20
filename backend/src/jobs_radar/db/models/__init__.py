@@ -40,7 +40,7 @@ from jobs_radar.db.models.source import (
     SourceConfiguration,
     SourceRunResult,
 )
-from jobs_radar.db.models.taxonomy import TaxonomyTerm, TaxonomyVersion
+from jobs_radar.db.models.taxonomy import OwnerPack, TaxonomyTerm, TaxonomyTermPack, TaxonomyVersion
 from jobs_radar.db.models.trend import TrendWeekly
 from jobs_radar.db.models.worker import WorkerHeartbeat
 
@@ -71,6 +71,7 @@ __all__ = [
     "JobSummary",
     "MatchEvaluation",
     "Owner",
+    "OwnerPack",
     "PageReaderConfiguration",
     "PrivacySetting",
     "ProfileProposal",
@@ -87,6 +88,7 @@ __all__ = [
     "SourceConfiguration",
     "SourceRunResult",
     "TaxonomyTerm",
+    "TaxonomyTermPack",
     "TaxonomyVersion",
     "TrendWeekly",
     "WorkerHeartbeat",

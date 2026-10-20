@@ -4,7 +4,14 @@ from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped
 
 from jobs_radar.db.base import Base, CreatedAtMixin, TimestampMixin
-from jobs_radar.db.columns import bool_column, enum_check, fk_column, pk_column, text_column
+from jobs_radar.db.columns import (
+    bool_column,
+    enum_check,
+    fk_column,
+    int_column,
+    pk_column,
+    text_column,
+)
 from jobs_radar.domain.enums import TaxonomyKind, TermOrigin
 
 
@@ -61,3 +68,38 @@ class TaxonomyTerm(TimestampMixin, Base):
         "false keeps it in stored intents and history.",
         default=True,
     )
+
+
+class TaxonomyTermPack(CreatedAtMixin, Base):
+    """Membership of a term in a domain pack (ADR-080). A term can belong to several packs."""
+
+    __tablename__ = "taxonomy_term_pack"
+    __table_args__ = (
+        UniqueConstraint("taxonomy_term_id", "pack_key", name="uq_taxonomy_term_pack_term_pack"),
+        {"comment": "Domain packs that list a taxonomy term; a term in no pack is always offered."},
+    )
+
+    taxonomy_term_pack_id: Mapped[int] = pk_column("Surrogate primary key of the membership.")
+    taxonomy_term_id: Mapped[int] = fk_column(
+        "taxonomy_term.taxonomy_term_id", "Term that the pack lists."
+    )
+    pack_key: Mapped[str] = text_column(
+        "Key of the pack file that lists the term (for example software_data_it).", length=60
+    )
+    pack_version: Mapped[int] = int_column(
+        "Version of the pack file in which the term was first listed.", default=1
+    )
+
+
+class OwnerPack(CreatedAtMixin, Base):
+    """A domain pack the owner switched on; its terms are offered to the model and the forms."""
+
+    __tablename__ = "owner_pack"
+    __table_args__ = (
+        UniqueConstraint("owner_id", "pack_key", name="uq_owner_pack_owner_id_pack_key"),
+        {"comment": "Domain packs each owner has switched on (ADR-080)."},
+    )
+
+    owner_pack_id: Mapped[int] = pk_column("Surrogate primary key of the activation.")
+    owner_id: Mapped[int] = fk_column("owner.owner_id", "Owner who switched the pack on.")
+    pack_key: Mapped[str] = text_column("Key of the pack that is switched on.", length=60)

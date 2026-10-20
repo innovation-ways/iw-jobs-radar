@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "key": "hospitality_tourism",
+  "version": 1,
+  "name": "Hospitality, food and tourism",
+  "description": "Restaurants, bars, hotels, travel and events.",
+  "role_families": [
+    {
+      "key": "waiter_waitress",
+      "label": "Waiter / waitress"
+    },
+    {
+      "key": "bartender_barista",
+      "label": "Bartender / barista"
+    },
+    {
+      "key": "cook_chef",
+      "label": "Cook / chef"
+    },
+    {
+      "key": "baker_pastry_chef",
+      "label": "Baker / pastry chef"
+    },
+    {
+      "key": "kitchen_assistant",
+      "label": "Kitchen assistant / dishwasher"
+    },
+    {
+      "key": "restaurant_bar_manager",
+      "label": "Restaurant / bar manager"
+    },
+    {
+      "key": "hotel_receptionist",
+      "label": "Hotel receptionist / front desk"
+    },
+    {
+      "key": "housekeeper_room_attendant",
+      "label": "Housekeeper / room attendant"
+    },
+    {
+      "key": "hotel_accommodation_manager",
+      "label": "Hotel / accommodation manager"
+    },
+    {
+      "key": "tour_guide_travel_consultant",
+      "label": "Tour guide / travel consultant"
+    },
+    {
+      "key": "events_coordinator",
+      "label": "Events coordinator"
+    }
+  ],
+  "sectors": [
+    {
+      "key": "hospitality",
+      "label": "Hospitality"
+    },
+    {
+      "key": "restaurants_catering",
+      "label": "Restaurants and catering"
+    },
+    {
+      "key": "tourism_travel",
+      "label": "Tourism and travel"
+    },
+    {
+      "key": "events_entertainment",
+      "label": "Events and entertainment"
+    },
+    {
+      "key": "media_entertainment",
+      "label": "Media and entertainment"
+    }
+  ]
+}

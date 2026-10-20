@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "key": "retail_sales_service",
+  "version": 1,
+  "name": "Retail, sales and customer service",
+  "description": "Shop floor, checkout, customer service, call centre and field sales roles.",
+  "role_families": [
+    {
+      "key": "sales_assistant",
+      "label": "Sales assistant / shop floor"
+    },
+    {
+      "key": "cashier_checkout",
+      "label": "Cashier / checkout operator"
+    },
+    {
+      "key": "store_manager",
+      "label": "Store / shop manager"
+    },
+    {
+      "key": "customer_service_agent",
+      "label": "Customer service agent"
+    },
+    {
+      "key": "call_centre_agent",
+      "label": "Call centre agent"
+    },
+    {
+      "key": "field_sales_representative",
+      "label": "Field sales representative"
+    },
+    {
+      "key": "stock_inventory_clerk",
+      "label": "Stock / inventory clerk"
+    },
+    {
+      "key": "visual_merchandiser",
+      "label": "Visual merchandiser"
+    },
+    {
+      "key": "retail_buyer_merchandiser",
+      "label": "Buyer / merchandiser"
+    },
+    {
+      "key": "ecommerce_operations",
+      "label": "E-commerce operations"
+    },
+    {
+      "key": "sales_account_management",
+      "label": "Sales account management"
+    },
+    {
+      "key": "customer_support",
+      "label": "Customer support"
+    }
+  ],
+  "sectors": [
+    {
+      "key": "retail_ecommerce",
+      "label": "Retail and e-commerce"
+    },
+    {
+      "key": "consumer_goods",
+      "label": "Consumer goods"
+    },
+    {
+      "key": "telecom",
+      "label": "Telecom"
+    },
+    {
+      "key": "finance_banking",
+      "label": "Finance and banking"
+    },
+    {
+      "key": "insurance",
+      "label": "Insurance"
+    }
+  ]
+}

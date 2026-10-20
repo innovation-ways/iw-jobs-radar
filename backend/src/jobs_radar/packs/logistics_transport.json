@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "key": "logistics_transport",
+  "version": 1,
+  "name": "Logistics, transport and warehousing",
+  "description": "Drivers, warehouse and delivery staff, dispatchers and supply chain roles.",
+  "role_families": [
+    {
+      "key": "delivery_driver",
+      "label": "Delivery driver"
+    },
+    {
+      "key": "truck_driver",
+      "label": "Truck / HGV driver"
+    },
+    {
+      "key": "bus_coach_driver",
+      "label": "Bus and coach driver"
+    },
+    {
+      "key": "taxi_ride_hail_driver",
+      "label": "Taxi and ride-hail driver"
+    },
+    {
+      "key": "forklift_operator",
+      "label": "Forklift operator"
+    },
+    {
+      "key": "warehouse_operative",
+      "label": "Warehouse operative"
+    },
+    {
+      "key": "order_picker_packer",
+      "label": "Order picker / packer"
+    },
+    {
+      "key": "courier_postal_worker",
+      "label": "Courier / postal worker"
+    },
+    {
+      "key": "logistics_coordinator_dispatcher",
+      "label": "Logistics coordinator / dispatcher"
+    },
+    {
+      "key": "supply_chain_planner",
+      "label": "Supply chain planner"
+    },
+    {
+      "key": "fleet_transport_manager",
+      "label": "Fleet / transport manager"
+    },
+    {
+      "key": "freight_customs_agent",
+      "label": "Freight forwarding and customs agent"
+    }
+  ],
+  "sectors": [
+    {
+      "key": "logistics_transport",
+      "label": "Logistics and transport"
+    },
+    {
+      "key": "retail_ecommerce",
+      "label": "Retail and e-commerce"
+    },
+    {
+      "key": "manufacturing_industrial",
+      "label": "Manufacturing and industrial"
+    },
+    {
+      "key": "shipping_ports",
+      "label": "Shipping and ports"
+    },
+    {
+      "key": "air_transport",
+      "label": "Air transport"
+    },
+    {
+      "key": "public_sector",
+      "label": "Public sector"
+    }
+  ]
+}

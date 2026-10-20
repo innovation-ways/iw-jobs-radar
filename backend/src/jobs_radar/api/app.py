@@ -4,10 +4,12 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any, cast
 
+import structlog
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from jobs_radar import __version__
@@ -20,6 +22,7 @@ from jobs_radar.core.settings import Settings, get_settings
 from jobs_radar.db.session import build_engine, build_session_factory
 from jobs_radar.schemas.errors import ErrorBody, ErrorEnvelope
 from jobs_radar.services.document_store import DocumentTextStore
+from jobs_radar.services.packs import PackService
 
 _HTTP_CODES = {404: "not_found", 405: "method_not_allowed"}
 
@@ -56,6 +59,28 @@ async def _handle_validation_error(_request: Request, exc: Exception) -> JSONRes
     return _envelope(422, "validation_error", "Request validation failed.", {"errors": errors})
 
 
+async def _load_packs(session_factory: async_sessionmaker[AsyncSession]) -> None:
+    """Add the shipped domain packs to the vocabulary (ADR-080).
+
+    A failure is logged and the API still starts: the vocabulary the database already has keeps
+    working, and the next start tries again.
+    """
+    log = structlog.get_logger()
+    try:
+        async with session_factory() as session:
+            result = await PackService(session).load()
+            await session.commit()
+    except Exception:  # intentionally broad: a bad pack file must not stop the API
+        log.exception("packs_load_failed")
+        return
+    log.info(
+        "packs_loaded",
+        terms_added=result.terms_added,
+        memberships_added=result.memberships_added,
+        terms_retired=result.terms_retired,
+    )
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     """Build the FastAPI application. ``settings`` defaults to the environment configuration."""
     settings = settings or get_settings()
@@ -69,6 +94,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.adapters = build_source_adapters()
         # Extracted CV text lives here only, briefly and in memory (ADR-010).
         app.state.document_texts = DocumentTextStore()
+        if settings.load_packs:
+            await _load_packs(app.state.session_factory)
         try:
             yield
         finally:

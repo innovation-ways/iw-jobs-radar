@@ -764,6 +764,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/packs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Packs
+         * @description List the packs that ship with the application and which ones are switched on.
+         */
+        get: operations["list_packs_api_v1_packs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/packs/{pack_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Set Pack Active
+         * @description Switch a pack on or off; a repeated request changes nothing. No terms are deleted.
+         */
+        put: operations["set_pack_active_api_v1_packs__pack_key__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pipeline/status": {
         parameters: {
             query?: never;
@@ -3311,6 +3351,44 @@ export interface components {
             longitude: number;
             /** Radius Km */
             radius_km: number;
+        };
+        /**
+         * PackActivation
+         * @description Switch a pack on or off.
+         */
+        PackActivation: {
+            /** Active */
+            active: boolean;
+        };
+        /**
+         * PackList
+         * @description Every shipped pack; ``active_count`` is how many the owner switched on.
+         */
+        PackList: {
+            /** Active Count */
+            active_count: number;
+            /** Packs */
+            packs: components["schemas"]["PackRead"][];
+        };
+        /**
+         * PackRead
+         * @description A domain pack as the owner sees it.
+         */
+        PackRead: {
+            /** Active */
+            active: boolean;
+            /** Description */
+            description: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Role Family Count */
+            role_family_count: number;
+            /** Sector Count */
+            sector_count: number;
+            /** Version */
+            version: number;
         };
         /**
          * PageReaderConfig
@@ -5923,6 +6001,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LinkDecisionResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_packs_api_v1_packs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackList"];
+                };
+            };
+        };
+    };
+    set_pack_active_api_v1_packs__pack_key__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pack_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PackActivation"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackRead"];
                 };
             };
             /** @description Validation Error */

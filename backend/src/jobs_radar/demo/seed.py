@@ -33,6 +33,7 @@ from jobs_radar.services.extraction_queue import ExtractionQueue
 from jobs_radar.services.inbox import InboxFilters, InboxRowView, InboxRunner, InboxService
 from jobs_radar.services.intents import IntentService
 from jobs_radar.services.job_summary import SummaryRunner
+from jobs_radar.services.packs import PackService
 from jobs_radar.services.profiles import ProfileService
 from jobs_radar.services.schedule import ScheduleService
 from jobs_radar.services.sources import SourceService
@@ -151,6 +152,10 @@ async def _has_sources(session: AsyncSession) -> bool:
 
 async def _persona(session: AsyncSession) -> None:
     """Create the persona's profile and its enabled intent."""
+    # The persona is a software engineer, so the software pack is on.
+    packs = PackService(session)
+    await packs.load()
+    await packs.set_active(LOCAL_OWNER_ID, "software_data_it", active=True)
     profiles = await ProfileService(session).create(LOCAL_OWNER_ID, DEMO_PROFILE_TITLE)
     profile_id = profiles.profile.career_profile_id
     await ProfileService(session).save(

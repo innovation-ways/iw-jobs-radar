@@ -17,6 +17,7 @@ from alembic import command
 from alembic.config import Config
 from cryptography.fernet import Fernet
 from fastapi import FastAPI
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from testcontainers.community.postgres import PostgresContainer
 
@@ -53,6 +54,8 @@ def _test_environment(postgres_container: PostgresContainer) -> Iterator[None]:
         "JOBS_RADAR_DB_USER": "jobs_radar_test",
         "JOBS_RADAR_DB_PASSWORD": postgres_container.password,
         "JOBS_RADAR_CREDENTIAL_KEY": Fernet.generate_key().decode(),
+        # The suite keeps the vocabulary the migrations leave; the packs have their own tests.
+        "JOBS_RADAR_LOAD_PACKS": "false",
     }
     previous = {key: os.environ.get(key) for key in overrides}
     os.environ.update(overrides)
@@ -60,6 +63,13 @@ def _test_environment(postgres_container: PostgresContainer) -> Iterator[None]:
     config = Config(str(BACKEND_ROOT / "alembic.ini"))
     config.set_main_option("script_location", str(BACKEND_ROOT / "alembic"))
     command.upgrade(config, "head")
+    # The suite models an installation that uses the software pack, like the owner's own.
+    admin = create_engine(get_settings().database_url)
+    with admin.begin() as connection:
+        connection.execute(
+            text("INSERT INTO owner_pack (owner_id, pack_key) VALUES (1, 'software_data_it')")
+        )
+    admin.dispose()
     yield
     for key, value in previous.items():
         if value is None:

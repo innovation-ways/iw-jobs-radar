@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "key": "construction_trades",
+  "version": 1,
+  "name": "Construction and skilled trades",
+  "description": "Electricians, plumbers, carpenters, welders, builders and site roles.",
+  "role_families": [
+    {
+      "key": "electrician",
+      "label": "Electrician"
+    },
+    {
+      "key": "plumber_pipefitter",
+      "label": "Plumber / pipefitter"
+    },
+    {
+      "key": "hvac_refrigeration",
+      "label": "HVAC and refrigeration technician"
+    },
+    {
+      "key": "carpenter_joiner",
+      "label": "Carpenter / joiner"
+    },
+    {
+      "key": "welder_fabricator",
+      "label": "Welder / fabricator"
+    },
+    {
+      "key": "bricklayer_mason",
+      "label": "Bricklayer / mason"
+    },
+    {
+      "key": "painter_decorator",
+      "label": "Painter / decorator"
+    },
+    {
+      "key": "roofer",
+      "label": "Roofer"
+    },
+    {
+      "key": "tiler_plasterer",
+      "label": "Tiler / plasterer"
+    },
+    {
+      "key": "scaffolder",
+      "label": "Scaffolder"
+    },
+    {
+      "key": "construction_labourer",
+      "label": "Construction labourer"
+    },
+    {
+      "key": "heavy_equipment_operator",
+      "label": "Heavy equipment operator"
+    },
+    {
+      "key": "civil_works_groundworker",
+      "label": "Civil works and groundworks"
+    },
+    {
+      "key": "solar_renewable_installer",
+      "label": "Solar and renewable energy installer"
+    },
+    {
+      "key": "site_supervisor",
+      "label": "Site supervisor / foreman"
+    },
+    {
+      "key": "surveyor_estimator",
+      "label": "Surveyor / estimator"
+    }
+  ],
+  "sectors": [
+    {
+      "key": "construction",
+      "label": "Construction"
+    },
+    {
+      "key": "building_services",
+      "label": "Building services"
+    },
+    {
+      "key": "renewable_energy_installation",
+      "label": "Renewable energy installation"
+    },
+    {
+      "key": "energy_utilities",
+      "label": "Energy and utilities"
+    },
+    {
+      "key": "public_sector",
+      "label": "Public sector"
+    }
+  ]
+}

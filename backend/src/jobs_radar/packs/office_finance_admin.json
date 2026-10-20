@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "key": "office_finance_admin",
+  "version": 1,
+  "name": "Office, finance, legal and HR",
+  "description": "Administration, accounting, finance, legal, HR, procurement and management.",
+  "role_families": [
+    {
+      "key": "finance_accounting",
+      "label": "Finance and accounting"
+    },
+    {
+      "key": "legal_compliance",
+      "label": "Legal and compliance"
+    },
+    {
+      "key": "hr_recruiting",
+      "label": "HR and recruiting"
+    },
+    {
+      "key": "marketing_communications",
+      "label": "Marketing and communications"
+    },
+    {
+      "key": "operations_admin",
+      "label": "Operations and administration"
+    },
+    {
+      "key": "design_creative",
+      "label": "Design and creative"
+    },
+    {
+      "key": "project_programme_management",
+      "label": "Project and programme management"
+    },
+    {
+      "key": "office_administrator",
+      "label": "Office administrator / secretary"
+    },
+    {
+      "key": "receptionist",
+      "label": "Receptionist"
+    },
+    {
+      "key": "executive_assistant",
+      "label": "Executive assistant"
+    },
+    {
+      "key": "bookkeeper",
+      "label": "Bookkeeper"
+    },
+    {
+      "key": "payroll_specialist",
+      "label": "Payroll specialist"
+    },
+    {
+      "key": "financial_analyst",
+      "label": "Financial analyst"
+    },
+    {
+      "key": "auditor",
+      "label": "Auditor"
+    },
+    {
+      "key": "lawyer_paralegal",
+      "label": "Lawyer / paralegal"
+    },
+    {
+      "key": "procurement_purchasing",
+      "label": "Procurement / purchasing"
+    },
+    {
+      "key": "business_analyst",
+      "label": "Business analyst"
+    },
+    {
+      "key": "data_entry_back_office",
+      "label": "Data entry / back-office clerk"
+    },
+    {
+      "key": "general_management",
+      "label": "General management"
+    }
+  ],
+  "sectors": [
+    {
+      "key": "finance_banking",
+      "label": "Finance and banking"
+    },
+    {
+      "key": "insurance",
+      "label": "Insurance"
+    },
+    {
+      "key": "consulting_services",
+      "label": "Consulting services"
+    },
+    {
+      "key": "public_sector",
+      "label": "Public sector"
+    },
+    {
+      "key": "real_estate",
+      "label": "Real estate"
+    },
+    {
+      "key": "legal_services",
+      "label": "Legal services"
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "key": "maintenance_repair",
+  "version": 1,
+  "name": "Installation, maintenance and repair",
+  "description": "Maintenance and field-service technicians, mechanics and installers.",
+  "role_families": [
+    {
+      "key": "maintenance_technician",
+      "label": "Maintenance technician"
+    },
+    {
+      "key": "mechatronics_technician",
+      "label": "Mechatronics technician"
+    },
+    {
+      "key": "machine_fitter_millwright",
+      "label": "Machine fitter / millwright"
+    },
+    {
+      "key": "field_service_technician",
+      "label": "Field service technician"
+    },
+    {
+      "key": "automotive_mechanic",
+      "label": "Automotive mechanic"
+    },
+    {
+      "key": "vehicle_body_paint_technician",
+      "label": "Vehicle body and paint technician"
+    },
+    {
+      "key": "appliance_repair_technician",
+      "label": "Appliance repair technician"
+    },
+    {
+      "key": "it_hardware_support_technician",
+      "label": "IT hardware support technician"
+    },
+    {
+      "key": "telecom_fibre_installer",
+      "label": "Telecom and fibre installer"
+    },
+    {
+      "key": "instrumentation_technician",
+      "label": "Instrumentation and control technician"
+    },
+    {
+      "key": "facilities_technician",
+      "label": "Facilities technician"
+    },
+    {
+      "key": "elevator_technician",
+      "label": "Elevator technician"
+    },
+    {
+      "key": "electrician",
+      "label": "Electrician"
+    },
+    {
+      "key": "hvac_refrigeration",
+      "label": "HVAC and refrigeration technician"
+    }
+  ],
+  "sectors": [
+    {
+      "key": "manufacturing_industrial",
+      "label": "Manufacturing and industrial"
+    },
+    {
+      "key": "automotive",
+      "label": "Automotive"
+    },
+    {
+      "key": "facilities_services",
+      "label": "Facilities services"
+    },
+    {
+      "key": "energy_utilities",
+      "label": "Energy and utilities"
+    },
+    {
+      "key": "telecom",
+      "label": "Telecom"
+    },
+    {
+      "key": "logistics_transport",
+      "label": "Logistics and transport"
+    }
+  ]
+}

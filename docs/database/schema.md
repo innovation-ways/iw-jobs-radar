@@ -518,6 +518,20 @@ Owner of personal data; V1 has one fixed local owner.
 | `updated_at` | DATETIME | no | UTC timestamp of the last modification of the row. |
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
 
+## owner_pack
+
+Domain packs each owner has switched on (ADR-080).
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `owner_pack_id` | BIGINT | no | Surrogate primary key of the activation. |
+| `owner_id` | BIGINT | no | Owner who switched the pack on. |
+| `pack_key` | VARCHAR(60) | no | Key of the pack that is switched on. |
+| `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
+
+- foreign key `owner_id` → `owner.owner_id`
+- unique `uq_owner_pack_owner_id_pack_key` (owner_id, pack_key)
+
 ## page_reader_configuration
 
 Approved reader configurations of careers-page sources (append-only).
@@ -861,6 +875,21 @@ Controlled-vocabulary terms (role families, sectors, seniority, ...).
 - foreign key `introduced_in_taxonomy_version_id` → `taxonomy_version.taxonomy_version_id`
 - foreign key `replaced_by_taxonomy_term_id` → `taxonomy_term.taxonomy_term_id`
 - unique `uq_taxonomy_term_kind_term_key` (kind, term_key)
+
+## taxonomy_term_pack
+
+Domain packs that list a taxonomy term; a term in no pack is always offered.
+
+| Column | Type | Nullable | Description |
+|---|---|---|---|
+| `taxonomy_term_pack_id` | BIGINT | no | Surrogate primary key of the membership. |
+| `taxonomy_term_id` | BIGINT | no | Term that the pack lists. |
+| `pack_key` | VARCHAR(60) | no | Key of the pack file that lists the term (for example software_data_it). |
+| `pack_version` | INTEGER | no | Version of the pack file in which the term was first listed. |
+| `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
+
+- foreign key `taxonomy_term_id` → `taxonomy_term.taxonomy_term_id`
+- unique `uq_taxonomy_term_pack_term_pack` (taxonomy_term_id, pack_key)
 
 ## taxonomy_version
 

@@ -1,23 +1,42 @@
 """Data access for the controlled vocabularies."""
 
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from jobs_radar.db.models import TaxonomyTerm, TaxonomyVersion
+from jobs_radar.db.models import OwnerPack, TaxonomyTerm, TaxonomyTermPack, TaxonomyVersion
+from jobs_radar.domain.enums import LOCAL_OWNER_ID
 
 _MAX_CHAIN = 10  # a merge chain is never this long; the limit only guards against a data error
 
 
+def in_scope_of_packs(owner_id: int) -> ColumnElement[bool]:
+    """Match the terms that no pack lists, or that a pack the owner switched on lists."""
+    lists_term = TaxonomyTermPack.taxonomy_term_id == TaxonomyTerm.taxonomy_term_id
+    in_no_pack = ~exists().where(lists_term)
+    in_an_active_pack = exists().where(
+        lists_term,
+        TaxonomyTermPack.pack_key == OwnerPack.pack_key,
+        OwnerPack.owner_id == owner_id,
+    )
+    return or_(in_no_pack, in_an_active_pack)
+
+
 class TaxonomyRepository:
-    """Reads taxonomy terms."""
+    """Reads taxonomy terms for one owner (V1 has a single local owner)."""
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: AsyncSession, owner_id: int = LOCAL_OWNER_ID) -> None:
         self._session = session
+        self._owner_id = owner_id
 
-    async def terms(self, *, include_inactive: bool = False) -> list[TaxonomyTerm]:
+    async def terms(
+        self, *, include_inactive: bool = False, all_packs: bool = False
+    ) -> list[TaxonomyTerm]:
         """Return the current terms (not replaced by a merge), ordered by kind then label.
 
-        Terms the owner switched off are left out unless ``include_inactive`` is set.
+        By default these are the terms *offered* to the owner: switched on, and either in no pack
+        or in a pack the owner switched on (ADR-080). ``include_inactive`` adds the terms the owner
+        switched off; ``all_packs`` also adds the terms of packs that are not switched on, which is
+        what checking a stored intent needs.
         """
         query = (
             select(TaxonomyTerm)
@@ -26,16 +45,20 @@ class TaxonomyRepository:
         )
         if not include_inactive:
             query = query.where(TaxonomyTerm.is_active.is_(True))
+        if not all_packs:
+            query = query.where(in_scope_of_packs(self._owner_id))
         return list((await self._session.execute(query)).scalars())
 
-    async def keys_by_kind(self, *, include_inactive: bool = False) -> dict[str, set[str]]:
-        """Return the current term keys of each kind.
+    async def keys_by_kind(
+        self, *, include_inactive: bool = False, all_packs: bool = False
+    ) -> dict[str, set[str]]:
+        """Return the current term keys of each kind (see :meth:`terms` for the flags).
 
-        The extraction asks the model with active terms only; checking a stored intent needs every
-        term, including the ones switched off after the intent was saved.
+        The extraction asks the model with offered terms only; checking a stored intent needs every
+        term, including the ones switched off or left behind in a pack after the intent was saved.
         """
         grouped: dict[str, set[str]] = {}
-        for term in await self.terms(include_inactive=include_inactive):
+        for term in await self.terms(include_inactive=include_inactive, all_packs=all_packs):
             grouped.setdefault(term.kind, set()).add(term.term_key)
         return grouped
 
@@ -44,6 +67,10 @@ class TaxonomyRepository:
         return await self._session.scalar(
             select(TaxonomyTerm).where(TaxonomyTerm.kind == kind, TaxonomyTerm.term_key == term_key)
         )
+
+    async def get(self, taxonomy_term_id: int) -> TaxonomyTerm | None:
+        """Return the term with this id (``None`` if there is none)."""
+        return await self._session.get(TaxonomyTerm, taxonomy_term_id)
 
     async def labels_of_kind(self, kind: str) -> list[str]:
         """Return the labels of every term of ``kind`` (active or not), for duplicate checks."""
@@ -83,11 +110,12 @@ class TaxonomyRepository:
         return term
 
     async def keys_in_order(self) -> dict[str, list[str]]:
-        """Return the active term keys of each kind in the order the terms were created."""
+        """Return the offered term keys of each kind in the order the terms were created."""
         rows = await self._session.execute(
             select(TaxonomyTerm.kind, TaxonomyTerm.term_key)
             .where(TaxonomyTerm.replaced_by_taxonomy_term_id.is_(None))
             .where(TaxonomyTerm.is_active.is_(True))
+            .where(in_scope_of_packs(self._owner_id))
             .order_by(TaxonomyTerm.taxonomy_term_id)
         )
         grouped: dict[str, list[str]] = {}

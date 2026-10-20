@@ -3,8 +3,8 @@
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import Mapped
 
-from jobs_radar.db.base import Base, CreatedAtMixin
-from jobs_radar.db.columns import enum_check, fk_column, pk_column, text_column
+from jobs_radar.db.base import Base, CreatedAtMixin, TimestampMixin
+from jobs_radar.db.columns import bool_column, enum_check, fk_column, pk_column, text_column
 from jobs_radar.domain.enums import TaxonomyKind, TermOrigin
 
 
@@ -26,8 +26,12 @@ class TaxonomyVersion(CreatedAtMixin, Base):
     )
 
 
-class TaxonomyTerm(CreatedAtMixin, Base):
-    """A term of a controlled vocabulary. Terms are never deleted; merges use ``replaced_by``."""
+class TaxonomyTerm(TimestampMixin, Base):
+    """A term of a controlled vocabulary.
+
+    Terms are never deleted: the owner can relabel a term or switch it off (``is_active``), and a
+    merge uses ``replaced_by``. The key never changes.
+    """
 
     __tablename__ = "taxonomy_term"
     __table_args__ = (
@@ -51,4 +55,9 @@ class TaxonomyTerm(CreatedAtMixin, Base):
     )
     introduced_in_taxonomy_version_id: Mapped[int] = fk_column(
         "taxonomy_version.taxonomy_version_id", "Taxonomy version in which the term was introduced."
+    )
+    is_active: Mapped[bool] = bool_column(
+        "Whether the term is offered for new choices and to the extraction model; "
+        "false keeps it in stored intents and history.",
+        default=True,
     )

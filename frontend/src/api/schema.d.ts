@@ -1406,6 +1406,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/taxonomy/terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Terms
+         * @description List every role family and sector, including the ones switched off.
+         */
+        get: operations["list_terms_api_v1_taxonomy_terms_get"];
+        put?: never;
+        /**
+         * Add Term
+         * @description Add a role family or a sector; its key is derived from the label.
+         */
+        post: operations["add_term_api_v1_taxonomy_terms_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/taxonomy/terms/{kind}/{term_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Term
+         * @description Relabel a term or switch it off or on; a repeated request changes nothing.
+         */
+        patch: operations["update_term_api_v1_taxonomy_terms__kind___term_key__patch"];
+        trace?: never;
+    };
     "/api/v1/trends": {
         parameters: {
             query?: never;
@@ -4231,6 +4275,44 @@ export interface components {
             groups: components["schemas"]["TaxonomyGroup"][];
         };
         /**
+         * TaxonomyTermAdmin
+         * @description A term with its state, for the screen where the owner manages the vocabulary.
+         */
+        TaxonomyTermAdmin: {
+            /** Active */
+            active: boolean;
+            /** Introduced In Taxonomy Version Id */
+            introduced_in_taxonomy_version_id: number;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+            /** Origin */
+            origin: string;
+            /** Term Key */
+            term_key: string;
+        };
+        /**
+         * TaxonomyTermCreate
+         * @description A term the owner adds; the key is derived from the label and never changes.
+         */
+        TaxonomyTermCreate: {
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+        };
+        /**
+         * TaxonomyTermList
+         * @description Every term of the editable vocabularies, active or not.
+         */
+        TaxonomyTermList: {
+            /** Taxonomy Version Id */
+            taxonomy_version_id: number;
+            /** Terms */
+            terms: components["schemas"]["TaxonomyTermAdmin"][];
+        };
+        /**
          * TaxonomyTermRead
          * @description One term of a controlled vocabulary.
          */
@@ -4239,6 +4321,16 @@ export interface components {
             label: string;
             /** Term Key */
             term_key: string;
+        };
+        /**
+         * TaxonomyTermUpdate
+         * @description A change to a term: a new label, or switching it off and on. At least one is required.
+         */
+        TaxonomyTermUpdate: {
+            /** Active */
+            active?: boolean | null;
+            /** Label */
+            label?: string | null;
         };
         /**
          * TechnologyRead
@@ -6983,6 +7075,95 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TaxonomyRead"];
+                };
+            };
+        };
+    };
+    list_terms_api_v1_taxonomy_terms_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxonomyTermList"];
+                };
+            };
+        };
+    };
+    add_term_api_v1_taxonomy_terms_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxonomyTermCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxonomyTermAdmin"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_term_api_v1_taxonomy_terms__kind___term_key__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+                term_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxonomyTermUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxonomyTermAdmin"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

@@ -852,6 +852,8 @@ Controlled-vocabulary terms (role families, sectors, seniority, ...).
 | `origin` | VARCHAR(30) | no | Where the term came from: seed, user or accepted AI proposal. |
 | `replaced_by_taxonomy_term_id` | BIGINT | yes | Term that replaces this one after a merge or rename; null while the term is current. |
 | `introduced_in_taxonomy_version_id` | BIGINT | no | Taxonomy version in which the term was introduced. |
+| `is_active` | BOOLEAN | no | Whether the term is offered for new choices and to the extraction model; false keeps it in stored intents and history. |
+| `updated_at` | DATETIME | no | UTC timestamp of the last modification of the row. |
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
 
 - check `ck_taxonomy_term_kind_valid`: `kind IN ('role_family', 'sector', 'seniority_level', 'engagement_type', 'work_arrangement', 'employer_type', 'benefit')`

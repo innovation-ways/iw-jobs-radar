@@ -7015,6 +7015,91 @@
         "title": "TaxonomyRead",
         "type": "object"
       },
+      "TaxonomyTermAdmin": {
+        "additionalProperties": false,
+        "description": "A term with its state, for the screen where the owner manages the vocabulary.",
+        "properties": {
+          "active": {
+            "title": "Active",
+            "type": "boolean"
+          },
+          "introduced_in_taxonomy_version_id": {
+            "title": "Introduced In Taxonomy Version Id",
+            "type": "integer"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "origin": {
+            "title": "Origin",
+            "type": "string"
+          },
+          "term_key": {
+            "title": "Term Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "term_key",
+          "label",
+          "origin",
+          "active",
+          "introduced_in_taxonomy_version_id"
+        ],
+        "title": "TaxonomyTermAdmin",
+        "type": "object"
+      },
+      "TaxonomyTermCreate": {
+        "additionalProperties": false,
+        "description": "A term the owner adds; the key is derived from the label and never changes.",
+        "properties": {
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "label"
+        ],
+        "title": "TaxonomyTermCreate",
+        "type": "object"
+      },
+      "TaxonomyTermList": {
+        "additionalProperties": false,
+        "description": "Every term of the editable vocabularies, active or not.",
+        "properties": {
+          "taxonomy_version_id": {
+            "title": "Taxonomy Version Id",
+            "type": "integer"
+          },
+          "terms": {
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyTermAdmin"
+            },
+            "title": "Terms",
+            "type": "array"
+          }
+        },
+        "required": [
+          "taxonomy_version_id",
+          "terms"
+        ],
+        "title": "TaxonomyTermList",
+        "type": "object"
+      },
       "TaxonomyTermRead": {
         "additionalProperties": false,
         "description": "One term of a controlled vocabulary.",
@@ -7033,6 +7118,38 @@
           "label"
         ],
         "title": "TaxonomyTermRead",
+        "type": "object"
+      },
+      "TaxonomyTermUpdate": {
+        "additionalProperties": false,
+        "description": "A change to a term: a new label, or switching it off and on. At least one is required.",
+        "properties": {
+          "active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "title": "TaxonomyTermUpdate",
         "type": "object"
       },
       "TechnologyRead": {
@@ -11530,6 +11647,130 @@
         "summary": "Get Taxonomy",
         "tags": [
           "intents"
+        ]
+      }
+    },
+    "/api/v1/taxonomy/terms": {
+      "get": {
+        "description": "List every role family and sector, including the ones switched off.",
+        "operationId": "list_terms_api_v1_taxonomy_terms_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxonomyTermList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Terms",
+        "tags": [
+          "taxonomy"
+        ]
+      },
+      "post": {
+        "description": "Add a role family or a sector; its key is derived from the label.",
+        "operationId": "add_term_api_v1_taxonomy_terms_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaxonomyTermCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxonomyTermAdmin"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Term",
+        "tags": [
+          "taxonomy"
+        ]
+      }
+    },
+    "/api/v1/taxonomy/terms/{kind}/{term_key}": {
+      "patch": {
+        "description": "Relabel a term or switch it off or on; a repeated request changes nothing.",
+        "operationId": "update_term_api_v1_taxonomy_terms__kind___term_key__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "term_key",
+            "required": true,
+            "schema": {
+              "title": "Term Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaxonomyTermUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxonomyTermAdmin"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Term",
+        "tags": [
+          "taxonomy"
         ]
       }
     },

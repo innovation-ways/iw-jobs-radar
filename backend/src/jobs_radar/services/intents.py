@@ -42,7 +42,8 @@ class IntentService:
         """Reject keys that are not in the live taxonomy and closed groups that skip options."""
         errors = validate_intent_against_taxonomy(
             definition,
-            await self._taxonomy.keys_by_kind(),
+            # Terms switched off after the intent was saved are still valid in it (ADR-080).
+            await self._taxonomy.keys_by_kind(include_inactive=True),
             await self._taxonomy.optional_keys_by_kind(),
         )
         if errors:

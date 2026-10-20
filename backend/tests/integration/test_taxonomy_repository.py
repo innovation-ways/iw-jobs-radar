@@ -24,3 +24,22 @@ async def test_optional_keys_are_the_terms_added_after_version_one(
     assert optional == golden_optional_terms()
     assert "contractor_agency" in optional["engagement_type"]
     assert "finance_accounting" in optional["role_family"]
+
+
+async def test_inactive_terms_are_left_out_unless_asked_for(db_session: AsyncSession) -> None:
+    from jobs_radar.db.models import TaxonomyTerm
+
+    repository = TaxonomyRepository(db_session)
+    term = (
+        await db_session.execute(
+            TaxonomyTerm.__table__.select().where(TaxonomyTerm.term_key == "gambling")
+        )
+    ).one()
+    await db_session.execute(
+        TaxonomyTerm.__table__.update()
+        .where(TaxonomyTerm.taxonomy_term_id == term.taxonomy_term_id)
+        .values(is_active=False)
+    )
+    assert "gambling" not in (await repository.keys_by_kind())["sector"]
+    assert "gambling" not in (await repository.keys_in_order())["sector"]
+    assert "gambling" in (await repository.keys_by_kind(include_inactive=True))["sector"]

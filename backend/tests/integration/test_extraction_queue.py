@@ -14,6 +14,7 @@ from tests.factories import (
     make_posting,
     make_source,
     session_factory_for,
+    unique,
 )
 from tests.fake_provider import FakeProvider
 
@@ -689,3 +690,23 @@ async def test_a_waiting_row_of_a_job_with_an_accepted_answer_is_never_sent_to_t
     await db_session.refresh(stale)
     assert (stale.status, stale.claimed_at) == ("pending", None)
     assert summary.backlog is False  # the skipped row is not a backlog
+
+
+async def test_the_model_is_offered_active_terms_only(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ADR-080: a role family the owner switched off is not in the allowed keys of the prompt."""
+    from jobs_radar.services.taxonomy import TaxonomyService
+
+    service = TaxonomyService(db_session)
+    kept = await service.add("role_family", unique("Kept family"))
+    dropped = await service.add("role_family", unique("Dropped family"))
+    await service.update("role_family", dropped.term_key, active=False)
+    await job(db_session)
+    provider = FakeProvider(responder=lambda _request: {})
+    q = queue(db_session, monkeypatch, provider)
+    await q.enqueue_missing()
+    await q.run_batch()
+    assert provider.requests, "the job was not sent to the model"
+    prompt = provider.requests[0].user
+    assert kept.term_key in prompt and dropped.term_key not in prompt

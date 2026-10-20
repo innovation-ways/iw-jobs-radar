@@ -824,6 +824,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/prefilter/areas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Areas
+         * @description List the areas of work offered by the packs the owner switched on.
+         */
+        get: operations["list_areas_api_v1_prefilter_areas_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/profiles": {
         parameters: {
             query?: never;
@@ -1710,6 +1730,24 @@ export interface components {
             model: string;
             /** Prompt Version */
             prompt_version: string;
+        };
+        /**
+         * AreaList
+         * @description The areas of the packs the owner switched on, in pack order.
+         */
+        AreaList: {
+            /** Areas */
+            areas: components["schemas"]["AreaRead"][];
+        };
+        /**
+         * AreaRead
+         * @description An area of work a job board can be narrowed to.
+         */
+        AreaRead: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
         };
         /**
          * AssessResponse
@@ -6096,6 +6134,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_areas_api_v1_prefilter_areas_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AreaList"];
                 };
             };
         };

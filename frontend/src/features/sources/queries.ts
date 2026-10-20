@@ -247,3 +247,11 @@ export function useSaveSchedule() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: SCHEDULE }),
   })
 }
+
+/** The areas of work offered by the packs the owner switched on (keys and names). */
+export function useAreas() {
+  return useQuery({
+    queryKey: ['prefilter-areas'],
+    queryFn: async () => (await unwrap(api.GET('/api/v1/prefilter/areas'))).areas,
+  })
+}

@@ -1,16 +1,16 @@
 import { ChipsInput } from '@/components/ChipsInput'
 import { filtersProblem } from './filters'
-import type { JobBoardFilters } from './queries'
+import { useAreas, type JobBoardFilters } from './queries'
 
 const FIELD = 'rounded-md border border-line-strong bg-surface px-2.5 py-1.5 text-sm text-ink'
 
 /**
- * The filters an owner can set on a job board: technology areas, search terms, how recent a posting
+ * The filters an owner can set on a job board: areas of work, search terms, how recent a posting
  * must be and the most postings kept per run. The countries are not here: they come from the
  * profile and the search intents.
  *
  * @param value the current filters
- * @param categories the technology areas the board offers
+ * @param categories the keys of the areas of work on offer (those of the owner's packs)
  * @param onChange called with the edited filters
  * @param idPrefix keeps the field ids unique when several boards are on the page
  */
@@ -25,11 +25,12 @@ export function BoardFiltersFields({
   onChange: (next: JobBoardFilters) => void
   idPrefix: string
 }) {
-  const problem = filtersProblem(value)
+  const problem = filtersProblem(value, categories.length > 0)
+  const names = new Map((useAreas().data ?? []).map((area) => [area.key, area.label]))
   return (
     <div className="flex flex-col gap-3">
       <fieldset>
-        <legend className="text-xs text-ink-2">Technology areas</legend>
+        <legend className="text-xs text-ink-2">Areas of work</legend>
         <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1.5">
           {categories.map((category) => (
             <label key={category} className="flex items-center gap-1.5 text-sm">
@@ -45,7 +46,7 @@ export function BoardFiltersFields({
                   })
                 }
               />
-              {category}
+              {names.get(category) ?? category}
             </label>
           ))}
         </div>

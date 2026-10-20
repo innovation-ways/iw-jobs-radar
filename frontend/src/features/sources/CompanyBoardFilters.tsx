@@ -3,13 +3,13 @@ import { describeApiError } from '@/api/errors'
 import { Button } from '@/components/ui/button'
 import { BoardFiltersFields } from './BoardFiltersFields'
 import { DEFAULT_FILTERS, filtersProblem, withDefaults } from './filters'
-import type { JobBoardFilters, SourceRead, useJobBoardActions } from './queries'
+import { useAreas, type JobBoardFilters, type SourceRead, type useJobBoardActions } from './queries'
 
 type Actions = ReturnType<typeof useJobBoardActions>
 
 /**
  * The filters of a company board, off by default: every posting of the company is kept. When the
- * owner opts in, only postings in the chosen technology areas and inside the owner's reach (taken
+ * owner opts in, only postings in the chosen areas of work and inside the owner's reach (taken
  * from the profile and the search intents) are stored, which keeps a large company from filling
  * the inbox. Saved with the version the owner saw.
  */
@@ -17,7 +17,10 @@ export function CompanyBoardFilters({ source, actions }: { source: SourceRead; a
   const saved = source.filters ? withDefaults(source.filters) : null
   const [enabled, setEnabled] = useState(saved !== null)
   const [draft, setDraft] = useState<JobBoardFilters>(saved ?? DEFAULT_FILTERS)
-  const problem = enabled ? filtersProblem(draft) : null
+  const areas = useAreas().data
+  // The areas of the owner's packs; a board that already has filters keeps showing its own.
+  const offered = areas?.map((area) => area.key) ?? saved?.categories ?? []
+  const problem = enabled ? filtersProblem(draft, offered.length > 0) : null
   const dirty = enabled
     ? saved === null || JSON.stringify(saved) !== JSON.stringify(draft)
     : saved !== null
@@ -40,7 +43,12 @@ export function CompanyBoardFilters({ source, actions }: { source: SourceRead; a
         <input
           type="checkbox"
           checked={enabled}
-          onChange={(event) => setEnabled(event.target.checked)}
+          onChange={(event) => {
+            setEnabled(event.target.checked)
+            // Opting in starts with every area of the owner's packs chosen.
+            if (event.target.checked && draft.categories.length === 0)
+              setDraft({ ...draft, categories: offered })
+          }}
         />
         Keep only postings that match my areas and location
       </label>
@@ -48,7 +56,7 @@ export function CompanyBoardFilters({ source, actions }: { source: SourceRead; a
         <>
           <BoardFiltersFields
             value={draft}
-            categories={DEFAULT_FILTERS.categories}
+            categories={offered}
             onChange={setDraft}
             idPrefix={`company-${id}`}
           />

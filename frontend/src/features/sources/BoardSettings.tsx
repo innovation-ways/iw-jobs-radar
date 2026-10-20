@@ -8,8 +8,6 @@ import { useCatalogue, useJobBoardActions, type JobBoardFilters, type SourceRead
 
 type Actions = ReturnType<typeof useJobBoardActions>
 
-const FALLBACK_CATEGORIES = ['software', 'data', 'devops', 'security', 'telecom']
-
 function sameFilters(a: JobBoardFilters, b: JobBoardFilters): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
 }
@@ -24,7 +22,7 @@ export function BoardSettings({ source, actions }: { source: SourceRead; actions
   const entry = catalogue.data?.find((item) => item.catalogue_key === source.external_identifier)
   const saved = withDefaults(source.filters)
   const [draft, setDraft] = useState<JobBoardFilters>(saved)
-  const problem = filtersProblem(draft)
+  const problem = filtersProblem(draft, (entry?.available_categories ?? []).length > 0)
   const dirty = !sameFilters(draft, saved)
   const keyError = [actions.writeKey, actions.removeKey].find((m) => m.isError)?.error
   const filtersError = actions.saveFilters.isError
@@ -37,7 +35,7 @@ export function BoardSettings({ source, actions }: { source: SourceRead; actions
         <h3 className="text-xs font-semibold tracking-wider text-ink-3 uppercase">Filters</h3>
         <BoardFiltersFields
           value={draft}
-          categories={entry?.available_categories ?? FALLBACK_CATEGORIES}
+          categories={entry?.available_categories ?? saved.categories}
           onChange={setDraft}
           idPrefix={`settings-${source.source_configuration_id}`}
         />

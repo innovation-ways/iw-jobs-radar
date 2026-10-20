@@ -55,7 +55,7 @@ export function AddJobBoardForm({
   const signature = JSON.stringify([credential.trim(), filters])
   const preview = checked?.signature === signature ? checked.preview : null
   const needsKey = entry.requires_credential && !credential.trim()
-  const problem = filtersProblem(filters)
+  const problem = filtersProblem(filters, entry.available_categories.length > 0)
   const draft = { catalogueKey: entry.catalogue_key, credential, filters }
   const error = actions.previewBoard.isError
     ? actions.previewBoard.error

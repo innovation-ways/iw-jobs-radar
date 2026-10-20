@@ -518,6 +518,15 @@ describe('Company board filters', () => {
       if (path === '/api/v1/source-catalogue')
         return Promise.resolve({ data: { items: catalogue } })
       if (path === '/api/v1/source-scope') return Promise.resolve({ data: currentScope })
+      if (path === '/api/v1/prefilter/areas')
+        return Promise.resolve({
+          data: {
+            areas: ['software', 'data', 'devops', 'security', 'telecom'].map((key) => ({
+              key,
+              label: key,
+            })),
+          },
+        })
       return Promise.reject(new Error(`unexpected GET ${path}`))
     })
   })

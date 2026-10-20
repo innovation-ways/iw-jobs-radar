@@ -147,12 +147,14 @@ function createStub() {
       })
     }
     if (path === '/inbox' && method === 'GET') {
-      const state = url.searchParams.get('state') ?? 'unread'
+      const state = url.searchParams.get('state') ?? 'to_review'
+      // "To review" is the unread and the updated-unread jobs (the API's tab name).
+      const inState = (j: { state: string }) =>
+        state === 'all' ||
+        (state === 'to_review' ? ['unread', 'updated_unread'].includes(j.state) : j.state === state)
       const shortlisted = url.searchParams.get('shortlisted') === 'true'
       const items = jobs
-        .filter(
-          (j) => (state === 'all' ? true : j.state === state) && (!shortlisted || j.shortlisted),
-        )
+        .filter((j) => inState(j) && (!shortlisted || j.shortlisted))
         .sort((a, b) => (b.score ?? -1) - (a.score ?? -1))
       return json(route, {
         items: items.map(summary),

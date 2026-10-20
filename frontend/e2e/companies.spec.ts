@@ -15,6 +15,8 @@ const COMPANY = {
   best_fit_score: 82,
   pending_candidates: 0,
   is_followed: false,
+  is_ignored: false,
+  has_source: true,
 }
 
 const DOSSIER = {
@@ -98,6 +100,8 @@ test('the company list opens a dossier with sourced facts', async ({ page }) => 
     return json(route, { error: { code: 'not_found', message: 'unexpected', details: {} } }, 404)
   })
   await page.goto('/companies')
+  // The list is grouped and collapsed ("All companies", "Ignored"): open the first group.
+  await page.getByRole('button', { name: /All companies/ }).click()
   await page.getByRole('option', { name: /Northwind Labs/ }).click()
   const panel = page.getByRole('region', { name: 'Northwind Labs' })
   await expect(panel.getByText('software industry')).toBeVisible()

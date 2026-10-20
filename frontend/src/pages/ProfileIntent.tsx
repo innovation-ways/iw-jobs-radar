@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { NoPackNotice } from '@/components/NoPackNotice'
 import { Button } from '@/components/ui/button'
 import { defaultIntentDefinition } from '@/features/intent/defaults'
 import { IntentPanel } from '@/features/intent/IntentPanel'
@@ -163,6 +164,7 @@ export function ProfileIntent() {
 
   return (
     <div className="flex min-h-full flex-col">
+      <NoPackNotice />
       <div className="border-b border-line bg-surface px-4 sm:px-6 py-3">
         <div className="flex flex-wrap items-end gap-3">
           <label className="flex flex-col gap-1 text-xs text-ink-2">

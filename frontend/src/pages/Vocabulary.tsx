@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Card } from '@/components/Card'
+import { NoPackNotice } from '@/components/NoPackNotice'
 import { Button } from '@/components/ui/button'
 import { describeApiError } from '@/api/errors'
 import {
@@ -267,22 +268,25 @@ export function Vocabulary() {
       </div>
     )
   return (
-    <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 sm:px-6 py-6">
-      <p className="text-sm text-ink-2">
-        Jobs are sorted into these role families and sectors, and your search intent takes a stance
-        on each. Switched-off terms stay in saved searches and history but are not offered for new
-        choices or to the AI that reads job postings. Jobs already analysed are not analysed again
-        when you change this list.
-      </p>
-      {KINDS.map(({ kind, title, singular }) => (
-        <VocabularyCard
-          key={kind}
-          kind={kind}
-          title={title}
-          singular={singular}
-          terms={data.terms.filter((term) => term.kind === kind)}
-        />
-      ))}
+    <div className="flex flex-col">
+      <NoPackNotice />
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 sm:px-6 py-6">
+        <p className="text-sm text-ink-2">
+          Jobs are sorted into these role families and sectors, and your search intent takes a
+          stance on each. Switched-off terms stay in saved searches and history but are not offered
+          for new choices or to the AI that reads job postings. Jobs already analysed are not
+          analysed again when you change this list.
+        </p>
+        {KINDS.map(({ kind, title, singular }) => (
+          <VocabularyCard
+            key={kind}
+            kind={kind}
+            title={title}
+            singular={singular}
+            terms={data.terms.filter((term) => term.kind === kind)}
+          />
+        ))}
+      </div>
     </div>
   )
 }

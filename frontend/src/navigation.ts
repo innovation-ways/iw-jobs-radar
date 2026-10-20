@@ -1,6 +1,7 @@
 import {
   Building2,
   Inbox,
+  Layers,
   Rss,
   Settings,
   Sun,
@@ -58,6 +59,12 @@ export const SETUP_NAV: NavItem[] = [
     label: 'Profile & intent',
     icon: User,
     description: 'Your career profile and what you are looking for.',
+  },
+  {
+    path: '/packs',
+    label: 'Packs',
+    icon: Layers,
+    description: 'Ready-made vocabularies for the fields of work you search in.',
   },
   {
     path: '/vocabulary',

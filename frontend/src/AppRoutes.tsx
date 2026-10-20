@@ -5,6 +5,7 @@ import { AiPrivacy } from '@/pages/AiPrivacy'
 import { Companies } from '@/pages/Companies'
 import { Inbox } from '@/pages/Inbox'
 import { NotFound } from '@/pages/NotFound'
+import { Packs } from '@/pages/Packs'
 import { Placeholder } from '@/pages/Placeholder'
 import { ProfileIntent } from '@/pages/ProfileIntent'
 import { Sources } from '@/pages/Sources'
@@ -24,6 +25,7 @@ export function AppRoutes() {
         <Route path="/sources" element={<Sources />} />
         <Route path="/profile" element={<ProfileIntent />} />
         <Route path="/settings" element={<AiPrivacy />} />
+        <Route path="/packs" element={<Packs />} />
         <Route path="/vocabulary" element={<Vocabulary />} />
         <Route path="/companies" element={<Companies />} />
         <Route path="/trends" element={<Trends />} />
@@ -36,6 +38,7 @@ export function AppRoutes() {
               '/sources',
               '/profile',
               '/settings',
+              '/packs',
               '/vocabulary',
               '/companies',
               '/trends',

@@ -1,0 +1,102 @@
+# Jobs Radar from published images (ADR-079): no source code, no build, no .env needed.
+#
+#   docker compose -f docker-compose.release.yml up -d
+#   then open http://127.0.0.1:5180
+#
+# The secrets (the key that encrypts stored credentials, and the database password) are generated on
+# the first start and kept in the "secrets" volume. BACK UP THE KEY: without it, stored credentials
+# cannot be recovered. See docs/operations/install.md. The development setup is docker-compose.yml.
+name: jobs-radar-release
+
+x-backend: &backend
+  image: ghcr.io/innovation-ways/iw-jobs-radar-backend:${JOBS_RADAR_VERSION:-latest}
+  restart: unless-stopped
+  # Linux needs this line for a container to reach a service on the host (for example a local model
+  # server); Docker Desktop provides the name itself. Optional: the default is No AI (ADR-046).
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  volumes:
+    - secrets:/secrets:ro
+  environment: &backend-env
+    JOBS_RADAR_ENV: prod
+    JOBS_RADAR_SECRETS_DIR: /secrets
+    JOBS_RADAR_DB_HOST: db
+    JOBS_RADAR_DB_PORT: "5432"
+    # Optional local AI: set these in your shell or in a .env next to this file (docs/operations/install.md).
+    JOBS_RADAR_OLLAMA_URL: ${JOBS_RADAR_OLLAMA_URL:-http://host.docker.internal:11434}
+    JOBS_RADAR_ALLOW_LOCAL_PROVIDERS: ${JOBS_RADAR_ALLOW_LOCAL_PROVIDERS:-false}
+    JOBS_RADAR_EXTRACTION_ENABLED: ${JOBS_RADAR_EXTRACTION_ENABLED:-false}
+
+services:
+  # Creates the secrets once, then exits. Runs as root only to hand the key to the image's user.
+  init:
+    image: ghcr.io/innovation-ways/iw-jobs-radar-backend:${JOBS_RADAR_VERSION:-latest}
+    user: root
+    command: ["init"]
+    environment:
+      JOBS_RADAR_SECRETS_DIR: /secrets
+    volumes:
+      - secrets:/secrets
+    restart: "no"
+
+  # Not published: only the other containers can reach the database.
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: jobs_radar
+      POSTGRES_USER: jobs_radar
+      POSTGRES_PASSWORD_FILE: /secrets/db_password
+    volumes:
+      - pgdata:/var/lib/postgresql
+      - secrets:/secrets:ro
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  # Not published: the frontend container proxies to it.
+  api:
+    <<: *backend
+    # Migrations run before the server starts.
+    command: >
+      sh -c "alembic upgrade head &&
+             exec uvicorn jobs_radar.api.app:create_app --factory --host 0.0.0.0 --port 8000"
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  worker:
+    <<: *backend
+    command: ["python", "-m", "jobs_radar.worker"]
+    depends_on:
+      init:
+        condition: service_completed_successfully
+      api:
+        condition: service_healthy
+
+  # The only published port. Loopback by default: V1 has no authentication (ADR-009), so reach it
+  # from other computers only on a network you trust (JOBS_RADAR_FRONTEND_BIND=0.0.0.0).
+  frontend:
+    image: ghcr.io/innovation-ways/iw-jobs-radar-frontend:${JOBS_RADAR_VERSION:-latest}
+    ports:
+      - "${JOBS_RADAR_FRONTEND_BIND:-127.0.0.1}:${JOBS_RADAR_FRONTEND_PORT:-5180}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  secrets:

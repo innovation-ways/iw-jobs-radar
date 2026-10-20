@@ -23,9 +23,14 @@ COPY alembic ./alembic
 COPY src ./src
 RUN if [ "$INSTALL_DEV" = "true" ]; then uv sync --frozen; else uv sync --frozen --no-dev; fi
 
+# Generates the secrets on first start and loads them for the real command (ADR-079).
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod 755 /usr/local/bin/docker-entrypoint.sh
+
 # Run as an unprivileged user.
 RUN useradd --system --create-home --uid 10001 jobsradar
 USER jobsradar
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 EXPOSE 8000
 CMD ["uvicorn", "jobs_radar.api.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]

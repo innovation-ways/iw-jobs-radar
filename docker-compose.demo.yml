@@ -1,0 +1,76 @@
+# The Jobs Radar demo in one command (ADR-079): a fictional persona, companies and job postings.
+#
+#   docker compose -f docker-compose.demo.yml up
+#   then open http://127.0.0.1:5181
+#
+# It has its own database and volume and never touches real data. The worker here only reports that
+# it is alive: nothing is collected and no AI is used. Stop it with Ctrl+C; remove everything with
+#   docker compose -f docker-compose.demo.yml down -v
+name: jobs-radar-demo
+
+x-backend: &backend
+  image: ghcr.io/innovation-ways/iw-jobs-radar-backend:${JOBS_RADAR_VERSION:-latest}
+  environment: &backend-env
+    # The demo tools refuse to run outside the dev environment and any database but *_demo. The
+    # password protects a throw-away database that is not published, so a fixed value is fine.
+    JOBS_RADAR_ENV: dev
+    JOBS_RADAR_DB_HOST: db
+    JOBS_RADAR_DB_PORT: "5432"
+    JOBS_RADAR_DB_NAME: jobs_radar_demo
+    JOBS_RADAR_DB_USER: jobs_radar
+    JOBS_RADAR_DB_PASSWORD: demo-only-not-a-secret
+
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: jobs_radar
+      POSTGRES_PASSWORD: demo-only-not-a-secret
+    volumes:
+      - demo-pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # Migrates, then rebuilds the fictional demo database; exits when done.
+  seed:
+    <<: *backend
+    command: ["python", "-m", "jobs_radar.tools.demo_seed", "--reset"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  # Keeps the heartbeat fresh so the screens show "worker up"; collects nothing.
+  worker:
+    <<: *backend
+    command: ["python", "-m", "jobs_radar.demo.idle_worker"]
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+
+  api:
+    <<: *backend
+    command: ["uvicorn", "jobs_radar.api.app:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+
+  frontend:
+    image: ghcr.io/innovation-ways/iw-jobs-radar-frontend:${JOBS_RADAR_VERSION:-latest}
+    ports:
+      - "127.0.0.1:${JOBS_RADAR_DEMO_PORT:-5181}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  demo-pgdata:

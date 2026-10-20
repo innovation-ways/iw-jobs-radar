@@ -1,0 +1,461 @@
+{
+  "intent": {
+    "alert_threshold": 65,
+    "benefits_wanted": [
+      "learning_budget",
+      "flexible_hours"
+    ],
+    "compensation": {
+      "contractor_day_rate": {
+        "currency": "EUR",
+        "minimum": 400,
+        "target": 520
+      },
+      "employee_pay": {
+        "annual_minimum": 55000,
+        "annual_target": 72000,
+        "currency": "EUR",
+        "payments_per_year": 14
+      },
+      "reject_below_minimum": false
+    },
+    "exclusions": {
+      "companies": [],
+      "words": [
+        "unpaid"
+      ]
+    },
+    "filters": {
+      "max_posting_age_days": null,
+      "needs_visa_or_relocation": false
+    },
+    "keywords": [
+      "Python",
+      "Kafka",
+      "data platform",
+      "event-driven"
+    ],
+    "languages": {
+      "can_work_in": [
+        "pt",
+        "en",
+        "es"
+      ],
+      "reject_unspoken_required": true
+    },
+    "schema_version": 1,
+    "stances": {
+      "employer_types": [
+        {
+          "key": "direct_employer",
+          "stance": "preferred"
+        },
+        {
+          "key": "agency_recruiter",
+          "stance": "rejected"
+        },
+        {
+          "key": "consultancy_outsourcer",
+          "stance": "acceptable"
+        }
+      ],
+      "engagement_types": [
+        {
+          "key": "employee_permanent",
+          "stance": "preferred"
+        },
+        {
+          "key": "employee_fixed_term",
+          "stance": "acceptable"
+        },
+        {
+          "key": "contractor_b2b",
+          "stance": "acceptable"
+        },
+        {
+          "key": "freelance",
+          "stance": "acceptable"
+        },
+        {
+          "key": "internship",
+          "stance": "rejected"
+        }
+      ],
+      "hours": {
+        "part_time": "rejected"
+      },
+      "role_families": [
+        {
+          "key": "ai_solutions_engineering",
+          "stance": "acceptable"
+        },
+        {
+          "key": "ai_ml_engineering",
+          "stance": "acceptable"
+        },
+        {
+          "key": "data_engineering",
+          "stance": "preferred"
+        },
+        {
+          "key": "data_analysis",
+          "stance": "acceptable"
+        },
+        {
+          "key": "software_engineering_general",
+          "stance": "acceptable"
+        },
+        {
+          "key": "backend_engineering",
+          "stance": "preferred"
+        },
+        {
+          "key": "frontend_engineering",
+          "stance": "acceptable"
+        },
+        {
+          "key": "devops_platform",
+          "stance": "preferred"
+        },
+        {
+          "key": "solutions_architecture",
+          "stance": "acceptable"
+        },
+        {
+          "key": "enterprise_architecture",
+          "stance": "acceptable"
+        },
+        {
+          "key": "telecom_billing_bss_oss",
+          "stance": "acceptable"
+        },
+        {
+          "key": "product_management",
+          "stance": "acceptable"
+        },
+        {
+          "key": "project_programme_management",
+          "stance": "acceptable"
+        },
+        {
+          "key": "consulting_integration",
+          "stance": "acceptable"
+        },
+        {
+          "key": "ai_governance_risk",
+          "stance": "acceptable"
+        },
+        {
+          "key": "security",
+          "stance": "acceptable"
+        },
+        {
+          "key": "qa_testing",
+          "stance": "acceptable"
+        },
+        {
+          "key": "sales_account_management",
+          "stance": "rejected"
+        },
+        {
+          "key": "customer_support",
+          "stance": "rejected"
+        },
+        {
+          "key": "other",
+          "stance": "acceptable"
+        },
+        {
+          "key": "finance_accounting",
+          "stance": "rejected"
+        },
+        {
+          "key": "legal_compliance",
+          "stance": "rejected"
+        },
+        {
+          "key": "hr_recruiting",
+          "stance": "rejected"
+        },
+        {
+          "key": "marketing_communications",
+          "stance": "rejected"
+        },
+        {
+          "key": "operations_admin",
+          "stance": "acceptable"
+        },
+        {
+          "key": "design_creative",
+          "stance": "rejected"
+        }
+      ],
+      "sectors": [
+        {
+          "key": "telecom",
+          "stance": "acceptable"
+        },
+        {
+          "key": "enterprise_it",
+          "stance": "acceptable"
+        },
+        {
+          "key": "software_saas",
+          "stance": "preferred"
+        },
+        {
+          "key": "finance_banking",
+          "stance": "acceptable"
+        },
+        {
+          "key": "insurance",
+          "stance": "acceptable"
+        },
+        {
+          "key": "public_sector",
+          "stance": "acceptable"
+        },
+        {
+          "key": "healthcare",
+          "stance": "acceptable"
+        },
+        {
+          "key": "retail_ecommerce",
+          "stance": "acceptable"
+        },
+        {
+          "key": "manufacturing_industrial",
+          "stance": "acceptable"
+        },
+        {
+          "key": "energy_utilities",
+          "stance": "acceptable"
+        },
+        {
+          "key": "logistics_transport",
+          "stance": "preferred"
+        },
+        {
+          "key": "media_entertainment",
+          "stance": "acceptable"
+        },
+        {
+          "key": "education",
+          "stance": "acceptable"
+        },
+        {
+          "key": "consulting_services",
+          "stance": "acceptable"
+        },
+        {
+          "key": "gambling",
+          "stance": "rejected"
+        },
+        {
+          "key": "defence_aerospace",
+          "stance": "acceptable"
+        },
+        {
+          "key": "other",
+          "stance": "acceptable"
+        }
+      ],
+      "seniority_levels": [
+        {
+          "key": "intern",
+          "stance": "rejected"
+        },
+        {
+          "key": "junior",
+          "stance": "rejected"
+        },
+        {
+          "key": "mid",
+          "stance": "acceptable"
+        },
+        {
+          "key": "senior",
+          "stance": "preferred"
+        },
+        {
+          "key": "staff_principal",
+          "stance": "preferred"
+        },
+        {
+          "key": "management",
+          "stance": "acceptable"
+        },
+        {
+          "key": "executive",
+          "stance": "acceptable"
+        }
+      ],
+      "work_arrangements": [
+        {
+          "key": "remote",
+          "stance": "preferred"
+        },
+        {
+          "key": "hybrid",
+          "stance": "acceptable"
+        },
+        {
+          "key": "onsite",
+          "stance": "rejected"
+        }
+      ]
+    },
+    "title": "Remote backend and data roles in the EU",
+    "weights": {
+      "benefits_flexibility": 0,
+      "career_direction": 0,
+      "company_profile": 7,
+      "compensation": 10,
+      "domain_sector": 10,
+      "engagement_terms": 10,
+      "qualifications": 0,
+      "role_responsibilities": 25,
+      "seniority_experience": 8,
+      "skills_technology": 15,
+      "work_arrangement_location": 15
+    },
+    "work_rules": {
+      "onsite_hybrid": {
+        "base_place": "Porto, Portugal",
+        "latitude": 41.15,
+        "longitude": -8.61,
+        "radius_km": 30
+      },
+      "remote": {
+        "eligible_regions": [
+          "EU"
+        ],
+        "timezone": "Europe/Lisbon",
+        "timezone_tolerance_hours": 2
+      }
+    }
+  },
+  "profile": {
+    "base_location": {
+      "country": "PT",
+      "latitude": 41.15,
+      "longitude": -8.61,
+      "place": "Porto, Portugal",
+      "timezone": "Europe/Lisbon"
+    },
+    "certifications": [
+      {
+        "name": "AWS Solutions Architect Associate",
+        "year": 2022
+      }
+    ],
+    "directions": [
+      {
+        "enabled": true,
+        "label": "Data platforms",
+        "text": "Building the data platform of a product company: streaming, orchestration and reliable pipelines, rather than analytics dashboards."
+      }
+    ],
+    "education": [
+      {
+        "field": "Computer Engineering",
+        "level": "msc"
+      }
+    ],
+    "experience": [
+      {
+        "end": null,
+        "organisation": "Example Logistics Ltd",
+        "sectors": [
+          "logistics_transport",
+          "software_saas"
+        ],
+        "start": "2020-03",
+        "summary": "Owns the event-driven order platform and its data pipelines.",
+        "title": "Senior Backend Engineer"
+      },
+      {
+        "end": "2020-02",
+        "organisation": "Sample Payments SA",
+        "sectors": [
+          "finance_banking"
+        ],
+        "start": "2015-09",
+        "summary": "Built payment APIs and the reconciliation batch jobs.",
+        "title": "Backend Engineer"
+      }
+    ],
+    "headline": "Senior backend and data-platform engineer",
+    "languages": [
+      {
+        "language": "pt",
+        "level": "native"
+      },
+      {
+        "language": "en",
+        "level": "C1"
+      },
+      {
+        "language": "es",
+        "level": "B2"
+      }
+    ],
+    "skills": [
+      {
+        "kind": "technology",
+        "level": "expert",
+        "name": "Python",
+        "years": 10
+      },
+      {
+        "kind": "technology",
+        "level": "expert",
+        "name": "PostgreSQL",
+        "years": 9
+      },
+      {
+        "kind": "technology",
+        "level": "advanced",
+        "name": "FastAPI",
+        "years": 5
+      },
+      {
+        "kind": "technology",
+        "level": "advanced",
+        "name": "Kafka",
+        "years": 5
+      },
+      {
+        "kind": "technology",
+        "level": "advanced",
+        "name": "Kubernetes",
+        "years": 5
+      },
+      {
+        "kind": "technology",
+        "level": "advanced",
+        "name": "AWS",
+        "years": 6
+      },
+      {
+        "kind": "technology",
+        "level": "intermediate",
+        "name": "Terraform",
+        "years": 3
+      },
+      {
+        "kind": "technology",
+        "level": "intermediate",
+        "name": "Go",
+        "years": 3
+      },
+      {
+        "kind": "technology",
+        "level": "advanced",
+        "name": "Apache Airflow",
+        "years": 4
+      }
+    ],
+    "years_experience": 11
+  }
+}

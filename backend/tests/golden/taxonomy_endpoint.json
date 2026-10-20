@@ -1,0 +1,323 @@
+{
+  "groups": [
+    {
+      "kind": "benefit",
+      "terms": [
+        {
+          "label": "Bonus",
+          "term_key": "bonus"
+        },
+        {
+          "label": "Equity",
+          "term_key": "equity"
+        },
+        {
+          "label": "Extra leave",
+          "term_key": "extra_leave"
+        },
+        {
+          "label": "Flexible hours",
+          "term_key": "flexible_hours"
+        },
+        {
+          "label": "Four-day week",
+          "term_key": "four_day_week"
+        },
+        {
+          "label": "Health insurance",
+          "term_key": "health_insurance"
+        },
+        {
+          "label": "Home office budget",
+          "term_key": "home_office_budget"
+        },
+        {
+          "label": "Learning budget",
+          "term_key": "learning_budget"
+        },
+        {
+          "label": "Relocation support",
+          "term_key": "relocation_support"
+        }
+      ]
+    },
+    {
+      "kind": "employer_type",
+      "terms": [
+        {
+          "label": "Agency / recruiter",
+          "term_key": "agency_recruiter"
+        },
+        {
+          "label": "Consultancy / outsourcer",
+          "term_key": "consultancy_outsourcer"
+        },
+        {
+          "label": "Direct employer",
+          "term_key": "direct_employer"
+        }
+      ]
+    },
+    {
+      "kind": "engagement_type",
+      "terms": [
+        {
+          "label": "Contractor / B2B",
+          "term_key": "contractor_b2b"
+        },
+        {
+          "label": "Contract via agency",
+          "term_key": "contractor_agency"
+        },
+        {
+          "label": "Fixed-term employee",
+          "term_key": "employee_fixed_term"
+        },
+        {
+          "label": "Freelance",
+          "term_key": "freelance"
+        },
+        {
+          "label": "Internship",
+          "term_key": "internship"
+        },
+        {
+          "label": "Permanent employee",
+          "term_key": "employee_permanent"
+        }
+      ]
+    },
+    {
+      "kind": "role_family",
+      "terms": [
+        {
+          "label": "AI governance and risk",
+          "term_key": "ai_governance_risk"
+        },
+        {
+          "label": "AI / ML engineering",
+          "term_key": "ai_ml_engineering"
+        },
+        {
+          "label": "AI solutions engineering",
+          "term_key": "ai_solutions_engineering"
+        },
+        {
+          "label": "Backend engineering",
+          "term_key": "backend_engineering"
+        },
+        {
+          "label": "Consulting integration",
+          "term_key": "consulting_integration"
+        },
+        {
+          "label": "Customer support",
+          "term_key": "customer_support"
+        },
+        {
+          "label": "Data analysis",
+          "term_key": "data_analysis"
+        },
+        {
+          "label": "Data engineering",
+          "term_key": "data_engineering"
+        },
+        {
+          "label": "Design and creative",
+          "term_key": "design_creative"
+        },
+        {
+          "label": "DevOps / platform",
+          "term_key": "devops_platform"
+        },
+        {
+          "label": "Enterprise architecture",
+          "term_key": "enterprise_architecture"
+        },
+        {
+          "label": "Finance and accounting",
+          "term_key": "finance_accounting"
+        },
+        {
+          "label": "Frontend engineering",
+          "term_key": "frontend_engineering"
+        },
+        {
+          "label": "HR and recruiting",
+          "term_key": "hr_recruiting"
+        },
+        {
+          "label": "Legal and compliance",
+          "term_key": "legal_compliance"
+        },
+        {
+          "label": "Marketing and communications",
+          "term_key": "marketing_communications"
+        },
+        {
+          "label": "Operations and administration",
+          "term_key": "operations_admin"
+        },
+        {
+          "label": "Other",
+          "term_key": "other"
+        },
+        {
+          "label": "Product management",
+          "term_key": "product_management"
+        },
+        {
+          "label": "Project and programme management",
+          "term_key": "project_programme_management"
+        },
+        {
+          "label": "QA and testing",
+          "term_key": "qa_testing"
+        },
+        {
+          "label": "Sales account management",
+          "term_key": "sales_account_management"
+        },
+        {
+          "label": "Security",
+          "term_key": "security"
+        },
+        {
+          "label": "Software engineering general",
+          "term_key": "software_engineering_general"
+        },
+        {
+          "label": "Solutions architecture",
+          "term_key": "solutions_architecture"
+        },
+        {
+          "label": "Telecom billing (BSS/OSS)",
+          "term_key": "telecom_billing_bss_oss"
+        }
+      ]
+    },
+    {
+      "kind": "sector",
+      "terms": [
+        {
+          "label": "Consulting services",
+          "term_key": "consulting_services"
+        },
+        {
+          "label": "Defence and aerospace",
+          "term_key": "defence_aerospace"
+        },
+        {
+          "label": "Education",
+          "term_key": "education"
+        },
+        {
+          "label": "Energy and utilities",
+          "term_key": "energy_utilities"
+        },
+        {
+          "label": "Enterprise IT",
+          "term_key": "enterprise_it"
+        },
+        {
+          "label": "Finance and banking",
+          "term_key": "finance_banking"
+        },
+        {
+          "label": "Gambling",
+          "term_key": "gambling"
+        },
+        {
+          "label": "Healthcare",
+          "term_key": "healthcare"
+        },
+        {
+          "label": "Insurance",
+          "term_key": "insurance"
+        },
+        {
+          "label": "Logistics and transport",
+          "term_key": "logistics_transport"
+        },
+        {
+          "label": "Manufacturing and industrial",
+          "term_key": "manufacturing_industrial"
+        },
+        {
+          "label": "Media and entertainment",
+          "term_key": "media_entertainment"
+        },
+        {
+          "label": "Other",
+          "term_key": "other"
+        },
+        {
+          "label": "Public sector",
+          "term_key": "public_sector"
+        },
+        {
+          "label": "Retail and e-commerce",
+          "term_key": "retail_ecommerce"
+        },
+        {
+          "label": "Software / SaaS",
+          "term_key": "software_saas"
+        },
+        {
+          "label": "Telecom",
+          "term_key": "telecom"
+        }
+      ]
+    },
+    {
+      "kind": "seniority_level",
+      "terms": [
+        {
+          "label": "Executive",
+          "term_key": "executive"
+        },
+        {
+          "label": "Intern",
+          "term_key": "intern"
+        },
+        {
+          "label": "Junior",
+          "term_key": "junior"
+        },
+        {
+          "label": "Management",
+          "term_key": "management"
+        },
+        {
+          "label": "Mid",
+          "term_key": "mid"
+        },
+        {
+          "label": "Senior",
+          "term_key": "senior"
+        },
+        {
+          "label": "Staff / Principal",
+          "term_key": "staff_principal"
+        }
+      ]
+    },
+    {
+      "kind": "work_arrangement",
+      "terms": [
+        {
+          "label": "Hybrid",
+          "term_key": "hybrid"
+        },
+        {
+          "label": "On-site",
+          "term_key": "onsite"
+        },
+        {
+          "label": "Remote",
+          "term_key": "remote"
+        }
+      ]
+    }
+  ]
+}

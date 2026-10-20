@@ -1,0 +1,253 @@
+{
+  "": [],
+  "AI Data Annotator": [],
+  "AI Engineer": [
+    "data"
+  ],
+  "AI/ML Engineer": [
+    "data"
+  ],
+  "Accountant": [],
+  "Analytics Engineer": [
+    "data"
+  ],
+  "Android Engineer": [
+    "software"
+  ],
+  "AppSec Engineer": [
+    "security"
+  ],
+  "Artificial Intelligence Researcher": [
+    "data"
+  ],
+  "Audio Rater": [],
+  "BI Analyst": [
+    "data"
+  ],
+  "BSS/OSS Architect": [
+    "telecom"
+  ],
+  "Backend Developer (Python)": [
+    "software"
+  ],
+  "Backend Developer - Cloud / Security": [
+    "devops",
+    "security",
+    "software"
+  ],
+  "Backend-Developer": [
+    "software"
+  ],
+  "Billing Consultant": [
+    "telecom"
+  ],
+  "Business Intelligence Developer": [
+    "data",
+    "software"
+  ],
+  "Care Assistant": [],
+  "Carpenter": [],
+  "Cashier": [],
+  "Charging and Mediation Specialist": [
+    "telecom"
+  ],
+  "Chef de Partie": [],
+  "Civil Engineer": [],
+  "Cloud Engineer (AWS)": [
+    "devops"
+  ],
+  "Cloudera Specialist": [],
+  "Convergent Billing Developer": [
+    "software",
+    "telecom"
+  ],
+  "Customer Service Agent": [],
+  "Cybersecurity Analyst": [
+    "security"
+  ],
+  "DEVOPS ENGINEER": [
+    "devops"
+  ],
+  "Data & AI Engineer": [
+    "data"
+  ],
+  "Data Annotation Specialist (remote)": [],
+  "Data Engineer": [
+    "data"
+  ],
+  "Data Entry Clerk": [],
+  "Data Entry and Security Clerk": [],
+  "Data Labelling Analyst": [],
+  "Data/Analytics Lead": [
+    "data"
+  ],
+  "Database Administrator (SQL)": [
+    "data"
+  ],
+  "Delivery Driver (category B licence)": [],
+  "DevOps Engineer": [
+    "devops"
+  ],
+  "ETL Developer": [
+    "data",
+    "software"
+  ],
+  "Electrician": [],
+  "Engineer": [],
+  "Forklift Operator": [],
+  "Frontend Engineer - React": [
+    "software"
+  ],
+  "Full Stack Developer": [
+    "software"
+  ],
+  "Fullstack Engineer, TypeScript": [
+    "software"
+  ],
+  "Golang Backend Engineer": [
+    "software"
+  ],
+  "Graphic Designer": [],
+  "HR Business Partner": [],
+  "HVAC Technician": [],
+  "Hardware Engineer": [],
+  "Hotel Receptionist": [],
+  "InfoSec Specialist": [
+    "security"
+  ],
+  "Infrastructure Engineer": [
+    "devops"
+  ],
+  "Initiativbewerbung Software Developer": [],
+  "Integration Engineer": [
+    "software"
+  ],
+  "Java": [
+    "software"
+  ],
+  "Java Developer": [
+    "software"
+  ],
+  "Javascript Developer": [
+    "software"
+  ],
+  "Kotlin Developer": [
+    "software"
+  ],
+  "Kubernetes Platform Engineer": [
+    "devops"
+  ],
+  "LLM Application Developer": [
+    "data",
+    "software"
+  ],
+  "Linguist - AI Training": [],
+  "ML Platform Engineer": [
+    "data",
+    "devops"
+  ],
+  "MLOps Engineer": [
+    "data"
+  ],
+  "Machine Learning Engineer": [
+    "data"
+  ],
+  "Maintenance Electrician (industrial)": [],
+  "Manager": [],
+  "Marketing Manager": [],
+  "Mechanic": [],
+  "Mechanical Engineer": [],
+  "Mobile Developer (iOS)": [
+    "software"
+  ],
+  "Office Administrator": [],
+  "Online Data Analyst": [],
+  "PHP Developer": [
+    "software"
+  ],
+  "Payroll Administrator": [],
+  "Penetration Tester": [],
+  "Pentester": [
+    "security"
+  ],
+  "Pharmacy Technician": [],
+  "Platform Engineer": [
+    "devops"
+  ],
+  "Plumber": [],
+  "Primary School Teacher": [],
+  "Production Operator": [],
+  "Pythonista": [],
+  "QA Engineer": [
+    "software"
+  ],
+  "Registered Nurse": [],
+  "Revenue Assurance Analyst": [
+    "telecom"
+  ],
+  "Ruby on Rails Engineer": [
+    "software"
+  ],
+  "Rust Systems Programmer": [
+    "software"
+  ],
+  "SDET - Automation": [
+    "software"
+  ],
+  "SRE": [
+    "devops"
+  ],
+  "Sales Assistant": [],
+  "Security Engineer": [
+    "security"
+  ],
+  "Security Guard": [
+    "security"
+  ],
+  "Senior Backend Engineer": [
+    "software"
+  ],
+  "Senior Data Scientist": [
+    "data"
+  ],
+  "Senior Engineer": [],
+  "Site Reliability Engineer": [
+    "devops"
+  ],
+  "Software Engineer, Payments": [
+    "software"
+  ],
+  "Solution Consultant": [
+    "software"
+  ],
+  "Solutions Architect": [
+    "software"
+  ],
+  "Solutions Engineer": [
+    "software"
+  ],
+  "Sound Designer": [],
+  "Sysadmin Linux": [
+    "devops"
+  ],
+  "Systems Administrator": [],
+  "Talent Pool - Software": [],
+  "Telecom Solutions Lead": [
+    "telecom"
+  ],
+  "Telecommunications Engineer": [
+    "telecom"
+  ],
+  "Terraform Specialist": [
+    "devops"
+  ],
+  "Transcription Specialist": [],
+  "Translator (English to Portuguese)": [],
+  "Waiter": [],
+  "Warehouse Operative": [],
+  "Welder": [],
+  "Wind Turbine Technician": [],
+  "back_end developer": [
+    "software"
+  ]
+}

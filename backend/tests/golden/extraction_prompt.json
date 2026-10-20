@@ -1,0 +1,846 @@
+{
+  "json_schema": {
+    "$defs": {
+      "Evidenced_Annotated_str__StringConstraints__": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence"
+          },
+          "status": {
+            "enum": [
+              "known",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "maxLength": 80,
+                "pattern": "^[a-z][a-z0-9_]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "status",
+          "confidence"
+        ],
+        "title": "Evidenced[Annotated[str, StringConstraints]]",
+        "type": "object"
+      },
+      "Evidenced_ExtractedCompensation_": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence"
+          },
+          "status": {
+            "enum": [
+              "known",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ExtractedCompensation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "value",
+          "status",
+          "confidence"
+        ],
+        "title": "Evidenced[ExtractedCompensation]",
+        "type": "object"
+      },
+      "Evidenced_ExtractedSectors_": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence"
+          },
+          "status": {
+            "enum": [
+              "known",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ExtractedSectors"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "value",
+          "status",
+          "confidence"
+        ],
+        "title": "Evidenced[ExtractedSectors]",
+        "type": "object"
+      },
+      "Evidenced_Literal__full_time____part_time___": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence"
+          },
+          "status": {
+            "enum": [
+              "known",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "enum": [
+                  "full_time",
+                  "part_time"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "status",
+          "confidence"
+        ],
+        "title": "Evidenced[Literal['full_time', 'part_time']]",
+        "type": "object"
+      },
+      "Evidenced_Literal__remote____hybrid____onsite___": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence"
+          },
+          "status": {
+            "enum": [
+              "known",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "enum": [
+                  "remote",
+                  "hybrid",
+                  "onsite"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "status",
+          "confidence"
+        ],
+        "title": "Evidenced[Literal['remote', 'hybrid', 'onsite']]",
+        "type": "object"
+      },
+      "Evidenced_bool_": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence"
+          },
+          "status": {
+            "enum": [
+              "known",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "status",
+          "confidence"
+        ],
+        "title": "Evidenced[bool]",
+        "type": "object"
+      },
+      "Evidenced_int_": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence"
+          },
+          "status": {
+            "enum": [
+              "known",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "status",
+          "confidence"
+        ],
+        "title": "Evidenced[int]",
+        "type": "object"
+      },
+      "Evidenced_list_Annotated_str__StringConstraints___": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence"
+          },
+          "status": {
+            "enum": [
+              "known",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "items": {
+                  "maxLength": 80,
+                  "pattern": "^[a-z][a-z0-9_]*$",
+                  "type": "string"
+                },
+                "maxItems": 12,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "status",
+          "confidence"
+        ],
+        "title": "Evidenced[list[Annotated[str, StringConstraints]]]",
+        "type": "object"
+      },
+      "Evidenced_list_ExtractedLanguage__": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence"
+          },
+          "status": {
+            "enum": [
+              "known",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/$defs/ExtractedLanguage"
+                },
+                "maxItems": 12,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "status",
+          "confidence"
+        ],
+        "title": "Evidenced[list[ExtractedLanguage]]",
+        "type": "object"
+      },
+      "Evidenced_list_str__": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence"
+          },
+          "status": {
+            "enum": [
+              "known",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 12,
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "status",
+          "confidence"
+        ],
+        "title": "Evidenced[list[str]]",
+        "type": "object"
+      },
+      "Evidenced_str_": {
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Evidence"
+          },
+          "status": {
+            "enum": [
+              "known",
+              "unknown"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "required": [
+          "value",
+          "status",
+          "confidence"
+        ],
+        "title": "Evidenced[str]",
+        "type": "object"
+      },
+      "ExtractedCompensation": {
+        "additionalProperties": false,
+        "description": "Pay exactly as stated in the posting.",
+        "properties": {
+          "currency": {
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "disclosed": {
+            "default": true,
+            "title": "Disclosed",
+            "type": "boolean"
+          },
+          "form": {
+            "enum": [
+              "annual_salary",
+              "day_rate",
+              "hourly_rate"
+            ],
+            "title": "Form",
+            "type": "string"
+          },
+          "max": {
+            "minimum": 0,
+            "title": "Max",
+            "type": "number"
+          },
+          "min": {
+            "minimum": 0,
+            "title": "Min",
+            "type": "number"
+          },
+          "period": {
+            "enum": [
+              "year",
+              "month",
+              "day",
+              "hour"
+            ],
+            "title": "Period",
+            "type": "string"
+          }
+        },
+        "required": [
+          "form",
+          "currency",
+          "min",
+          "max",
+          "period"
+        ],
+        "title": "ExtractedCompensation",
+        "type": "object"
+      },
+      "ExtractedLanguage": {
+        "additionalProperties": false,
+        "description": "A language requirement.",
+        "properties": {
+          "language": {
+            "pattern": "^[a-z]{2}$",
+            "title": "Language",
+            "type": "string"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Level"
+          }
+        },
+        "required": [
+          "language"
+        ],
+        "title": "ExtractedLanguage",
+        "type": "object"
+      },
+      "ExtractedRoleFamily": {
+        "additionalProperties": false,
+        "description": "A role family with confidence and a quote.",
+        "properties": {
+          "confidence": {
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "evidence": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Evidence",
+            "type": "string"
+          },
+          "key": {
+            "maxLength": 80,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "confidence",
+          "evidence"
+        ],
+        "title": "ExtractedRoleFamily",
+        "type": "object"
+      },
+      "ExtractedSectors": {
+        "additionalProperties": false,
+        "description": "Primary and secondary sector keys.",
+        "properties": {
+          "primary": {
+            "maxLength": 80,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "title": "Primary",
+            "type": "string"
+          },
+          "secondary": {
+            "items": {
+              "maxLength": 80,
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "type": "string"
+            },
+            "maxItems": 12,
+            "title": "Secondary",
+            "type": "array"
+          }
+        },
+        "required": [
+          "primary"
+        ],
+        "title": "ExtractedSectors",
+        "type": "object"
+      },
+      "ExtractedSkill": {
+        "additionalProperties": false,
+        "description": "A skill mention (by name; canonicalisation happens later) with a quote.",
+        "properties": {
+          "evidence": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Evidence",
+            "type": "string"
+          },
+          "importance": {
+            "enum": [
+              "must",
+              "nice"
+            ],
+            "title": "Importance",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "importance",
+          "evidence"
+        ],
+        "title": "ExtractedSkill",
+        "type": "object"
+      }
+    },
+    "additionalProperties": false,
+    "description": "What the model must return for one job description.",
+    "properties": {
+      "benefits_mentioned": {
+        "$ref": "#/$defs/Evidenced_list_Annotated_str__StringConstraints___"
+      },
+      "compensation": {
+        "$ref": "#/$defs/Evidenced_ExtractedCompensation_"
+      },
+      "education_required": {
+        "$ref": "#/$defs/Evidenced_str_"
+      },
+      "employer_type": {
+        "$ref": "#/$defs/Evidenced_Annotated_str__StringConstraints__"
+      },
+      "employment_types": {
+        "$ref": "#/$defs/Evidenced_list_Annotated_str__StringConstraints___"
+      },
+      "hours": {
+        "$ref": "#/$defs/Evidenced_Literal__full_time____part_time___"
+      },
+      "languages_required": {
+        "$ref": "#/$defs/Evidenced_list_ExtractedLanguage__"
+      },
+      "locations": {
+        "$ref": "#/$defs/Evidenced_list_str__"
+      },
+      "remote_regions": {
+        "$ref": "#/$defs/Evidenced_list_str__"
+      },
+      "role_families": {
+        "items": {
+          "$ref": "#/$defs/ExtractedRoleFamily"
+        },
+        "maxItems": 3,
+        "title": "Role Families",
+        "type": "array"
+      },
+      "schema_version": {
+        "const": 1,
+        "default": 1,
+        "title": "Schema Version",
+        "type": "integer"
+      },
+      "sectors": {
+        "$ref": "#/$defs/Evidenced_ExtractedSectors_"
+      },
+      "seniority_levels": {
+        "$ref": "#/$defs/Evidenced_list_Annotated_str__StringConstraints___"
+      },
+      "skills": {
+        "items": {
+          "$ref": "#/$defs/ExtractedSkill"
+        },
+        "maxItems": 25,
+        "title": "Skills",
+        "type": "array"
+      },
+      "title": {
+        "$ref": "#/$defs/Evidenced_str_"
+      },
+      "visa_sponsorship": {
+        "$ref": "#/$defs/Evidenced_bool_"
+      },
+      "work_mode": {
+        "$ref": "#/$defs/Evidenced_Literal__remote____hybrid____onsite___"
+      },
+      "years_required_min": {
+        "$ref": "#/$defs/Evidenced_int_"
+      }
+    },
+    "required": [
+      "title",
+      "employment_types",
+      "hours",
+      "work_mode",
+      "remote_regions",
+      "locations",
+      "compensation",
+      "seniority_levels",
+      "sectors",
+      "languages_required",
+      "employer_type",
+      "education_required",
+      "benefits_mentioned",
+      "visa_sponsorship",
+      "role_families",
+      "skills"
+    ],
+    "title": "ExtractionOutput",
+    "type": "object"
+  },
+  "system": "You extract structured facts from one job posting and answer with a JSON object.\n\nRules:\n1. Use only what the posting states. Never guess. If an attribute is not stated, set its status to \"unknown\", its value to null, its confidence to 0 and its evidence to null.\n2. For every known attribute give \"evidence\": an exact quote copied verbatim from the posting title or description (at most 200 characters). Never paraphrase, translate or invent a quote.\n3. \"confidence\" is a number from 0 to 1.\n4. For role families, sectors, seniority, employment types, employer type and benefits, use only the allowed keys listed in the message. If none fits, leave the attribute unknown.\n5. Compensation exactly as stated: form (annual_salary, day_rate or hourly_rate), ISO currency code, min, max (equal when one figure is given) and period (year, month, day or hour). Do not convert.\n6. work_mode is remote, hybrid or onsite. remote_regions lists the regions or countries remote work is open to (for example EU, UK, PT, WORLD); locations lists the places named for the job.\n7. skills lists technologies and skills the posting asks for with importance \"must\" (required) or \"nice\" (preferred), named as written, at most 25.\n8. role_families: list the one to three families that best fit the role, each with a quote from the posting describing the work. Leave it empty only if no role is described.\n9. The evidence is always text from the posting, never the value or a key. For example, for the posting text \"Fully remote within the EU.\" the answer is {\"value\": \"remote\", \"status\": \"known\", \"confidence\": 0.95, \"evidence\": \"Fully remote within the EU\"}; for an attribute the posting never mentions it is {\"value\": null, \"status\": \"unknown\", \"confidence\": 0, \"evidence\": null}.\n10. employment_types: tell the kinds of work contract apart. employee_permanent is a permanent employment contract. employee_fixed_term is a fixed-term or temporary employment contract. contractor_b2b is a self-employed contractor invoicing through their own company (B2B, limited company, sole trader). freelance is an independent freelancer or project-based self-employed work. contractor_agency is a contract placed through a recruitment agency or umbrella company, paid by day or hour. A day rate or an hourly rate with no mention of employment is a contractor kind, not employee_permanent.\n11. Answer with the JSON object only.",
+  "truncated": false,
+  "user": "Title: Senior AI Solutions Engineer\n\nSource hints (structured fields from the job board; they may be wrong, confirm or contradict them from the text):\n{\"locations\": [\"Remote - EU\"], \"departments\": [\"Engineering\"]}\n\nAllowed keys:\n- benefit: bonus, equity, extra_leave, flexible_hours, four_day_week, health_insurance, home_office_budget, learning_budget, relocation_support\n- employer_type: agency_recruiter, consultancy_outsourcer, direct_employer\n- engagement_type: contractor_agency, contractor_b2b, employee_fixed_term, employee_permanent, freelance, internship\n- role_family: ai_governance_risk, ai_ml_engineering, ai_solutions_engineering, backend_engineering, consulting_integration, customer_support, data_analysis, data_engineering, design_creative, devops_platform, enterprise_architecture, finance_accounting, frontend_engineering, hr_recruiting, legal_compliance, marketing_communications, operations_admin, other, product_management, project_programme_management, qa_testing, sales_account_management, security, software_engineering_general, solutions_architecture, telecom_billing_bss_oss\n- sector: consulting_services, defence_aerospace, education, energy_utilities, enterprise_it, finance_banking, gambling, healthcare, insurance, logistics_transport, manufacturing_industrial, media_entertainment, other, public_sector, retail_ecommerce, software_saas, telecom\n- seniority_level: executive, intern, junior, management, mid, senior, staff_principal\n- work_arrangement: hybrid, onsite, remote\n\nPosting:\n<<<\nAbout the role\nDesign and evaluate LLM-powered features for enterprise customers. This is a 12-month contract.\nFully remote within EU time zones. Our customers are large enterprises in finance and telecom.\nRequirements\n- Experience with Python and API design.\n- Fluent English.\nWe offer flexible hours. Join our team in Lisbon or work remotely.\n>>>"
+}

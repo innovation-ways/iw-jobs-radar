@@ -4,6 +4,7 @@ import {
   Rss,
   Settings,
   Sun,
+  Tags,
   TrendingUp,
   User,
   type LucideIcon,
@@ -57,6 +58,12 @@ export const SETUP_NAV: NavItem[] = [
     label: 'Profile & intent',
     icon: User,
     description: 'Your career profile and what you are looking for.',
+  },
+  {
+    path: '/vocabulary',
+    label: 'Vocabulary',
+    icon: Tags,
+    description: 'The role families and sectors jobs are sorted into.',
   },
   {
     path: '/settings',

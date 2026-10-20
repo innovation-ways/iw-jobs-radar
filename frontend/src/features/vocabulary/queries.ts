@@ -1,0 +1,49 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { api } from '@/api/client'
+import { unwrap } from '@/api/errors'
+import type { components } from '@/api/schema'
+
+type Schemas = components['schemas']
+export type VocabularyTerm = Schemas['TaxonomyTermAdmin']
+
+const TERMS = ['taxonomy-terms'] as const
+
+/** Every role family and sector, including the ones switched off. */
+export function useVocabularyTerms() {
+  return useQuery({
+    queryKey: TERMS,
+    queryFn: () => unwrap(api.GET('/api/v1/taxonomy/terms')),
+  })
+}
+
+/**
+ * Add, rename, switch off and switch on. Each refreshes this list and the taxonomy the intent form
+ * is built from (that one is cached for the whole session otherwise).
+ */
+export function useVocabularyActions() {
+  const queryClient = useQueryClient()
+  const refresh = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: TERMS }),
+      queryClient.invalidateQueries({ queryKey: ['taxonomy'] }),
+    ])
+  }
+  const addTerm = useMutation({
+    mutationFn: (body: Schemas['TaxonomyTermCreate']) =>
+      unwrap(api.POST('/api/v1/taxonomy/terms', { body })),
+    onSuccess: refresh,
+  })
+  const changeTerm = useMutation({
+    mutationFn: (input: { kind: string; termKey: string } & Schemas['TaxonomyTermUpdate']) => {
+      const { kind, termKey, ...body } = input
+      return unwrap(
+        api.PATCH('/api/v1/taxonomy/terms/{kind}/{term_key}', {
+          params: { path: { kind, term_key: termKey } },
+          body,
+        }),
+      )
+    },
+    onSuccess: refresh,
+  })
+  return { addTerm, changeTerm }
+}

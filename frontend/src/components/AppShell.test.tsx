@@ -94,6 +94,7 @@ const ITEMS = [
   'Trends',
   'Sources',
   'Profile & intent',
+  'Vocabulary',
   'AI & privacy',
 ]
 

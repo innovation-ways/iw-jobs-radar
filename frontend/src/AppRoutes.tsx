@@ -10,6 +10,7 @@ import { ProfileIntent } from '@/pages/ProfileIntent'
 import { Sources } from '@/pages/Sources'
 import { Trends } from '@/pages/Trends'
 import { Today } from '@/pages/Today'
+import { Vocabulary } from '@/pages/Vocabulary'
 import { ALL_NAV } from '@/navigation'
 
 /** Route table. Screens not built yet are placeholders (see the implementation guide). */
@@ -23,6 +24,7 @@ export function AppRoutes() {
         <Route path="/sources" element={<Sources />} />
         <Route path="/profile" element={<ProfileIntent />} />
         <Route path="/settings" element={<AiPrivacy />} />
+        <Route path="/vocabulary" element={<Vocabulary />} />
         <Route path="/companies" element={<Companies />} />
         <Route path="/trends" element={<Trends />} />
         <Route path="/about" element={<About />} />
@@ -34,6 +36,7 @@ export function AppRoutes() {
               '/sources',
               '/profile',
               '/settings',
+              '/vocabulary',
               '/companies',
               '/trends',
             ].includes(item.path),

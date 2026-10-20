@@ -7,7 +7,7 @@ cannot change the model's instructions, the demo data or the validation of an ex
 from collections import defaultdict
 
 from tests.data import SAMPLE_JOB_DESCRIPTION, SAMPLE_JOB_TITLE, sample_intent
-from tests.golden import check_golden, load_golden
+from tests.golden import check_golden, golden_optional_terms, golden_taxonomy, load_golden
 
 from jobs_radar.demo.persona import demo_intent, demo_profile
 from jobs_radar.schemas.intent import IntentDefinition, validate_intent_against_taxonomy
@@ -44,9 +44,12 @@ def test_c2_extraction_prompt_is_byte_for_byte_what_it_is_today() -> None:
 
 def test_c6_today_s_intents_still_validate_against_the_taxonomy() -> None:
     """The documented sample and the demo persona's intent are accepted and complete."""
-    for data in (sample_intent(), demo_intent()):
+    for data in (sample_intent(), demo_intent(golden_taxonomy())):
         intent = IntentDefinition.model_validate(data)
-        assert validate_intent_against_taxonomy(intent, current_taxonomy()) == []
+        assert (
+            validate_intent_against_taxonomy(intent, current_taxonomy(), golden_optional_terms())
+            == []
+        )
         # A round trip must not lose or add anything.
         assert intent.model_dump(mode="json") == IntentDefinition.model_validate(
             intent.model_dump(mode="json")
@@ -55,4 +58,6 @@ def test_c6_today_s_intents_still_validate_against_the_taxonomy() -> None:
 
 def test_c11_demo_persona_is_unchanged() -> None:
     """``make demo`` shows the same profile and the same intent stances."""
-    check_golden("demo_persona", {"profile": demo_profile(), "intent": demo_intent()})
+    check_golden(
+        "demo_persona", {"profile": demo_profile(), "intent": demo_intent(golden_taxonomy())}
+    )

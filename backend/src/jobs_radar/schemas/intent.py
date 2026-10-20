@@ -1,13 +1,11 @@
 """Search Intent contract and validation rules (document 13, section 4; ADR-024, ADR-026)."""
 
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from typing import Annotated, Literal, Self
 
 from pydantic import Field, StringConstraints, field_validator, model_validator
 
 from jobs_radar.domain.enums import Stance
-from jobs_radar.domain.taxonomy_additions import TAXONOMY_V2_ADDITIONS
-from jobs_radar.domain.taxonomy_v3 import TAXONOMY_V3_ADDITIONS
 from jobs_radar.schemas.common import (
     CurrencyCode,
     IanaTimezone,
@@ -232,36 +230,25 @@ _GROUP_KINDS = {
 _OPEN_GROUPS = {"role_families", "sectors"}
 
 
-def later_terms() -> dict[str, frozenset[str]]:
-    """Return the terms added to the taxonomy after version 1, by kind.
-
-    An intent saved before such a term existed does not list it. The term is therefore optional
-    in the closed groups and counts as acceptable (what the form shows for it) until the owner
-    chooses a stance (ADR-073).
-    """
-    merged: dict[str, set[str]] = {}
-    for additions in (TAXONOMY_V2_ADDITIONS, TAXONOMY_V3_ADDITIONS):
-        for kind, keys in additions.items():
-            merged.setdefault(kind, set()).update(keys)
-    return {kind: frozenset(keys) for kind, keys in merged.items()}
-
-
 def validate_intent_against_taxonomy(
-    intent: IntentDefinition, taxonomy: Mapping[str, set[str]]
+    intent: IntentDefinition,
+    taxonomy: Mapping[str, set[str]],
+    optional: Mapping[str, Collection[str]] | None = None,
 ) -> list[str]:
     """Check the intent against the live taxonomy; returns human-readable errors (empty if valid).
 
     Every key must exist, and the closed groups (everything except role families and sectors) must
-    list every term so that no option silently falls back to a default.
+    list every term so that no option silently falls back to a default. ``optional`` names, by kind,
+    the terms added after the intent may have been saved (ADR-073): those may be missing.
     """
     errors: list[str] = []
-    optional = later_terms()
+    optional = optional or {}
     for group, kind in _GROUP_KINDS.items():
         entries: list[StanceEntry] = getattr(intent.stances, group)
         known = taxonomy.get(kind, set())
         listed = {entry.key for entry in entries}
         errors.extend(f"{group}: unknown key '{key}'" for key in sorted(listed - known))
-        required = known - optional.get(kind, frozenset())
+        required = known - set(optional.get(kind, ()))
         if group not in _OPEN_GROUPS and (missing := sorted(required - listed)):
             errors.append(f"{group}: missing options: {', '.join(missing)}")
     benefits = taxonomy.get("benefit", set())

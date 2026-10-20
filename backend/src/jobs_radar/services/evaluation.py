@@ -42,6 +42,7 @@ from jobs_radar.domain.matching.types import Evaluation
 from jobs_radar.repositories.directions import DirectionRepository
 from jobs_radar.repositories.evaluations import EvaluationRepository
 from jobs_radar.repositories.skills import SkillRepository
+from jobs_radar.repositories.taxonomy import TaxonomyRepository
 from jobs_radar.schemas.intent import IntentDefinition
 from jobs_radar.schemas.profile import ProfileFacts
 from jobs_radar.services.evaluation_inputs import intent_view, job_attributes, profile_view
@@ -232,7 +233,8 @@ class EvaluationService:
         relations = await self._relations(
             [skill.skill_id for skill in job.skills], set(profile.skill_levels), judge=judge
         )
-        result = evaluate(job, profile, intent_view(definition), relations)
+        optional_terms = await TaxonomyRepository(self._session).optional_keys_by_kind()
+        result = evaluate(job, profile, intent_view(definition, optional_terms), relations)
         return _Scored(result, definition, basis, snapshot)
 
     async def evaluate(

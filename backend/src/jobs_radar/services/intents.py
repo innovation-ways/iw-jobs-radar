@@ -40,7 +40,11 @@ class IntentService:
 
     async def _validate(self, definition: IntentDefinition) -> None:
         """Reject keys that are not in the live taxonomy and closed groups that skip options."""
-        errors = validate_intent_against_taxonomy(definition, await self._taxonomy.keys_by_kind())
+        errors = validate_intent_against_taxonomy(
+            definition,
+            await self._taxonomy.keys_by_kind(),
+            await self._taxonomy.optional_keys_by_kind(),
+        )
         if errors:
             msg = "The intent does not match the taxonomy."
             raise InputValidationError(msg, details={"errors": errors})

@@ -4,10 +4,8 @@ The persona is a senior backend and data-platform engineer based in Porto who wa
 inside the EU. Every value is invented; nothing resembles a real CV.
 """
 
+from collections.abc import Mapping, Sequence
 from typing import Any
-
-from jobs_radar.domain.taxonomy_additions import TAXONOMY_V2_ADDITIONS
-from jobs_radar.domain.taxonomy_seed import TAXONOMY_SEED_V1
 
 DEMO_PROFILE_TITLE = "Demo profile"
 
@@ -89,12 +87,12 @@ def demo_profile() -> dict[str, Any]:
 
 
 def _stances(
-    kind: str, preferred: tuple[str, ...] = (), rejected: tuple[str, ...] = ()
+    taxonomy: Mapping[str, Sequence[str]],
+    kind: str,
+    preferred: tuple[str, ...] = (),
+    rejected: tuple[str, ...] = (),
 ) -> list[dict[str, str]]:
     """Stance entries for every term of ``kind``; unlisted terms are acceptable."""
-    keys = TAXONOMY_SEED_V1[kind]
-    if kind == "role_family":
-        keys = (*keys, *TAXONOMY_V2_ADDITIONS["role_family"])
     return [
         {
             "key": key,
@@ -104,30 +102,37 @@ def _stances(
             if key in rejected
             else "acceptable",
         }
-        for key in keys
+        for key in taxonomy[kind]
     ]
 
 
-def demo_intent() -> dict[str, Any]:
-    """Return the persona's search intent (a fresh dictionary each call)."""
+def demo_intent(taxonomy: Mapping[str, Sequence[str]]) -> dict[str, Any]:
+    """Return the persona's search intent (a fresh dictionary each call).
+
+    ``taxonomy`` lists the term keys of each kind, as the database holds them, so that every closed
+    group names every option (document 13, section 4.1).
+    """
     return {
         "schema_version": 1,
         "title": "Remote backend and data roles in the EU",
         "stances": {
-            "role_families": _stances("role_family", _PREFERRED_ROLES, _REJECTED_ROLES),
-            "work_arrangements": _stances("work_arrangement", ("remote",), ("onsite",)),
+            "role_families": _stances(taxonomy, "role_family", _PREFERRED_ROLES, _REJECTED_ROLES),
+            "work_arrangements": _stances(taxonomy, "work_arrangement", ("remote",), ("onsite",)),
             "engagement_types": _stances(
-                "engagement_type", ("employee_permanent",), ("internship",)
+                taxonomy, "engagement_type", ("employee_permanent",), ("internship",)
             ),
             "hours": {"part_time": "rejected"},
             "seniority_levels": _stances(
+                taxonomy,
                 "seniority_level",
                 ("senior", "staff_principal"),
                 ("intern", "junior"),
             ),
-            "sectors": _stances("sector", ("software_saas", "logistics_transport"), ("gambling",)),
+            "sectors": _stances(
+                taxonomy, "sector", ("software_saas", "logistics_transport"), ("gambling",)
+            ),
             "employer_types": _stances(
-                "employer_type", ("direct_employer",), ("agency_recruiter",)
+                taxonomy, "employer_type", ("direct_employer",), ("agency_recruiter",)
             ),
         },
         "work_rules": {

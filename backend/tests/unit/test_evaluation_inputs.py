@@ -9,6 +9,7 @@ from tests.data import (
     sample_intent,
     sample_profile_facts,
 )
+from tests.golden import golden_optional_terms
 
 from jobs_radar.schemas.intent import IntentDefinition
 from jobs_radar.schemas.profile import ProfileFacts
@@ -105,7 +106,7 @@ def test_a_profile_becomes_skill_levels_languages_and_education() -> None:
 
 
 def test_an_intent_becomes_stances_rules_pay_and_weights() -> None:
-    view = intent_view(IntentDefinition.model_validate(sample_intent()))
+    view = intent_view(IntentDefinition.model_validate(sample_intent()), {})
     assert view.stances["role_families"]["ai_solutions_engineering"] == "preferred"
     assert view.stances["work_arrangements"]["remote"] == "preferred"
     assert view.part_time == "rejected"
@@ -274,7 +275,7 @@ def test_a_term_the_intent_does_not_list_is_acceptable_when_it_was_added_after_v
     """ADR-073: an older intent has no stance for ``contractor_agency``; the form shows it as OK."""
     definition = IntentDefinition.model_validate(sample_intent())
     assert "contractor_agency" not in {e.key for e in definition.stances.engagement_types}
-    view = intent_view(definition)
+    view = intent_view(definition, golden_optional_terms())
     assert view.stances["engagement_types"]["contractor_agency"] == "acceptable"
     # A stance the owner did set is never overridden.
     assert view.stances["engagement_types"]["contractor_b2b"] == "preferred"

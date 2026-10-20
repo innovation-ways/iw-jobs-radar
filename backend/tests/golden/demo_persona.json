@@ -79,6 +79,10 @@
         {
           "key": "internship",
           "stance": "rejected"
+        },
+        {
+          "key": "contractor_agency",
+          "stance": "acceptable"
         }
       ],
       "hours": {

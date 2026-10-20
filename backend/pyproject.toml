@@ -155,6 +155,28 @@ forbidden_modules = [
 ]
 
 [[tool.importlinter.contracts]]
+name = "Frozen taxonomy seeds are for migrations only (ADR-080)"
+type = "forbidden"
+source_modules = [
+    "jobs_radar.api",
+    "jobs_radar.schemas",
+    "jobs_radar.services",
+    "jobs_radar.repositories",
+    "jobs_radar.db",
+    "jobs_radar.adapters",
+    "jobs_radar.worker",
+    "jobs_radar.core",
+    "jobs_radar.demo",
+    "jobs_radar.tools",
+    "jobs_radar.mcp_server",
+]
+forbidden_modules = [
+    "jobs_radar.domain.taxonomy_seed",
+    "jobs_radar.domain.taxonomy_additions",
+    "jobs_radar.domain.taxonomy_v3",
+]
+
+[[tool.importlinter.contracts]]
 name = "The MCP server only talks to the API"
 type = "forbidden"
 source_modules = ["jobs_radar.mcp_server"]

@@ -4,7 +4,7 @@ These functions only translate; they decide nothing. Anything the extraction did
 stays ``None`` or empty so the engine treats it as unknown.
 """
 
-from collections.abc import Sequence
+from collections.abc import Collection, Mapping, Sequence
 from typing import Any, cast
 
 from jobs_radar.adapters.sources.countries import country_code
@@ -20,7 +20,7 @@ from jobs_radar.domain.matching.types import (
 )
 from jobs_radar.domain.regions import expand_regions
 from jobs_radar.schemas.extraction import Evidenced, ExtractionOutput
-from jobs_radar.schemas.intent import IntentDefinition, later_terms
+from jobs_radar.schemas.intent import IntentDefinition
 from jobs_radar.schemas.profile import ProfileFacts
 from jobs_radar.services.remote_places import source_remote_countries
 
@@ -184,11 +184,17 @@ _CLOSED_GROUPS = {
 _OPEN_GROUPS_VIEW = ("role_families", "sectors")
 
 
-def intent_view(definition: IntentDefinition) -> IntentView:
-    """Map an intent revision to what matching needs."""
+def intent_view(
+    definition: IntentDefinition, optional_terms: Mapping[str, Collection[str]]
+) -> IntentView:
+    """Map an intent revision to what matching needs.
+
+    ``optional_terms`` are the terms added to the taxonomy after the intent may have been saved
+    (``TaxonomyRepository.optional_keys_by_kind``).
+    """
     stances = definition.stances
     pay = definition.compensation
-    later = later_terms()
+    later = optional_terms
     group_stances: dict[str, dict[str, Stance]] = {}
     for group, kind in _CLOSED_GROUPS.items():
         listed: dict[str, Stance] = {

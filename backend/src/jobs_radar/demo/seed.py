@@ -21,6 +21,7 @@ from jobs_radar.demo.persona import DEMO_PROFILE_TITLE, demo_intent, demo_profil
 from jobs_radar.demo.scripted import DEMO_MODEL, DemoBoards, DemoModel, Timeline
 from jobs_radar.domain.enums import LOCAL_OWNER_ID, InboxAction, SourceType
 from jobs_radar.repositories.companies import CompanyRepository
+from jobs_radar.repositories.taxonomy import TaxonomyRepository
 from jobs_radar.schemas.intent import IntentDefinition
 from jobs_radar.schemas.profile_api import ProfileInput
 from jobs_radar.services.ai_settings import AiSettingsService
@@ -160,7 +161,12 @@ async def _persona(session: AsyncSession) -> None:
         change_summary="Demo profile",
     )
     await IntentService(session).create(
-        LOCAL_OWNER_ID, profile_id, IntentDefinition.model_validate(demo_intent()), enabled=True
+        LOCAL_OWNER_ID,
+        profile_id,
+        IntentDefinition.model_validate(
+            demo_intent(await TaxonomyRepository(session).keys_in_order())
+        ),
+        enabled=True,
     )
 
 

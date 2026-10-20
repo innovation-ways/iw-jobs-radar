@@ -35,3 +35,26 @@ def check_golden(name: str, actual: Any) -> None:
         f"{path.name} differs from the current output; if the change is intended, "
         "run with UPDATE_GOLDEN=1 and review the diff"
     )
+
+
+def golden_taxonomy() -> dict[str, list[str]]:
+    """The term keys of an installation today, by kind, in creation order (from the golden record).
+
+    This is the vocabulary that tests use instead of the frozen seed constants, which only the
+    migrations may import (ADR-080, phase 2).
+    """
+    grouped: dict[str, list[str]] = {}
+    for _id, kind, key, *_rest in load_golden("taxonomy_after_migrations")["terms"]:
+        grouped.setdefault(kind, []).append(key)
+    return grouped
+
+
+def golden_optional_terms() -> dict[str, frozenset[str]]:
+    """The terms introduced after taxonomy version 1 (optional in an older intent, ADR-073)."""
+    optional: dict[str, set[str]] = {}
+    for _id, kind, key, _label, _origin, introduced, _replaced in load_golden(
+        "taxonomy_after_migrations"
+    )["terms"]:
+        if introduced > 1:
+            optional.setdefault(kind, set()).add(key)
+    return {kind: frozenset(keys) for kind, keys in optional.items()}

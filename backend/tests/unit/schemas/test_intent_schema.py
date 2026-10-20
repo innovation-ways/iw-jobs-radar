@@ -294,7 +294,16 @@ def test_a_term_added_after_version_one_may_be_missing_from_an_older_intent() ->
     """ADR-073: an intent saved before ``contractor_agency`` existed stays valid."""
     live = {**taxonomy(), "engagement_type": {*taxonomy()["engagement_type"], "contractor_agency"}}
     intent = IntentDefinition.model_validate(sample_intent())
-    assert validate_intent_against_taxonomy(intent, live) == []
+    optional = {"engagement_type": frozenset({"contractor_agency"})}
+    assert validate_intent_against_taxonomy(intent, live, optional) == []
+
+
+def test_a_term_that_is_not_optional_must_be_listed() -> None:
+    """Optional terms come from the database; without them a missing option is an error."""
+    live = {**taxonomy(), "engagement_type": {*taxonomy()["engagement_type"], "contractor_agency"}}
+    intent = IntentDefinition.model_validate(sample_intent())
+    errors = validate_intent_against_taxonomy(intent, live, {})
+    assert any("engagement_types" in e and "contractor_agency" in e for e in errors), errors
 
 
 def test_an_intent_may_still_set_a_stance_for_a_later_term() -> None:

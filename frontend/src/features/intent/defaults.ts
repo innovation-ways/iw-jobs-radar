@@ -51,7 +51,11 @@ export function defaultIntentDefinition(
     },
     keywords: [],
     exclusions: { companies: [], words: [] },
-    filters: { max_posting_age_days: null, needs_visa_or_relocation: false },
+    filters: {
+      max_posting_age_days: null,
+      needs_visa_or_relocation: false,
+      reject_missing_credentials: false,
+    },
     benefits_wanted: [],
     weights: { ...DEFAULT_WEIGHTS },
     alert_threshold: 65,

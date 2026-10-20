@@ -49,10 +49,9 @@ export function formFromProfile(profile: ProfileRead): ProfileForm {
     base_location: facts.base_location,
     years_experience: facts.years_experience,
     languages: facts.languages,
-    // The kind of an existing skill is not returned and is not needed: known names resolve to it.
     skills: facts.skills.map((s) => ({
       name: s.name,
-      kind: 'technology',
+      kind: s.kind ?? 'technology',
       level: s.level,
       years: s.years,
     })),

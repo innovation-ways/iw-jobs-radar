@@ -95,8 +95,22 @@ export function makeProfile(overrides: Partial<ProfileRead> = {}, revision = 1):
               years_experience: 12,
               languages: [{ language: 'pt', level: 'native' }],
               skills: [
-                { skill_id: 1, name: 'Python', level: 'expert', years: 10, provenance },
-                { skill_id: 2, name: 'Kubernetes', level: 'advanced', years: 4, provenance },
+                {
+                  skill_id: 1,
+                  name: 'Python',
+                  kind: 'technology',
+                  level: 'expert',
+                  years: 10,
+                  provenance,
+                },
+                {
+                  skill_id: 2,
+                  name: 'Kubernetes',
+                  kind: 'technology',
+                  level: 'advanced',
+                  years: 4,
+                  provenance,
+                },
               ],
               experience: [
                 {

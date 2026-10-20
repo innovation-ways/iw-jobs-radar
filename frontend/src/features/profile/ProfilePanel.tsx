@@ -188,7 +188,7 @@ export function ProfilePanel({ profile, onDirtyChange }: Props) {
             </Button>
           }
         >
-          {draft.skills.length === 0 ? (
+          {draft.skills.every((skill) => skill.kind === 'credential') ? (
             <p className="text-sm text-ink-3">No skills yet.</p>
           ) : (
             <div className="relative overflow-x-auto">
@@ -211,70 +211,126 @@ export function ProfilePanel({ profile, onDirtyChange }: Props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {draft.skills.map((skill, index) => (
-                    <tr key={index} className="border-t border-line">
-                      <td className="py-1.5 pr-2">
-                        <input
-                          aria-label="Skill name"
-                          className={`${field} w-full`}
-                          value={skill.name}
-                          onChange={(event) =>
-                            set({
-                              skills: replaceAt(draft.skills, index, { name: event.target.value }),
-                            })
-                          }
-                        />
-                      </td>
-                      <td className="py-1.5 pr-2">
-                        <select
-                          aria-label="Skill level"
-                          className={field}
-                          value={skill.level}
-                          onChange={(event) =>
-                            set({
-                              skills: replaceAt(draft.skills, index, {
-                                level: event.target.value as (typeof LEVELS)[number],
-                              }),
-                            })
-                          }
-                        >
-                          {LEVELS.map((level) => (
-                            <option key={level}>{level}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="py-1.5 pr-2 text-right">
-                        <input
-                          aria-label="Skill years"
-                          inputMode="decimal"
-                          className={`${field} w-20 text-right`}
-                          value={skill.years}
-                          onChange={(event) =>
-                            set({
-                              skills: replaceAt(draft.skills, index, {
-                                years: numberOf(event.target.value),
-                              }),
-                            })
-                          }
-                        />
-                      </td>
-                      <td className="py-1.5 text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Remove ${skill.name || 'skill'}`}
-                          onClick={() =>
-                            set({ skills: draft.skills.filter((_, i) => i !== index) })
-                          }
-                        >
-                          <Trash2 />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
+                  {draft.skills.map((skill, index) =>
+                    skill.kind === 'credential' ? null : (
+                      <tr key={index} className="border-t border-line">
+                        <td className="py-1.5 pr-2">
+                          <input
+                            aria-label="Skill name"
+                            className={`${field} w-full`}
+                            value={skill.name}
+                            onChange={(event) =>
+                              set({
+                                skills: replaceAt(draft.skills, index, {
+                                  name: event.target.value,
+                                }),
+                              })
+                            }
+                          />
+                        </td>
+                        <td className="py-1.5 pr-2">
+                          <select
+                            aria-label="Skill level"
+                            className={field}
+                            value={skill.level}
+                            onChange={(event) =>
+                              set({
+                                skills: replaceAt(draft.skills, index, {
+                                  level: event.target.value as (typeof LEVELS)[number],
+                                }),
+                              })
+                            }
+                          >
+                            {LEVELS.map((level) => (
+                              <option key={level}>{level}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="py-1.5 pr-2 text-right">
+                          <input
+                            aria-label="Skill years"
+                            inputMode="decimal"
+                            className={`${field} w-20 text-right`}
+                            value={skill.years}
+                            onChange={(event) =>
+                              set({
+                                skills: replaceAt(draft.skills, index, {
+                                  years: numberOf(event.target.value),
+                                }),
+                              })
+                            }
+                          />
+                        </td>
+                        <td className="py-1.5 text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={`Remove ${skill.name || 'skill'}`}
+                            onClick={() =>
+                              set({ skills: draft.skills.filter((_, i) => i !== index) })
+                            }
+                          >
+                            <Trash2 />
+                          </Button>
+                        </td>
+                      </tr>
+                    ),
+                  )}
                 </tbody>
               </table>
             </div>
+          )}
+        </Card>
+
+        <Card
+          title="Licences and certifications"
+          hint="Driving licences, trade registrations, safety tickets and the like. Job postings that ask for them are matched against this list."
+          actions={
+            <Button
+              variant="outline"
+              size="xs"
+              onClick={() =>
+                set({
+                  skills: [
+                    ...draft.skills,
+                    { name: '', kind: 'credential', level: 'expert', years: 0 },
+                  ],
+                })
+              }
+            >
+              <Plus /> Add licence
+            </Button>
+          }
+        >
+          {draft.skills.some((skill) => skill.kind === 'credential') ? (
+            <ul className="flex flex-col gap-2">
+              {draft.skills.map((skill, index) =>
+                skill.kind !== 'credential' ? null : (
+                  <li key={index} className="flex items-center gap-2">
+                    <input
+                      aria-label="Licence or certification"
+                      className={`${field} w-full`}
+                      value={skill.name}
+                      onChange={(event) =>
+                        set({
+                          skills: replaceAt(draft.skills, index, { name: event.target.value }),
+                        })
+                      }
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      aria-label={`Remove ${skill.name || 'licence'}`}
+                      onClick={() => set({ skills: draft.skills.filter((_, i) => i !== index) })}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </li>
+                ),
+              )}
+            </ul>
+          ) : (
+            <p className="text-sm text-ink-3">No licences or certifications yet.</p>
           )}
         </Card>
 

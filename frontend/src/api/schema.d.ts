@@ -2627,6 +2627,11 @@ export interface components {
              * @default false
              */
             needs_visa_or_relocation: boolean;
+            /**
+             * Reject Missing Credentials
+             * @default false
+             */
+            reject_missing_credentials: boolean;
         };
         /**
          * GateRead
@@ -2926,7 +2931,8 @@ export interface components {
             exclusions: components["schemas"]["Exclusions"];
             /**
              * @default {
-             *       "needs_visa_or_relocation": false
+             *       "needs_visa_or_relocation": false,
+             *       "reject_missing_credentials": false
              *     }
              */
             filters: components["schemas"]["Filters"];
@@ -2987,7 +2993,8 @@ export interface components {
             exclusions: components["schemas"]["Exclusions"];
             /**
              * @default {
-             *       "needs_visa_or_relocation": false
+             *       "needs_visa_or_relocation": false,
+             *       "reject_missing_credentials": false
              *     }
              */
             filters: components["schemas"]["Filters"];
@@ -3103,7 +3110,8 @@ export interface components {
             expected_current_revision: number;
             /**
              * @default {
-             *       "needs_visa_or_relocation": false
+             *       "needs_visa_or_relocation": false,
+             *       "reject_missing_credentials": false
              *     }
              */
             filters: components["schemas"]["Filters"];
@@ -4107,12 +4115,14 @@ export interface components {
          * @description Category of a skill.
          * @enum {string}
          */
-        SkillKind: "technology" | "domain_knowledge" | "method";
+        SkillKind: "technology" | "domain_knowledge" | "method" | "tool_equipment" | "credential";
         /**
          * SkillRead
          * @description A skill of a revision, with its canonical name.
          */
         SkillRead: {
+            /** @default technology */
+            kind: components["schemas"]["SkillKind"];
             /**
              * Level
              * @enum {string}

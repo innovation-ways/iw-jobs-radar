@@ -369,6 +369,18 @@ export function IntentForm({ value, onChange, taxonomy }: Props) {
             />
             I need visa sponsorship or relocation help
           </label>
+          <label className="flex items-center gap-2 pb-1.5 text-sm">
+            <input
+              type="checkbox"
+              checked={value.filters.reject_missing_credentials ?? false}
+              onChange={(event) =>
+                set({
+                  filters: { ...value.filters, reject_missing_credentials: event.target.checked },
+                })
+              }
+            />
+            Rule out jobs that require a licence or certification I do not hold
+          </label>
         </div>
         <div className="mt-4 flex items-center gap-3">
           <label htmlFor="alert-threshold" className="text-xs whitespace-nowrap text-ink-2">

@@ -78,6 +78,21 @@ describe('IntentPanel', () => {
     expect(options.body.stances.work_arrangements).toHaveLength(3)
   })
 
+  it('lets the owner rule out jobs that need a licence they do not hold (off by default)', async () => {
+    put.mockResolvedValue({
+      data: { created: true, intent: makeIntent() },
+      response: { status: 200 },
+    })
+    renderPanel()
+    const toggle = screen.getByRole('checkbox', {
+      name: /rule out jobs that require a licence or certification i do not hold/i,
+    })
+    expect(toggle).not.toBeChecked()
+    await userEvent.click(toggle)
+    await userEvent.click(screen.getByRole('button', { name: /save revision/i }))
+    expect(put.mock.calls[0][1].body.filters.reject_missing_credentials).toBe(true)
+  })
+
   it('discarding restores the saved values', async () => {
     renderPanel()
     const name = screen.getByLabelText('Intent name')

@@ -16,7 +16,7 @@ const field = 'rounded-md border border-line-strong bg-surface px-2 py-1 text-sm
 const OPTIONS: Record<string, Record<string, readonly string[]>> = {
   skills: {
     level: ['beginner', 'intermediate', 'advanced', 'expert'],
-    kind: ['technology', 'domain_knowledge', 'method'],
+    kind: ['technology', 'domain_knowledge', 'method', 'tool_equipment', 'credential'],
   },
   languages: { level: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'native'] },
 }

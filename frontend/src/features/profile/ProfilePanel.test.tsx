@@ -136,6 +136,84 @@ describe('ProfilePanel', () => {
     ])
   })
 
+  describe('licences and certifications', () => {
+    /** A profile that holds a driving licence next to its two skills. */
+    function withLicence() {
+      const profile = makeProfile()
+      const facts = profile.current_revision!.facts
+      facts.skills = [
+        ...facts.skills,
+        {
+          skill_id: 9,
+          name: 'Driving licence (category B)',
+          kind: 'credential',
+          level: 'expert',
+          years: 0,
+          provenance: facts.skills[0].provenance,
+        },
+      ]
+      return profile
+    }
+
+    it('lists them apart from the skills', () => {
+      renderPanel(withLicence())
+      const card = screen
+        .getByRole('heading', { name: 'Licences and certifications' })
+        .closest('section')!
+      expect(within(card).getByDisplayValue('Driving licence (category B)')).toBeInTheDocument()
+      const skills = screen.getByRole('heading', { name: 'Skills' }).closest('section')!
+      expect(
+        within(skills).queryByDisplayValue('Driving licence (category B)'),
+      ).not.toBeInTheDocument()
+      expect(within(skills).getByDisplayValue('Python')).toBeInTheDocument()
+    })
+
+    it('adds one as a credential and saves it with the skills', async () => {
+      put.mockResolvedValue(saved())
+      renderPanel()
+      const card = screen
+        .getByRole('heading', { name: 'Licences and certifications' })
+        .closest('section')!
+      await userEvent.click(within(card).getByRole('button', { name: /add licence/i }))
+      await userEvent.type(
+        within(card).getByLabelText('Licence or certification'),
+        'Gas Safe registration',
+      )
+      await userEvent.click(screen.getByRole('button', { name: /save revision/i }))
+      expect(put.mock.calls[0][1].body.skills).toEqual([
+        { name: 'Python', kind: 'technology', level: 'expert', years: 10 },
+        { name: 'Kubernetes', kind: 'technology', level: 'advanced', years: 4 },
+        { name: 'Gas Safe registration', kind: 'credential', level: 'expert', years: 0 },
+      ])
+    })
+
+    it('keeps the kind of a saved licence and removes it on request', async () => {
+      put.mockResolvedValue(saved())
+      renderPanel(withLicence())
+      await userEvent.click(
+        screen.getByRole('button', { name: 'Remove Driving licence (category B)' }),
+      )
+      await userEvent.click(screen.getByRole('button', { name: /save revision/i }))
+      expect(put.mock.calls[0][1].body.skills.map((s: { kind: string }) => s.kind)).toEqual([
+        'technology',
+        'technology',
+      ])
+    })
+
+    it('saves a licence that was already there with its kind', async () => {
+      put.mockResolvedValue(saved())
+      renderPanel(withLicence())
+      await userEvent.type(screen.getByLabelText('Headline'), '!')
+      await userEvent.click(screen.getByRole('button', { name: /save revision/i }))
+      expect(put.mock.calls[0][1].body.skills[2]).toEqual({
+        name: 'Driving licence (category B)',
+        kind: 'credential',
+        level: 'expert',
+        years: 0,
+      })
+    })
+  })
+
   it('adds a role and removes another', async () => {
     put.mockResolvedValue(saved())
     renderPanel()

@@ -6,7 +6,7 @@ test('the app shell loads, shows backend readiness and navigates', async ({ page
   await expect(page.getByRole('heading', { level: 1, name: 'Inbox' })).toBeVisible()
 
   const nav = page.getByRole('navigation', { name: 'Main navigation' })
-  await expect(nav.getByRole('link')).toHaveCount(7)
+  await expect(nav.getByRole('link')).toHaveCount(9)
 
   // The worker heartbeat makes the backend report "ready" (ADR-031).
   await expect(page.getByRole('status')).toContainText('API ready', { timeout: 30_000 })

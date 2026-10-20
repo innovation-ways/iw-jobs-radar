@@ -95,6 +95,8 @@ function createStub() {
       },
     ],
     possible_duplicate: false,
+    engagement_types: [],
+    pay: null,
     applied_at: job.state === 'applied' ? '2026-10-08T12:00:00Z' : null,
     note: null,
   })

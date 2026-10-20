@@ -183,5 +183,102 @@
     "talent pool*",
     "spontaneous application*",
     "unpaid*"
+  ],
+  "credentials": [
+    {
+      "name": "Driving licence (category B)",
+      "aliases": [
+        "driving licence b",
+        "driving license b",
+        "category b licence",
+        "b licence",
+        "full driving licence",
+        "driver s licence b"
+      ]
+    },
+    {
+      "name": "Gas Safe registration",
+      "aliases": [
+        "gas safe",
+        "gas safe card",
+        "gas safe registered",
+        "gas engineer registration"
+      ]
+    },
+    {
+      "name": "Electrician's licence",
+      "aliases": [
+        "electrician licence",
+        "electrical installer licence",
+        "electrical licence",
+        "qualified electrician"
+      ]
+    },
+    {
+      "name": "Plumbing licence",
+      "aliases": [
+        "plumber licence",
+        "plumber s licence",
+        "licensed plumber"
+      ]
+    },
+    {
+      "name": "Welding certification",
+      "aliases": [
+        "welding certificate",
+        "certified welder",
+        "coded welder",
+        "welding ticket"
+      ]
+    },
+    {
+      "name": "Construction site safety card",
+      "aliases": [
+        "cscs card",
+        "construction skills card",
+        "site safety card"
+      ]
+    },
+    {
+      "name": "Working at height certification",
+      "aliases": [
+        "work at height",
+        "working at heights",
+        "height safety certificate"
+      ]
+    },
+    {
+      "name": "Confined space certification",
+      "aliases": [
+        "confined space entry",
+        "confined space ticket"
+      ]
+    },
+    {
+      "name": "Asbestos awareness certificate",
+      "aliases": [
+        "asbestos awareness",
+        "asbestos training"
+      ]
+    },
+    {
+      "name": "First aid certificate",
+      "aliases": [
+        "first aid",
+        "first aider",
+        "first aid at work",
+        "emergency first aid"
+      ]
+    },
+    {
+      "name": "Forklift operator licence",
+      "aliases": [
+        "forklift licence",
+        "forklift ticket",
+        "forklift certificate",
+        "counterbalance licence",
+        "reach truck licence"
+      ]
+    }
   ]
 }

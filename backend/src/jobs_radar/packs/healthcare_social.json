@@ -167,5 +167,90 @@
     "talent pool*",
     "spontaneous application*",
     "unpaid*"
+  ],
+  "credentials": [
+    {
+      "name": "Nursing registration",
+      "aliases": [
+        "registered nurse licence",
+        "nursing licence",
+        "nurse registration",
+        "rn licence"
+      ]
+    },
+    {
+      "name": "Medical licence",
+      "aliases": [
+        "medical registration",
+        "licence to practise medicine",
+        "gmc registration"
+      ]
+    },
+    {
+      "name": "Pharmacist registration",
+      "aliases": [
+        "pharmacy registration",
+        "pharmacist licence",
+        "registered pharmacist"
+      ]
+    },
+    {
+      "name": "Physiotherapy registration",
+      "aliases": [
+        "physiotherapist registration",
+        "physio licence"
+      ]
+    },
+    {
+      "name": "Social work registration",
+      "aliases": [
+        "registered social worker",
+        "social worker registration"
+      ]
+    },
+    {
+      "name": "Basic life support (BLS)",
+      "aliases": [
+        "bls certificate",
+        "basic life support certificate",
+        "cpr certification"
+      ]
+    },
+    {
+      "name": "Advanced life support (ALS)",
+      "aliases": [
+        "als certificate",
+        "advanced life support certificate"
+      ]
+    },
+    {
+      "name": "First aid certificate",
+      "aliases": [
+        "first aid",
+        "first aider",
+        "first aid at work",
+        "emergency first aid"
+      ]
+    },
+    {
+      "name": "Driving licence (category B)",
+      "aliases": [
+        "driving licence b",
+        "driving license b",
+        "category b licence",
+        "b licence",
+        "full driving licence",
+        "driver s licence b"
+      ]
+    },
+    {
+      "name": "Criminal record check",
+      "aliases": [
+        "dbs check",
+        "enhanced dbs",
+        "criminal record certificate",
+        "police clearance"
+      ]
+    }
   ]
 }

@@ -710,3 +710,31 @@ async def test_the_model_is_offered_active_terms_only(
     assert provider.requests, "the job was not sent to the model"
     prompt = provider.requests[0].user
     assert kept.term_key in prompt and dropped.term_key not in prompt
+
+
+async def test_required_credentials_become_canonical_skills_of_that_kind(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ADR-080, phase 6a: a licence in the posting is stored as a credential, not a technology."""
+    description = SAMPLE_JOB_DESCRIPTION + " A valid category B driving licence is required."
+    source = await make_source(db_session, await make_company(db_session))
+    _posting, snapshot = await make_posting(
+        db_session, source, title=SAMPLE_JOB_TITLE, description=description
+    )
+    answer = sample_extraction_output()
+    answer["credentials"] = [
+        {
+            "name": unique("Driving licence B"),
+            "importance": "must",
+            "evidence": "A valid category B driving licence is required",
+        }
+    ]
+    q = queue(db_session, monkeypatch, FakeProvider([answer]))
+    await q.enqueue_missing()
+    await q.run_batch()
+    stored = (await extraction_of(db_session, snapshot.job_snapshot_id)).attributes_json
+    (credential,) = stored["credentials_resolved"]
+    assert credential["importance"] == "must"
+    skill = await db_session.get(Skill, credential["skill_id"])
+    assert skill is not None and skill.kind == "credential"
+    assert [s["name"] for s in stored["skills_resolved"]] == ["Python", "API design"]

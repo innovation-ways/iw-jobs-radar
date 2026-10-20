@@ -265,3 +265,30 @@ def test_list_items_that_break_the_contract_are_dropped_and_noted() -> None:
 def test_an_answer_that_is_not_an_extraction_is_rejected(text: str) -> None:
     with pytest.raises(ValueError, match="extraction"):
         parse_lenient(text)
+
+
+# --- credentials (ADR-080, phase 6a) -----------------------------------------------------------------------
+
+
+def test_credentials_are_parsed_like_skills_and_bad_items_are_set_aside() -> None:
+    answer = sample_extraction_output()
+    answer["credentials"] = [
+        {"name": "Driving licence B", "importance": "must", "evidence": "category B licence"},
+        {"name": "No importance", "evidence": "x"},
+        "not an object",
+    ]
+    parsed = parse_lenient(json.dumps(answer))
+    assert [c.name for c in parsed.output.credentials] == ["Driving licence B"]
+    assert parsed.notes == ["credentials:2", "credentials:3"]
+
+
+def test_a_credential_whose_quote_is_not_in_the_posting_is_dropped_and_named() -> None:
+    changed = output(
+        credentials=[
+            {"name": "Python licence", "importance": "must", "evidence": "Experience with Python"},
+            {"name": "Gas Safe", "importance": "must", "evidence": "Gas Safe registered"},
+        ]
+    )
+    result = verify_evidence(changed, SAMPLE_JOB_TITLE, SAMPLE_JOB_DESCRIPTION)
+    assert [c.name for c in result.output.credentials] == ["Python licence"]
+    assert result.unverified == ["credentials:Gas Safe"]

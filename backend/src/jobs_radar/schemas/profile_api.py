@@ -127,6 +127,7 @@ class SkillRead(StrictModel):
 
     skill_id: int
     name: str
+    kind: SkillKind = SkillKind.TECHNOLOGY
     level: SkillLevel
     years: float
     provenance: Provenance

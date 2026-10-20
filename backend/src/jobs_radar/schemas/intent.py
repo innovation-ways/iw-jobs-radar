@@ -169,6 +169,8 @@ class Filters(StrictModel):
 
     max_posting_age_days: int | None = Field(default=None, ge=1, le=365)
     needs_visa_or_relocation: bool = False
+    # Rule out jobs that require a licence or certification the owner does not hold (G12, ADR-080).
+    reject_missing_credentials: bool = False
 
 
 Weight = Annotated[int, Field(ge=0, le=40)]

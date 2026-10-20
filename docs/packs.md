@@ -90,7 +90,32 @@ Keywords are **plain text, never regular expressions**: letters, digits, spaces 
 - Text with pattern characters (`(`, `[`, `|`, `\`) is refused when the pack is loaded.
 - Two packs that define an area with the same key share it: its keywords are joined.
 
+### Credentials
+
+A pack lists the licences and certifications of its field. They become canonical skills of kind
+`credential`, so a posting that asks for "a valid category B licence" and a profile that holds
+"Driving licence (category B)" are recognised as the same thing.
+
+```json
+"credentials": [
+  { "name": "Driving licence (category B)",
+    "aliases": ["driving licence b", "category b licence", "b licence"] }
+]
+```
+
+- The name is what the owner sees; aliases are other ways it is written (matched ignoring case and
+  punctuation). An alias that another skill already answers to is not taken over.
+- A credential that already exists, for example from an imported CV, is kept as it is and gains the
+  pack's aliases. Loading is repeatable.
+- A credential written in two packs needs the same name and aliases in both (tests check it).
+- A pack needs at least 3 credentials.
+
+In the profile they are listed under "Licences and certifications". A posting can name several; the
+qualifications score is the share the owner holds, and an option in the search intent ("Rule out jobs
+that require a licence or certification I do not hold") turns a missing required one into a hard gate
+(G12, off by default).
+
 An area needs at least 4 keywords and a pack at least 4 areas (tests check it). Areas and noise are
 read from the pack files; nothing about them is stored in the database, so a newer pack improves the
-filter without a migration. Credentials and suggested defaults will be added to the format in
-later steps of ADR-080; the validator rejects them until then.
+filter without a migration. Suggested defaults will be added to the format in a later step of
+ADR-080; the validator rejects them until then.

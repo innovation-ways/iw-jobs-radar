@@ -91,6 +91,9 @@ def bounded_schema() -> dict[str, Any]:
     schema["required"] = [*schema["required"], "role_families", "skills"]
     schema["properties"]["skills"]["maxItems"] = _MAX_SKILLS
     schema["properties"]["role_families"]["maxItems"] = _MAX_ROLE_FAMILIES
+    # The contract has `credentials` (ADR-080, phase 6a), but the prompt does not explain them yet,
+    # so the model is not asked for them. The prompt and this line change together, in phase 6b.
+    schema["properties"].pop("credentials", None)
     return schema
 
 

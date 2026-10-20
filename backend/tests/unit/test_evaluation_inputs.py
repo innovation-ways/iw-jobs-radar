@@ -328,3 +328,52 @@ def test_a_job_extracted_with_a_merged_term_is_read_as_the_term_that_replaced_it
     )
     assert job.role_families == (("new_family", 0.9),)
     assert job.sector_primary == "new_sector"
+
+
+# --- credentials (ADR-080, phase 6a) -------------------------------------------------------------------
+
+
+def test_held_credentials_are_kept_apart_from_skills() -> None:
+    facts = ProfileFacts.model_validate(sample_profile_facts())
+    view = profile_view(facts, credential_ids={17})
+    assert view.credential_ids == frozenset({17})
+    assert view.skill_levels == {18: "advanced"}  # skill 17 is a credential, not a skill
+
+
+def test_without_credentials_the_profile_view_is_unchanged() -> None:
+    view = profile_view(ProfileFacts.model_validate(sample_profile_facts()))
+    assert view.credential_ids == frozenset() and view.skill_levels == {
+        17: "expert",
+        18: "advanced",
+    }
+
+
+def test_the_credentials_a_job_requires_are_read_from_the_stored_extraction() -> None:
+    attributes = stored(output=sample_extraction_output())
+    attributes["credentials_resolved"] = [
+        {"skill_id": 501, "name": "Driving licence (category B)", "importance": "must"}
+    ]
+    output = attributes["output"]
+    assert isinstance(output, dict)
+    output["credentials"] = [
+        {"name": "Driving licence B", "importance": "must", "evidence": "category B licence"}
+    ]
+    job = job_attributes(attributes, "t", "d", "Acme")
+    assert [(c.skill_id, c.importance) for c in job.credentials] == [(501, "must")]
+    assert job.evidence["credentials"] == "category B licence"
+
+
+def test_an_extraction_without_credentials_gives_a_job_without() -> None:
+    assert (
+        job_attributes(stored(output=sample_extraction_output()), "t", "d", "Acme").credentials
+        == ()
+    )
+
+
+def test_the_intent_says_whether_a_missing_credential_rules_a_job_out() -> None:
+    data = sample_intent()
+    assert (
+        intent_view(IntentDefinition.model_validate(data), {}).reject_missing_credentials is False
+    )
+    data["filters"]["reject_missing_credentials"] = True
+    assert intent_view(IntentDefinition.model_validate(data), {}).reject_missing_credentials is True

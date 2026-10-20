@@ -187,5 +187,53 @@
     "talent pool*",
     "spontaneous application*",
     "unpaid*"
+  ],
+  "credentials": [
+    {
+      "name": "Chartered accountant qualification",
+      "aliases": [
+        "acca",
+        "icaew",
+        "cima",
+        "chartered accountant",
+        "cpa"
+      ]
+    },
+    {
+      "name": "AAT qualification",
+      "aliases": [
+        "aat level 3",
+        "aat accounting technician"
+      ]
+    },
+    {
+      "name": "Payroll certification",
+      "aliases": [
+        "payroll qualification",
+        "payroll professional certificate"
+      ]
+    },
+    {
+      "name": "CIPD qualification",
+      "aliases": [
+        "cipd level 5",
+        "hr qualification",
+        "cipd certified"
+      ]
+    },
+    {
+      "name": "PRINCE2 certification",
+      "aliases": [
+        "prince2 foundation",
+        "prince2 practitioner"
+      ]
+    },
+    {
+      "name": "PMP certification",
+      "aliases": [
+        "project management professional",
+        "pmp certified"
+      ]
+    }
   ]
 }

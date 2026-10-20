@@ -51,7 +51,7 @@ Skills are not a fixed list. They live in `skill` rows created on demand:
 
 | Table | Columns |
 |---|---|
-| `skill` | `skill_id`, `canonical_name`, `kind` (`technology`, `domain_knowledge`, `method`), `esco_uri` (nullable) |
+| `skill` | `skill_id`, `canonical_name`, `kind` (`technology`, `domain_knowledge`, `method`, `tool_equipment`, `credential`), `esco_uri` (nullable) |
 | `skill_alias` | `skill_alias_id`, `skill_id`, `alias_normalised` (lowercase, punctuation stripped, for example `node js`, `nodejs`) |
 | `skill_relation` | `skill_relation_id`, `skill_id_a`, `skill_id_b`, `relation` (`equivalent`, `related`, `unrelated`), `origin` (`ai`, `user`), `provider`, `model`, `prompt_version`, `created_at` |
 
@@ -152,7 +152,7 @@ An `IntentRevision.intent_json` has this shape (the values below are an invented
   "languages": {"can_work_in": ["pt", "en"], "reject_unspoken_required": true},
   "keywords": ["LLM", "RAG", "billing", "charging", "mediation"],
   "exclusions": {"companies": ["Harbor Systems"], "words": ["unpaid", "internship"]},
-  "filters": {"max_posting_age_days": null, "needs_visa_or_relocation": false},
+  "filters": {"max_posting_age_days": null, "needs_visa_or_relocation": false, "reject_missing_credentials": false},
   "benefits_wanted": [],
   "weights": {
     "role_responsibilities": 25, "skills_technology": 15, "work_arrangement_location": 15,
@@ -299,7 +299,7 @@ Input: a `job_extraction` (`succeeded`), the profile revision, the intent revisi
 | Company profile | Stance of the employer type; `unknown` if not determined; `rejected` → gate |
 | Benefits & flexibility (optional) | Fraction of `benefits_wanted` mentioned in the job; none stated → `unknown`; if `benefits_wanted` is empty the dimension is `unknown` |
 | Career direction (optional, ADR-057, `matching-v1.3`) | The career directions (profile facts: up to 5 texts of up to 1,000 characters) are each judged by the local model against the job: `strong` 1.0, `partial` 0.5, `weak` 0.2, `none` 0 (mismatch, no gate), `unknown` = could not tell. The **best known level** among the enabled directions counts, chosen by the engine; all `unknown` → `unknown` (contributes 0, weight counts). A job with no judgement at all is **not assessed**: the dimension is left out and the other weights are renormalised, so old and new jobs stay comparable. Default weight 0. Evidence: winning direction, level, `job_quote` (verbatim from the posting), `direction_quote` (verbatim from the direction text) |
-| Qualifications (optional) | Required education level and certifications vs the profile: all satisfied → 1.0; a missing required certification or lower education → `mismatch` (no gate); none required → `unknown` |
+| Qualifications (optional) | The mean of the parts the posting states. Education: the required level vs the profile's (met → 1.0, lower → 0). Credentials (ADR-080): the licences and certifications the posting asks for, each a skill of kind `credential`; share held, a required one weighing 2 and a preferred one 1, no judging of equivalents. Missing parts are left out; neither stated → `unknown`. A shortfall is `mismatch`, never a gate by itself (see G12) |
 
 ### 7.5 Compensation
 
@@ -327,6 +327,7 @@ Input: a `job_extraction` (`succeeded`), the profile revision, the intent revisi
 | G9 words | an excluded word occurs in the title or description (whole word) |
 | G10 pay | stated pay is below the minimum and `reject_below_minimum` is on |
 | G11 visa | the user needs visa/relocation help and the job states it is not offered |
+| G12 credential (ADR-080) | `filters.reject_missing_credentials` is on (default off) and a required (`must`) licence or certification of the posting is not among the profile's credentials |
 
 A gate never fires on `unknown` data. All fired gates are listed with their reason and evidence; `recommendation` is `not_recommended` if any fired, otherwise `recommended`. The raw weighted score is still computed and shown.
 

@@ -13,7 +13,7 @@ from jobs_radar.core.errors import NotFoundError
 from jobs_radar.db.models import OwnerPack, TaxonomyTerm, TaxonomyTermPack
 from jobs_radar.domain.enums import LOCAL_OWNER_ID
 from jobs_radar.repositories.taxonomy import TaxonomyRepository
-from jobs_radar.schemas.pack import PackFile, PackTerm
+from jobs_radar.schemas.pack import PackCredential, PackFile, PackTerm
 from jobs_radar.services.packs import PackService
 from jobs_radar.services.taxonomy import TaxonomyService
 
@@ -25,6 +25,7 @@ def pack(
     families: list[tuple[str, str]],
     sectors: list[tuple[str, str]] | None = None,
     version: int = 1,
+    credentials: list[PackCredential] | None = None,
 ) -> PackFile:
     return PackFile(
         schema_version=1,
@@ -34,6 +35,7 @@ def pack(
         description="A synthetic pack.",
         role_families=[PackTerm(key=k, label=label) for k, label in families],
         sectors=[PackTerm(key=k, label=label) for k, label in (sectors or [])],
+        credentials=credentials or [],
     )
 
 
@@ -265,3 +267,98 @@ async def test_loading_the_shipped_packs_twice_changes_nothing(db_session: Async
     await service.load()
     second = await service.load()
     assert (second.terms_added, second.memberships_added, second.terms_retired) == (0, 0, 0)
+
+
+# --- credentials (ADR-080, phase 6a) ------------------------------------------------------------------
+
+
+async def skill_named(session: AsyncSession, name: str):  # type: ignore[no-untyped-def]
+    from sqlalchemy import func as sql_func
+
+    from jobs_radar.db.models import Skill
+
+    return await session.scalar(
+        select(Skill).where(sql_func.lower(Skill.canonical_name) == name.lower())
+    )
+
+
+async def aliases_of(session: AsyncSession, skill_id: int) -> set[str]:
+    from jobs_radar.db.models import SkillAlias
+
+    rows = await session.execute(
+        select(SkillAlias.alias_normalised).where(SkillAlias.skill_id == skill_id)
+    )
+    return set(rows.scalars())
+
+
+async def test_a_pack_creates_its_credentials_as_skills_with_their_aliases(
+    db_session: AsyncSession,
+) -> None:
+    name = unique("Gas Safe registration")
+    p = pack(
+        "cred_pack",
+        [("pk_cred", "Credential family")],
+        credentials=[PackCredential(name=name, aliases=["gas safe", "gas safe card"])],
+    )
+    result = await PackService(db_session, packs=[p]).load()
+    assert result.credentials_added == 1
+    skill = await skill_named(db_session, name)
+    assert skill is not None and skill.kind == "credential"
+    aliases = await aliases_of(db_session, skill.skill_id)
+    assert {"gas safe", "gas safe card"} <= aliases
+
+
+async def test_loading_credentials_again_adds_nothing(db_session: AsyncSession) -> None:
+    p = pack(
+        "cred_again",
+        [("pk_again", "Again")],
+        credentials=[PackCredential(name=unique("Forklift licence"), aliases=["forklift ticket"])],
+    )
+    service = PackService(db_session, packs=[p])
+    await service.load()
+    second = await service.load()
+    assert second.credentials_added == 0
+
+
+async def test_a_skill_that_exists_is_kept_as_it_is_and_gains_the_aliases(
+    db_session: AsyncSession,
+) -> None:
+    """A name the owner already has (for example from a CV) is not duplicated or retyped."""
+    from jobs_radar.domain.enums import SkillKind
+    from jobs_radar.repositories.skills import SkillRepository
+
+    name = unique("First aid certificate")
+    existing, _ = await SkillRepository(db_session).resolve_mention(name, SkillKind.METHOD)
+    p = pack(
+        "cred_existing",
+        [("pk_existing", "Existing")],
+        credentials=[PackCredential(name=name, aliases=["first aid ticket"])],
+    )
+    result = await PackService(db_session, packs=[p]).load()
+    assert result.credentials_added == 0
+    again = await skill_named(db_session, name)
+    assert again is not None and again.skill_id == existing.skill_id and again.kind == "method"
+    assert "first aid ticket" in await aliases_of(db_session, existing.skill_id)
+
+
+async def test_an_alias_that_belongs_to_another_skill_is_not_taken_over(
+    db_session: AsyncSession,
+) -> None:
+    from jobs_radar.domain.enums import SkillKind
+    from jobs_radar.repositories.skills import SkillRepository
+
+    other, _ = await SkillRepository(db_session).resolve_mention(
+        unique("Other skill"), SkillKind.TECHNOLOGY
+    )
+    shared = sorted(await aliases_of(db_session, other.skill_id))[0]
+    name = unique("Brand new credential")
+    p = pack(
+        "cred_alias",
+        [("pk_alias", "Alias")],
+        credentials=[PackCredential(name=name, aliases=[shared])],
+    )
+    await PackService(db_session, packs=[p]).load()
+    new = await skill_named(db_session, name)
+    assert new is not None
+    assert shared not in await aliases_of(db_session, new.skill_id)
+    assert shared in await aliases_of(db_session, other.skill_id)

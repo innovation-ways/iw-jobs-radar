@@ -102,6 +102,8 @@ def job_attributes(
     }
     if output.role_families:
         evidence["role_families"] = output.role_families[0].evidence
+    if output.credentials:
+        evidence["credentials"] = output.credentials[0].evidence
 
     locations = tuple(
         JobLocation(
@@ -165,6 +167,10 @@ def job_attributes(
             JobSkill(s["skill_id"], s["name"], s["importance"])
             for s in attributes.get("skills_resolved", [])
         ),
+        credentials=tuple(
+            JobSkill(c["skill_id"], c["name"], c["importance"])
+            for c in attributes.get("credentials_resolved", [])
+        ),
         languages_required=tuple(lang.language for lang in languages) if languages else None,
         employer_type=_known(output.employer_type),
         education_required=_known(output.education_required),
@@ -174,10 +180,20 @@ def job_attributes(
     )
 
 
-def profile_view(facts: ProfileFacts) -> ProfileView:
-    """Map profile facts to what matching needs."""
+def profile_view(facts: ProfileFacts, credential_ids: Collection[int] = ()) -> ProfileView:
+    """Map profile facts to what matching needs.
+
+    ``credential_ids`` are the profile's skills that are licences or certifications (their kind is
+    stored with the skill, not in the facts): they count towards qualifications, not skills.
+    """
+    held = frozenset(credential_ids)
     return ProfileView(
-        skill_levels={skill.skill_id: skill.level for skill in facts.skills},
+        skill_levels={
+            skill.skill_id: skill.level for skill in facts.skills if skill.skill_id not in held
+        },
+        credential_ids=frozenset(
+            skill.skill_id for skill in facts.skills if skill.skill_id in held
+        ),
         languages=frozenset(item.language for item in facts.languages),
         education_levels=tuple(item.level for item in facts.education),
         certifications=tuple(item.name for item in facts.certifications),
@@ -257,6 +273,7 @@ def intent_view(
         excluded_companies=tuple(definition.exclusions.companies),
         excluded_words=tuple(definition.exclusions.words),
         needs_visa=definition.filters.needs_visa_or_relocation,
+        reject_missing_credentials=definition.filters.reject_missing_credentials,
         benefits_wanted=tuple(definition.benefits_wanted),
         weights=definition.weights.model_dump(),
     )

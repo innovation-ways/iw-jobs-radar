@@ -46,6 +46,7 @@ def _facts(view: RevisionView) -> ProfileFactsRead:
         {
             **skill,
             "name": view.skill_names.get(int(skill["skill_id"]), f"Skill {skill['skill_id']}"),
+            "kind": view.skill_kinds.get(int(skill["skill_id"]), "technology"),
         }
         for skill in facts["skills"]
     ]

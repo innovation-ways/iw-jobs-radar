@@ -153,3 +153,9 @@ def test_the_lists_are_required_in_the_schema_sent_to_the_model() -> None:
     # Without this the model may leave out `role_families` (a third of the answers did) and the
     # role gate has nothing to judge; an empty list stays allowed for a posting with no role.
     assert {"role_families", "skills"} <= set(_prompt_schema()["required"])
+
+
+def test_the_model_is_not_asked_for_credentials_before_the_prompt_that_explains_them() -> None:
+    """Phase 6a adds the field to the contract; the prompt and its schema change once, in 6b."""
+    properties = prompt().request.json_schema["properties"]
+    assert "credentials" not in properties

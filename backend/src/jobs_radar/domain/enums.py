@@ -34,6 +34,10 @@ class SkillKind(StrEnum):
     TECHNOLOGY = "technology"
     DOMAIN_KNOWLEDGE = "domain_knowledge"
     METHOD = "method"
+    # Added with the domain packs (ADR-080): the equipment a trade uses, and licences and
+    # certifications (a driving licence, a gas registration), which jobs require and people hold.
+    TOOL_EQUIPMENT = "tool_equipment"
+    CREDENTIAL = "credential"
 
 
 class SkillRelationKind(StrEnum):

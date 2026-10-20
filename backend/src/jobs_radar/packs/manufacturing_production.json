@@ -165,5 +165,71 @@
     "talent pool*",
     "spontaneous application*",
     "unpaid*"
+  ],
+  "credentials": [
+    {
+      "name": "Forklift operator licence",
+      "aliases": [
+        "forklift licence",
+        "forklift ticket",
+        "forklift certificate",
+        "counterbalance licence",
+        "reach truck licence"
+      ]
+    },
+    {
+      "name": "Food hygiene certificate",
+      "aliases": [
+        "food safety certificate",
+        "food hygiene level 2",
+        "haccp certificate",
+        "food handler certificate"
+      ]
+    },
+    {
+      "name": "Lean Six Sigma certification",
+      "aliases": [
+        "six sigma green belt",
+        "six sigma black belt",
+        "lean certification"
+      ]
+    },
+    {
+      "name": "ISO 9001 internal auditor",
+      "aliases": [
+        "iso 9001 auditor",
+        "internal auditor iso 9001",
+        "quality auditor certificate"
+      ]
+    },
+    {
+      "name": "First aid certificate",
+      "aliases": [
+        "first aid",
+        "first aider",
+        "first aid at work",
+        "emergency first aid"
+      ]
+    },
+    {
+      "name": "Welding certification",
+      "aliases": [
+        "welding certificate",
+        "certified welder",
+        "coded welder",
+        "welding ticket"
+      ]
+    },
+    {
+      "name": "Driving licence (category B)",
+      "aliases": [
+        "driving licence b",
+        "driving license b",
+        "category b licence",
+        "b licence",
+        "full driving licence",
+        "driver s licence b"
+      ]
+    }
   ]
 }

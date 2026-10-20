@@ -35,6 +35,7 @@ from jobs_radar.domain.enums import (
     DIRECTION_PROMPT_VERSION,
     EXTRACTION_ACCEPTED_PROMPT_VERSIONS,
     EXTRACTION_PROMPT_VERSION,
+    SkillKind,
 )
 from jobs_radar.domain.matching.engine import POLICY_VERSION, evaluate
 from jobs_radar.domain.matching.types import DirectionJudgement as DirectionResult
@@ -226,7 +227,11 @@ class EvaluationService:
             source_places=_source_places(snapshot),
             replacements=replacements,
         )
-        profile = profile_view(ProfileFacts.model_validate(profile_revision.facts_json))
+        facts = ProfileFacts.model_validate(profile_revision.facts_json)
+        credential_ids = await SkillRepository(self._session).ids_of_kind(
+            {skill.skill_id for skill in facts.skills}, SkillKind.CREDENTIAL
+        )
+        profile = profile_view(facts, credential_ids)
         job = replace(job, directions=directions)
         definition = IntentDefinition.model_validate(intent_revision.intent_json)
         if weights:

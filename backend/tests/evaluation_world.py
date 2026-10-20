@@ -6,7 +6,7 @@ from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.db.models import JobExtraction, JobPosting
-from jobs_radar.domain.enums import LOCAL_OWNER_ID
+from jobs_radar.domain.enums import LOCAL_OWNER_ID, SkillKind
 from jobs_radar.schemas.extraction import ExtractedSkill
 from jobs_radar.schemas.intent import IntentDefinition
 from jobs_radar.schemas.profile_api import ProfileInput
@@ -39,6 +39,8 @@ class World:
         self.extraction_id: int
         self.held: str
         self.unheld: str
+        self.credential_ids: list[int] = []
+        self.credential_names: list[str] = []
 
 
 async def world(
@@ -47,10 +49,13 @@ async def world(
     extracted_by: tuple[str, str] | None = None,
     with_extraction: bool = True,
     locations: list[str] | None = None,
+    credentials: list[str] | None = None,
 ) -> World:
     """Build the world; ``extracted_by`` is the ``(provider, model)`` that extracted the job.
 
     ``locations`` are the board's own places for the job (the sample job's when omitted).
+    ``credentials`` are licences or certifications the job requires (all ``must``), stored as the
+    extraction would (ADR-080, phase 6a).
     """
     await session.execute(
         update(JobPosting).where(JobPosting.closed_at.is_(None)).values(closed_at=NOW)
@@ -99,6 +104,17 @@ async def world(
     )
     if not with_extraction:
         return w
+    required = [
+        ExtractedSkill(name=name, importance="must", evidence="licence required")
+        for name in credentials or []
+    ]
+    held_credentials = await SkillCanonicaliser(session).canonicalise(
+        required, SkillKind.CREDENTIAL
+    )
+    w.credential_ids = [c.skill_id for c in held_credentials]
+    w.credential_names = [c.name for c in held_credentials]
+    output = sample_extraction_output()
+    output["credentials"] = [r.model_dump() for r in required]
     extraction = JobExtraction(
         job_snapshot_id=w.snapshot_id,
         status="succeeded",
@@ -107,13 +123,17 @@ async def world(
         prompt_version="extract-v2",
         taxonomy_version_id=1,
         attributes_json={
-            "output": sample_extraction_output(),
+            "output": output,
             "unverified": [],
             "dropped_keys": [],
             "contradictions": [],
             "skills_resolved": [
                 {"skill_id": r.skill_id, "name": r.name, "importance": r.importance}
                 for r in resolved
+            ],
+            "credentials_resolved": [
+                {"skill_id": c.skill_id, "name": c.name, "importance": c.importance}
+                for c in held_credentials
             ],
             "locations_resolved": [{"raw": "Remote - EU", "resolved": False}],
         },

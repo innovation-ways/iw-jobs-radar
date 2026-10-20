@@ -159,7 +159,10 @@ async def test_export_has_profile_and_intents_but_no_secrets(client: httpx.Async
     assert body["profile"]["facts"]["skills"][0]["name"] == "Python"
     assert len(body["intents"]) == 1 and body["intents"][0]["definition"]["alert_threshold"] == 65
     text = response.text.lower()
-    assert not any(word in text for word in ("credential", "password", "api_key", "ciphertext"))
+    # "credential" alone would also match licences and certifications (a skill kind and an intent
+    # option, ADR-080), so the check names the secrets' own fields.
+    secrets = ("credential_ciphertext", "credential_key", "password", "api_key", "ciphertext")
+    assert not any(word in text for word in secrets)
     assert (await client.get(f"{API}/profiles/987654321/export")).status_code == 404
 
 
@@ -275,3 +278,18 @@ async def test_the_taxonomy_lists_terms_with_labels_by_kind(client: httpx.AsyncC
     } <= groups.keys()
     roles = {t["term_key"]: t["label"] for t in groups["role_family"]}
     assert roles.get("ai_solutions_engineering")
+
+
+async def test_a_skill_is_returned_with_its_kind_so_credentials_can_be_shown_apart(
+    client: httpx.AsyncClient,
+) -> None:
+    """ADR-080, phase 6a: the profile form lists licences and certifications on their own."""
+    pid = (await new_profile(client, unique("Kinds")))["career_profile_id"]
+    skills = [
+        {"name": unique("Python"), "kind": "technology", "level": "expert", "years": 5},
+        {"name": unique("Forklift licence"), "kind": "credential", "level": "expert", "years": 0},
+    ]
+    saved = await save(client, pid, None, skills=skills)
+    assert saved.status_code == 200, saved.text
+    returned = saved.json()["profile"]["current_revision"]["facts"]["skills"]
+    assert [s["kind"] for s in returned] == ["technology", "credential"]

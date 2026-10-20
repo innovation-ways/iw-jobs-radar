@@ -144,5 +144,79 @@
     "talent pool*",
     "spontaneous application*",
     "unpaid*"
+  ],
+  "credentials": [
+    {
+      "name": "Driving licence (category B)",
+      "aliases": [
+        "driving licence b",
+        "driving license b",
+        "category b licence",
+        "b licence",
+        "full driving licence",
+        "driver s licence b"
+      ]
+    },
+    {
+      "name": "HGV licence (category C)",
+      "aliases": [
+        "hgv licence",
+        "c licence",
+        "category c licence",
+        "lgv licence",
+        "truck driving licence"
+      ]
+    },
+    {
+      "name": "Bus and coach licence (category D)",
+      "aliases": [
+        "category d licence",
+        "d licence",
+        "psv licence",
+        "bus driving licence"
+      ]
+    },
+    {
+      "name": "Forklift operator licence",
+      "aliases": [
+        "forklift licence",
+        "forklift ticket",
+        "forklift certificate",
+        "counterbalance licence",
+        "reach truck licence"
+      ]
+    },
+    {
+      "name": "Driver CPC",
+      "aliases": [
+        "driver cpc card",
+        "certificate of professional competence",
+        "cpc card"
+      ]
+    },
+    {
+      "name": "ADR dangerous goods certificate",
+      "aliases": [
+        "adr certificate",
+        "adr licence",
+        "dangerous goods certificate"
+      ]
+    },
+    {
+      "name": "Digital tachograph card",
+      "aliases": [
+        "tachograph card",
+        "driver card tachograph"
+      ]
+    },
+    {
+      "name": "First aid certificate",
+      "aliases": [
+        "first aid",
+        "first aider",
+        "first aid at work",
+        "emergency first aid"
+      ]
+    }
   ]
 }

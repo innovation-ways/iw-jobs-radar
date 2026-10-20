@@ -165,5 +165,87 @@
     "talent pool*",
     "spontaneous application*",
     "unpaid*"
+  ],
+  "credentials": [
+    {
+      "name": "Driving licence (category B)",
+      "aliases": [
+        "driving licence b",
+        "driving license b",
+        "category b licence",
+        "b licence",
+        "full driving licence",
+        "driver s licence b"
+      ]
+    },
+    {
+      "name": "Electrician's licence",
+      "aliases": [
+        "electrician licence",
+        "electrical installer licence",
+        "electrical licence",
+        "qualified electrician"
+      ]
+    },
+    {
+      "name": "Refrigerant handling certification (F-gas)",
+      "aliases": [
+        "f gas certificate",
+        "f gas certification",
+        "refrigerant handling licence"
+      ]
+    },
+    {
+      "name": "HVAC certification",
+      "aliases": [
+        "hvac certificate",
+        "hvac qualification",
+        "hvacr certification"
+      ]
+    },
+    {
+      "name": "Welding certification",
+      "aliases": [
+        "welding certificate",
+        "certified welder",
+        "coded welder",
+        "welding ticket"
+      ]
+    },
+    {
+      "name": "Forklift operator licence",
+      "aliases": [
+        "forklift licence",
+        "forklift ticket",
+        "forklift certificate",
+        "counterbalance licence",
+        "reach truck licence"
+      ]
+    },
+    {
+      "name": "Working at height certification",
+      "aliases": [
+        "work at height",
+        "working at heights",
+        "height safety certificate"
+      ]
+    },
+    {
+      "name": "First aid certificate",
+      "aliases": [
+        "first aid",
+        "first aider",
+        "first aid at work",
+        "emergency first aid"
+      ]
+    },
+    {
+      "name": "Vehicle mechanic qualification",
+      "aliases": [
+        "motor vehicle technician certificate",
+        "automotive technician certificate",
+        "mot tester"
+      ]
+    }
   ]
 }

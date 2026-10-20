@@ -311,3 +311,11 @@ def test_an_intent_may_still_set_a_stance_for_a_later_term() -> None:
     data = deepcopy(sample_intent())
     data["stances"]["engagement_types"].append({"key": "contractor_agency", "stance": "preferred"})
     assert validate_intent_against_taxonomy(IntentDefinition.model_validate(data), live) == []
+
+
+def test_rejecting_missing_credentials_is_an_option_that_is_off_by_default() -> None:
+    """ADR-080, phase 6a: like rejecting unspoken languages, but off unless the owner turns it on."""
+    data = sample_intent()
+    assert IntentDefinition.model_validate(data).filters.reject_missing_credentials is False
+    data["filters"]["reject_missing_credentials"] = True
+    assert IntentDefinition.model_validate(data).filters.reject_missing_credentials is True

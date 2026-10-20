@@ -16,8 +16,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.core.errors import NotFoundError
 from jobs_radar.db.models import TaxonomyTermPack
-from jobs_radar.domain.enums import TermOrigin
+from jobs_radar.domain.enums import SkillKind, TermOrigin
+from jobs_radar.domain.skills import normalise_skill_name
 from jobs_radar.repositories.packs import PackRepository
+from jobs_radar.repositories.skills import SkillRepository
 from jobs_radar.repositories.taxonomy import TaxonomyRepository
 from jobs_radar.schemas.pack import PackFile
 
@@ -50,6 +52,7 @@ class LoadResult:
     terms_added: int
     memberships_added: int
     terms_retired: int
+    credentials_added: int = 0
 
 
 @dataclass(frozen=True)
@@ -72,6 +75,7 @@ class PackService:
         self._session = session
         self._taxonomy = TaxonomyRepository(session)
         self._packs = PackRepository(session)
+        self._skills = SkillRepository(session)
         self._files = list(shipped_packs() if packs is None else packs)
 
     async def load(self) -> LoadResult:
@@ -111,7 +115,27 @@ class PackService:
                         memberships_added += 1
 
         terms_retired = await self._retire_unlisted(existing, listed, new_version)
-        return LoadResult(terms_added, memberships_added, terms_retired)
+        credentials_added = await self._load_credentials()
+        return LoadResult(terms_added, memberships_added, terms_retired, credentials_added)
+
+    async def _load_credentials(self) -> int:
+        """Create the licences and certifications of the packs as canonical skills.
+
+        A skill that already answers to the name is kept as it is (it may come from a CV and have
+        another kind); the pack's other spellings are added to it when no skill uses them yet.
+        """
+        added = 0
+        for pack in self._files:
+            for credential in pack.credentials:
+                skill, created = await self._skills.resolve_mention(
+                    credential.name, SkillKind.CREDENTIAL
+                )
+                added += int(created)
+                for alias in credential.aliases:
+                    await self._skills.add_alias_if_free(
+                        skill.skill_id, normalise_skill_name(alias)
+                    )
+        return added
 
     async def _retire_unlisted(
         self,

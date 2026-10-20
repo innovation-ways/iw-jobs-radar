@@ -293,5 +293,58 @@
     "initiativbewerbung*",
     "data entry*",
     "online data analyst*"
+  ],
+  "credentials": [
+    {
+      "name": "AWS Certified Solutions Architect",
+      "aliases": [
+        "aws solutions architect",
+        "aws certified solutions architect associate",
+        "aws sa certification"
+      ]
+    },
+    {
+      "name": "Certified Kubernetes Administrator",
+      "aliases": [
+        "cka",
+        "kubernetes administrator certification"
+      ]
+    },
+    {
+      "name": "CISSP",
+      "aliases": [
+        "certified information systems security professional"
+      ]
+    },
+    {
+      "name": "ITIL certification",
+      "aliases": [
+        "itil foundation",
+        "itil 4 foundation"
+      ]
+    },
+    {
+      "name": "Scrum Master certification",
+      "aliases": [
+        "certified scrum master",
+        "psm",
+        "csm"
+      ]
+    },
+    {
+      "name": "Microsoft Azure certification",
+      "aliases": [
+        "azure fundamentals",
+        "azure administrator associate",
+        "az 104"
+      ]
+    },
+    {
+      "name": "PMP certification",
+      "aliases": [
+        "project management professional",
+        "pmp certified"
+      ]
+    }
   ]
 }

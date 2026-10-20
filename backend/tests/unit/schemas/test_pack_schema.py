@@ -52,7 +52,11 @@ def test_sectors_may_be_left_out() -> None:
         {"role_families": [{"key": "ok_key", "label": ""}]},
         {"sectors": [{"key": "9starts_with_digit", "label": "x"}]},
         {"unexpected": True},  # nothing may be ignored silently
-        {"credentials": [{"key": "driving_licence_b", "label": "Driving licence B"}]},  # later
+        {"credentials": [{"name": "", "aliases": []}]},
+        {"credentials": [{"name": "Driving licence B", "aliases": ["!!!"]}]},  # nothing to match
+        {"credentials": [{"name": "Gas Safe"}, {"name": "gas  safe"}]},  # the same name twice
+        {"credentials": [{"label": "Gas Safe"}]},  # the field is `name`
+        {"defaults": {"weights": {}}},  # arrives in a later step
         {"areas": [{"key": "electrical", "label": "Electrical", "keywords": []}]},
         {"areas": [{"key": "Bad Key", "label": "Electrical", "keywords": ["wiring"]}]},
         {"areas": [{"key": "electrical", "label": "", "keywords": ["wiring"]}]},
@@ -102,3 +106,21 @@ def test_area_keys_and_labels_are_unique() -> None:
     area = {"key": "electrical", "label": "Electrical", "keywords": ["wiring"]}
     reject(areas=[area, {**area, "label": "Other label"}])
     reject(areas=[area, {**area, "key": "electric_2"}])
+
+
+def test_credentials_are_names_with_optional_aliases() -> None:
+    data = deepcopy(VALID)
+    data["credentials"] = [
+        {"name": "Driving licence (category B)", "aliases": ["category b licence", "b licence"]},
+        {"name": "Gas Safe registration"},
+    ]
+    pack = PackFile.model_validate(data)
+    assert [c.name for c in pack.credentials] == [
+        "Driving licence (category B)",
+        "Gas Safe registration",
+    ]
+    assert pack.credentials[1].aliases == []
+
+
+def test_a_pack_without_credentials_has_none() -> None:
+    assert PackFile.model_validate(VALID).credentials == []

@@ -400,7 +400,8 @@ def _benefits(job: JobAttributes, intent: IntentView) -> _Raw:
     )
 
 
-def _qualifications(job: JobAttributes, profile: ProfileView) -> _Raw:
+def _education(job: JobAttributes, profile: ProfileView) -> _Raw:
+    """Compare the education the posting requires with the profile's."""
     required = job.education_required
     if not required:
         return _unknown("The posting states no education requirement.")
@@ -422,6 +423,59 @@ def _qualifications(job: JobAttributes, profile: ProfileView) -> _Raw:
     if held >= needed:
         return _scored(ONE, evidence, "Your education meets the requirement.")
     return _Raw("mismatch", ZERO, evidence, "Your education is below the requirement.")
+
+
+_CREDENTIAL_WEIGHT = {"must": 2, "nice": 1}
+
+
+def _credentials(job: JobAttributes, profile: ProfileView) -> _Raw:
+    """Share of the licences and certifications the posting asks for that the owner holds.
+
+    A required one weighs 2 and a preferred one 1, as for skills. There is no judging of near
+    equivalents: a licence is held or it is not.
+    """
+    if not job.credentials:
+        return _unknown("The posting names no licence or certification.")
+    total = sum(_CREDENTIAL_WEIGHT[c.importance] for c in job.credentials)
+    covered = sum(
+        _CREDENTIAL_WEIGHT[c.importance]
+        for c in job.credentials
+        if c.skill_id in profile.credential_ids
+    )
+    evidence = {
+        "job_quote": _quote(job, "credentials"),
+        "credentials": [
+            {
+                "name": c.name,
+                "importance": c.importance,
+                "held": c.skill_id in profile.credential_ids,
+            }
+            for c in job.credentials
+        ],
+    }
+    strength = Fraction(covered, total)
+    status: Status = "match" if strength > 0 else "mismatch"
+    return _Raw(
+        status, strength, evidence, "Share of the required licences and certifications you hold."
+    )
+
+
+def _qualifications(job: JobAttributes, profile: ProfileView) -> _Raw:
+    """Education and credentials together: the mean of the parts the posting states."""
+    education = _education(job, profile)
+    if not job.credentials:
+        return education  # exactly what this dimension was before credentials existed
+    credentials = _credentials(job, profile)
+    parts = [part for part in (education, credentials) if part.strength is not None]
+    strength = sum((part.strength for part in parts if part.strength is not None), ZERO) / len(
+        parts
+    )
+    evidence: dict[str, Any] = {}
+    for part in parts:
+        evidence.update(part.evidence)
+    status: Status = "match" if strength > 0 else "mismatch"
+    explanation = " ".join(part.explanation for part in parts)
+    return _Raw(status, strength, evidence, explanation)
 
 
 def _direction(job: JobAttributes) -> _Raw:
@@ -447,7 +501,7 @@ def _direction(job: JobAttributes) -> _Raw:
 # --- gates that do not belong to one dimension ---------------------------------------------
 
 
-def _extra_gates(job: JobAttributes, intent: IntentView) -> list[Gate]:
+def _extra_gates(job: JobAttributes, intent: IntentView, profile: ProfileView) -> list[Gate]:
     gates: list[Gate] = []
     if intent.reject_unspoken_required and job.languages_required:
         missing = sorted(
@@ -474,6 +528,20 @@ def _extra_gates(job: JobAttributes, intent: IntentView) -> list[Gate]:
     ]
     if hits:
         gates.append(Gate("G9", "The posting contains a word you excluded.", {"words": hits}))
+    if intent.reject_missing_credentials:
+        missing = [
+            c.name
+            for c in job.credentials
+            if c.importance == "must" and c.skill_id not in profile.credential_ids
+        ]
+        if missing:
+            gates.append(
+                Gate(
+                    "G12",
+                    "The job requires a licence or certification you do not hold.",
+                    {"missing": missing, "job_quote": _quote(job, "credentials")},
+                )
+            )
     if intent.needs_visa and job.visa_sponsorship is False:
         gates.append(
             Gate(
@@ -563,7 +631,7 @@ def evaluate(
         "qualifications": _qualifications(job, profile),
         "career_direction": _direction(job),
     }
-    gates.extend(_extra_gates(job, intent))
+    gates.extend(_extra_gates(job, intent, profile))
 
     results: list[DimensionResult] = []
     for key in DIMENSION_KEYS:

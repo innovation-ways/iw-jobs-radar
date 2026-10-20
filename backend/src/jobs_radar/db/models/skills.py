@@ -21,7 +21,10 @@ class Skill(TimestampMixin, Base):
     canonical_name: Mapped[str] = text_column(
         "Canonical display name of the skill.", length=120, unique=True
     )
-    kind: Mapped[str] = text_column("Category: technology, domain knowledge or method.", length=30)
+    kind: Mapped[str] = text_column(
+        "Category: technology, domain knowledge, method, tool or equipment, or credential.",
+        length=30,
+    )
     esco_uri: Mapped[str | None] = text_column(
         "Optional ESCO concept URI (mapping is a deferred improvement).", nullable=True
     )

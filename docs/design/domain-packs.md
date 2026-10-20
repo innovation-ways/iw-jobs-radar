@@ -108,7 +108,8 @@ Existing tests that must stay green unchanged (they already exercise the contrac
 | 3 | done | editable vocabulary, merge (survivor's stance wins), Vocabulary screen |
 | 4 | done | ten packs as package data, loader at start-up, per-owner activation, Packs screen; guide in `docs/packs.md` |
 | 5 | done | areas and noise in the pack files; rules compiled from keywords (`domain/prefilter.py`), read per owner from the packs that are on; no table |
-| 6a, 6b, 6c | to do | skill kinds; credentials, schedule and travel; setup assistant |
+| 6a | done | skill kinds `tool_equipment` and `credential`; credentials in packs, extraction, qualifications and gate G12 (off); profile section. The model is not asked for credentials until 6b |
+| 6b, 6c | to do | schedule and travel (taxonomy v4, `schedule_travel`, G13, G14, `matching-v1.9`, `extract-v5`); setup assistant, pack defaults, re-extraction action |
 
 Decisions of phase 4: a term in no pack is always offered (`other`, user terms, the global kinds);
 an installation that already has a profile gets the software pack switched on by migration `0030`, a
@@ -121,3 +122,11 @@ the packs the owner has switched on, not stored in tables. Nothing about them is
 owner yet, so a table would only copy the files; owner-defined areas would need one, later. A board
 with no stored areas selects every area of the owner's packs; a request that names none gets the
 same. Chosen areas that no switched-on pack defines are ignored (nothing is filtered by them).
+
+Decisions of phase 6a: credentials are skills of kind `credential` (level and years are fixed and not
+shown); the contract has `credentials` but the model-facing schema leaves it out until the prompt that
+explains it ships in 6b, so the prompt is unchanged and nothing is re-extracted; the qualifications
+dimension is the mean of the education part and the credentials part that the posting states, and is
+exactly what it was when a posting names no credential; G12 fires only for a required (`must`)
+credential, only when the owner turned the option on. The policy version is bumped in 6b, together
+with the prompt, so that one rescore covers every change.

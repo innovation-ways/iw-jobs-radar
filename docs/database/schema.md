@@ -733,12 +733,12 @@ Canonical skills referenced by profiles and job extractions.
 |---|---|---|---|
 | `skill_id` | BIGINT | no | Surrogate primary key of the skill. |
 | `canonical_name` | VARCHAR(120) | no | Canonical display name of the skill. |
-| `kind` | VARCHAR(30) | no | Category: technology, domain knowledge or method. |
+| `kind` | VARCHAR(30) | no | Category: technology, domain knowledge, method, tool or equipment, or credential. |
 | `esco_uri` | TEXT | yes | Optional ESCO concept URI (mapping is a deferred improvement). |
 | `updated_at` | DATETIME | no | UTC timestamp of the last modification of the row. |
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |
 
-- check `ck_skill_kind_valid`: `kind IN ('technology', 'domain_knowledge', 'method')`
+- check `ck_skill_kind_valid`: `kind IN ('technology', 'domain_knowledge', 'method', 'tool_equipment', 'credential')`
 - unique `uq_skill_canonical_name` (canonical_name)
 
 ## skill_alias

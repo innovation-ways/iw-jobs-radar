@@ -78,6 +78,7 @@ async def _load_packs(session_factory: async_sessionmaker[AsyncSession]) -> None
         terms_added=result.terms_added,
         memberships_added=result.memberships_added,
         terms_retired=result.terms_retired,
+        credentials_added=result.credentials_added,
     )
 
 

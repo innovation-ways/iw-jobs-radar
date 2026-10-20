@@ -56,6 +56,7 @@ _UNKNOWN: dict[str, Any] = {"value": None, "status": "unknown", "confidence": 0.
 _LIST_ITEMS: dict[str, type[ExtractedRoleFamily] | type[ExtractedSkill]] = {
     "role_families": ExtractedRoleFamily,
     "skills": ExtractedSkill,
+    "credentials": ExtractedSkill,
 }
 _EXPECTED = {*_EVIDENCED_FIELDS, *_LIST_ITEMS, "schema_version"}
 
@@ -174,8 +175,15 @@ def verify_evidence(output: ExtractionOutput, title: str, description: str) -> V
     unverified += [
         f"skills:{s.name}" for s in output.skills if not quote_occurs(s.evidence, haystack)
     ]
+    credentials = [c for c in output.credentials if quote_occurs(c.evidence, haystack)]
+    unverified += [
+        f"credentials:{c.name}"
+        for c in output.credentials
+        if not quote_occurs(c.evidence, haystack)
+    ]
     updates["role_families"] = role_families
     updates["skills"] = skills
+    updates["credentials"] = credentials
     return VerificationResult(output.model_copy(update=updates), sorted(unverified))
 
 

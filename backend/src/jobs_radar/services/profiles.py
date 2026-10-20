@@ -5,6 +5,7 @@ nothing changed, none at all. Skills are typed by name and resolved to canonical
 """
 
 from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from datetime import UTC, datetime
 from typing import Any
 
@@ -29,6 +30,8 @@ class RevisionView:
 
     revision: ProfileRevision
     skill_names: dict[int, str]
+    # The kind of each skill (technology, credential, ...), so the screens can list them apart.
+    skill_kinds: dict[int, str] = dataclass_field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -67,7 +70,7 @@ class ProfileService:
 
     async def _view(self, revision: ProfileRevision) -> RevisionView:
         ids = {int(skill["skill_id"]) for skill in revision.facts_json.get("skills", [])}
-        return RevisionView(revision, await self._skills.names(ids))
+        return RevisionView(revision, await self._skills.names(ids), await self._skills.kinds(ids))
 
     async def _profile_view(self, profile: CareerProfile) -> ProfileView:
         current = await self._profiles.current_revision(profile)

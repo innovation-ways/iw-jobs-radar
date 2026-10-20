@@ -157,5 +157,68 @@
     "talent pool*",
     "spontaneous application*",
     "unpaid*"
+  ],
+  "credentials": [
+    {
+      "name": "Teaching qualification",
+      "aliases": [
+        "qts",
+        "qualified teacher status",
+        "teaching licence",
+        "teaching certificate"
+      ]
+    },
+    {
+      "name": "Criminal record check",
+      "aliases": [
+        "dbs check",
+        "enhanced dbs",
+        "criminal record certificate",
+        "police clearance"
+      ]
+    },
+    {
+      "name": "Safeguarding training",
+      "aliases": [
+        "safeguarding certificate",
+        "child protection training"
+      ]
+    },
+    {
+      "name": "First aid certificate",
+      "aliases": [
+        "first aid",
+        "first aider",
+        "first aid at work",
+        "emergency first aid"
+      ]
+    },
+    {
+      "name": "Security guard licence",
+      "aliases": [
+        "sia licence",
+        "security officer licence",
+        "security licence"
+      ]
+    },
+    {
+      "name": "Coaching qualification",
+      "aliases": [
+        "sports coaching certificate",
+        "coaching badge",
+        "fitness instructor qualification"
+      ]
+    },
+    {
+      "name": "Driving licence (category B)",
+      "aliases": [
+        "driving licence b",
+        "driving license b",
+        "category b licence",
+        "b licence",
+        "full driving licence",
+        "driver s licence b"
+      ]
+    }
   ]
 }

@@ -107,6 +107,9 @@ class ExtractionOutput(StrictModel):
     role_families: list[ExtractedRoleFamily] = Field(default_factory=list)
     sectors: Evidenced[ExtractedSectors]
     skills: list[ExtractedSkill] = Field(default_factory=list)
+    # Licences and certifications the posting asks for (ADR-080). Optional, so extractions made
+    # before they existed stay valid.
+    credentials: list[ExtractedSkill] = Field(default_factory=list)
     languages_required: Evidenced[list[ExtractedLanguage]]
     employer_type: Evidenced[TaxonomyKey]
     education_required: Evidenced[str]

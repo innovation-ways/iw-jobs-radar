@@ -2559,6 +2559,11 @@
             "default": false,
             "title": "Needs Visa Or Relocation",
             "type": "boolean"
+          },
+          "reject_missing_credentials": {
+            "default": false,
+            "title": "Reject Missing Credentials",
+            "type": "boolean"
           }
         },
         "title": "Filters",
@@ -3380,7 +3385,8 @@
           "filters": {
             "$ref": "#/components/schemas/Filters",
             "default": {
-              "needs_visa_or_relocation": false
+              "needs_visa_or_relocation": false,
+              "reject_missing_credentials": false
             }
           },
           "keywords": {
@@ -3476,7 +3482,8 @@
           "filters": {
             "$ref": "#/components/schemas/Filters",
             "default": {
-              "needs_visa_or_relocation": false
+              "needs_visa_or_relocation": false,
+              "reject_missing_credentials": false
             }
           },
           "keywords": {
@@ -3713,7 +3720,8 @@
           "filters": {
             "$ref": "#/components/schemas/Filters",
             "default": {
-              "needs_visa_or_relocation": false
+              "needs_visa_or_relocation": false,
+              "reject_missing_credentials": false
             }
           },
           "keywords": {
@@ -6244,7 +6252,9 @@
         "enum": [
           "technology",
           "domain_knowledge",
-          "method"
+          "method",
+          "tool_equipment",
+          "credential"
         ],
         "title": "SkillKind",
         "type": "string"
@@ -6253,6 +6263,10 @@
         "additionalProperties": false,
         "description": "A skill of a revision, with its canonical name.",
         "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/SkillKind",
+            "default": "technology"
+          },
           "level": {
             "enum": [
               "beginner",

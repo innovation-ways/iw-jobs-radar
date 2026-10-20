@@ -137,5 +137,54 @@
     "talent pool*",
     "spontaneous application*",
     "unpaid*"
+  ],
+  "credentials": [
+    {
+      "name": "Driving licence (category B)",
+      "aliases": [
+        "driving licence b",
+        "driving license b",
+        "category b licence",
+        "b licence",
+        "full driving licence",
+        "driver s licence b"
+      ]
+    },
+    {
+      "name": "Food hygiene certificate",
+      "aliases": [
+        "food safety certificate",
+        "food hygiene level 2",
+        "haccp certificate",
+        "food handler certificate"
+      ]
+    },
+    {
+      "name": "First aid certificate",
+      "aliases": [
+        "first aid",
+        "first aider",
+        "first aid at work",
+        "emergency first aid"
+      ]
+    },
+    {
+      "name": "Personal licence (alcohol)",
+      "aliases": [
+        "personal alcohol licence",
+        "alcohol licence",
+        "bar licence"
+      ]
+    },
+    {
+      "name": "Forklift operator licence",
+      "aliases": [
+        "forklift licence",
+        "forklift ticket",
+        "forklift certificate",
+        "counterbalance licence",
+        "reach truck licence"
+      ]
+    }
   ]
 }

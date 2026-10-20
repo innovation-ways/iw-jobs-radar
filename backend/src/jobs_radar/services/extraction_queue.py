@@ -21,6 +21,7 @@ from jobs_radar.domain.enums import (
     EXTRACTION_ACCEPTED_PROMPT_VERSIONS,
     EXTRACTION_PROMPT_VERSION,
     LOCAL_OWNER_ID,
+    SkillKind,
 )
 from jobs_radar.repositories.extractions import ExtractionRepository
 from jobs_radar.repositories.schedule import ScheduleRepository
@@ -227,6 +228,13 @@ class ExtractionQueue:
             attributes["skills_resolved"] = [
                 {"skill_id": s.skill_id, "name": s.name, "importance": s.importance}
                 for s in resolved
+            ]
+            credentials = await SkillCanonicaliser(session).canonicalise(
+                result.output.credentials, SkillKind.CREDENTIAL
+            )
+            attributes["credentials_resolved"] = [
+                {"skill_id": s.skill_id, "name": s.name, "importance": s.importance}
+                for s in credentials
             ]
             attributes["locations_resolved"] = _resolved_locations(result, hints)
             await repository.finalise_success(

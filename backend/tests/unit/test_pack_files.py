@@ -181,3 +181,19 @@ def test_the_areas_of_several_packs_add_up() -> None:
     assert both.categorise(["Electrician"]) == {"electrical"}
     assert both.categorise(["Backend Developer"]) == {"software"}
     assert len(both.areas) == 11
+
+
+def test_every_pack_lists_credentials_people_in_the_field_hold() -> None:
+    for pack in shipped_packs():
+        assert len(pack.credentials) >= 3, pack.key
+    names = {c.name for pack in shipped_packs() for c in pack.credentials}
+    assert "Driving licence (category B)" in names
+    assert "First aid certificate" in names
+
+
+def test_a_credential_has_the_same_aliases_wherever_it_appears() -> None:
+    seen: dict[str, tuple[str, ...]] = {}
+    for pack in shipped_packs():
+        for credential in pack.credentials:
+            aliases = tuple(sorted(credential.aliases))
+            assert seen.setdefault(credential.name.casefold(), aliases) == aliases, credential.name

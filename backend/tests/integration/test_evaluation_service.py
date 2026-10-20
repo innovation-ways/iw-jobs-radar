@@ -464,3 +464,69 @@ async def test_the_runner_stops_when_its_time_budget_is_spent(
 
     assert scored == 0
     assert await count(db_session, MatchEvaluation, job_snapshot_id=w.snapshot_id) == 0
+
+
+# --- licences and certifications (ADR-080, phase 6a) ----------------------------------------------------
+
+
+async def evaluate_with_licence(session: AsyncSession, *, hold_it: bool, reject_missing: bool):  # type: ignore[no-untyped-def]
+    """A job that requires a driving licence; a profile that holds it or not; an intent that may
+    reject a missing one."""
+    from tests.data import sample_profile_input
+
+    from jobs_radar.schemas.profile_api import ProfileInput
+    from jobs_radar.services.profiles import ProfileService
+
+    w = await world(session, credentials=[unique("Driving licence")])
+    if hold_it:
+        data = sample_profile_input()
+        data["skills"] = [
+            {"name": w.held, "kind": "technology", "level": "expert", "years": 5},
+            {"name": w.credential_names[0], "kind": "credential", "level": "expert", "years": 0},
+        ]
+        await ProfileService(session).save(
+            LOCAL_OWNER_ID,
+            w.profile_id,
+            ProfileInput.model_validate(data),
+            expected_current_revision=1,
+        )
+    profile = await ProfileService(session).get(LOCAL_OWNER_ID, w.profile_id)
+    data = deepcopy(sample_intent())
+    data["weights"]["qualifications"] = 10
+    data["filters"]["reject_missing_credentials"] = reject_missing
+    saved = await IntentService(session).save(
+        LOCAL_OWNER_ID,
+        w.intent_id,
+        IntentDefinition.model_validate(data),
+        expected_current_revision=1,
+    )
+    assert saved.view.current is not None and profile.current is not None
+    return await EvaluationService(session, provider=None).evaluate(
+        LOCAL_OWNER_ID,
+        job_snapshot_id=w.snapshot_id,
+        job_extraction_id=w.extraction_id,
+        profile_revision_id=profile.current.revision.profile_revision_id,
+        intent_revision_id=saved.view.current.intent_revision_id,
+        judge=False,
+    )
+
+
+async def test_a_held_licence_counts_in_qualifications(db_session: AsyncSession) -> None:
+    record = await evaluate_with_licence(db_session, hold_it=True, reject_missing=True)
+    by_key = {d.dimension_key: d for d in record.dimensions}
+    assert (by_key["qualifications"].status, float(by_key["qualifications"].strength)) == (
+        "match",
+        1.0,
+    )
+    assert record.evaluation.gates_json == []
+
+
+async def test_a_missing_licence_is_a_mismatch_and_a_gate_only_when_asked(
+    db_session: AsyncSession,
+) -> None:
+    lenient = await evaluate_with_licence(db_session, hold_it=False, reject_missing=False)
+    assert {d.dimension_key: d.status for d in lenient.dimensions}["qualifications"] == "mismatch"
+    assert lenient.evaluation.gates_json == []
+    strict = await evaluate_with_licence(db_session, hold_it=False, reject_missing=True)
+    assert [g["code"] for g in strict.evaluation.gates_json] == ["G12"]
+    assert strict.evaluation.recommendation == "not_recommended"

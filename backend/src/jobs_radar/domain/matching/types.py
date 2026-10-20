@@ -100,6 +100,8 @@ class JobAttributes:
     seniority_levels: tuple[str, ...] | None = None
     sector_primary: str | None = None
     skills: tuple[JobSkill, ...] = ()
+    # Licences and certifications the posting asks for, mapped to canonical skills (ADR-080).
+    credentials: tuple[JobSkill, ...] = ()
     languages_required: tuple[str, ...] | None = None
     employer_type: str | None = None
     education_required: str | None = None
@@ -120,6 +122,8 @@ class ProfileView:
     languages: frozenset[str] = frozenset()
     education_levels: tuple[str, ...] = ()
     certifications: tuple[str, ...] = ()
+    # Skills of the profile that are licences or certifications (ADR-080).
+    credential_ids: frozenset[int] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -150,6 +154,8 @@ class IntentView:
     excluded_companies: tuple[str, ...] = ()
     excluded_words: tuple[str, ...] = ()
     needs_visa: bool = False
+    # Rule out jobs that require a licence or certification the owner does not hold (G12, off).
+    reject_missing_credentials: bool = False
     benefits_wanted: tuple[str, ...] = ()
     weights: Mapping[str, int] = field(default_factory=dict)
 

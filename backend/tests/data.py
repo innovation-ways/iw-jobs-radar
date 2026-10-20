@@ -125,7 +125,11 @@ def sample_intent() -> dict[str, Any]:
         "languages": {"can_work_in": ["pt", "en"], "reject_unspoken_required": True},
         "keywords": ["LLM", "RAG", "billing", "charging", "mediation"],
         "exclusions": {"companies": ["Harbor Systems"], "words": ["unpaid", "internship"]},
-        "filters": {"max_posting_age_days": None, "needs_visa_or_relocation": False},
+        "filters": {
+            "max_posting_age_days": None,
+            "needs_visa_or_relocation": False,
+            "reject_missing_credentials": False,
+        },
         "benefits_wanted": [],
         "weights": {
             "role_responsibilities": 25,

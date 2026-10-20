@@ -9,6 +9,7 @@ from typing import Annotated, Literal, Self
 from pydantic import Field, StringConstraints, model_validator
 
 from jobs_radar.domain.prefilter import Area, PrefilterRules
+from jobs_radar.domain.skills import normalise_skill_name
 from jobs_radar.schemas.common import StrictModel, TaxonomyKey
 from jobs_radar.schemas.taxonomy_api import TermLabel
 
@@ -25,6 +26,28 @@ class PackTerm(StrictModel):
 
     key: TaxonomyKey
     label: TermLabel
+
+
+Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
+
+
+class PackCredential(StrictModel):
+    """A licence or certification people in the field hold and jobs ask for (ADR-080).
+
+    The name becomes a canonical skill of kind ``credential``; the aliases are other ways it is
+    written in postings and CVs ("category B licence"), so a mention resolves to the same skill.
+    """
+
+    name: Name
+    aliases: list[Name] = Field(default_factory=list, max_length=20)
+
+    @model_validator(mode="after")
+    def _names_can_be_matched(self) -> Self:
+        for text in (self.name, *self.aliases):
+            if not normalise_skill_name(text):
+                msg = f"credential {self.name!r}: {text!r} has no letter or digit to match on"
+                raise ValueError(msg)
+        return self
 
 
 class PackArea(StrictModel):
@@ -70,6 +93,8 @@ class PackFile(StrictModel):
     # posting out. Keywords are plain text, see ``jobs_radar.domain.prefilter``.
     areas: list[PackArea] = Field(default_factory=list)
     noise: Annotated[list[str], Field(max_length=80)] = Field(default_factory=list)
+    # Licences and certifications of the field (ADR-080, phase 6a).
+    credentials: list[PackCredential] = Field(default_factory=list, max_length=60)
 
     @model_validator(mode="after")
     def _terms_are_sound(self) -> Self:
@@ -85,6 +110,10 @@ class PackFile(StrictModel):
         labels = [area.label.casefold() for area in self.areas]
         if len(set(keys)) != len(keys) or len(set(labels)) != len(labels):
             msg = "areas: a key or a label is used twice"
+            raise ValueError(msg)
+        names = [normalise_skill_name(c.name) for c in self.credentials]
+        if len(set(names)) != len(names):
+            msg = "credentials: a name is used twice"
             raise ValueError(msg)
         PrefilterRules((), tuple(self.noise))  # raises ValueError on a bad noise keyword
         return self

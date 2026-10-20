@@ -69,3 +69,19 @@ def test_skills_must_quote_evidence() -> None:
     data = sample_output()
     data["skills"][0]["evidence"] = ""
     reject(data)
+
+
+def test_credentials_are_optional_so_older_answers_stay_valid() -> None:
+    """Phase 6a: stored extractions made before credentials existed still validate."""
+    assert ExtractionOutput.model_validate(sample_output()).credentials == []
+
+
+def test_credentials_are_named_with_importance_and_a_quote() -> None:
+    data = sample_output()
+    data["credentials"] = [
+        {"name": "Driving licence B", "importance": "must", "evidence": "valid category B licence"}
+    ]
+    output = ExtractionOutput.model_validate(data)
+    assert [(c.name, c.importance) for c in output.credentials] == [("Driving licence B", "must")]
+    data["credentials"] = [{"name": "Driving licence B", "importance": "must"}]
+    reject(data)  # a claim without its quote is not accepted

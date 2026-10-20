@@ -62,11 +62,17 @@ class SkillCanonicaliser:
     def __init__(self, session: AsyncSession) -> None:
         self._skills = SkillRepository(session)
 
-    async def canonicalise(self, mentions: Sequence[ExtractedSkill]) -> list[ResolvedSkill]:
-        """Resolve each mention, creating skills for unknown ones; duplicates keep ``must``."""
+    async def canonicalise(
+        self, mentions: Sequence[ExtractedSkill], kind: SkillKind = SkillKind.TECHNOLOGY
+    ) -> list[ResolvedSkill]:
+        """Resolve each mention, creating skills of ``kind`` for unknown ones.
+
+        A mention that matches an existing skill keeps that skill's own kind. Duplicates keep
+        ``must``.
+        """
         resolved: dict[int, ResolvedSkill] = {}
         for mention in mentions:
-            skill, created = await self._skills.resolve_mention(mention.name, SkillKind.TECHNOLOGY)
+            skill, created = await self._skills.resolve_mention(mention.name, kind)
             if created:
                 await self._skills.record_accepted_candidate(skill, mention.name)
             current = resolved.get(skill.skill_id)

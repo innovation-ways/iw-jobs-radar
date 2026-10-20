@@ -1,13 +1,15 @@
-import { Navigate, Route, Routes } from 'react-router'
+import { Route, Routes } from 'react-router'
 import { AppShell } from '@/components/AppShell'
 import { About } from '@/pages/About'
 import { AiPrivacy } from '@/pages/AiPrivacy'
 import { Companies } from '@/pages/Companies'
+import { Home } from '@/pages/Home'
 import { Inbox } from '@/pages/Inbox'
 import { NotFound } from '@/pages/NotFound'
 import { Packs } from '@/pages/Packs'
 import { Placeholder } from '@/pages/Placeholder'
 import { ProfileIntent } from '@/pages/ProfileIntent'
+import { Setup } from '@/pages/Setup'
 import { Sources } from '@/pages/Sources'
 import { Trends } from '@/pages/Trends'
 import { Today } from '@/pages/Today'
@@ -19,7 +21,8 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route element={<AppShell />}>
-        <Route index element={<Navigate to="/inbox" replace />} />
+        <Route index element={<Home />} />
+        <Route path="/setup" element={<Setup />} />
         <Route path="/today" element={<Today />} />
         <Route path="/inbox" element={<Inbox />} />
         <Route path="/sources" element={<Sources />} />

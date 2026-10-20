@@ -56,7 +56,13 @@ def test_sectors_may_be_left_out() -> None:
         {"credentials": [{"name": "Driving licence B", "aliases": ["!!!"]}]},  # nothing to match
         {"credentials": [{"name": "Gas Safe"}, {"name": "gas  safe"}]},  # the same name twice
         {"credentials": [{"label": "Gas Safe"}]},  # the field is `name`
-        {"defaults": {"weights": {}}},  # arrives in a later step
+        {"defaults": {"weights": {"not_a_dimension": 5}}},
+        {"defaults": {"weights": {"compensation": 41}}},
+        {"defaults": {"weights": {"compensation": -1}}},
+        {"defaults": {"work_arrangements": {"underwater": "preferred"}}},
+        {"defaults": {"work_arrangements": {"remote": "maybe"}}},
+        {"defaults": {"schedules": {"day": "rejected", "night": "rejected"}}},  # all rejected
+        {"defaults": {"unknown_field": 1}},
         {"areas": [{"key": "electrical", "label": "Electrical", "keywords": []}]},
         {"areas": [{"key": "Bad Key", "label": "Electrical", "keywords": ["wiring"]}]},
         {"areas": [{"key": "electrical", "label": "", "keywords": ["wiring"]}]},
@@ -124,3 +130,22 @@ def test_credentials_are_names_with_optional_aliases() -> None:
 
 def test_a_pack_without_credentials_has_none() -> None:
     assert PackFile.model_validate(VALID).credentials == []
+
+
+def test_defaults_suggest_stances_weights_and_the_credential_gate() -> None:
+    data = deepcopy(VALID)
+    data["defaults"] = {
+        "work_arrangements": {"onsite": "preferred", "remote": "rejected"},
+        "schedules": {"day": "preferred", "night": "acceptable"},
+        "travel_levels": {"frequent": "rejected", "none": "acceptable"},
+        "weights": {"work_arrangement_location": 20, "qualifications": 12, "schedule_travel": 8},
+        "reject_missing_credentials": True,
+    }
+    defaults = PackFile.model_validate(data).defaults
+    assert defaults is not None
+    assert defaults.work_arrangements == {"onsite": "preferred", "remote": "rejected"}
+    assert defaults.weights["qualifications"] == 12 and defaults.reject_missing_credentials is True
+
+
+def test_a_pack_may_have_no_defaults() -> None:
+    assert PackFile.model_validate(VALID).defaults is None

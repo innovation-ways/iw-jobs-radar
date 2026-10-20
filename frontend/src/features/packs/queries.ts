@@ -36,3 +36,27 @@ export function usePackActions() {
   })
   return { setActive }
 }
+
+const REEXTRACTION = ['re-extraction'] as const
+
+/** How many open jobs would be analysed again with the current prompt, and for how long. */
+export function useReextractionPreview(sinceDays: number) {
+  return useQuery({
+    queryKey: [...REEXTRACTION, sinceDays],
+    retry: false,
+    queryFn: () =>
+      unwrap(
+        api.GET('/api/v1/pipeline/re-extraction', { params: { query: { since_days: sinceDays } } }),
+      ),
+  })
+}
+
+/** Queue those analyses (only after the owner confirms). */
+export function useQueueReextraction() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (sinceDays: number) =>
+      unwrap(api.POST('/api/v1/pipeline/re-extraction', { body: { since_days: sinceDays } })),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: REEXTRACTION }),
+  })
+}

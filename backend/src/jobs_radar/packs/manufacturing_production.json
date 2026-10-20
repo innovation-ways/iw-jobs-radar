@@ -231,5 +231,31 @@
         "driver s licence b"
       ]
     }
-  ]
+  ],
+  "defaults": {
+    "work_arrangements": {
+      "onsite": "preferred",
+      "hybrid": "acceptable",
+      "remote": "rejected"
+    },
+    "schedules": {
+      "day": "preferred",
+      "rotating_shifts": "acceptable",
+      "night": "acceptable",
+      "weekends": "acceptable",
+      "on_call": "acceptable"
+    },
+    "weights": {
+      "role_responsibilities": 25,
+      "skills_technology": 10,
+      "work_arrangement_location": 18,
+      "engagement_terms": 10,
+      "compensation": 10,
+      "seniority_experience": 5,
+      "domain_sector": 5,
+      "company_profile": 5,
+      "qualifications": 8,
+      "schedule_travel": 12
+    }
+  }
 }

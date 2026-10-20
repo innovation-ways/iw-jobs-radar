@@ -804,6 +804,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/pipeline/re-extraction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview Reextraction
+         * @description Count the open jobs that the current prompt would analyse again; changes nothing.
+         */
+        get: operations["preview_reextraction_api_v1_pipeline_re_extraction_get"];
+        put?: never;
+        /**
+         * Queue Reextraction
+         * @description Queue those analyses; the worker takes them like any other. Repeating it queues nothing.
+         */
+        post: operations["queue_reextraction_api_v1_pipeline_re_extraction_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/pipeline/status": {
         parameters: {
             query?: never;
@@ -1251,6 +1275,46 @@ export interface paths {
          * @description Change the schedule; the worker picks it up within one poll interval.
          */
         put: operations["update_schedule_api_v1_settings_schedule_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/setup/intent-defaults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Intent Defaults
+         * @description Return what a first search intent starts with, from the first pack switched on.
+         */
+        get: operations["intent_defaults_api_v1_setup_intent_defaults_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/setup/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Setup Status
+         * @description Say whether the installation still has to be set up (no profile and no pack on).
+         */
+        get: operations["setup_status_api_v1_setup_status_get"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -2968,6 +3032,32 @@ export interface components {
             work_rules: components["schemas"]["WorkRules"];
         };
         /**
+         * IntentDefaultsRead
+         * @description What a first search intent starts with: the first switched-on pack's suggestions.
+         */
+        IntentDefaultsRead: {
+            /** Pack Key */
+            pack_key: string | null;
+            /** Reject Missing Credentials */
+            reject_missing_credentials: boolean;
+            /** Schedules */
+            schedules: {
+                [key: string]: string;
+            };
+            /** Travel Levels */
+            travel_levels: {
+                [key: string]: string;
+            };
+            /** Weights */
+            weights: {
+                [key: string]: number;
+            };
+            /** Work Arrangements */
+            work_arrangements: {
+                [key: string]: string;
+            };
+        };
+        /**
          * IntentDefinition
          * @description The content of one immutable intent revision.
          */
@@ -3959,6 +4049,39 @@ export interface components {
             window_minutes: number;
         };
         /**
+         * ReextractionPreviewRead
+         * @description How many open jobs would be analysed again with the current prompt, and for how long.
+         */
+        ReextractionPreviewRead: {
+            /** Candidates */
+            candidates: number;
+            /** Minutes */
+            minutes: number;
+            /** Model */
+            model: string;
+            /** Seconds Per Job */
+            seconds_per_job: number;
+        };
+        /**
+         * ReextractionQueuedRead
+         * @description How many analyses were queued.
+         */
+        ReextractionQueuedRead: {
+            /** Queued */
+            queued: number;
+        };
+        /**
+         * ReextractionRequest
+         * @description Analyse the open jobs first seen within the last ``since_days`` days again.
+         */
+        ReextractionRequest: {
+            /**
+             * Since Days
+             * @default 30
+             */
+            since_days: number;
+        };
+        /**
          * RemoteRule
          * @description Where remote work is acceptable from.
          */
@@ -4078,6 +4201,18 @@ export interface components {
              * Format: date
              */
             week_start: string;
+        };
+        /**
+         * SetupStatusRead
+         * @description Whether the installation still has to be set up.
+         */
+        SetupStatusRead: {
+            /** Active Pack Count */
+            active_pack_count: number;
+            /** Has Profile */
+            has_profile: boolean;
+            /** Needs Setup */
+            needs_setup: boolean;
         };
         /**
          * SignalRead
@@ -6129,6 +6264,70 @@ export interface operations {
             };
         };
     };
+    preview_reextraction_api_v1_pipeline_re_extraction_get: {
+        parameters: {
+            query?: {
+                since_days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReextractionPreviewRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    queue_reextraction_api_v1_pipeline_re_extraction_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReextractionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReextractionQueuedRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     pipeline_status_api_v1_pipeline_status_get: {
         parameters: {
             query?: {
@@ -7030,6 +7229,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    intent_defaults_api_v1_setup_intent_defaults_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntentDefaultsRead"];
+                };
+            };
+        };
+    };
+    setup_status_api_v1_setup_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SetupStatusRead"];
                 };
             };
         };

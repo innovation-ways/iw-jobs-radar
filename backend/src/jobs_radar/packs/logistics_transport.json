@@ -218,5 +218,37 @@
         "emergency first aid"
       ]
     }
-  ]
+  ],
+  "defaults": {
+    "work_arrangements": {
+      "onsite": "preferred",
+      "hybrid": "acceptable",
+      "remote": "rejected"
+    },
+    "schedules": {
+      "day": "preferred",
+      "night": "acceptable",
+      "rotating_shifts": "acceptable",
+      "weekends": "acceptable",
+      "on_call": "acceptable"
+    },
+    "travel_levels": {
+      "none": "acceptable",
+      "occasional": "acceptable",
+      "frequent": "acceptable"
+    },
+    "weights": {
+      "role_responsibilities": 22,
+      "skills_technology": 5,
+      "work_arrangement_location": 18,
+      "engagement_terms": 10,
+      "compensation": 12,
+      "seniority_experience": 3,
+      "domain_sector": 5,
+      "company_profile": 5,
+      "qualifications": 15,
+      "schedule_travel": 10
+    },
+    "reject_missing_credentials": true
+  }
 }

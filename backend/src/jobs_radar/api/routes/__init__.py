@@ -20,6 +20,7 @@ from jobs_radar.api.routes import (
     profiles,
     proposals,
     schedule,
+    setup,
     sources,
     summaries,
     taxonomy,
@@ -35,6 +36,7 @@ v1_router.include_router(intents.router)
 v1_router.include_router(taxonomy.router)
 v1_router.include_router(packs.router)
 v1_router.include_router(prefilter.router)
+v1_router.include_router(setup.router)
 v1_router.include_router(locations.router)
 v1_router.include_router(evaluations.router)
 v1_router.include_router(directions.router)

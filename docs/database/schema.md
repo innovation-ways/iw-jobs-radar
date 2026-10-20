@@ -340,6 +340,7 @@ AI attribute extractions per job snapshot (immutable once finalised).
 | `error_class` | VARCHAR(50) | yes | Classified failure reason. |
 | `failure_json` | JSONB | yes | Size and last characters of the unusable answer of the latest failed attempt, so the failure can be diagnosed. |
 | `attempts` | INTEGER | no | Number of attempts made so far. |
+| `forced` | BOOLEAN | no | True when the owner asked to analyse the job again: the worker then claims the row even though the job already has an accepted answer from an earlier prompt. |
 | `latency_ms` | INTEGER | yes | Duration of the last attempt in milliseconds. |
 | `claimed_at` | DATETIME | yes | UTC time at which a worker claimed the task. |
 | `completed_at` | DATETIME | yes | UTC time at which the extraction was finalised. |

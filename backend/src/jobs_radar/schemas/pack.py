@@ -8,6 +8,8 @@ from typing import Annotated, Literal, Self
 
 from pydantic import Field, StringConstraints, model_validator
 
+from jobs_radar.domain.enums import Stance
+from jobs_radar.domain.matching.types import DIMENSION_KEYS
 from jobs_radar.domain.prefilter import Area, PrefilterRules
 from jobs_radar.domain.skills import normalise_skill_name
 from jobs_radar.schemas.common import StrictModel, TaxonomyKey
@@ -47,6 +49,49 @@ class PackCredential(StrictModel):
             if not normalise_skill_name(text):
                 msg = f"credential {self.name!r}: {text!r} has no letter or digit to match on"
                 raise ValueError(msg)
+        return self
+
+
+# The options of the vocabularies that belong to the scoring model, not to a pack (ADR-080).
+_WORK_ARRANGEMENTS = frozenset({"remote", "hybrid", "onsite"})
+_SCHEDULES = frozenset({"day", "night", "rotating_shifts", "weekends", "on_call"})
+_TRAVEL_LEVELS = frozenset({"none", "occasional", "frequent"})
+_MAX_WEIGHT = 40  # the limit of one weight in a search intent
+
+
+def _check_stances(name: str, stances: dict[str, Stance], allowed: frozenset[str]) -> None:
+    if unknown := sorted(set(stances) - allowed):
+        msg = f"defaults.{name}: unknown option {', '.join(unknown)}"
+        raise ValueError(msg)
+    if stances and all(stance is Stance.REJECTED for stance in stances.values()):
+        msg = f"defaults.{name}: at least one option must not be rejected"
+        raise ValueError(msg)
+
+
+class PackDefaults(StrictModel):
+    """What a new search intent starts with for someone in this field (ADR-080, phase 6c).
+
+    Only suggestions: the owner sees and changes every one of them. Options left out stay as the
+    application's own defaults (acceptable, and the usual weights).
+    """
+
+    work_arrangements: dict[str, Stance] = Field(default_factory=dict)
+    schedules: dict[str, Stance] = Field(default_factory=dict)
+    travel_levels: dict[str, Stance] = Field(default_factory=dict)
+    weights: dict[str, Annotated[int, Field(ge=0, le=_MAX_WEIGHT)]] = Field(default_factory=dict)
+    reject_missing_credentials: bool = False
+
+    @model_validator(mode="after")
+    def _known_options(self) -> Self:
+        _check_stances("work_arrangements", self.work_arrangements, _WORK_ARRANGEMENTS)
+        _check_stances("schedules", self.schedules, _SCHEDULES)
+        _check_stances("travel_levels", self.travel_levels, _TRAVEL_LEVELS)
+        if unknown := sorted(set(self.weights) - set(DIMENSION_KEYS)):
+            msg = f"defaults.weights: unknown dimension {', '.join(unknown)}"
+            raise ValueError(msg)
+        if self.weights and not any(self.weights.values()):
+            msg = "defaults.weights: at least one weight must be above 0"
+            raise ValueError(msg)
         return self
 
 
@@ -95,6 +140,8 @@ class PackFile(StrictModel):
     noise: Annotated[list[str], Field(max_length=80)] = Field(default_factory=list)
     # Licences and certifications of the field (ADR-080, phase 6a).
     credentials: list[PackCredential] = Field(default_factory=list, max_length=60)
+    # What a new search intent starts with for someone in this field (ADR-080, phase 6c).
+    defaults: PackDefaults | None = None
 
     @model_validator(mode="after")
     def _terms_are_sound(self) -> Self:

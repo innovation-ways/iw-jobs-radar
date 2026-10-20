@@ -252,5 +252,32 @@
         "police clearance"
       ]
     }
-  ]
+  ],
+  "defaults": {
+    "work_arrangements": {
+      "onsite": "preferred",
+      "hybrid": "acceptable",
+      "remote": "rejected"
+    },
+    "schedules": {
+      "day": "preferred",
+      "night": "acceptable",
+      "rotating_shifts": "acceptable",
+      "weekends": "acceptable",
+      "on_call": "acceptable"
+    },
+    "weights": {
+      "role_responsibilities": 25,
+      "skills_technology": 5,
+      "work_arrangement_location": 15,
+      "engagement_terms": 10,
+      "compensation": 10,
+      "seniority_experience": 5,
+      "domain_sector": 5,
+      "company_profile": 5,
+      "qualifications": 15,
+      "schedule_travel": 10
+    },
+    "reject_missing_credentials": true
+  }
 }

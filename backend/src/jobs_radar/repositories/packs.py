@@ -39,6 +39,15 @@ class PackRepository:
         )
         return set(rows.scalars())
 
+    async def active_in_order(self, owner_id: int) -> list[str]:
+        """Return the keys of the packs the owner switched on, the first one switched on first."""
+        rows = await self._session.execute(
+            select(OwnerPack.pack_key)
+            .where(OwnerPack.owner_id == owner_id)
+            .order_by(OwnerPack.owner_pack_id)
+        )
+        return list(rows.scalars())
+
     async def activate(self, owner_id: int, pack_key: str) -> None:
         """Switch a pack on for the owner."""
         self._session.add(OwnerPack(owner_id=owner_id, pack_key=pack_key))

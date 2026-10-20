@@ -197,3 +197,30 @@ def test_a_credential_has_the_same_aliases_wherever_it_appears() -> None:
         for credential in pack.credentials:
             aliases = tuple(sorted(credential.aliases))
             assert seen.setdefault(credential.name.casefold(), aliases) == aliases, credential.name
+
+
+# --- defaults for a new search intent (ADR-080, phase 6c) ----------------------------------------------
+
+
+def test_every_pack_suggests_how_its_field_works() -> None:
+    for pack in shipped_packs():
+        assert pack.defaults is not None, pack.key
+        assert pack.defaults.work_arrangements, pack.key
+
+
+def test_trades_and_care_work_on_site_and_check_credentials() -> None:
+    by_key = {pack.key: pack for pack in shipped_packs()}
+    for key in ("construction_trades", "healthcare_social", "logistics_transport"):
+        defaults = by_key[key].defaults
+        assert defaults is not None
+        assert defaults.work_arrangements["onsite"] == "preferred", key
+        assert defaults.work_arrangements["remote"] == "rejected", key
+        assert defaults.reject_missing_credentials is True, key
+        assert defaults.weights.get("qualifications", 0) > 0, key
+
+
+def test_the_software_pack_keeps_what_a_software_owner_already_has() -> None:
+    (software,) = [p for p in shipped_packs() if p.key == "software_data_it"]
+    assert software.defaults is not None
+    assert software.defaults.work_arrangements["remote"] == "preferred"
+    assert software.defaults.weights == {} and software.defaults.reject_missing_credentials is False

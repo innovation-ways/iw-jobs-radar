@@ -151,6 +151,11 @@ class JobExtraction(CreatedAtMixin, Base):
         nullable=True,
     )
     attempts: Mapped[int] = int_column("Number of attempts made so far.", default=0)
+    forced: Mapped[bool] = bool_column(
+        "True when the owner asked to analyse the job again: the worker then claims the row even "
+        "though the job already has an accepted answer from an earlier prompt.",
+        default=False,
+    )
     latency_ms: Mapped[int | None] = int_column(
         "Duration of the last attempt in milliseconds.", nullable=True
     )

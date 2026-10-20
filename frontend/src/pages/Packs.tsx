@@ -1,35 +1,81 @@
 import { Card } from '@/components/Card'
+import { PackCard } from '@/features/packs/PackCard'
 import { Button } from '@/components/ui/button'
 import { describeApiError } from '@/api/errors'
-import { usePackActions, usePacks, type Pack } from '@/features/packs/queries'
+import { useState } from 'react'
+import { usePacks, useQueueReextraction, useReextractionPreview } from '@/features/packs/queries'
 
-/** One pack: what it holds, whether it is on, and the button that changes that. */
-function PackCard({ pack }: { pack: Pack }) {
-  const { setActive } = usePackActions()
-  const busy = setActive.isPending && setActive.variables?.packKey === pack.key
+const WINDOWS = [
+  { days: 30, label: '30 days' },
+  { days: 90, label: '90 days' },
+  { days: 365, label: 'year' },
+]
+
+/**
+ * Analyse open jobs again with the current prompt. Nothing is re-analysed by itself (it costs
+ * local-model time and changes little for most people); this card says how many jobs and how long,
+ * and queues them only when the owner confirms.
+ */
+export function ReextractCard() {
+  const [days, setDays] = useState(30)
+  const preview = useReextractionPreview(days)
+  const queue = useQueueReextraction()
+  const queued = queue.isSuccess ? queue.data.queued : null
   return (
     <Card
-      title={pack.name}
-      hint={`${pack.role_family_count} role families · ${pack.sector_count} sectors`}
-      actions={
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-medium text-ink-2">{pack.active ? 'On' : 'Off'}</span>
-          <Button
-            type="button"
-            size="sm"
-            variant={pack.active ? 'outline' : 'default'}
-            disabled={busy}
-            onClick={() => setActive.mutate({ packKey: pack.key, active: !pack.active })}
-          >
-            {pack.active ? 'Switch off' : 'Switch on'}
-          </Button>
-        </div>
-      }
+      title="Analyse open jobs again"
+      hint="Jobs analysed before a pack's licences, schedule and travel were asked for keep their old analysis until you do this."
     >
-      <p className="text-sm text-ink-2">{pack.description}</p>
-      {setActive.isError && setActive.variables?.packKey === pack.key && (
-        <p role="alert" className="mt-2 text-sm text-bad">
-          {describeApiError(setActive.error).message}
+      <label className="flex items-center gap-2 text-sm text-ink-2">
+        First seen in the last
+        <select
+          aria-label="First seen in the last"
+          className="rounded-md border border-line-strong bg-surface px-2 py-1 text-sm"
+          value={days}
+          onChange={(event) => {
+            queue.reset()
+            setDays(Number(event.target.value))
+          }}
+        >
+          {WINDOWS.map((window) => (
+            <option key={window.days} value={window.days}>
+              {window.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      {preview.isPending && <p className="mt-3 text-sm text-ink-3">Counting…</p>}
+      {preview.isError && (
+        <p role="alert" className="mt-3 text-sm text-bad">
+          {describeApiError(preview.error).message}
+        </p>
+      )}
+      {preview.data && preview.data.candidates === 0 && queued === null && (
+        <p className="mt-3 text-sm text-ink-2">No open job needs it: they are all up to date.</p>
+      )}
+      {preview.data && preview.data.candidates > 0 && (
+        <div className="mt-3 flex flex-col gap-2 text-sm">
+          <p className="text-ink-2">
+            {preview.data.candidates} open jobs were analysed with an earlier version of the prompt.
+            Analysing them again with {preview.data.model} takes about {preview.data.minutes}{' '}
+            minutes while the worker is running. Jobs you ignored or archived are left alone.
+          </p>
+          <div>
+            <Button size="sm" disabled={queue.isPending} onClick={() => queue.mutate(days)}>
+              Analyse {preview.data.candidates} jobs again
+            </Button>
+          </div>
+        </div>
+      )}
+      {queued !== null && (
+        <p role="status" className="mt-3 text-sm text-ink-2">
+          {queued} jobs queued. The worker analyses them one after another, and their scores are
+          updated as each finishes.
+        </p>
+      )}
+      {queue.isError && (
+        <p role="alert" className="mt-3 text-sm text-bad">
+          {describeApiError(queue.error).message}
         </p>
       )}
     </Card>
@@ -66,6 +112,7 @@ export function Packs() {
       {data.packs.map((pack) => (
         <PackCard key={pack.key} pack={pack} />
       ))}
+      <ReextractCard />
     </div>
   )
 }

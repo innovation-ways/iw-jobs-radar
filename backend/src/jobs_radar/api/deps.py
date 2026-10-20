@@ -43,6 +43,7 @@ from jobs_radar.services.profiles import ProfileService
 from jobs_radar.services.proposal_review import ReviewService
 from jobs_radar.services.proposals import ProposalService
 from jobs_radar.services.readiness import ReadinessService, migration_head
+from jobs_radar.services.reextraction import ReextractionService
 from jobs_radar.services.schedule import ScheduleService
 from jobs_radar.services.sources import SourceService
 from jobs_radar.services.summary_assess import SummaryAssessService
@@ -142,6 +143,13 @@ def get_prefilter_service(
 ) -> PrefilterService:
     """Build the pre-filter service on the request's session."""
     return PrefilterService(session)
+
+
+def get_reextraction_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ReextractionService:
+    """Build the re-extraction service on the request's session."""
+    return ReextractionService(session)
 
 
 def get_pack_service(

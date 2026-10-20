@@ -125,9 +125,9 @@ describe('AppShell', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Trends' })).toBeInTheDocument()
   })
 
-  it('redirects the root path to the inbox', () => {
+  it('redirects the root path to the inbox (once the setup status is known)', async () => {
     renderAt('/')
-    expect(screen.getByRole('heading', { level: 1, name: 'Inbox' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Inbox' })).toBeInTheDocument()
   })
 
   it('offers a theme switch that changes the document theme', async () => {

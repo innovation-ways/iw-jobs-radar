@@ -115,7 +115,42 @@ qualifications score is the share the owner holds, and an option in the search i
 that require a licence or certification I do not hold") turns a missing required one into a hard gate
 (G12, off by default).
 
+### Defaults for a new search
+
+`defaults` says what a first search intent starts with for someone in this field. They are only
+suggestions: the setup assistant shows them, and every one can be changed in Profile & intent.
+
+```json
+"defaults": {
+  "work_arrangements": { "onsite": "preferred", "hybrid": "acceptable", "remote": "rejected" },
+  "schedules": { "day": "preferred", "night": "acceptable", "weekends": "acceptable" },
+  "travel_levels": { "frequent": "acceptable" },
+  "weights": { "qualifications": 12, "schedule_travel": 8, "work_arrangement_location": 20 },
+  "reject_missing_credentials": true
+}
+```
+
+- Stances are `preferred`, `acceptable` or `rejected`; options left out stay acceptable. The options
+  are the application's own (`remote`, `hybrid`, `onsite`; `day`, `night`, `rotating_shifts`,
+  `weekends`, `on_call`; `none`, `occasional`, `frequent`), not the pack's.
+- `weights` are relative weights (0 to 40) of the scoring dimensions; those left out keep the
+  usual ones. At least one must be above 0.
+- A group where every option is rejected is refused.
+- When several packs are on, the suggestions of the **first one switched on** are used (the main
+  field); the others add vocabulary only.
+
 An area needs at least 4 keywords and a pack at least 4 areas (tests check it). Areas and noise are
 read from the pack files; nothing about them is stored in the database, so a newer pack improves the
-filter without a migration. Suggested defaults will be added to the format in a later step of
-ADR-080; the validator rejects them until then.
+filter without a migration.
+
+## First-run setup and analysing jobs again
+
+A new installation (no profile and no pack switched on) opens a short setup: choose the fields of
+work, say who you are (headline, place, experience, licences) and create a first search made from the
+packs' suggestions. It can be skipped, and nobody who already has a profile sees it.
+
+A pack or an upgrade can add things the analysis asks jobs for (licences, working pattern, travel).
+Jobs analysed before that keep their old analysis; nothing is analysed again by itself, because it
+costs local-model time and changes little for most people. **Packs → Analyse open jobs again** says
+how many open jobs have only an old analysis and about how long the new one takes, and queues them
+when you confirm. Jobs you ignored or archived are left alone.

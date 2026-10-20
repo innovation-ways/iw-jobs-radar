@@ -1,7 +1,9 @@
 """API contract for the pipeline status: what the worker has done and still has to do."""
 
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
+
+from pydantic import Field
 
 from jobs_radar.schemas.common import StrictModel
 
@@ -58,3 +60,24 @@ class PipelineStatusRead(StrictModel):
     recent: RecentRead
     failures: FailuresRead
     generated_at: datetime
+
+
+class ReextractionPreviewRead(StrictModel):
+    """How many open jobs would be analysed again with the current prompt, and for how long."""
+
+    candidates: int
+    model: str
+    seconds_per_job: float
+    minutes: int
+
+
+class ReextractionRequest(StrictModel):
+    """Analyse the open jobs first seen within the last ``since_days`` days again."""
+
+    since_days: Annotated[int, Field(ge=1, le=365)] = 30
+
+
+class ReextractionQueuedRead(StrictModel):
+    """How many analyses were queued."""
+
+    queued: int

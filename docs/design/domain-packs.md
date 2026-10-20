@@ -1,6 +1,6 @@
 # Domain packs: plan and characterisation tests (ADR-080)
 
-Status: approved on 2026-10-20 (ADR-080). Phases 0 to 4 are implemented; the later phases follow.
+Status: approved on 2026-10-20 (ADR-080). All phases are implemented.
 
 Goal: the job domain (vocabulary, pre-filter, skills, requirements) becomes data that ships in packs, so Jobs
 Radar serves any occupation, and the current owner's installation keeps every term, revision, score and
@@ -109,7 +109,8 @@ Existing tests that must stay green unchanged (they already exercise the contrac
 | 4 | done | ten packs as package data, loader at start-up, per-owner activation, Packs screen; guide in `docs/packs.md` |
 | 5 | done | areas and noise in the pack files; rules compiled from keywords (`domain/prefilter.py`), read per owner from the packs that are on; no table |
 | 6a | done | skill kinds `tool_equipment` and `credential`; credentials in packs, extraction, qualifications and gate G12 (off); profile section. The model is not asked for credentials until 6b |
-| 6b, 6c | to do | schedule and travel (taxonomy v4, `schedule_travel`, G13, G14, `matching-v1.9`, `extract-v5`); setup assistant, pack defaults, re-extraction action |
+| 6b | done | schedule and travel (taxonomy v4, `schedule_travel`, G13, G14, `matching-v1.9`, `extract-v5`); C5 proves no existing result changes |
+| 6c | done | pack `defaults`, first-run setup (`/setup`, skippable), "Analyse open jobs again" (forced pending rows, migration 0033) |
 
 Decisions of phase 4: a term in no pack is always offered (`other`, user terms, the global kinds);
 an installation that already has a profile gets the software pack switched on by migration `0030`, a
@@ -130,3 +131,13 @@ dimension is the mean of the education part and the credentials part that the po
 exactly what it was when a posting names no credential; G12 fires only for a required (`must`)
 credential, only when the owner turned the option on. The policy version is bumped in 6b, together
 with the prompt, so that one rescore covers every change.
+
+Decisions of phases 6b and 6c: `schedule` and `travel_level` are global vocabularies (no pack); one
+dimension `schedule_travel` with the weaker of the two parts; G13 and G14 come from Rejected stances
+like every other gate. The prompt becomes `extract-v5` and `extract-v4` stays accepted, so a new
+prompt re-extracts nothing by itself; the explicit action queues rows with `forced = true`, which
+the worker claims even though an accepted answer exists. It covers open jobs first seen in a chosen
+window that are not ignored, archived or set aside, and says how many and how long (the pace of the
+latest analyses; 12 seconds a job before any). The suggestions for a first search come from the first
+pack switched on. The setup is shown only when there is no profile and no pack, and skipping it is
+remembered in the browser.

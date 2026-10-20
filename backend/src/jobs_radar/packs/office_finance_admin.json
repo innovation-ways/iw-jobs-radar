@@ -235,5 +235,12 @@
         "pmp certified"
       ]
     }
-  ]
+  ],
+  "defaults": {
+    "work_arrangements": {
+      "hybrid": "preferred",
+      "remote": "acceptable",
+      "onsite": "acceptable"
+    }
+  }
 }

@@ -6,8 +6,13 @@ import { Packs } from './Packs'
 
 const get = vi.fn()
 const put = vi.fn()
+const post = vi.fn()
 vi.mock('@/api/client', () => ({
-  api: { GET: (...a: unknown[]) => get(...a), PUT: (...a: unknown[]) => put(...a) },
+  api: {
+    GET: (...a: unknown[]) => get(...a),
+    PUT: (...a: unknown[]) => put(...a),
+    POST: (...a: unknown[]) => post(...a),
+  },
 }))
 
 function pack(overrides: Record<string, unknown> = {}) {
@@ -24,6 +29,7 @@ function pack(overrides: Record<string, unknown> = {}) {
 }
 
 let packs: ReturnType<typeof pack>[]
+let preview: Record<string, unknown>
 
 function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -38,6 +44,8 @@ describe('Packs screen', () => {
   beforeEach(() => {
     get.mockReset()
     put.mockReset()
+    post.mockReset()
+    preview = { candidates: 120, model: 'qwen3:8b', seconds_per_job: 12, minutes: 24 }
     packs = [
       pack(),
       pack({
@@ -49,9 +57,12 @@ describe('Packs screen', () => {
         active: false,
       }),
     ]
-    get.mockImplementation(() =>
+    get.mockImplementation((path: string) =>
       Promise.resolve({
-        data: { packs, active_count: packs.filter((p) => p.active).length },
+        data:
+          path === '/api/v1/pipeline/re-extraction'
+            ? preview
+            : { packs, active_count: packs.filter((p) => p.active).length },
       }),
     )
   })
@@ -115,5 +126,62 @@ describe('Packs screen', () => {
     ).closest('section')!
     await user.click(within(trades).getByRole('button', { name: 'Switch on' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(/there is no pack/i)
+  })
+
+  describe('analysing open jobs again', () => {
+    async function card() {
+      renderPage()
+      return (await screen.findByRole('heading', { name: 'Analyse open jobs again' })).closest(
+        'section',
+      )!
+    }
+
+    it('says how many jobs and how long, and changes nothing until confirmed', async () => {
+      const section = await card()
+      expect(await within(section).findByText(/120 open jobs/i)).toBeInTheDocument()
+      expect(within(section).getByText(/about 24 minutes/i)).toBeInTheDocument()
+      expect(within(section).getByText(/qwen3:8b/)).toBeInTheDocument()
+      expect(post).not.toHaveBeenCalled()
+    })
+
+    it('queues the analyses after the owner confirms, for the chosen window', async () => {
+      const user = userEvent.setup()
+      post.mockResolvedValue({ data: { queued: 120 } })
+      const section = await card()
+      await user.selectOptions(within(section).getByLabelText('First seen in the last'), '90')
+      await user.click(
+        await within(section).findByRole('button', { name: /analyse 120 jobs again/i }),
+      )
+      expect(post).toHaveBeenCalledWith('/api/v1/pipeline/re-extraction', {
+        body: { since_days: 90 },
+      })
+      expect(await within(section).findByText(/120 jobs queued/i)).toBeInTheDocument()
+    })
+
+    it('has nothing to offer when no job needs it', async () => {
+      preview = { candidates: 0, model: 'qwen3:8b', seconds_per_job: 12, minutes: 0 }
+      const section = await card()
+      expect(await within(section).findByText(/no open job needs it/i)).toBeInTheDocument()
+      expect(within(section).queryByRole('button', { name: /analyse/i })).not.toBeInTheDocument()
+    })
+
+    it('explains why it cannot count when no model is chosen', async () => {
+      get.mockImplementation((path: string) =>
+        path === '/api/v1/pipeline/re-extraction'
+          ? Promise.resolve({
+              error: {
+                error: {
+                  code: 'conflict',
+                  message: 'Choose the model that analyses jobs in AI & privacy first.',
+                },
+              },
+            })
+          : Promise.resolve({ data: { packs, active_count: 1 } }),
+      )
+      const section = await card()
+      expect(
+        await within(section).findByText(/choose the model that analyses jobs/i),
+      ).toBeInTheDocument()
+    })
   })
 })

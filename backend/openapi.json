@@ -3447,6 +3447,65 @@
         "title": "IntentCreate",
         "type": "object"
       },
+      "IntentDefaultsRead": {
+        "additionalProperties": false,
+        "description": "What a first search intent starts with: the first switched-on pack's suggestions.",
+        "properties": {
+          "pack_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pack Key"
+          },
+          "reject_missing_credentials": {
+            "title": "Reject Missing Credentials",
+            "type": "boolean"
+          },
+          "schedules": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Schedules",
+            "type": "object"
+          },
+          "travel_levels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Travel Levels",
+            "type": "object"
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Weights",
+            "type": "object"
+          },
+          "work_arrangements": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Work Arrangements",
+            "type": "object"
+          }
+        },
+        "required": [
+          "pack_key",
+          "work_arrangements",
+          "schedules",
+          "travel_levels",
+          "weights",
+          "reject_missing_credentials"
+        ],
+        "title": "IntentDefaultsRead",
+        "type": "object"
+      },
       "IntentDefinition": {
         "additionalProperties": false,
         "description": "The content of one immutable intent revision.",
@@ -5826,6 +5885,66 @@
         "title": "RecentRead",
         "type": "object"
       },
+      "ReextractionPreviewRead": {
+        "additionalProperties": false,
+        "description": "How many open jobs would be analysed again with the current prompt, and for how long.",
+        "properties": {
+          "candidates": {
+            "title": "Candidates",
+            "type": "integer"
+          },
+          "minutes": {
+            "title": "Minutes",
+            "type": "integer"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "seconds_per_job": {
+            "title": "Seconds Per Job",
+            "type": "number"
+          }
+        },
+        "required": [
+          "candidates",
+          "model",
+          "seconds_per_job",
+          "minutes"
+        ],
+        "title": "ReextractionPreviewRead",
+        "type": "object"
+      },
+      "ReextractionQueuedRead": {
+        "additionalProperties": false,
+        "description": "How many analyses were queued.",
+        "properties": {
+          "queued": {
+            "title": "Queued",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "queued"
+        ],
+        "title": "ReextractionQueuedRead",
+        "type": "object"
+      },
+      "ReextractionRequest": {
+        "additionalProperties": false,
+        "description": "Analyse the open jobs first seen within the last ``since_days`` days again.",
+        "properties": {
+          "since_days": {
+            "default": 30,
+            "maximum": 365.0,
+            "minimum": 1.0,
+            "title": "Since Days",
+            "type": "integer"
+          }
+        },
+        "title": "ReextractionRequest",
+        "type": "object"
+      },
       "RemoteRule": {
         "additionalProperties": false,
         "description": "Where remote work is acceptable from.",
@@ -6162,6 +6281,31 @@
           "share"
         ],
         "title": "SeriesPointRead",
+        "type": "object"
+      },
+      "SetupStatusRead": {
+        "additionalProperties": false,
+        "description": "Whether the installation still has to be set up.",
+        "properties": {
+          "active_pack_count": {
+            "title": "Active Pack Count",
+            "type": "integer"
+          },
+          "has_profile": {
+            "title": "Has Profile",
+            "type": "boolean"
+          },
+          "needs_setup": {
+            "title": "Needs Setup",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "needs_setup",
+          "has_profile",
+          "active_pack_count"
+        ],
+        "title": "SetupStatusRead",
         "type": "object"
       },
       "SignalRead": {
@@ -10303,6 +10447,92 @@
         ]
       }
     },
+    "/api/v1/pipeline/re-extraction": {
+      "get": {
+        "description": "Count the open jobs that the current prompt would analyse again; changes nothing.",
+        "operationId": "preview_reextraction_api_v1_pipeline_re_extraction_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "since_days",
+            "required": false,
+            "schema": {
+              "default": 30,
+              "maximum": 365,
+              "minimum": 1,
+              "title": "Since Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReextractionPreviewRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Reextraction",
+        "tags": [
+          "pipeline"
+        ]
+      },
+      "post": {
+        "description": "Queue those analyses; the worker takes them like any other. Repeating it queues nothing.",
+        "operationId": "queue_reextraction_api_v1_pipeline_re_extraction_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReextractionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReextractionQueuedRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Queue Reextraction",
+        "tags": [
+          "pipeline"
+        ]
+      }
+    },
     "/api/v1/pipeline/status": {
       "get": {
         "description": "Analysis and scoring progress, pace, time left, failures and the worker's state.",
@@ -11554,6 +11784,50 @@
         "summary": "Update Schedule",
         "tags": [
           "schedule"
+        ]
+      }
+    },
+    "/api/v1/setup/intent-defaults": {
+      "get": {
+        "description": "Return what a first search intent starts with, from the first pack switched on.",
+        "operationId": "intent_defaults_api_v1_setup_intent_defaults_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IntentDefaultsRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Intent Defaults",
+        "tags": [
+          "setup"
+        ]
+      }
+    },
+    "/api/v1/setup/status": {
+      "get": {
+        "description": "Say whether the installation still has to be set up (no profile and no pack on).",
+        "operationId": "setup_status_api_v1_setup_status_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupStatusRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Setup Status",
+        "tags": [
+          "setup"
         ]
       }
     },

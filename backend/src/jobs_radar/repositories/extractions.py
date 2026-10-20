@@ -25,6 +25,23 @@ from jobs_radar.db.models import (
 from jobs_radar.domain.enums import InboxState
 
 
+def _put_away(snapshot: Any = JobSnapshot) -> Any:
+    """Whether the owner ignored or archived the opportunity of the snapshot's posting."""
+    return (
+        select(JobInboxItem.job_inbox_item_id)
+        .join(
+            JobOpportunityLink,
+            JobOpportunityLink.job_opportunity_id == JobInboxItem.job_opportunity_id,
+        )
+        .where(
+            JobOpportunityLink.job_posting_id == snapshot.job_posting_id,
+            JobOpportunityLink.state != "rejected",
+            JobInboxItem.state.in_([InboxState.IGNORED.value, InboxState.ARCHIVED.value]),
+        )
+        .exists()
+    )
+
+
 def _set_aside(snapshot: Any, *, below: int) -> Any:
     """Whether the main inbox sets the snapshot's opportunity aside (the same rule as the inbox).
 
@@ -134,19 +151,7 @@ class ExtractionRepository:
             )
             .exists()
         )
-        put_away = (
-            select(JobInboxItem.job_inbox_item_id)
-            .join(
-                JobOpportunityLink,
-                JobOpportunityLink.job_opportunity_id == JobInboxItem.job_opportunity_id,
-            )
-            .where(
-                JobOpportunityLink.job_posting_id == JobSnapshot.job_posting_id,
-                JobOpportunityLink.state != "rejected",
-                JobInboxItem.state.in_([InboxState.IGNORED.value, InboxState.ARCHIVED.value]),
-            )
-            .exists()
-        )
+        put_away = _put_away()
         candidates = (
             select(
                 JobSnapshot.job_snapshot_id,
@@ -190,6 +195,124 @@ class ExtractionRepository:
         )
         # rowcount is not reliable for INSERT ... SELECT here, so count the returned ids.
         return len((await self._session.execute(statement)).all())
+
+    def _reextraction_candidates(
+        self,
+        *,
+        provider: str,
+        model: str,
+        prompt_version: str,
+        accepted_prompt_versions: Collection[str],
+        since: datetime,
+        set_aside_below: int,
+    ) -> Any:
+        """Select the snapshots to analyse again.
+
+        These are the latest snapshots of open, recent, not put-away jobs that have an accepted
+        older answer from this provider and model but none yet from the current prompt.
+        """
+        newer = aliased(JobSnapshot)
+        latest = (
+            select(func.max(newer.job_snapshot_id))
+            .where(newer.job_posting_id == JobSnapshot.job_posting_id)
+            .scalar_subquery()
+        )
+        accepted_answer = (
+            select(JobExtraction.job_extraction_id)
+            .where(
+                JobExtraction.job_snapshot_id == JobSnapshot.job_snapshot_id,
+                JobExtraction.provider == provider,
+                JobExtraction.model == model,
+                JobExtraction.status == "succeeded",
+                JobExtraction.prompt_version.in_(accepted_prompt_versions),
+            )
+            .exists()
+        )
+        current = (
+            select(JobExtraction.job_extraction_id)
+            .where(
+                JobExtraction.job_snapshot_id == JobSnapshot.job_snapshot_id,
+                JobExtraction.provider == provider,
+                JobExtraction.model == model,
+                JobExtraction.prompt_version == prompt_version,
+                JobExtraction.status.in_(["pending", "succeeded"]),
+            )
+            .exists()
+        )
+        return (
+            select(JobSnapshot.job_snapshot_id)
+            .join(JobPosting, JobPosting.job_posting_id == JobSnapshot.job_posting_id)
+            .where(
+                JobPosting.closed_at.is_(None),
+                JobPosting.first_seen_at >= since,
+                JobSnapshot.job_snapshot_id == latest,
+                accepted_answer,
+                ~current,
+                ~_put_away(),
+                ~_set_aside(JobSnapshot, below=set_aside_below),
+            )
+        )
+
+    async def count_reextractions(self, **criteria: Any) -> int:
+        """How many jobs :meth:`requeue_for_reextraction` would queue with these criteria."""
+        candidates = self._reextraction_candidates(**criteria).subquery()
+        return int(
+            (await self._session.execute(select(func.count()).select_from(candidates))).scalar_one()
+        )
+
+    async def requeue_for_reextraction(self, *, taxonomy_version_id: int, **criteria: Any) -> int:
+        """Queue a forced analysis with the current prompt for each candidate; returns how many."""
+        candidates = self._reextraction_candidates(**criteria).subquery()
+        rows = select(
+            candidates.c.job_snapshot_id,
+            literal("pending"),
+            literal(criteria["provider"]),
+            literal(criteria["model"]),
+            literal(criteria["prompt_version"]),
+            literal(taxonomy_version_id),
+            literal(False),
+            literal(0),
+            literal(True),
+        ).select_from(candidates)
+        statement = (
+            insert(JobExtraction)
+            .from_select(
+                [
+                    "job_snapshot_id",
+                    "status",
+                    "provider",
+                    "model",
+                    "prompt_version",
+                    "taxonomy_version_id",
+                    "truncated",
+                    "attempts",
+                    "forced",
+                ],
+                rows,
+            )
+            .on_conflict_do_nothing()
+            .returning(JobExtraction.job_extraction_id)
+        )
+        return len((await self._session.execute(statement)).all())
+
+    async def average_latency_seconds(
+        self, *, provider: str, model: str, sample: int = 200
+    ) -> float | None:
+        """Return the mean duration of the latest successful analyses by this provider and model."""
+        latest = (
+            select(JobExtraction.latency_ms)
+            .where(
+                JobExtraction.provider == provider,
+                JobExtraction.model == model,
+                JobExtraction.status == "succeeded",
+                JobExtraction.latency_ms.is_not(None),
+            )
+            .order_by(JobExtraction.job_extraction_id.desc())
+            .limit(sample)
+            .subquery()
+        )
+        value = (await self._session.execute(select(func.avg(latest.c.latency_ms)))).scalar_one()
+        return None if value is None else float(value) / 1000
 
     async def claim_next(
         self,
@@ -244,7 +367,8 @@ class ExtractionRepository:
                 JobExtraction.model == model,
                 JobExtraction.prompt_version == prompt_version,
                 (JobExtraction.claimed_at.is_(None)) | (JobExtraction.claimed_at < stale_before),
-                ~already_answered,
+                # A row the owner forced is wanted even though an accepted answer exists.
+                or_(JobExtraction.forced.is_(True), ~already_answered),
                 ~and_(has_earlier_answer, _set_aside(JobSnapshot, below=set_aside_below)),
             )
             .order_by(has_earlier_answer, JobExtraction.job_extraction_id)

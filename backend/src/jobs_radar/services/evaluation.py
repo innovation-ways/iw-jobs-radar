@@ -216,12 +216,15 @@ class EvaluationService:
         attributes = dict(extraction.attributes_json)
         attributes["locations_resolved"] = resolve_all(_place_names(attributes, snapshot))
         directions, basis = await self._directions(profile_revision, job_snapshot_id)
+        taxonomy = TaxonomyRepository(self._session)
+        replacements = await taxonomy.replacements()
         job = job_attributes(
             attributes,
             snapshot.normalised_json["title"],
             snapshot.normalised_json["description_text"],
             company.canonical_name if company else "",
             source_places=_source_places(snapshot),
+            replacements=replacements,
         )
         profile = profile_view(ProfileFacts.model_validate(profile_revision.facts_json))
         job = replace(job, directions=directions)
@@ -233,8 +236,10 @@ class EvaluationService:
         relations = await self._relations(
             [skill.skill_id for skill in job.skills], set(profile.skill_levels), judge=judge
         )
-        optional_terms = await TaxonomyRepository(self._session).optional_keys_by_kind()
-        result = evaluate(job, profile, intent_view(definition, optional_terms), relations)
+        optional_terms = await taxonomy.optional_keys_by_kind()
+        result = evaluate(
+            job, profile, intent_view(definition, optional_terms, replacements), relations
+        )
         return _Scored(result, definition, basis, snapshot)
 
     async def evaluate(

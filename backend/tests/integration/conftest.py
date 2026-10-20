@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from testcontainers.community.postgres import PostgresContainer
 
 from jobs_radar.api.app import create_app
+from jobs_radar.api.deps import get_session
 from jobs_radar.core.settings import Settings, get_settings
 from jobs_radar.db.session import build_engine, build_session_factory
 
@@ -111,3 +112,20 @@ async def client(app: FastAPI) -> AsyncIterator[httpx.AsyncClient]:
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as http_client:
         yield http_client
+
+
+@pytest_asyncio.fixture
+async def isolated_client(
+    app: FastAPI,
+    client: httpx.AsyncClient,
+    db_session: AsyncSession,
+    monkeypatch: pytest.MonkeyPatch,
+) -> AsyncIterator[httpx.AsyncClient]:
+    """The shared client with every request running in the test's transaction."""
+    monkeypatch.setattr(db_session, "commit", db_session.flush)
+
+    async def same_session() -> AsyncIterator[AsyncSession]:
+        yield db_session
+
+    monkeypatch.setitem(app.dependency_overrides, get_session, same_session)
+    yield client

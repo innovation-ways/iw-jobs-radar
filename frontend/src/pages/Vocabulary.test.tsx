@@ -127,6 +127,75 @@ describe('Vocabulary screen', () => {
     })
   })
 
+  describe('merging', () => {
+    function preview(intents: unknown[]) {
+      get.mockImplementation((path: string) =>
+        Promise.resolve({
+          data: path.endsWith('/merge-preview') ? { intents } : { taxonomy_version_id: 3, terms },
+        }),
+      )
+    }
+
+    async function startMerge(user: ReturnType<typeof userEvent.setup>) {
+      renderPage()
+      const row = (await screen.findByText('Electrician')).closest('li')!
+      await user.click(within(row).getByRole('button', { name: /merge electrician/i }))
+      await user.selectOptions(within(row).getByLabelText('Merge into'), 'security')
+      return row
+    }
+
+    it('only offers other terms of the same vocabulary that are switched on', async () => {
+      const user = userEvent.setup()
+      preview([])
+      renderPage()
+      const row = (await screen.findByText('Electrician')).closest('li')!
+      await user.click(within(row).getByRole('button', { name: /merge electrician/i }))
+      const options = within(within(row).getByLabelText('Merge into')).getAllByRole('option')
+      expect(options.map((o) => o.textContent)).toEqual(['Choose a term', 'Security'])
+    })
+
+    it('shows the searches it touches and warns about differing stances before merging', async () => {
+      const user = userEvent.setup()
+      preview([
+        {
+          search_intent_id: 1,
+          title: 'Remote roles',
+          from_stance: 'preferred',
+          into_stance: 'rejected',
+          conflict: true,
+        },
+        {
+          search_intent_id: 2,
+          title: 'Local roles',
+          from_stance: 'rejected',
+          into_stance: null,
+          conflict: false,
+        },
+      ])
+      const row = await startMerge(user)
+      expect(await within(row).findByText(/remote roles/i)).toBeInTheDocument()
+      expect(within(row).getByText(/differ/i)).toHaveTextContent(/security’s own choice is kept/i)
+      expect(get).toHaveBeenCalledWith('/api/v1/taxonomy/terms/{kind}/{term_key}/merge-preview', {
+        params: {
+          path: { kind: 'role_family', term_key: 'electrician' },
+          query: { into: 'security' },
+        },
+      })
+    })
+
+    it('merges after the owner confirms', async () => {
+      const user = userEvent.setup()
+      preview([])
+      post.mockResolvedValue({ data: term() })
+      const row = await startMerge(user)
+      await user.click(await within(row).findByRole('button', { name: 'Merge' }))
+      expect(post).toHaveBeenCalledWith('/api/v1/taxonomy/terms/{kind}/{term_key}/merge', {
+        params: { path: { kind: 'role_family', term_key: 'electrician' } },
+        body: { into: 'security' },
+      })
+    })
+  })
+
   it('explains what switching off does', async () => {
     renderPage()
     expect(await screen.findByText(/stay in saved searches and history/i)).toBeInTheDocument()

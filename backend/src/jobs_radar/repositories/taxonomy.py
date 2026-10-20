@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.db.models import TaxonomyTerm, TaxonomyVersion
 
+_MAX_CHAIN = 10  # a merge chain is never this long; the limit only guards against a data error
+
 
 class TaxonomyRepository:
     """Reads taxonomy terms."""
@@ -109,3 +111,21 @@ class TaxonomyRepository:
         for kind, key in rows:
             grouped.setdefault(kind, set()).add(key)
         return {kind: frozenset(keys) for kind, keys in grouped.items()}
+
+    async def replacements(self) -> dict[str, dict[str, str]]:
+        """Map each merged term key to the key of the term that replaced it, by kind.
+
+        A chain (A merged into B, B into C) is followed to its end, so every key points at a term
+        that is still current.
+        """
+        rows = (await self._session.execute(select(TaxonomyTerm))).scalars().all()
+        by_id = {term.taxonomy_term_id: term for term in rows}
+        result: dict[str, dict[str, str]] = {}
+        for term in rows:
+            current, hops = term, 0
+            while current.replaced_by_taxonomy_term_id is not None and hops < _MAX_CHAIN:
+                current = by_id[current.replaced_by_taxonomy_term_id]
+                hops += 1
+            if current is not term:
+                result.setdefault(term.kind, {})[term.term_key] = current.term_key
+        return result

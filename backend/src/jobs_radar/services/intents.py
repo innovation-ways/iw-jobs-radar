@@ -45,6 +45,8 @@ class IntentService:
             # Terms switched off after the intent was saved are still valid in it (ADR-080).
             await self._taxonomy.keys_by_kind(include_inactive=True),
             await self._taxonomy.optional_keys_by_kind(),
+            # Terms merged into another are still valid in a saved intent (ADR-080).
+            await self._taxonomy.replacements(),
         )
         if errors:
             msg = "The intent does not match the taxonomy."

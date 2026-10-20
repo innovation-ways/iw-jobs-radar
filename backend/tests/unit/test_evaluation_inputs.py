@@ -279,3 +279,52 @@ def test_a_term_the_intent_does_not_list_is_acceptable_when_it_was_added_after_v
     assert view.stances["engagement_types"]["contractor_agency"] == "acceptable"
     # A stance the owner did set is never overridden.
     assert view.stances["engagement_types"]["contractor_b2b"] == "preferred"
+
+
+def test_a_merged_term_in_the_intent_counts_as_the_term_that_replaced_it() -> None:
+    """ADR-080: the owner's stance follows a merge; the surviving term's own stance wins."""
+    data = sample_intent()
+    data["stances"]["role_families"] = [
+        {"key": "old_family", "stance": "preferred"},
+        {"key": "other_old", "stance": "rejected"},
+        {"key": "new_family", "stance": "acceptable"},
+    ]
+    data["stances"]["sectors"] = [
+        {"key": "old_sector", "stance": "rejected"},
+        {"key": "kept_sector", "stance": "acceptable"},
+    ]
+    view = intent_view(
+        IntentDefinition.model_validate(data),
+        {},
+        {
+            "role_family": {"old_family": "new_family", "other_old": "third"},
+            "sector": {"old_sector": "new_sector"},
+        },
+    )
+    assert view.stances["role_families"] == {"new_family": "acceptable", "third": "rejected"}
+    assert view.stances["sectors"] == {"kept_sector": "acceptable", "new_sector": "rejected"}
+
+
+def test_a_job_extracted_with_a_merged_term_is_read_as_the_term_that_replaced_it() -> None:
+    attributes = stored_regions(["EU"])
+    output = attributes["output"]
+    assert isinstance(output, dict)
+    output["role_families"] = [{"key": "old_family", "confidence": 0.9, "evidence": "builds"}]
+    output["sectors"] = {
+        "value": {"primary": "old_sector", "secondary": []},
+        "status": "known",
+        "confidence": 0.9,
+        "evidence": "in the sector",
+    }
+    job = job_attributes(
+        attributes,
+        "t",
+        "d",
+        "Acme",
+        replacements={
+            "role_family": {"old_family": "new_family"},
+            "sector": {"old_sector": "new_sector"},
+        },
+    )
+    assert job.role_families == (("new_family", 0.9),)
+    assert job.sector_primary == "new_sector"

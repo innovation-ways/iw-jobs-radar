@@ -19,6 +19,7 @@ from jobs_radar.domain.matching.types import (
     Stance,
 )
 from jobs_radar.domain.regions import expand_regions
+from jobs_radar.domain.taxonomy_terms import resolve_key, resolve_stances
 from jobs_radar.schemas.extraction import Evidenced, ExtractionOutput
 from jobs_radar.schemas.intent import IntentDefinition
 from jobs_radar.schemas.profile import ProfileFacts
@@ -80,6 +81,7 @@ def job_attributes(
     description: str,
     company_name: str,
     source_places: Sequence[str] = (),
+    replacements: Mapping[str, Mapping[str, str]] | None = None,
 ) -> JobAttributes:
     """Map a stored extraction (``job_extraction.attributes_json``) to :class:`JobAttributes`.
 
@@ -87,6 +89,8 @@ def job_attributes(
     countries they limit the regions the model reported (ADR-056).
     """
     output = ExtractionOutput.model_validate(attributes["output"])
+    replacements = replacements or {}
+    family_keys = replacements.get("role_family", {})
     languages = _known(output.languages_required)
     compensation = _known(output.compensation)
     sectors = _known(output.sectors)
@@ -130,7 +134,9 @@ def job_attributes(
         title=title,
         description=description,
         company_name=company_name,
-        role_families=tuple((r.key, r.confidence) for r in output.role_families),
+        role_families=tuple(
+            (resolve_key(family_keys, r.key), r.confidence) for r in output.role_families
+        ),
         work_mode=_known(output.work_mode),
         remote_regions=region_codes,
         text_remote_regions=text_regions,
@@ -150,7 +156,11 @@ def job_attributes(
             else None
         ),
         seniority_levels=tuple(seniority) if seniority is not None else None,
-        sector_primary=sectors.primary if sectors is not None else None,
+        sector_primary=(
+            resolve_key(replacements.get("sector", {}), sectors.primary)
+            if sectors is not None
+            else None
+        ),
         skills=tuple(
             JobSkill(s["skill_id"], s["name"], s["importance"])
             for s in attributes.get("skills_resolved", [])
@@ -181,17 +191,22 @@ _CLOSED_GROUPS = {
     "seniority_levels": "seniority_level",
     "employer_types": "employer_type",
 }
-_OPEN_GROUPS_VIEW = ("role_families", "sectors")
+_OPEN_GROUPS_VIEW = {"role_families": "role_family", "sectors": "sector"}
 
 
 def intent_view(
-    definition: IntentDefinition, optional_terms: Mapping[str, Collection[str]]
+    definition: IntentDefinition,
+    optional_terms: Mapping[str, Collection[str]],
+    replacements: Mapping[str, Mapping[str, str]] | None = None,
 ) -> IntentView:
     """Map an intent revision to what matching needs.
 
     ``optional_terms`` are the terms added to the taxonomy after the intent may have been saved
-    (``TaxonomyRepository.optional_keys_by_kind``).
+    (``TaxonomyRepository.optional_keys_by_kind``). ``replacements`` map merged terms to the term
+    that replaced them, by kind (``TaxonomyRepository.replacements``): a stance on a merged term is
+    a stance on its replacement, and the replacement's own stance wins (ADR-080).
     """
+    replacements = replacements or {}
     stances = definition.stances
     pay = definition.compensation
     later = optional_terms
@@ -205,10 +220,11 @@ def intent_view(
             **dict.fromkeys(later.get(kind, ()), "acceptable"),
             **listed,
         }
-    for group in _OPEN_GROUPS_VIEW:
-        group_stances[group] = {
-            entry.key: cast(Stance, entry.stance.value) for entry in getattr(stances, group)
-        }
+    for group, kind in _OPEN_GROUPS_VIEW.items():
+        listed_open = {entry.key: entry.stance.value for entry in getattr(stances, group)}
+        group_stances[group] = cast(
+            dict[str, Stance], resolve_stances(listed_open, replacements.get(kind, {}))
+        )
     return IntentView(
         stances=group_stances,
         part_time=stances.hours.part_time.value,

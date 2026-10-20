@@ -3945,6 +3945,66 @@
         "title": "LivenessResponse",
         "type": "object"
       },
+      "MergeImpactRead": {
+        "additionalProperties": false,
+        "description": "One search intent that mentions the term being merged.",
+        "properties": {
+          "conflict": {
+            "title": "Conflict",
+            "type": "boolean"
+          },
+          "from_stance": {
+            "title": "From Stance",
+            "type": "string"
+          },
+          "into_stance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Into Stance"
+          },
+          "search_intent_id": {
+            "title": "Search Intent Id",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "search_intent_id",
+          "title",
+          "from_stance",
+          "into_stance",
+          "conflict"
+        ],
+        "title": "MergeImpactRead",
+        "type": "object"
+      },
+      "MergePreviewRead": {
+        "additionalProperties": false,
+        "description": "The searches a merge would touch, so the owner can see conflicts before confirming.",
+        "properties": {
+          "intents": {
+            "items": {
+              "$ref": "#/components/schemas/MergeImpactRead"
+            },
+            "title": "Intents",
+            "type": "array"
+          }
+        },
+        "required": [
+          "intents"
+        ],
+        "title": "MergePreviewRead",
+        "type": "object"
+      },
       "OfferRead": {
         "additionalProperties": false,
         "description": "One opportunity of the company.",
@@ -7007,12 +7067,44 @@
             },
             "title": "Groups",
             "type": "array"
+          },
+          "replacements": {
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyReplacement"
+            },
+            "title": "Replacements",
+            "type": "array"
           }
         },
         "required": [
           "groups"
         ],
         "title": "TaxonomyRead",
+        "type": "object"
+      },
+      "TaxonomyReplacement": {
+        "additionalProperties": false,
+        "description": "A term that was merged into another (ADR-080): saved intents may still use the old key.",
+        "properties": {
+          "from_key": {
+            "title": "From Key",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "to_key": {
+            "title": "To Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "from_key",
+          "to_key"
+        ],
+        "title": "TaxonomyReplacement",
         "type": "object"
       },
       "TaxonomyTermAdmin": {
@@ -7098,6 +7190,21 @@
           "terms"
         ],
         "title": "TaxonomyTermList",
+        "type": "object"
+      },
+      "TaxonomyTermMerge": {
+        "additionalProperties": false,
+        "description": "The term that takes over the merged one.",
+        "properties": {
+          "into": {
+            "title": "Into",
+            "type": "string"
+          }
+        },
+        "required": [
+          "into"
+        ],
+        "title": "TaxonomyTermMerge",
         "type": "object"
       },
       "TaxonomyTermRead": {
@@ -11769,6 +11876,129 @@
           }
         },
         "summary": "Update Term",
+        "tags": [
+          "taxonomy"
+        ]
+      }
+    },
+    "/api/v1/taxonomy/terms/{kind}/{term_key}/merge": {
+      "post": {
+        "description": "Merge the term into another; returns the term that stays.",
+        "operationId": "merge_term_api_v1_taxonomy_terms__kind___term_key__merge_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "term_key",
+            "required": true,
+            "schema": {
+              "title": "Term Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaxonomyTermMerge"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxonomyTermAdmin"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Merge Term",
+        "tags": [
+          "taxonomy"
+        ]
+      }
+    },
+    "/api/v1/taxonomy/terms/{kind}/{term_key}/merge-preview": {
+      "get": {
+        "description": "Show which searches mention the term and whether their stances differ; changes nothing.",
+        "operationId": "preview_merge_api_v1_taxonomy_terms__kind___term_key__merge_preview_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "term_key",
+            "required": true,
+            "schema": {
+              "title": "Term Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "into",
+            "required": true,
+            "schema": {
+              "title": "Into",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MergePreviewRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Merge",
         "tags": [
           "taxonomy"
         ]

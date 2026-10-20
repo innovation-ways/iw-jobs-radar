@@ -1450,6 +1450,46 @@ export interface paths {
         patch: operations["update_term_api_v1_taxonomy_terms__kind___term_key__patch"];
         trace?: never;
     };
+    "/api/v1/taxonomy/terms/{kind}/{term_key}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Merge Term
+         * @description Merge the term into another; returns the term that stays.
+         */
+        post: operations["merge_term_api_v1_taxonomy_terms__kind___term_key__merge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/taxonomy/terms/{kind}/{term_key}/merge-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview Merge
+         * @description Show which searches mention the term and whether their stances differ; changes nothing.
+         */
+        get: operations["preview_merge_api_v1_taxonomy_terms__kind___term_key__merge_preview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/trends": {
         parameters: {
             query?: never;
@@ -3116,6 +3156,30 @@ export interface components {
             status: string;
         };
         /**
+         * MergeImpactRead
+         * @description One search intent that mentions the term being merged.
+         */
+        MergeImpactRead: {
+            /** Conflict */
+            conflict: boolean;
+            /** From Stance */
+            from_stance: string;
+            /** Into Stance */
+            into_stance: string | null;
+            /** Search Intent Id */
+            search_intent_id: number;
+            /** Title */
+            title: string;
+        };
+        /**
+         * MergePreviewRead
+         * @description The searches a merge would touch, so the owner can see conflicts before confirming.
+         */
+        MergePreviewRead: {
+            /** Intents */
+            intents: components["schemas"]["MergeImpactRead"][];
+        };
+        /**
          * OfferRead
          * @description One opportunity of the company.
          */
@@ -4273,6 +4337,20 @@ export interface components {
         TaxonomyRead: {
             /** Groups */
             groups: components["schemas"]["TaxonomyGroup"][];
+            /** Replacements */
+            replacements?: components["schemas"]["TaxonomyReplacement"][];
+        };
+        /**
+         * TaxonomyReplacement
+         * @description A term that was merged into another (ADR-080): saved intents may still use the old key.
+         */
+        TaxonomyReplacement: {
+            /** From Key */
+            from_key: string;
+            /** Kind */
+            kind: string;
+            /** To Key */
+            to_key: string;
         };
         /**
          * TaxonomyTermAdmin
@@ -4311,6 +4389,14 @@ export interface components {
             taxonomy_version_id: number;
             /** Terms */
             terms: components["schemas"]["TaxonomyTermAdmin"][];
+        };
+        /**
+         * TaxonomyTermMerge
+         * @description The term that takes over the merged one.
+         */
+        TaxonomyTermMerge: {
+            /** Into */
+            into: string;
         };
         /**
          * TaxonomyTermRead
@@ -7155,6 +7241,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TaxonomyTermAdmin"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    merge_term_api_v1_taxonomy_terms__kind___term_key__merge_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: string;
+                term_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxonomyTermMerge"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxonomyTermAdmin"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_merge_api_v1_taxonomy_terms__kind___term_key__merge_preview_get: {
+        parameters: {
+            query: {
+                into: string;
+            };
+            header?: never;
+            path: {
+                kind: string;
+                term_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MergePreviewRead"];
                 };
             };
             /** @description Validation Error */

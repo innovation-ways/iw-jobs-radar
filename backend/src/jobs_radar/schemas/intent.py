@@ -234,20 +234,25 @@ def validate_intent_against_taxonomy(
     intent: IntentDefinition,
     taxonomy: Mapping[str, set[str]],
     optional: Mapping[str, Collection[str]] | None = None,
+    merged: Mapping[str, Collection[str]] | None = None,
 ) -> list[str]:
     """Check the intent against the live taxonomy; returns human-readable errors (empty if valid).
 
     Every key must exist, and the closed groups (everything except role families and sectors) must
     list every term so that no option silently falls back to a default. ``optional`` names, by kind,
     the terms added after the intent may have been saved (ADR-073): those may be missing.
+    ``merged`` names, by kind, the keys of terms that were merged into another: a saved intent may
+    still list them (ADR-080).
     """
     errors: list[str] = []
     optional = optional or {}
+    merged = merged or {}
     for group, kind in _GROUP_KINDS.items():
         entries: list[StanceEntry] = getattr(intent.stances, group)
         known = taxonomy.get(kind, set())
         listed = {entry.key for entry in entries}
-        errors.extend(f"{group}: unknown key '{key}'" for key in sorted(listed - known))
+        unknown = listed - known - set(merged.get(kind, ()))
+        errors.extend(f"{group}: unknown key '{key}'" for key in sorted(unknown))
         required = known - set(optional.get(kind, ()))
         if group not in _OPEN_GROUPS and (missing := sorted(required - listed)):
             errors.append(f"{group}: missing options: {', '.join(missing)}")

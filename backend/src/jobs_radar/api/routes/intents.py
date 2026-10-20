@@ -19,6 +19,7 @@ from jobs_radar.schemas.intent_api import (
     IntentSaveResponse,
     TaxonomyGroup,
     TaxonomyRead,
+    TaxonomyReplacement,
     TaxonomyTermRead,
     VersionRequest,
 )
@@ -169,5 +170,10 @@ async def get_taxonomy(
                 terms=[TaxonomyTermRead(term_key=t.term_key, label=t.label) for t in terms],
             )
             for kind, terms in groups.items()
-        ]
+        ],
+        replacements=[
+            TaxonomyReplacement(kind=kind, from_key=old, to_key=new)
+            for kind, merged in (await service.replacements()).items()
+            for old, new in merged.items()
+        ],
     )

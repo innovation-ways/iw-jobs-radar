@@ -84,10 +84,19 @@ class TaxonomyGroup(StrictModel):
     terms: list[TaxonomyTermRead]
 
 
+class TaxonomyReplacement(StrictModel):
+    """A term that was merged into another (ADR-080): saved intents may still use the old key."""
+
+    kind: str
+    from_key: str
+    to_key: str
+
+
 class TaxonomyRead(StrictModel):
     """All vocabularies."""
 
     groups: list[TaxonomyGroup]
+    replacements: list[TaxonomyReplacement] = Field(default_factory=list)
 
 
 class ExportedIntent(StrictModel):

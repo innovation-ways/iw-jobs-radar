@@ -4,19 +4,15 @@ Every test runs inside the test's transaction (``commit`` is a flush), so the sh
 keeps exactly the vocabulary the characterisation tests record.
 """
 
-from collections.abc import AsyncIterator
 from copy import deepcopy
 
 import httpx
 import pytest
-import pytest_asyncio
-from fastapi import FastAPI
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from tests.data import sample_intent
 from tests.factories import make_profile, unique
 
-from jobs_radar.api.deps import get_session
 from jobs_radar.core.errors import ConflictError, InputValidationError, NotFoundError
 from jobs_radar.db.models import TaxonomyTerm, TaxonomyVersion
 from jobs_radar.domain.enums import LOCAL_OWNER_ID
@@ -159,23 +155,6 @@ async def test_the_other_vocabularies_cannot_be_changed(db_session: AsyncSession
 
 
 # --- the HTTP interface -----------------------------------------------------------------------------
-
-
-@pytest_asyncio.fixture
-async def isolated_client(
-    app: FastAPI,
-    client: httpx.AsyncClient,
-    db_session: AsyncSession,
-    monkeypatch: pytest.MonkeyPatch,
-) -> AsyncIterator[httpx.AsyncClient]:
-    """The shared client with every request running in the test's transaction."""
-    monkeypatch.setattr(db_session, "commit", db_session.flush)
-
-    async def same_session() -> AsyncIterator[AsyncSession]:
-        yield db_session
-
-    monkeypatch.setitem(app.dependency_overrides, get_session, same_session)
-    yield client
 
 
 async def test_the_api_adds_renames_and_deactivates_a_term(

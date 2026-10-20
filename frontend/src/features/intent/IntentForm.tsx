@@ -3,6 +3,7 @@ import { ChipsInput } from '@/components/ChipsInput'
 import { LocationPicker } from '@/components/LocationPicker'
 import type { IntentDefinition, TaxonomyRead } from '@/features/profile/queries'
 import { ContractorFields, EmployeePayFields } from './PayFields'
+import { replacementsOf } from './merge'
 import { StanceGroup } from './StanceGroup'
 
 interface Props {
@@ -70,6 +71,7 @@ export function IntentForm({ value, onChange, taxonomy }: Props) {
           terms={termsOf(taxonomy, 'role_family')}
           value={value.stances.role_families}
           onChange={(role_families) => stances({ role_families })}
+          replacements={replacementsOf(taxonomy, 'role_family')}
           allowNoOpinion
         />
         <div className="mt-3">
@@ -281,6 +283,7 @@ export function IntentForm({ value, onChange, taxonomy }: Props) {
           terms={termsOf(taxonomy, 'sector')}
           value={value.stances.sectors ?? []}
           onChange={(sectors) => stances({ sectors })}
+          replacements={replacementsOf(taxonomy, 'sector')}
           allowNoOpinion
         />
       </Card>

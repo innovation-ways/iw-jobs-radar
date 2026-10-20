@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
 import type { IntentDefinition, TaxonomyRead } from '@/features/profile/queries'
+import { resolveStances } from './merge'
 
 export type StanceEntry = IntentDefinition['stances']['role_families'][number]
 type Stance = StanceEntry['stance']
@@ -19,6 +20,8 @@ interface Props {
   onChange: (value: StanceEntry[]) => void
   /** Open groups (role families, sectors) allow an option to have no opinion (not listed). */
   allowNoOpinion?: boolean
+  /** Terms merged into another: old key → replacing key. Their stances move to the replacement. */
+  replacements?: Record<string, string>
 }
 
 /**
@@ -27,7 +30,15 @@ interface Props {
  * Each choice is a real radio input, so it works with the keyboard and screen readers, and the
  * selected state is shown by text styling and not by colour alone.
  */
-export function StanceGroup({ label, terms, value, onChange, allowNoOpinion = false }: Props) {
+export function StanceGroup({
+  label,
+  terms,
+  value: saved,
+  onChange,
+  allowNoOpinion = false,
+  replacements = {},
+}: Props) {
+  const value = resolveStances(saved, replacements)
   const stanceOf = (key: string): Stance | 'none' =>
     value.find((entry) => entry.key === key)?.stance ?? (allowNoOpinion ? 'none' : 'acceptable')
 

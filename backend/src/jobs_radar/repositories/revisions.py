@@ -185,6 +185,15 @@ class IntentRepository:
         )
         return list(rows.scalars())
 
+    async def list_all(self, owner_id: int) -> list[SearchIntent]:
+        """Return every intent of the owner, enabled or not, oldest first."""
+        rows = await self._session.execute(
+            select(SearchIntent)
+            .where(SearchIntent.owner_id == owner_id)
+            .order_by(SearchIntent.search_intent_id)
+        )
+        return list(rows.scalars())
+
     async def list_enabled(self, owner_id: int) -> list[SearchIntent]:
         """Return the owner's enabled intents, oldest first."""
         rows = await self._session.execute(

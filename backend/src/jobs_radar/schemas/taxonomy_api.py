@@ -39,3 +39,25 @@ class TaxonomyTermList(StrictModel):
 
     taxonomy_version_id: int
     terms: list[TaxonomyTermAdmin]
+
+
+class TaxonomyTermMerge(StrictModel):
+    """The term that takes over the merged one."""
+
+    into: str
+
+
+class MergeImpactRead(StrictModel):
+    """One search intent that mentions the term being merged."""
+
+    search_intent_id: int
+    title: str
+    from_stance: str
+    into_stance: str | None
+    conflict: bool
+
+
+class MergePreviewRead(StrictModel):
+    """The searches a merge would touch, so the owner can see conflicts before confirming."""
+
+    intents: list[MergeImpactRead]

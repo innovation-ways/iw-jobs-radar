@@ -1,7 +1,8 @@
-"""Rules for the terms the owner adds to the vocabulary (ADR-080, point 5)."""
+"""Rules for the terms the owner adds to the vocabulary and merges (ADR-080, point 5)."""
 
 import re
 import unicodedata
+from collections.abc import Mapping
 
 # Only these vocabularies are the owner's to extend. The others (seniority, work arrangement,
 # engagement, employer type, benefits) are options of the scoring model itself.
@@ -29,3 +30,26 @@ def term_key_from_label(label: str) -> str:
     if not key[0].isalpha():
         key = f"term_{key}"
     return key[:_MAX_KEY_LENGTH].rstrip("_")
+
+
+def resolve_key(replacements: Mapping[str, str], key: str) -> str:
+    """Return the key of the term that replaced ``key`` (followed to the end), or ``key`` itself."""
+    return replacements.get(key, key)
+
+
+def resolve_stances(stances: Mapping[str, str], replacements: Mapping[str, str]) -> dict[str, str]:
+    """Express a map of ``term key -> stance`` in the terms that exist after merges (ADR-080).
+
+    A stance on a merged term becomes the stance of the term that replaced it. When the owner had
+    also chosen a stance for that surviving term, the surviving term's own stance wins; when several
+    merged terms had stances and the survivor had none, the first one listed is used. Without
+    merges the stances come back unchanged and in the same order.
+    """
+    resolved: dict[str, str] = {}
+    for key, stance in stances.items():
+        if key not in replacements:
+            resolved[key] = stance
+    for key, stance in stances.items():
+        if key in replacements:
+            resolved.setdefault(resolve_key(replacements, key), stance)
+    return resolved

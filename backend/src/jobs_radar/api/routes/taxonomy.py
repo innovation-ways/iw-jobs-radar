@@ -10,10 +10,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from jobs_radar.api.deps import get_session, get_taxonomy_service
 from jobs_radar.db.models import TaxonomyTerm
+from jobs_radar.domain.enums import LOCAL_OWNER_ID
 from jobs_radar.schemas.taxonomy_api import (
+    MergeImpactRead,
+    MergePreviewRead,
     TaxonomyTermAdmin,
     TaxonomyTermCreate,
     TaxonomyTermList,
+    TaxonomyTermMerge,
     TaxonomyTermUpdate,
 )
 from jobs_radar.services.taxonomy import TaxonomyService
@@ -62,3 +66,31 @@ async def update_term(
     term = await service.update(kind, term_key, label=body.label, active=body.active)
     await session.commit()
     return _read(term)
+
+
+@router.get("/{kind}/{term_key}/merge-preview", response_model=MergePreviewRead)
+async def preview_merge(kind: str, term_key: str, into: str, service: Service) -> MergePreviewRead:
+    """Show which searches mention the term and whether their stances differ; changes nothing."""
+    impacts = await service.merge_preview(LOCAL_OWNER_ID, kind, term_key, into=into)
+    return MergePreviewRead(
+        intents=[
+            MergeImpactRead(
+                search_intent_id=i.search_intent_id,
+                title=i.title,
+                from_stance=i.from_stance,
+                into_stance=i.into_stance,
+                conflict=i.conflict,
+            )
+            for i in impacts
+        ]
+    )
+
+
+@router.post("/{kind}/{term_key}/merge", response_model=TaxonomyTermAdmin)
+async def merge_term(
+    kind: str, term_key: str, body: TaxonomyTermMerge, service: Service, session: Session
+) -> TaxonomyTermAdmin:
+    """Merge the term into another; returns the term that stays."""
+    survivor = await service.merge(kind, term_key, into=body.into)
+    await session.commit()
+    return _read(survivor)

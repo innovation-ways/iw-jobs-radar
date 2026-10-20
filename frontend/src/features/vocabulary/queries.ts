@@ -45,5 +45,29 @@ export function useVocabularyActions() {
     },
     onSuccess: refresh,
   })
-  return { addTerm, changeTerm }
+  const mergeTerm = useMutation({
+    mutationFn: (input: { kind: string; termKey: string; into: string }) =>
+      unwrap(
+        api.POST('/api/v1/taxonomy/terms/{kind}/{term_key}/merge', {
+          params: { path: { kind: input.kind, term_key: input.termKey } },
+          body: { into: input.into },
+        }),
+      ),
+    onSuccess: refresh,
+  })
+  return { addTerm, changeTerm, mergeTerm }
+}
+
+/** What merging `termKey` into `into` would do to the owner's searches; runs once `into` is chosen. */
+export function useMergePreview(kind: string, termKey: string, into: string) {
+  return useQuery({
+    queryKey: ['merge-preview', kind, termKey, into],
+    enabled: into !== '',
+    queryFn: () =>
+      unwrap(
+        api.GET('/api/v1/taxonomy/terms/{kind}/{term_key}/merge-preview', {
+          params: { path: { kind, term_key: termKey }, query: { into } },
+        }),
+      ),
+  })
 }

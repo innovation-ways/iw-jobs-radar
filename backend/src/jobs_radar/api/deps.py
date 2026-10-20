@@ -37,6 +37,7 @@ from jobs_radar.services.location_scope import LocationScopeService
 from jobs_radar.services.packs import PackService
 from jobs_radar.services.page_reader_proposal import PageReaderProposalService
 from jobs_radar.services.pipeline import PipelineService
+from jobs_radar.services.prefilter import PrefilterService
 from jobs_radar.services.profile_data import ProfileDataService
 from jobs_radar.services.profiles import ProfileService
 from jobs_radar.services.proposal_review import ReviewService
@@ -134,6 +135,13 @@ def get_profile_service(session: Annotated[AsyncSession, Depends(get_session)]) 
 def get_intent_service(session: Annotated[AsyncSession, Depends(get_session)]) -> IntentService:
     """Build the intent service on the request's session."""
     return IntentService(session)
+
+
+def get_prefilter_service(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> PrefilterService:
+    """Build the pre-filter service on the request's session."""
+    return PrefilterService(session)
 
 
 def get_pack_service(

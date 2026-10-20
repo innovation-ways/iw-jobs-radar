@@ -8,6 +8,7 @@ newer pack), and a term that a loaded pack stops listing is switched off, never 
 import json
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
+from functools import cache
 from importlib import resources
 
 from sqlalchemy import text
@@ -24,7 +25,13 @@ _LOCK_KEY = 80_001  # arbitrary application-wide key of the advisory lock that g
 
 
 def shipped_packs() -> list[PackFile]:
-    """Read and validate every pack file that ships inside the package, in file-name order."""
+    """Return every pack file that ships inside the package, in file-name order (read once)."""
+    return list(_read_shipped_packs())
+
+
+@cache
+def _read_shipped_packs() -> tuple[PackFile, ...]:
+    """Read and validate the pack files. They are fixed for the life of the process."""
     packs: list[PackFile] = []
     for entry in sorted(resources.files("jobs_radar.packs").iterdir(), key=lambda e: e.name):
         if entry.name.endswith(".json"):
@@ -33,7 +40,7 @@ def shipped_packs() -> list[PackFile]:
             except ValueError as error:
                 msg = f"The pack file {entry.name} is not valid: {error}"
                 raise ValueError(msg) from error
-    return packs
+    return tuple(packs)
 
 
 @dataclass(frozen=True)

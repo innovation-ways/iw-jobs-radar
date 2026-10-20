@@ -36,7 +36,8 @@ from jobs_radar.adapters.sources.company_board import (
 from jobs_radar.adapters.sources.countries import country_name
 from jobs_radar.adapters.sources.html_text import html_to_text
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
-from jobs_radar.domain.job_board_rules import LocationScope, categorise
+from jobs_radar.domain.job_board_rules import LocationScope
+from jobs_radar.domain.prefilter import PrefilterRules
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 DEFAULT_MAX_DETAILS = 200
@@ -175,6 +176,7 @@ class EightfoldAdapter(CompanyBoardAdapter):
         credential: str | None = None,
         filters: JobBoardFilters | None = None,
         scope: LocationScope | None = None,
+        rules: PrefilterRules | None = None,
     ) -> BoardInfo:
         """Check that the site is an Eightfold careers site with postings."""
         host, domain = self._parts(identifier)
@@ -196,14 +198,14 @@ class EightfoldAdapter(CompanyBoardAdapter):
         return [*[name for name in names if name], REMOTE_LISTING] if any(names) else [None]
 
     @staticmethod
-    def _wanted(position: Any, areas: list[str] | None) -> bool:
+    def _wanted(position: Any, areas: list[str] | None, rules: PrefilterRules | None) -> bool:
         """Whether a listed position is worth reading in detail (its title fits a chosen area)."""
-        if not areas:
+        if not areas or rules is None:
             return True
-        found = categorise(
-            [clean(as_dict(position).get("name")), clean(as_dict(position).get("department"))]
+        return rules.allows(
+            areas,
+            [clean(as_dict(position).get("name")), clean(as_dict(position).get("department"))],
         )
-        return bool(found & set(areas))
 
     async def collect(self, checkpoint: SourceCheckpoint) -> CollectionResult:
         """List the postings newest first, then read the details of those worth reading."""
@@ -235,7 +237,7 @@ class EightfoldAdapter(CompanyBoardAdapter):
                     if not posting_id or posting_id in seen:
                         continue
                     seen.add(posting_id)
-                    if self._wanted(position, areas):
+                    if self._wanted(position, areas, checkpoint.rules):
                         wanted.append(posting_id)
                     else:
                         dropped += 1

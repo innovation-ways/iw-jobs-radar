@@ -12,6 +12,7 @@ from jobs_radar.adapters.sources.base import (
 )
 from jobs_radar.domain.enums import SourceType
 from jobs_radar.domain.job_board_rules import LocationScope
+from jobs_radar.domain.prefilter import PrefilterRules
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 
@@ -58,6 +59,8 @@ class FakeAdapter:
         self.board = board or BoardInfo(name="Synthetic Co", postings_count=1)
         self.provider = provider
         self.checkpoints: list[SourceCheckpoint] = []
+        # The pre-filter rules of every ``validate`` call (ADR-080).
+        self.rules_seen: list[PrefilterRules | None] = []
         # Every ``validate`` call as (identifier, credential, filters, scope), for assertions.
         self.validations: list[
             tuple[str, str | None, JobBoardFilters | None, LocationScope | None]
@@ -72,7 +75,9 @@ class FakeAdapter:
         credential: str | None = None,
         filters: JobBoardFilters | None = None,
         scope: LocationScope | None = None,
+        rules: PrefilterRules | None = None,
     ) -> BoardInfo:
+        self.rules_seen.append(rules)
         self.validations.append((identifier, credential, filters, scope))
         if isinstance(self.board, Exception):
             raise self.board

@@ -107,5 +107,85 @@
       "key": "legal_services",
       "label": "Legal services"
     }
+  ],
+  "areas": [
+    {
+      "key": "finance_accounting",
+      "label": "Finance and accounting",
+      "keywords": [
+        "accountant*",
+        "accounting",
+        "bookkeep*",
+        "payroll",
+        "financial analyst*",
+        "auditor*",
+        "accounts payable",
+        "accounts receivable",
+        "credit controller*",
+        "treasury",
+        "tax"
+      ]
+    },
+    {
+      "key": "administration",
+      "label": "Administration",
+      "keywords": [
+        "office administrator*",
+        "administrator*",
+        "administrative",
+        "secretary",
+        "executive assistant*",
+        "personal assistant*",
+        "receptionist*",
+        "data entry*",
+        "back office",
+        "office manager*",
+        "clerk*"
+      ]
+    },
+    {
+      "key": "legal_compliance",
+      "label": "Legal and compliance",
+      "keywords": [
+        "lawyer*",
+        "solicitor*",
+        "paralegal*",
+        "legal",
+        "compliance",
+        "contract manager*",
+        "company secretary"
+      ]
+    },
+    {
+      "key": "hr_recruitment",
+      "label": "HR and recruitment",
+      "keywords": [
+        "hr",
+        "human resources",
+        "recruiter*",
+        "recruitment",
+        "talent acquisition",
+        "people partner*",
+        "hr business partner*"
+      ]
+    },
+    {
+      "key": "procurement_management",
+      "label": "Procurement and management",
+      "keywords": [
+        "procurement",
+        "purchasing",
+        "buyer*",
+        "business analyst*",
+        "project manager*",
+        "operations manager*",
+        "general manager*"
+      ]
+    }
+  ],
+  "noise": [
+    "talent pool*",
+    "spontaneous application*",
+    "unpaid*"
   ]
 }

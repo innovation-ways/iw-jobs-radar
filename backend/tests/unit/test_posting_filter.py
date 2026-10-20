@@ -4,6 +4,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from tests.fake_adapter import make_posting
+from tests.job_board_support import software_filters
+from tests.prefilter_rules import software_rules
 
 from jobs_radar.adapters.sources.posting_filter import apply_filters, keep_posting
 from jobs_radar.domain.job_board_rules import LocationScope, OnsiteArea
@@ -12,7 +14,7 @@ from jobs_radar.schemas.source_filters import JobBoardFilters
 NOW = datetime(2026, 10, 9, 12, 0, tzinfo=UTC)
 LISBON = OnsiteArea("Lisbon", 38.72, -9.14, 40)
 SCOPE = LocationScope(frozenset({"PT"}), include_worldwide=True, onsite_areas=(LISBON,))
-FILTERS = JobBoardFilters()
+FILTERS = software_filters(JobBoardFilters())
 
 
 def posting(
@@ -27,7 +29,7 @@ def posting(
 
 
 def keep(p, filters: JobBoardFilters = FILTERS, scope: LocationScope | None = SCOPE) -> bool:
-    return keep_posting(p, filters, scope, NOW)
+    return keep_posting(p, filters, scope, NOW, software_rules())
 
 
 # --- areas, terms, age -------------------------------------------------------------------------
@@ -124,9 +126,17 @@ def test_apply_filters_counts_what_it_drops_and_respects_the_limit() -> None:
         make_posting("3", title="Data Engineer", locations=("Remote - EU",)),
         make_posting("4", title="DevOps Engineer", locations=("Remote - EU",)),
     ]
-    outcome = apply_filters(postings, JobBoardFilters(max_postings_per_run=2), SCOPE, NOW)
+    outcome = apply_filters(
+        postings,
+        software_filters(JobBoardFilters(max_postings_per_run=2)),
+        SCOPE,
+        NOW,
+        software_rules(),
+    )
     assert [p.external_job_id for p in outcome.kept] == ["1", "3"]
     assert outcome.dropped == 1
     assert outcome.truncated is True
-    everything = apply_filters(postings, JobBoardFilters(), SCOPE, NOW)
+    everything = apply_filters(
+        postings, software_filters(JobBoardFilters()), SCOPE, NOW, software_rules()
+    )
     assert (len(everything.kept), everything.dropped, everything.truncated) == (3, 1, False)

@@ -83,5 +83,79 @@
       "key": "defence_aerospace",
       "label": "Defence and aerospace"
     }
+  ],
+  "areas": [
+    {
+      "key": "teaching",
+      "label": "Teaching and training",
+      "keywords": [
+        "teacher*",
+        "teaching assistant*",
+        "tutor*",
+        "lecturer*",
+        "professor*",
+        "early years",
+        "nursery",
+        "school",
+        "classroom",
+        "trainer*",
+        "instructor*"
+      ]
+    },
+    {
+      "key": "public_administration",
+      "label": "Public administration",
+      "keywords": [
+        "civil servant*",
+        "public administration",
+        "municipal",
+        "council",
+        "government"
+      ]
+    },
+    {
+      "key": "public_safety",
+      "label": "Public safety",
+      "keywords": [
+        "police*",
+        "firefighter*",
+        "fire fighter*",
+        "security guard*",
+        "security officer*",
+        "prison officer*",
+        "emergency services",
+        "border"
+      ]
+    },
+    {
+      "key": "community_sports",
+      "label": "Community and sports",
+      "keywords": [
+        "youth worker*",
+        "community worker*",
+        "sports instructor*",
+        "fitness instructor*",
+        "personal trainer*",
+        "lifeguard*",
+        "coach"
+      ]
+    },
+    {
+      "key": "facilities_support",
+      "label": "Facilities and support",
+      "keywords": [
+        "cleaner*",
+        "caretaker*",
+        "janitor*",
+        "school caretaker*",
+        "librarian*",
+        "archivist*"
+      ]
+    }
+  ],
+  "noise": [
+    "talent pool*",
+    "spontaneous application*",
+    "unpaid*"
   ]
 }

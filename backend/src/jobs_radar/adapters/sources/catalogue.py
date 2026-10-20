@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from jobs_radar.domain.enums import SourceType
-from jobs_radar.schemas.source_filters import JOB_BOARD_CATEGORIES, JobBoardFilters
+from jobs_radar.schemas.source_filters import JobBoardFilters
 
 _TERMS_READ_ON = date(2026, 10, 9)
 # A board is read every day, so postings older than this are duplicates of what is already stored;
@@ -36,7 +36,6 @@ class CatalogueEntry:
     requires_credential: bool = False
     credential_label: str | None = None
     delay_note: str | None = None
-    available_categories: tuple[str, ...] = JOB_BOARD_CATEGORIES
     default_filters: JobBoardFilters = field(
         default_factory=lambda: JobBoardFilters(max_age_days=JOB_BOARD_MAX_AGE_DAYS)
     )

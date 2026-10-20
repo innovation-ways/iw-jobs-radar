@@ -66,5 +66,31 @@ Rules, all checked by tests (`backend/tests/unit/schemas/test_pack_schema.py` an
 - Unknown fields are rejected. Do not list `other`: it belongs to no pack.
 - Raise `version` when you change a pack.
 
-Keywords for the job-board pre-filter, credentials, and suggested defaults will be added to the
-format in later steps of ADR-080; the validator rejects them until then.
+### Areas and noise: the job-board pre-filter
+
+A pack can also say which postings of a job board belong to its field. `areas` are groups of
+keywords ("electrical", "plumbing and heating"); `noise` lists words that rule a posting out
+(talent pools, for example). The owner chooses areas in the filters of a board (Sources), and the
+areas on offer are those of the packs that are switched on.
+
+```json
+"areas": [
+  { "key": "electrical", "label": "Electrical",
+    "keywords": ["electrician*", "electrical", "wiring", "switchboard*"] }
+],
+"noise": ["talent pool*", "spontaneous application*", "unpaid*"]
+```
+
+Keywords are **plain text, never regular expressions**: letters, digits, spaces and `+ # . & '`.
+
+- A keyword matches whole words, ignoring case. `electrical` does not match `electricals`.
+- A trailing `*` lets it match any ending: `electrician*` matches `electrician` and `electricians`.
+- Hyphens, underscores and slashes count as spaces: `back-end` equals `back end`.
+- A phrase of several words matches those words in a row: `site supervisor*`.
+- Text with pattern characters (`(`, `[`, `|`, `\`) is refused when the pack is loaded.
+- Two packs that define an area with the same key share it: its keywords are joined.
+
+An area needs at least 4 keywords and a pack at least 4 areas (tests check it). Areas and noise are
+read from the pack files; nothing about them is stored in the database, so a newer pack improves the
+filter without a migration. Credentials and suggested defaults will be added to the format in
+later steps of ADR-080; the validator rejects them until then.

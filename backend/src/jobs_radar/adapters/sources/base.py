@@ -14,6 +14,7 @@ from typing import Any, Literal, Protocol
 from jobs_radar.core.http import FetchError
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
 from jobs_radar.domain.job_board_rules import LocationScope
+from jobs_radar.domain.prefilter import PrefilterRules
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 
@@ -60,6 +61,8 @@ class SourceCheckpoint:
     credential: str | None = field(default=None, repr=False)
     filters: JobBoardFilters | None = None
     scope: LocationScope | None = None
+    # The owner's pre-filter areas and noise (ADR-080); ``None``: no area filtering is possible.
+    rules: PrefilterRules | None = None
     # Careers-page sources read through an approved configuration (ADR-070 layer 3).
     page_config: dict[str, Any] | None = None
     # True until the source has completed one run: the backlog of a newly added company can be far
@@ -129,6 +132,7 @@ class JobSourceAdapter(Protocol):
         credential: str | None = None,
         filters: JobBoardFilters | None = None,
         scope: LocationScope | None = None,
+        rules: PrefilterRules | None = None,
     ) -> BoardInfo:
         """Check that the board exists and describe it. Raises :class:`SourceError`."""
         ...

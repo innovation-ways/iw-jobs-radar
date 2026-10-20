@@ -28,7 +28,8 @@ from jobs_radar.adapters.sources.company_board import (
 )
 from jobs_radar.adapters.sources.html_text import html_to_text
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
-from jobs_radar.domain.job_board_rules import LocationScope, categorise
+from jobs_radar.domain.job_board_rules import LocationScope
+from jobs_radar.domain.prefilter import PrefilterRules
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 BASE_URL = "https://api.smartrecruiters.com/v1/companies"
@@ -40,18 +41,24 @@ _TECH_FUNCTIONS = frozenset({"information_technology", "engineering"})
 _SECTIONS = ("jobDescription", "qualifications", "additionalInformation")
 
 
-def _looks_technical(item: dict[str, Any], areas: list[str] | None = None) -> bool:
+def _worth_reading(
+    item: dict[str, Any], areas: list[str] | None, rules: PrefilterRules | None
+) -> bool:
     """Whether a listed posting is worth reading in detail.
 
-    Without the owner's areas, SmartRecruiters' own function or a technology word in the title
-    is enough; with them, the title must belong to one of the chosen areas, so the detail limit is
-    spent on postings that can pass the filters.
+    With the owner's chosen areas, the title must belong to one of them, so the detail limit is
+    spent on postings that can pass the filters. Without them, a posting that matches any area of
+    the owner's packs is read; so is one SmartRecruiters files under a technology function when the
+    owner's packs have a software area. Without rules nothing can be told apart: all are read.
     """
+    if rules is None:
+        return True
     function = as_dict(item.get("function"))
-    found = categorise([clean(item.get("name")), clean(function.get("label"))])
-    if areas:
+    found = rules.categorise([clean(item.get("name")), clean(function.get("label"))])
+    if areas and any(area.key in areas for area in rules.areas):
         return bool(found & set(areas))
-    return function.get("id") in _TECH_FUNCTIONS or bool(found)
+    has_software = any(area.key == "software" for area in rules.areas)
+    return bool(found) or (has_software and function.get("id") in _TECH_FUNCTIONS)
 
 
 def _description(detail: dict[str, Any]) -> str:
@@ -129,6 +136,7 @@ class SmartRecruitersAdapter(CompanyBoardAdapter):
         credential: str | None = None,
         filters: JobBoardFilters | None = None,
         scope: LocationScope | None = None,
+        rules: PrefilterRules | None = None,
     ) -> BoardInfo:
         """Check that the company has postings (an unknown company looks like an empty one)."""
         listing = self._json(await self._get(f"{self.endpoint(identifier)}?limit=1", identifier, 6))
@@ -175,7 +183,7 @@ class SmartRecruitersAdapter(CompanyBoardAdapter):
                     if not posting_id or posting_id in seen:
                         continue
                     seen.add(posting_id)
-                    if _looks_technical(item, areas):
+                    if _worth_reading(item, areas, checkpoint.rules):
                         wanted.append(posting_id)
                     else:
                         dropped += 1

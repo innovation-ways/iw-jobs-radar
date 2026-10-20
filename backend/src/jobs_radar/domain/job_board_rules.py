@@ -6,7 +6,6 @@ worth storing. They never judge fit: a posting whose eligibility is not stated i
 the later location judgement (ADR-021), so the pre-filter only removes what is clearly outside.
 """
 
-import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -156,53 +155,6 @@ def allows_location(candidate: LocationCandidate, scope: LocationScope) -> bool:
             for area in scope.onsite_areas
         )
     return allows_country(candidate.eligibility, scope)
-
-
-# Keyword families per technology area, matched on whole words after hyphens become spaces. They are
-# deliberately about the work, not the seniority: a bare "engineer" is not enough (a hardware or
-# wind engineer is not software), so the title must say what is built or run.
-_AREAS: dict[str, re.Pattern[str]] = {
-    "software": re.compile(
-        r"\b(software|developer|programmer|backend|frontend|full stack|fullstack|mobile|android|"
-        r"ios|qa|sdet|react|python|java|javascript|typescript|golang|rust|node|php|ruby|kotlin|"
-        r"swift|integration|solutions? (?:engineer|architect|consultant))\b",
-        re.IGNORECASE,
-    ),
-    "data": re.compile(
-        r"\b(data|analytics|machine learning|ml|ai|artificial intelligence|llm|mlops|etl|bi|"
-        r"business intelligence|database|sql)\b",
-        re.IGNORECASE,
-    ),
-    "devops": re.compile(
-        r"\b(devops|sre|site reliability|infrastructure|cloud|kubernetes|platform engineer|"
-        r"sysadmin|system administrator|terraform|linux)\b",
-        re.IGNORECASE,
-    ),
-    "telecom": re.compile(
-        r"\b(bss|oss|billing|telecom|telecoms|telecommunications?|charging|mediation|"
-        r"revenue assurance|convergent|ocs|ocf)\b",
-        re.IGNORECASE,
-    ),
-    "security": re.compile(
-        r"\b(security|cybersecurity|infosec|appsec|pentest|pentester|pentesting)\b", re.IGNORECASE
-    ),
-}
-
-# Remote boards carry many data-labelling gigs, talent pools and spontaneous applications whose
-# titles mention "AI" or "data" but are not technology jobs; any of these words rules a title out.
-_NOISE = re.compile(
-    r"\b(annotat\w*|transcri\w*|linguist\w*|raters?|translators?|labell?ing|audio collection|"
-    r"sound design\w*|talent pool|initiativbewerbung|data entry|online data analyst)",
-    re.IGNORECASE,
-)
-
-
-def categorise(texts: Iterable[str]) -> frozenset[str]:
-    """Technology areas suggested by titles, tags and category names (empty if none apply)."""
-    text = " ".join(texts).replace("-", " ").replace("_", " ").replace("/", " ")
-    if _NOISE.search(text):
-        return frozenset()
-    return frozenset(area for area, pattern in _AREAS.items() if pattern.search(text))
 
 
 def is_recent(posted_at: datetime | None, now: datetime, max_age_days: int) -> bool:

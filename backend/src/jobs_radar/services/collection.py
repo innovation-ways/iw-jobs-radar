@@ -45,6 +45,7 @@ from jobs_radar.schemas.source_filters import JobBoardFilters
 from jobs_radar.services.inbox import InboxService
 from jobs_radar.services.location_scope import LocationScopeService
 from jobs_radar.services.normalise import build_normalised_job, material_of_job
+from jobs_radar.services.prefilter import PrefilterService
 
 logger = logging.getLogger(__name__)
 
@@ -275,6 +276,9 @@ class CollectionService:
                 else None
             )
             filters = scope = next_allowed = credential = problem = company_filters = None
+            # The areas and noise of the packs the owner uses (ADR-080) decide which postings of a
+            # board belong to the owner's fields of work.
+            rules = await PrefilterService(session).rules_for_owner(run.owner_id)
             # A source that never completed a run reads its whole backlog (ADR-070).
             backlog = entry is None and not await RunRepository(session).has_completed_run(
                 source.source_configuration_id
@@ -291,7 +295,9 @@ class CollectionService:
                 filters = (
                     JobBoardFilters.model_validate(source.config_json)
                     if source.config_json
-                    else entry.default_filters
+                    else entry.default_filters.model_copy(
+                        update={"categories": [area.key for area in rules.areas]}
+                    )
                 )
                 scope = await LocationScopeService(session).for_owner(run.owner_id)
                 last = await RunRepository(session).last_attempt_finished_at(
@@ -317,6 +323,7 @@ class CollectionService:
                     # details one by one (SmartRecruiters) can skip what would be dropped.
                     filters=filters or company_filters,
                     scope=scope,
+                    rules=rules,
                     credential=credential,
                     page_config=page_config,
                     backlog=backlog,
@@ -338,7 +345,11 @@ class CollectionService:
             # The backlog of a newly added company is kept whole: no per-run limit on what is kept.
             filters = filters.model_copy(update={"max_postings_per_run": len(fetched.postings) + 1})
         outcome = apply_filters(
-            list(fetched.postings), filters, view.checkpoint.scope, self._clock()
+            list(fetched.postings),
+            filters,
+            view.checkpoint.scope,
+            self._clock(),
+            view.checkpoint.rules,
         )
         return replace(
             fetched,

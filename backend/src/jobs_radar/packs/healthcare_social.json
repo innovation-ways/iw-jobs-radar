@@ -83,5 +83,89 @@
       "key": "public_sector",
       "label": "Public sector"
     }
+  ],
+  "areas": [
+    {
+      "key": "nursing",
+      "label": "Nursing",
+      "keywords": [
+        "nurse*",
+        "nursing assistant*",
+        "healthcare assistant*",
+        "care assistant*",
+        "midwife*",
+        "midwives",
+        "auxiliary nurse*"
+      ]
+    },
+    {
+      "key": "medical",
+      "label": "Medicine and dentistry",
+      "keywords": [
+        "doctor*",
+        "physician*",
+        "general practitioner*",
+        "gp",
+        "surgeon*",
+        "medical officer*",
+        "dentist*",
+        "dental assistant*",
+        "dental hygienist*"
+      ]
+    },
+    {
+      "key": "therapy_rehabilitation",
+      "label": "Therapy and rehabilitation",
+      "keywords": [
+        "physiotherapist*",
+        "occupational therapist*",
+        "speech therapist*",
+        "psychologist*",
+        "therapist*",
+        "rehabilitation"
+      ]
+    },
+    {
+      "key": "diagnostics_pharmacy",
+      "label": "Diagnostics and pharmacy",
+      "keywords": [
+        "pharmacist*",
+        "pharmacy technician*",
+        "lab technician*",
+        "laboratory technician*",
+        "radiographer*",
+        "biomedical scientist*",
+        "phlebotomist*"
+      ]
+    },
+    {
+      "key": "social_care",
+      "label": "Social care",
+      "keywords": [
+        "care worker*",
+        "carer*",
+        "social worker*",
+        "support worker*",
+        "youth worker*",
+        "residential care",
+        "home care"
+      ]
+    },
+    {
+      "key": "emergency_veterinary",
+      "label": "Emergency and veterinary",
+      "keywords": [
+        "paramedic*",
+        "ambulance",
+        "emergency medical",
+        "veterinar*",
+        "vet nurse*"
+      ]
+    }
+  ],
+  "noise": [
+    "talent pool*",
+    "spontaneous application*",
+    "unpaid*"
   ]
 }

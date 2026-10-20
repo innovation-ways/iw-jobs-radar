@@ -31,10 +31,10 @@ from jobs_radar.domain.job_board_rules import (
     LocationCandidate,
     LocationScope,
     allows_location,
-    categorise,
     is_recent,
     matches_terms,
 )
+from jobs_radar.domain.prefilter import PrefilterRules
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 # Safety net against a feed that never ends; the per-run limit normally stops the scan first.
@@ -136,6 +136,7 @@ class JobBoardAdapter:
         credential: str | None = None,
         filters: JobBoardFilters | None = None,
         scope: LocationScope | None = None,
+        rules: PrefilterRules | None = None,
     ) -> BoardInfo:
         """Scan a bounded sample of the board and report how many postings match the filters."""
         self._check(identifier)
@@ -144,6 +145,7 @@ class JobBoardAdapter:
         scan = await self._scan(
             filters,
             self._require_scope(scope),
+            rules,
             limit,
             per_minute=self.entry.rate_limit_per_minute,
             credential=credential,
@@ -163,6 +165,7 @@ class JobBoardAdapter:
         scan = await self._scan(
             filters,
             self._require_scope(checkpoint.scope),
+            checkpoint.rules,
             filters.max_postings_per_run,
             per_minute=checkpoint.rate_limit_per_minute,
             credential=checkpoint.credential,
@@ -193,6 +196,7 @@ class JobBoardAdapter:
         self,
         filters: JobBoardFilters,
         scope: LocationScope,
+        rules: PrefilterRules | None,
         limit: int,
         *,
         per_minute: int,
@@ -204,7 +208,7 @@ class JobBoardAdapter:
         for stream in self._streams(filters, scope, per_minute=per_minute, credential=credential):
             pages = stream()
             try:
-                if await self._read_stream(pages, filters, scope, limit, now, scan, ids):
+                if await self._read_stream(pages, filters, scope, rules, limit, now, scan, ids):
                     return scan
             finally:
                 await pages.aclose()  # type: ignore[attr-defined]  # async generators have aclose
@@ -215,6 +219,7 @@ class JobBoardAdapter:
         pages: AsyncIterator[Page],
         filters: JobBoardFilters,
         scope: LocationScope,
+        rules: PrefilterRules | None,
         limit: int,
         now: datetime,
         scan: _Scan,
@@ -237,7 +242,7 @@ class JobBoardAdapter:
                 scan.seen += 1
                 if is_recent(posting.posted_at, now, filters.max_age_days):
                     all_old = False
-                if not self._passes(candidate, filters, scope, now):
+                if not self._passes(candidate, filters, scope, rules, now):
                     scan.dropped += 1
                     continue
                 if len(scan.kept) >= limit:
@@ -253,7 +258,11 @@ class JobBoardAdapter:
 
     @staticmethod
     def _passes(
-        candidate: Candidate, filters: JobBoardFilters, scope: LocationScope, now: datetime
+        candidate: Candidate,
+        filters: JobBoardFilters,
+        scope: LocationScope,
+        rules: PrefilterRules | None,
+        now: datetime,
     ) -> bool:
         posting = candidate.posting
         if not posting.company_name:
@@ -263,8 +272,8 @@ class JobBoardAdapter:
         where = LocationCandidate(candidate.remote, candidate.eligibility, candidate.place)
         if not allows_location(where, scope):
             return False
-        if filters.categories and not set(filters.categories) & categorise(
-            (posting.title, *candidate.area_texts)
+        if rules is not None and not rules.allows(
+            filters.categories, (posting.title, *candidate.area_texts)
         ):
             return False
         text = " ".join((posting.title, *candidate.area_texts, posting.description_text))

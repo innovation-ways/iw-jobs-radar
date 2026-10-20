@@ -29,7 +29,7 @@ until the owner confirms the whole work (owner decision).
   `schemas/intent.py`, `demo/persona.py`. Test importers: `tests/data.py`, `tests/integration/test_seed_data.py`,
   `tests/unit/schemas/test_intent_schema.py`, `tests/unit/test_demo_jobs.py`. Migrations 0002, 0017 and 0025
   import them and must not be edited.
-- `domain/job_board_rules.py`: `_AREAS` (software, data, devops, telecom, security) and `_NOISE`.
+- `domain/job_board_rules.py`: `_AREAS` (software, data, devops, telecom, security) and `_NOISE` (moved to the packs in phase 5).
 - `services/extraction_prompt.py`: text and the `bounded_schema()` limits; `services/extraction_rules.py:216`
   already validates families against the database.
 - `domain/matching/engine.py`: compares keys and stances only; `qualifications` (weight 0) and `radius_km` /
@@ -107,10 +107,17 @@ Existing tests that must stay green unchanged (they already exercise the contrac
 | 2 | done | seeds are for migrations only (import-linter contract) |
 | 3 | done | editable vocabulary, merge (survivor's stance wins), Vocabulary screen |
 | 4 | done | ten packs as package data, loader at start-up, per-owner activation, Packs screen; guide in `docs/packs.md` |
-| 5, 6a, 6b, 6c | to do | pre-filter as data; skill kinds; credentials, schedule and travel; setup assistant |
+| 5 | done | areas and noise in the pack files; rules compiled from keywords (`domain/prefilter.py`), read per owner from the packs that are on; no table |
+| 6a, 6b, 6c | to do | skill kinds; credentials, schedule and travel; setup assistant |
 
 Decisions of phase 4: a term in no pack is always offered (`other`, user terms, the global kinds);
 an installation that already has a profile gets the software pack switched on by migration `0030`, a
 fresh one chooses; the loader never rewrites a label and only switches off what a loaded pack stopped
 listing; a stored intent is validated against every term, whatever packs are on. A pack file must
 list at least 10 role families and 5 sectors, and a key has one label in every pack.
+
+Decision of phase 5 (a refinement of ADR-080, point 7): areas and noise are read from the pack files of
+the packs the owner has switched on, not stored in tables. Nothing about them is edited by the
+owner yet, so a table would only copy the files; owner-defined areas would need one, later. A board
+with no stored areas selects every area of the owner's packs; a request that names none gets the
+same. Chosen areas that no switched-on pack defines are ignored (nothing is filtered by them).

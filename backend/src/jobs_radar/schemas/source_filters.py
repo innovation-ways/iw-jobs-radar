@@ -10,9 +10,6 @@ from pydantic import AfterValidator, Field, StringConstraints
 
 from jobs_radar.schemas.common import StrictModel
 
-# Technology areas a board entry can be narrowed to; each adapter maps its own tags onto them.
-JOB_BOARD_CATEGORIES = ("software", "data", "devops", "security", "telecom")
-
 CategoryKey = Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]*$", max_length=40)]
 # Blank terms are dropped after stripping instead of rejected, so an empty form row is harmless.
 SearchTerm = Annotated[str, StringConstraints(strip_whitespace=True, max_length=80)]
@@ -31,8 +28,10 @@ class JobBoardFilters(StrictModel):
     """Which postings of a job board are kept. Countries come from the profile, not from here."""
 
     schema_version: Literal[1] = 1
+    # Keys of the areas of work to keep (ADR-080): they come from the packs the owner switched on.
+    # Empty means any area. The services fill in the owner's areas when the owner gives no filters.
     categories: Annotated[list[CategoryKey], AfterValidator(_unique)] = Field(
-        default_factory=lambda: list(JOB_BOARD_CATEGORIES), max_length=20
+        default_factory=list, max_length=40
     )
     search_terms: Annotated[
         list[SearchTerm], AfterValidator(_drop_blank), AfterValidator(_unique)

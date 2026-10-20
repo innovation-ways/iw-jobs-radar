@@ -8,6 +8,7 @@ from typing import Annotated, Literal, Self
 
 from pydantic import Field, StringConstraints, model_validator
 
+from jobs_radar.domain.prefilter import Area, PrefilterRules
 from jobs_radar.schemas.common import StrictModel, TaxonomyKey
 from jobs_radar.schemas.taxonomy_api import TermLabel
 
@@ -24,6 +25,19 @@ class PackTerm(StrictModel):
 
     key: TaxonomyKey
     label: TermLabel
+
+
+class PackArea(StrictModel):
+    """An area of work for the job-board pre-filter, with the keywords that put a posting in it."""
+
+    key: Annotated[str, StringConstraints(pattern=r"^[a-z][a-z0-9_]*$", max_length=40)]
+    label: TermLabel
+    keywords: Annotated[list[str], Field(min_length=1, max_length=80)]
+
+    @model_validator(mode="after")
+    def _keywords_are_plain(self) -> Self:
+        Area(self.key, self.label, tuple(self.keywords))  # raises ValueError on a bad keyword
+        return self
 
 
 def _check_terms(terms: list[PackTerm], what: str) -> None:
@@ -52,6 +66,10 @@ class PackFile(StrictModel):
     ]
     role_families: list[PackTerm]
     sectors: list[PackTerm] = Field(default_factory=list)
+    # Job-board pre-filter (ADR-080, phase 5): areas of work with keywords, and words that rule a
+    # posting out. Keywords are plain text, see ``jobs_radar.domain.prefilter``.
+    areas: list[PackArea] = Field(default_factory=list)
+    noise: Annotated[list[str], Field(max_length=80)] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _terms_are_sound(self) -> Self:
@@ -63,4 +81,10 @@ class PackFile(StrictModel):
             raise ValueError(msg)
         _check_terms(self.role_families, "role_families")
         _check_terms(self.sectors, "sectors")
+        keys = [area.key for area in self.areas]
+        labels = [area.label.casefold() for area in self.areas]
+        if len(set(keys)) != len(keys) or len(set(labels)) != len(labels):
+            msg = "areas: a key or a label is used twice"
+            raise ValueError(msg)
+        PrefilterRules((), tuple(self.noise))  # raises ValueError on a bad noise keyword
         return self

@@ -77,7 +77,6 @@ def test_entries_are_complete_and_use_https(entry) -> None:  # type: ignore[no-u
     assert entry.min_interval_minutes >= 1
     assert 1 <= entry.rate_limit_per_minute <= 60
     assert entry.default_filters.max_postings_per_run <= 5000
-    assert entry.available_categories
 
 
 def test_the_key_is_asked_for_only_where_the_catalogue_says_so() -> None:
@@ -141,7 +140,8 @@ def test_filter_defaults_follow_adr_049() -> None:
     assert filters.max_age_days == 30
     assert filters.max_postings_per_run == 500
     assert filters.search_terms == []
-    assert filters.categories == ["software", "data", "devops", "security", "telecom"]
+    # Any area until the owner's packs say which areas exist (ADR-080); the services fill them in.
+    assert filters.categories == []
 
 
 def test_filters_round_trip_through_json_for_config_json() -> None:

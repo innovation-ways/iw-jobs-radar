@@ -75,5 +75,67 @@
       "key": "insurance",
       "label": "Insurance"
     }
+  ],
+  "areas": [
+    {
+      "key": "retail",
+      "label": "Retail",
+      "keywords": [
+        "retail",
+        "sales assistant*",
+        "shop assistant*",
+        "cashier*",
+        "store manager*",
+        "shop manager*",
+        "shop floor",
+        "merchandiser*",
+        "store assistant*"
+      ]
+    },
+    {
+      "key": "customer_service",
+      "label": "Customer service",
+      "keywords": [
+        "customer service",
+        "customer care",
+        "customer support",
+        "customer advisor*",
+        "call centre",
+        "call center",
+        "contact centre",
+        "contact center",
+        "helpdesk"
+      ]
+    },
+    {
+      "key": "sales",
+      "label": "Sales",
+      "keywords": [
+        "sales representative*",
+        "sales rep*",
+        "field sales",
+        "account executive*",
+        "business development",
+        "sales executive*",
+        "inside sales"
+      ]
+    },
+    {
+      "key": "stock_ecommerce",
+      "label": "Stock and e-commerce",
+      "keywords": [
+        "stock clerk*",
+        "inventory clerk*",
+        "e commerce",
+        "ecommerce",
+        "online store",
+        "buyer*"
+      ]
+    }
+  ],
+  "noise": [
+    "talent pool*",
+    "spontaneous application*",
+    "unpaid*"
   ]
 }

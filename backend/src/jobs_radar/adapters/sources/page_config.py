@@ -35,6 +35,7 @@ from jobs_radar.domain.careers_markers import page_address
 from jobs_radar.domain.domains import registered_domain
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
 from jobs_radar.domain.job_board_rules import LocationScope
+from jobs_radar.domain.prefilter import PrefilterRules
 from jobs_radar.schemas.page_reader import PageReaderConfig
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
@@ -199,6 +200,7 @@ class PageConfigAdapter:
         credential: str | None = None,
         filters: JobBoardFilters | None = None,
         scope: LocationScope | None = None,
+        rules: PrefilterRules | None = None,
     ) -> BoardInfo:
         """Refuse: a careers-page reader is validated with its configuration, not an identifier."""
         msg = "A careers-page reader needs its approved configuration."

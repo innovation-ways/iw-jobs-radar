@@ -26,6 +26,7 @@ from jobs_radar.adapters.sources.company_board import (
 from jobs_radar.adapters.sources.html_text import html_to_text
 from jobs_radar.domain.enums import SourceType
 from jobs_radar.domain.job_board_rules import LocationScope
+from jobs_radar.domain.prefilter import PrefilterRules
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 BASE_URL = "https://api.lever.co/v0/postings"
@@ -105,6 +106,7 @@ class LeverAdapter(CompanyBoardAdapter):
         credential: str | None = None,
         filters: JobBoardFilters | None = None,
         scope: LocationScope | None = None,
+        rules: PrefilterRules | None = None,
     ) -> BoardInfo:
         """Check that the company has a board and count its postings."""
         response = await self._get(self._url(identifier), identifier, per_minute=6)

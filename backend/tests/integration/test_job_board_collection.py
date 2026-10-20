@@ -168,7 +168,10 @@ async def test_the_adapter_receives_the_catalogue_filters_and_the_derived_scope(
     source = await board(db_session)
     await run(build(db_session, monkeypatch, adapter, clock), source)
     checkpoint = seen[0]
-    assert checkpoint.filters == require_entry("himalayas").default_filters
+    # A board with no stored filters selects every area of the owner's packs (the software pack).
+    assert checkpoint.filters == require_entry("himalayas").default_filters.model_copy(
+        update={"categories": ["software", "data", "devops", "security", "telecom"]}
+    )
     assert checkpoint.scope is not None
     assert {"PT", "GB"} <= checkpoint.scope.country_codes  # base country; remote regions EU, UK
     assert checkpoint.scope.include_worldwide is True
@@ -403,3 +406,59 @@ async def test_a_job_board_never_closes_a_posting_it_no_longer_sees(
         clock.advance(hours=7)
     assert (await last_result(db_session, source)).closed_count == 0
     assert all(p.closed_at is None for p in await postings_of(db_session, source))
+
+
+# --- the pre-filter rules of the owner's packs (ADR-080, phase 5) ---------------------------------------
+
+
+async def checkpoint_of_a_run(
+    session: AsyncSession, monkeypatch: pytest.MonkeyPatch, clock: Clock
+) -> SourceCheckpoint:
+    seen: list[SourceCheckpoint] = []
+
+    def provider(checkpoint: SourceCheckpoint) -> object:
+        seen.append(checkpoint)
+        return listing()
+
+    await run(
+        build(session, monkeypatch, FakeAdapter(provider=provider), clock), await board(session)
+    )
+    return seen[0]
+
+
+async def test_the_adapter_receives_the_areas_and_noise_of_the_owners_packs(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch, clock: Clock
+) -> None:
+    checkpoint = await checkpoint_of_a_run(db_session, monkeypatch, clock)
+    assert checkpoint.rules is not None
+    assert [a.key for a in checkpoint.rules.areas] == [
+        "software", "data", "devops", "security", "telecom"
+    ]  # fmt: skip
+    assert checkpoint.rules.categorise(["Backend Developer"]) == {"software"}
+    assert checkpoint.rules.categorise(["Data Annotator"]) == frozenset()  # noise
+
+
+async def test_a_trades_pack_gives_the_adapter_trades_areas(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch, clock: Clock
+) -> None:
+    from jobs_radar.services.packs import PackService
+
+    packs = PackService(db_session)
+    await packs.set_active(LOCAL_OWNER_ID, "software_data_it", active=False)
+    await packs.set_active(LOCAL_OWNER_ID, "construction_trades", active=True)
+    checkpoint = await checkpoint_of_a_run(db_session, monkeypatch, clock)
+    assert checkpoint.rules is not None
+    assert checkpoint.rules.categorise(["Maintenance Electrician"]) == {"electrical"}
+    assert checkpoint.rules.categorise(["Backend Developer"]) == frozenset()
+    assert checkpoint.filters is not None and "electrical" in checkpoint.filters.categories
+
+
+async def test_with_no_pack_on_nothing_is_filtered_by_area(
+    db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch, clock: Clock
+) -> None:
+    from jobs_radar.services.packs import PackService
+
+    await PackService(db_session).set_active(LOCAL_OWNER_ID, "software_data_it", active=False)
+    checkpoint = await checkpoint_of_a_run(db_session, monkeypatch, clock)
+    assert checkpoint.rules is not None and checkpoint.rules.areas == ()
+    assert checkpoint.filters is not None and checkpoint.filters.categories == []

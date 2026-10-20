@@ -25,6 +25,7 @@ from jobs_radar.demo.jobs import COMPANIES, JOBS, SOURCES, WEEKS, DemoJob
 from jobs_radar.demo.render import render_description, render_extraction
 from jobs_radar.domain.enums import ProviderErrorClass, SourceErrorClass, SourceType
 from jobs_radar.domain.job_board_rules import LocationScope
+from jobs_radar.domain.prefilter import PrefilterRules
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 DEMO_MODEL = "demo-script"
@@ -82,6 +83,7 @@ class DemoBoards:
         credential: str | None = None,
         filters: JobBoardFilters | None = None,
         scope: LocationScope | None = None,
+        rules: PrefilterRules | None = None,
     ) -> BoardInfo:
         """Describe a demo board; unknown identifiers are refused like a real unknown board."""
         source = _SOURCES_BY_KEY.get(identifier)

@@ -14,7 +14,7 @@
   datasets; confirm the candidate in the dossier.
 - Job boards read only the first postings of a feed, newest first, up to the per-run limit; a very
   large board (Himalayas) is read country by country, so a first run can take several minutes.
-  Technology areas are matched by keywords in titles and tags, so the filter is loose on purpose.
+  Areas of work are matched by the keywords of your packs in titles and tags, so the filter is loose on purpose.
 - Arbeitnow and Jobicy do not state who may apply: a posting whose place cannot be read is kept
   and judged later. Jobicy is read through its `europe`, `anywhere` and country slugs only.
 - ITJobs.pt (Portugal) was checked with a real key on 2026-10-12: collection succeeds, the offer links

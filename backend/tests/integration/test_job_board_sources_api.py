@@ -317,3 +317,57 @@ async def test_job_board_filters_cannot_be_cleared(
         json={"expected_version": source["version"], "clear_filters": True},
     )
     assert response.status_code == 422
+
+
+# --- the owner's areas (ADR-080, phase 5) ----------------------------------------------------------------
+
+FIVE_AREAS = ["software", "data", "devops", "security", "telecom"]
+
+
+async def test_the_catalogue_offers_the_areas_of_the_owners_packs(
+    client: httpx.AsyncClient,
+) -> None:
+    items = (await client.get("/api/v1/source-catalogue")).json()["items"]
+    assert items
+    for item in items:
+        assert item["available_categories"] == FIVE_AREAS  # the test owner has the software pack
+        assert item["default_filters"]["categories"] == FIVE_AREAS
+
+
+async def test_preview_passes_the_owners_rules_and_areas_to_the_board(
+    client: httpx.AsyncClient,
+    app: FastAPI,
+    monkeypatch: pytest.MonkeyPatch,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    await enable_an_intent(session_factory)
+    adapter = use_adapters(app, monkeypatch, FakeAdapter(board=BoardInfo("Himalayas", 10, 3)))
+    response = await client.post(
+        "/api/v1/sources/preview",
+        json={"catalogue_key": "himalayas", "filters": {"max_age_days": 7}},
+    )
+    assert response.status_code == 200, response.text
+    _identifier, _credential, filters, _scope = adapter.validations[0]
+    assert filters is not None and filters.categories == FIVE_AREAS  # none named: the owner's areas
+    rules = adapter.rules_seen[0]
+    assert rules is not None and [a.key for a in rules.areas] == FIVE_AREAS
+
+
+async def test_areas_the_owner_names_are_kept_as_they_are(
+    client: httpx.AsyncClient,
+    app: FastAPI,
+    monkeypatch: pytest.MonkeyPatch,
+    session_factory: async_sessionmaker[AsyncSession],
+) -> None:
+    await enable_an_intent(session_factory)
+    adapter = use_adapters(app, monkeypatch, FakeAdapter(board=BoardInfo("Himalayas", 10, 3)))
+    await client.post(
+        "/api/v1/sources/preview",
+        json={"catalogue_key": "himalayas", "filters": {"categories": ["data"]}},
+    )
+    assert adapter.validations[0][2].categories == ["data"]  # type: ignore[union-attr]
+    await client.post(
+        "/api/v1/sources/preview",
+        json={"catalogue_key": "himalayas", "filters": {"categories": []}},
+    )
+    assert adapter.validations[1][2].categories == []  # type: ignore[union-attr]

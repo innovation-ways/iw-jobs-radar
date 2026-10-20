@@ -21,7 +21,7 @@
   chosen area, and only your countries plus the site's remote postings are listed (Eightfold's remote work is limited to the posting's own country). Its default pace is 30 requests a minute.
 - **Filters on a company board** are off by default (every posting is kept). For a large company
   open **Filters** on its row and tick *Keep only postings that match my areas and location*: only
-  postings in the chosen technology areas, remote work open to your countries, or on-site work
+  postings in the chosen areas of work, remote work open to your countries, or on-site work
   inside your radius are stored (the rest are counted as dropped). Places that cannot be read are
   kept. A new filter applies from the next run and does not close postings already stored.
 - A run never blocks on one failing board. The table shows the last outcome and the reason
@@ -91,7 +91,7 @@ many postings would be kept), then **Add**. Nothing is saved before the check su
   accepts remote work. The Sources screen shows them read-only; change them in **Profile & intent**.
   With no enabled intent a board fails with `configuration` ("Set your base location ... in
   Profile & intent first") before any request.
-- **Filters** (technology areas, search terms, posted within N days, most postings per run) decide
+- **Filters** (areas of work, search terms, posted within N days, most postings per run) decide
   what is stored. Postings left out are counted (`dropped`) and never stored, which keeps the number
   of local-model extractions small. A new filter applies from the next run and does not close
   postings already kept.

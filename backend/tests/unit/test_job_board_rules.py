@@ -3,6 +3,7 @@
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from tests.prefilter_rules import software_rules
 
 from jobs_radar.domain.job_board_rules import (
     UNKNOWN,
@@ -15,7 +16,6 @@ from jobs_radar.domain.job_board_rules import (
     Reach,
     allows_country,
     allows_location,
-    categorise,
     derive_location_scope,
     eligibility_from_regions,
     is_recent,
@@ -23,6 +23,11 @@ from jobs_radar.domain.job_board_rules import (
 )
 
 NOW = datetime(2026, 10, 9, 12, 0, tzinfo=UTC)
+
+
+def categorise(texts: list[str]) -> frozenset[str]:
+    """The areas of the software pack, which is what the five fixed areas used to be."""
+    return software_rules().categorise(texts)
 
 
 # --- eligibility --------------------------------------------------------------------------------

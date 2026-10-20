@@ -87,5 +87,83 @@
       "key": "logistics_transport",
       "label": "Logistics and transport"
     }
+  ],
+  "areas": [
+    {
+      "key": "maintenance",
+      "label": "Maintenance",
+      "keywords": [
+        "maintenance",
+        "millwright*",
+        "machine fitter*",
+        "mechatronic*",
+        "plant technician*",
+        "maintenance technician*"
+      ]
+    },
+    {
+      "key": "automotive_repair",
+      "label": "Automotive repair",
+      "keywords": [
+        "mechanic*",
+        "vehicle technician*",
+        "auto technician*",
+        "car technician*",
+        "body shop",
+        "panel beater*",
+        "tyre fitter*"
+      ]
+    },
+    {
+      "key": "field_service",
+      "label": "Field service",
+      "keywords": [
+        "field service",
+        "service technician*",
+        "installation technician*",
+        "field technician*",
+        "installer*",
+        "repair technician*"
+      ]
+    },
+    {
+      "key": "appliance_it_repair",
+      "label": "Appliance and IT hardware repair",
+      "keywords": [
+        "appliance repair",
+        "hardware technician*",
+        "it support technician*",
+        "computer repair",
+        "help desk technician*"
+      ]
+    },
+    {
+      "key": "telecom_installation",
+      "label": "Telecom installation",
+      "keywords": [
+        "fibre installer*",
+        "fiber installer*",
+        "cable technician*",
+        "telecom technician*",
+        "network installer*"
+      ]
+    },
+    {
+      "key": "facilities",
+      "label": "Facilities",
+      "keywords": [
+        "facilities technician*",
+        "building maintenance",
+        "caretaker*",
+        "handyman*",
+        "lift technician*",
+        "elevator technician*"
+      ]
+    }
+  ],
+  "noise": [
+    "talent pool*",
+    "spontaneous application*",
+    "unpaid*"
   ]
 }

@@ -185,6 +185,44 @@
         "title": "ApplicationDraftRead",
         "type": "object"
       },
+      "AreaList": {
+        "additionalProperties": false,
+        "description": "The areas of the packs the owner switched on, in pack order.",
+        "properties": {
+          "areas": {
+            "items": {
+              "$ref": "#/components/schemas/AreaRead"
+            },
+            "title": "Areas",
+            "type": "array"
+          }
+        },
+        "required": [
+          "areas"
+        ],
+        "title": "AreaList",
+        "type": "object"
+      },
+      "AreaRead": {
+        "additionalProperties": false,
+        "description": "An area of work a job board can be narrowed to.",
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label"
+        ],
+        "title": "AreaRead",
+        "type": "object"
+      },
       "AssessResponse": {
         "additionalProperties": false,
         "description": "What assessing one job did: judgements made and new evaluations stored.",
@@ -3765,7 +3803,7 @@
               "pattern": "^[a-z][a-z0-9_]*$",
               "type": "string"
             },
-            "maxItems": 20,
+            "maxItems": 40,
             "title": "Categories",
             "type": "array"
           },
@@ -10275,6 +10313,28 @@
         "summary": "Pipeline Status",
         "tags": [
           "pipeline"
+        ]
+      }
+    },
+    "/api/v1/prefilter/areas": {
+      "get": {
+        "description": "List the areas of work offered by the packs the owner switched on.",
+        "operationId": "list_areas_api_v1_prefilter_areas_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AreaList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Areas",
+        "tags": [
+          "prefilter"
         ]
       }
     },

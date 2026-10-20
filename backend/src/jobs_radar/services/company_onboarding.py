@@ -200,7 +200,7 @@ class CompanyOnboardingService:
                     owner_id,
                     source.source_configuration_id,
                     expected_version=source.version,
-                    filters=JobBoardFilters(),
+                    filters=JobBoardFilters(categories=await self._sources.area_keys(owner_id)),
                 )
             company_id = source.company_id
             assert company_id is not None  # noqa: S101  # a company board always has its company

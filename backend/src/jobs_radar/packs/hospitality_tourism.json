@@ -71,5 +71,67 @@
       "key": "media_entertainment",
       "label": "Media and entertainment"
     }
+  ],
+  "areas": [
+    {
+      "key": "kitchen",
+      "label": "Kitchen",
+      "keywords": [
+        "chef*",
+        "cook*",
+        "kitchen assistant*",
+        "commis",
+        "sous chef*",
+        "baker*",
+        "pastry",
+        "kitchen porter*",
+        "dishwasher*"
+      ]
+    },
+    {
+      "key": "front_of_house",
+      "label": "Front of house",
+      "keywords": [
+        "waiter*",
+        "waitress*",
+        "bartender*",
+        "barista*",
+        "bar staff",
+        "restaurant manager*",
+        "floor staff",
+        "front of house"
+      ]
+    },
+    {
+      "key": "accommodation",
+      "label": "Accommodation",
+      "keywords": [
+        "hotel",
+        "receptionist*",
+        "housekeep*",
+        "room attendant*",
+        "concierge*",
+        "night porter*",
+        "guest services"
+      ]
+    },
+    {
+      "key": "tourism_events",
+      "label": "Tourism and events",
+      "keywords": [
+        "tour guide*",
+        "travel consultant*",
+        "travel agent*",
+        "events coordinator*",
+        "event manager*",
+        "holiday",
+        "resort"
+      ]
+    }
+  ],
+  "noise": [
+    "talent pool*",
+    "spontaneous application*",
+    "unpaid*"
   ]
 }

@@ -87,5 +87,83 @@
       "key": "energy_utilities",
       "label": "Energy and utilities"
     }
+  ],
+  "areas": [
+    {
+      "key": "production",
+      "label": "Production and assembly",
+      "keywords": [
+        "production operator*",
+        "production worker*",
+        "machine operator*",
+        "line operator*",
+        "assembly",
+        "assembler*",
+        "packer*",
+        "packaging"
+      ]
+    },
+    {
+      "key": "machining",
+      "label": "Machining",
+      "keywords": [
+        "cnc",
+        "machinist*",
+        "turner*",
+        "milling",
+        "press operator*",
+        "toolmaker*",
+        "tool maker*"
+      ]
+    },
+    {
+      "key": "quality",
+      "label": "Quality",
+      "keywords": [
+        "quality inspector*",
+        "quality technician*",
+        "quality control",
+        "qc inspector*"
+      ]
+    },
+    {
+      "key": "process_engineering",
+      "label": "Process and production engineering",
+      "keywords": [
+        "process engineer*",
+        "industrial engineer*",
+        "production engineer*",
+        "production planner*",
+        "production supervisor*",
+        "shift leader*"
+      ]
+    },
+    {
+      "key": "food_production",
+      "label": "Food production",
+      "keywords": [
+        "food production",
+        "food factory",
+        "butcher*",
+        "meat processor*",
+        "bakery operative*"
+      ]
+    },
+    {
+      "key": "textile",
+      "label": "Textile and garment",
+      "keywords": [
+        "textile*",
+        "garment*",
+        "sewing",
+        "seamstress*",
+        "tailor*"
+      ]
+    }
+  ],
+  "noise": [
+    "talent pool*",
+    "spontaneous application*",
+    "unpaid*"
   ]
 }

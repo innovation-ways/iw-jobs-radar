@@ -91,5 +91,97 @@
       "key": "public_sector",
       "label": "Public sector"
     }
+  ],
+  "areas": [
+    {
+      "key": "electrical",
+      "label": "Electrical",
+      "keywords": [
+        "electrician*",
+        "electrical",
+        "wiring",
+        "switchboard*",
+        "cable jointer*",
+        "high voltage",
+        "low voltage"
+      ]
+    },
+    {
+      "key": "plumbing_heating",
+      "label": "Plumbing and heating",
+      "keywords": [
+        "plumber*",
+        "pipefitter*",
+        "pipe fitter*",
+        "heating",
+        "boiler*",
+        "gas engineer*",
+        "gas fitter*"
+      ]
+    },
+    {
+      "key": "hvac",
+      "label": "HVAC and refrigeration",
+      "keywords": [
+        "hvac",
+        "refrigeration",
+        "air conditioning",
+        "heat pump*",
+        "ventilation"
+      ]
+    },
+    {
+      "key": "carpentry_building",
+      "label": "Carpentry and building",
+      "keywords": [
+        "carpenter*",
+        "joiner*",
+        "bricklayer*",
+        "mason*",
+        "roofer*",
+        "plasterer*",
+        "tiler*",
+        "painter*",
+        "decorator*",
+        "scaffolder*",
+        "drywall*",
+        "dry wall*"
+      ]
+    },
+    {
+      "key": "welding_metalwork",
+      "label": "Welding and metalwork",
+      "keywords": [
+        "welder*",
+        "welding",
+        "fabricator*",
+        "metalwork*",
+        "metal work*",
+        "sheet metal"
+      ]
+    },
+    {
+      "key": "site_civil",
+      "label": "Site and civil works",
+      "keywords": [
+        "labourer*",
+        "laborer*",
+        "groundwork*",
+        "civil works",
+        "site manager*",
+        "site supervisor*",
+        "foreman",
+        "site engineer*",
+        "surveyor*",
+        "plant operator*",
+        "excavator*",
+        "crane operator*"
+      ]
+    }
+  ],
+  "noise": [
+    "talent pool*",
+    "spontaneous application*",
+    "unpaid*"
   ]
 }

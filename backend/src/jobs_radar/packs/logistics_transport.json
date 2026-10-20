@@ -79,5 +79,70 @@
       "key": "public_sector",
       "label": "Public sector"
     }
+  ],
+  "areas": [
+    {
+      "key": "driving",
+      "label": "Driving",
+      "keywords": [
+        "driver*",
+        "delivery driver*",
+        "hgv",
+        "truck driver*",
+        "lorry driver*",
+        "van driver*",
+        "bus driver*",
+        "coach driver*",
+        "chauffeur*",
+        "taxi driver*"
+      ]
+    },
+    {
+      "key": "warehouse",
+      "label": "Warehouse",
+      "keywords": [
+        "warehouse*",
+        "forklift*",
+        "order picker*",
+        "picker*",
+        "packer*",
+        "stock handler*",
+        "goods in",
+        "goods out",
+        "reach truck"
+      ]
+    },
+    {
+      "key": "courier_delivery",
+      "label": "Courier and delivery",
+      "keywords": [
+        "courier*",
+        "postal",
+        "postman*",
+        "parcel*",
+        "delivery rider*",
+        "delivery agent*"
+      ]
+    },
+    {
+      "key": "logistics_planning",
+      "label": "Logistics and planning",
+      "keywords": [
+        "logistics coordinator*",
+        "dispatcher*",
+        "transport planner*",
+        "supply chain",
+        "fleet manager*",
+        "transport manager*",
+        "freight forwarder*",
+        "customs agent*",
+        "shipping clerk*"
+      ]
+    }
+  ],
+  "noise": [
+    "talent pool*",
+    "spontaneous application*",
+    "unpaid*"
   ]
 }

@@ -12,6 +12,7 @@ from jobs_radar.core.http import GuardedHttpClient
 from jobs_radar.core.url_guard import UrlGuard
 from jobs_radar.domain.job_board_rules import LocationScope, OnsiteArea
 from jobs_radar.schemas.source_filters import JobBoardFilters
+from tests.prefilter_rules import software_rules
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 NOW = datetime(2026, 10, 9, 12, 0, tzinfo=UTC)
@@ -37,6 +38,44 @@ def clock() -> datetime:
     return NOW
 
 
+SOFTWARE_AREAS = ["software", "data", "devops", "security", "telecom"]
+
+
+def software_filters(filters: JobBoardFilters | None) -> JobBoardFilters:
+    """The filters an owner of the software pack gets: all five areas unless the test chose some.
+
+    Before ADR-080 these five areas were the default of ``JobBoardFilters``; now the services fill
+    in the owner's areas, so the tests that mean "an owner with the software pack" do the same.
+    """
+    filters = filters or JobBoardFilters()
+    if "categories" in filters.model_fields_set:
+        return filters
+    return filters.model_copy(update={"categories": list(SOFTWARE_AREAS)})
+
+
+class _SoftwareOwner:
+    """Wraps a job-board adapter so that ``validate`` runs as for an owner with the software pack."""
+
+    def __init__(self, adapter: Any) -> None:
+        self._adapter = adapter
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._adapter, name)
+
+    async def validate(
+        self,
+        identifier: str,
+        credential: str | None = None,
+        filters: Any = None,
+        scope: Any = None,
+        rules: Any = None,
+    ) -> Any:
+        chosen = filters or self._adapter.entry.default_filters
+        return await self._adapter.validate(
+            identifier, credential, software_filters(chosen), scope, rules or software_rules()
+        )
+
+
 def build(adapter_class: Callable[..., Any], sleeper: Sleeper | None = None) -> Any:
     """Create an adapter on a guarded client that resolves every host to a public address."""
 
@@ -45,8 +84,13 @@ def build(adapter_class: Callable[..., Any], sleeper: Sleeper | None = None) -> 
 
     client = GuardedHttpClient(guard=UrlGuard(resolver=resolve), user_agent="JobsRadar/test")
     sleeper = sleeper or Sleeper()
-    return adapter_class(
-        client, sleep=sleeper, limiter=RateLimiter(sleep=sleeper, clock=lambda: 0.0), clock=clock
+    return _SoftwareOwner(
+        adapter_class(
+            client,
+            sleep=sleeper,
+            limiter=RateLimiter(sleep=sleeper, clock=lambda: 0.0),
+            clock=clock,
+        )
     )
 
 
@@ -61,15 +105,22 @@ def checkpoint(
     identifier: str,
     filters: JobBoardFilters | None = None,
     scope: LocationScope | None = PORTUGAL,
+    *,
+    default_areas: bool = True,
 ) -> SourceCheckpoint:
-    """A checkpoint for a job board source; the scope is what the profile and intents give."""
+    """A checkpoint for a job board source; the scope is what the profile and intents give.
+
+    Without filters the board's defaults apply, with every area of the software pack selected, as
+    for an owner who has that pack on. ``default_areas=False`` leaves no filters at all.
+    """
     return SourceCheckpoint(
         identifier=identifier,
         url=f"https://example.test/{identifier}",
         etag=None,
         rate_limit_per_minute=60,
-        filters=filters,
+        filters=software_filters(filters) if filters is not None or default_areas else None,
         scope=scope,
+        rules=software_rules(),
     )
 
 
@@ -115,4 +166,5 @@ def ats_checkpoint(identifier: str, etag: str | None = None) -> SourceCheckpoint
         url=f"https://example.test/{identifier}",
         etag=etag,
         rate_limit_per_minute=60,
+        rules=software_rules(),
     )

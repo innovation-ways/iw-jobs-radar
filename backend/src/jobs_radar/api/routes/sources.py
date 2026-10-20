@@ -172,6 +172,7 @@ async def list_source_catalogue(
 ) -> CatalogueList:
     """List the job boards that can be added, marking those already configured."""
     added = await service.added_types(LOCAL_OWNER_ID)
+    areas = await service.area_keys(LOCAL_OWNER_ID)
     return CatalogueList(
         items=[
             CatalogueEntryRead(
@@ -187,8 +188,8 @@ async def list_source_catalogue(
                 attribution_text=entry.attribution_text,
                 delay_note=entry.delay_note,
                 min_interval_minutes=entry.min_interval_minutes,
-                default_filters=entry.default_filters,
-                available_categories=list(entry.available_categories),
+                default_filters=entry.default_filters.model_copy(update={"categories": areas}),
+                available_categories=areas,
                 already_added=entry.source_type in added,
             )
             for entry in available_entries()

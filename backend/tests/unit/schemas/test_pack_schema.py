@@ -52,7 +52,12 @@ def test_sectors_may_be_left_out() -> None:
         {"role_families": [{"key": "ok_key", "label": ""}]},
         {"sectors": [{"key": "9starts_with_digit", "label": "x"}]},
         {"unexpected": True},  # nothing may be ignored silently
-        {"areas": [{"key": "electrical", "keywords": ["wiring"]}]},  # arrives in a later phase
+        {"credentials": [{"key": "driving_licence_b", "label": "Driving licence B"}]},  # later
+        {"areas": [{"key": "electrical", "label": "Electrical", "keywords": []}]},
+        {"areas": [{"key": "Bad Key", "label": "Electrical", "keywords": ["wiring"]}]},
+        {"areas": [{"key": "electrical", "label": "", "keywords": ["wiring"]}]},
+        {"areas": [{"key": "electrical", "label": "E", "keywords": ["wir(ing"]}]},  # no patterns
+        {"noise": ["a|b"]},
     ],
 )
 def test_what_a_pack_cannot_contain(changes: dict[str, Any]) -> None:
@@ -74,3 +79,26 @@ def test_a_pack_cannot_list_other() -> None:
     """`other` belongs to no pack: it is always offered."""
     reject(role_families=[{"key": "other", "label": "Other"}])
     reject(sectors=[{"key": "other", "label": "Other"}])
+
+
+def test_areas_and_noise_are_plain_keywords() -> None:
+    data = deepcopy(VALID)
+    data["areas"] = [
+        {"key": "electrical", "label": "Electrical", "keywords": ["electrician", "gas fitt*"]},
+        {"key": "plumbing", "label": "Plumbing", "keywords": ["plumber"]},
+    ]
+    data["noise"] = ["volunteer*", "unpaid"]
+    pack = PackFile.model_validate(data)
+    assert [a.key for a in pack.areas] == ["electrical", "plumbing"]
+    assert pack.noise == ["volunteer*", "unpaid"]
+
+
+def test_a_pack_without_areas_has_none() -> None:
+    pack = PackFile.model_validate(VALID)
+    assert pack.areas == [] and pack.noise == []
+
+
+def test_area_keys_and_labels_are_unique() -> None:
+    area = {"key": "electrical", "label": "Electrical", "keywords": ["wiring"]}
+    reject(areas=[area, {**area, "label": "Other label"}])
+    reject(areas=[area, {**area, "key": "electric_2"}])

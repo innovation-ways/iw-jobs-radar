@@ -67,3 +67,117 @@ def test_other_packs_reuse_existing_terms_with_the_same_label() -> None:
             for term in getattr(pack, attribute):
                 if (kind, term.key) in existing:
                     assert existing[(kind, term.key)] == term.label, (pack.key, term.key)
+
+
+# --- areas and noise of each pack (ADR-080, phase 5) -------------------------------------------------
+
+
+def test_every_pack_has_areas_with_enough_keywords() -> None:
+    for pack in shipped_packs():
+        assert len(pack.areas) >= 4, pack.key
+        for area in pack.areas:
+            assert len(area.keywords) >= 4, (pack.key, area.key)
+        assert pack.noise, pack.key
+
+
+def test_an_area_key_has_one_label_in_every_pack() -> None:
+    labels: dict[str, set[str]] = defaultdict(set)
+    for pack in shipped_packs():
+        for area in pack.areas:
+            labels[area.key].add(area.label)
+    assert {key: found for key, found in labels.items() if len(found) > 1} == {}
+
+
+# Titles a person in each field would expect the pre-filter to recognise (area keys of that pack).
+EXPECTED = {
+    "construction_trades": {
+        "Maintenance Electrician": {"electrical"},
+        "Plumber / Gas Engineer": {"plumbing_heating"},
+        "HVAC Technician": {"hvac"},
+        "Carpenter and Joiner": {"carpentry_building"},
+        "Welder Fabricator": {"welding_metalwork"},
+        "Site Supervisor": {"site_civil"},
+    },
+    "maintenance_repair": {
+        "Maintenance Technician": {"maintenance"},
+        "Automotive Mechanic": {"automotive_repair"},
+        "Field Service Engineer": {"field_service"},
+        "Fibre Installer": {"telecom_installation"},
+    },
+    "manufacturing_production": {
+        "Production Operator": {"production"},
+        "CNC Machinist": {"machining"},
+        "Quality Inspector": {"quality"},
+        "Food Production Operative": {"food_production"},
+    },
+    "logistics_transport": {
+        "HGV Driver": {"driving"},
+        "Warehouse Operative": {"warehouse"},
+        "Parcel Courier": {"courier_delivery"},
+        "Transport Planner": {"logistics_planning"},
+    },
+    "healthcare_social": {
+        "Registered Nurse": {"nursing"},
+        "General Practitioner": {"medical"},
+        "Physiotherapist": {"therapy_rehabilitation"},
+        "Pharmacy Technician": {"diagnostics_pharmacy"},
+        "Care Worker": {"social_care"},
+        "Paramedic": {"emergency_veterinary"},
+    },
+    "retail_sales_service": {
+        "Sales Assistant": {"retail"},
+        "Customer Service Agent": {"customer_service"},
+        "Field Sales Representative": {"sales"},
+    },
+    "hospitality_tourism": {
+        "Sous Chef": {"kitchen"},
+        "Bartender": {"front_of_house"},
+        "Hotel Receptionist": {"accommodation"},
+        "Tour Guide": {"tourism_events"},
+    },
+    "office_finance_admin": {
+        "Accountant": {"finance_accounting"},
+        "Executive Assistant": {"administration"},
+        "Paralegal": {"legal_compliance"},
+        "Recruiter": {"hr_recruitment"},
+    },
+    "education_public_services": {
+        "Primary School Teacher": {"teaching"},
+        "Police Officer": {"public_safety"},
+        "Personal Trainer": {"community_sports"},
+        "Cleaner": {"facilities_support"},
+    },
+}
+
+
+def test_each_pack_recognises_the_titles_of_its_field() -> None:
+    from tests.prefilter_rules import rules_of
+
+    for key, titles in EXPECTED.items():
+        rules = rules_of(key)
+        for title, areas in titles.items():
+            assert areas <= rules.categorise([title]), (key, title)
+
+
+def test_the_noise_of_a_pack_rules_a_posting_out() -> None:
+    from tests.prefilter_rules import rules_of
+
+    rules = rules_of("construction_trades")
+    assert rules.categorise(["Electrician - talent pool"]) == frozenset()
+    assert rules.categorise(["Electrician"]) == {"electrical"}
+
+
+def test_a_software_owner_does_not_see_trades_titles_and_the_reverse() -> None:
+    from tests.prefilter_rules import rules_of
+
+    assert rules_of("software_data_it").categorise(["Maintenance Electrician"]) == frozenset()
+    assert rules_of("construction_trades").categorise(["Senior Backend Engineer"]) == frozenset()
+
+
+def test_the_areas_of_several_packs_add_up() -> None:
+    from tests.prefilter_rules import rules_of
+
+    both = rules_of("software_data_it", "construction_trades")
+    assert both.categorise(["Electrician"]) == {"electrical"}
+    assert both.categorise(["Backend Developer"]) == {"software"}
+    assert len(both.areas) == 11

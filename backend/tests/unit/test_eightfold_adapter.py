@@ -40,7 +40,9 @@ def serve(*, pages: bool = True) -> Scripted:
 
 def run(identifier: str = HOST, filters: JobBoardFilters | None = None, scope=None, **kwargs):
     """Collect with an adapter built for the tests."""
-    return build_ats(EightfoldAdapter, **kwargs).collect(checkpoint(identifier, filters, scope))
+    return build_ats(EightfoldAdapter, **kwargs).collect(
+        checkpoint(identifier, filters, scope, default_areas=False)
+    )
 
 
 def test_the_endpoint_is_the_search_address_of_the_careers_site() -> None:

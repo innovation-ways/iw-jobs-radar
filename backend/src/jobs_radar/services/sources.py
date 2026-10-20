@@ -27,6 +27,7 @@ from jobs_radar.repositories.sources import PageReaderRepository, SourceReposito
 from jobs_radar.schemas.page_reader import PageReaderConfig
 from jobs_radar.schemas.source_filters import JobBoardFilters
 from jobs_radar.services.location_scope import LocationScopeService
+from jobs_radar.services.prefilter import PrefilterService
 
 # Failures caused by what the owner typed; every other class means the source itself is unavailable.
 _INPUT_ERRORS = {
@@ -70,6 +71,7 @@ class SourceService:
         self._session = session
         self._adapters = adapters
         self._box = box
+        self._prefilter = PrefilterService(session)
         self._sources = SourceRepository(session)
 
     def _adapter(self, source_type: SourceType) -> JobSourceAdapter:
@@ -288,12 +290,34 @@ class SourceService:
             raise InputValidationError(
                 msg, details={"error_class": SourceErrorClass.CONFIGURATION.value}
             )
+        rules = await self._prefilter.rules_for_owner(owner_id)
         try:
             return await self._adapter(entry.source_type).validate(
-                entry.catalogue_key, credential, filters, scope
+                entry.catalogue_key, credential, filters, scope, rules
             )
         except SourceError as error:
             raise translate_source_error(error) from error
+
+    async def default_filters(self, owner_id: int, entry: CatalogueEntry) -> JobBoardFilters:
+        """Return a board's default filters with every area of the owner's packs selected."""
+        return await self.with_areas(owner_id, entry.default_filters, given=False)
+
+    async def with_areas(
+        self, owner_id: int, filters: JobBoardFilters, *, given: bool = True
+    ) -> JobBoardFilters:
+        """Select every area of the owner's packs when the filters do not say which areas.
+
+        A request that names no ``categories`` means "my areas", as it did when the five technology
+        areas were the default; one that names them (even none) is taken as it is. ``given`` is
+        false for filters that are a default, which never name any.
+        """
+        if given and "categories" in filters.model_fields_set:
+            return filters
+        return filters.model_copy(update={"categories": await self.area_keys(owner_id)})
+
+    async def area_keys(self, owner_id: int) -> list[str]:
+        """Return the keys of the areas of work offered by the packs the owner switched on."""
+        return [area.key for area in (await self._prefilter.rules_for_owner(owner_id)).areas]
 
     async def preview(
         self,
@@ -306,7 +330,14 @@ class SourceService:
         """Count the postings that would be kept, without saving anything."""
         entry = self._entry(catalogue_key)
         key = self._credential_rule(entry, credential)
-        info = await self._check_board(owner_id, entry, key, filters or entry.default_filters)
+        info = await self._check_board(
+            owner_id,
+            entry,
+            key,
+            (await self.with_areas(owner_id, filters))
+            if filters
+            else await self.default_filters(owner_id, entry),
+        )
         return entry, info
 
     async def add_job_board(
@@ -332,7 +363,11 @@ class SourceService:
             msg = "This job board is already configured."
             raise ConflictError(msg, details={"external_identifier": entry.catalogue_key})
         key = self._credential_rule(entry, credential)
-        chosen = filters or entry.default_filters
+        chosen = (
+            await self.with_areas(owner_id, filters)
+            if filters
+            else await self.default_filters(owner_id, entry)
+        )
         ciphertext = self._encrypt(key) if key else None
         await self._check_board(owner_id, entry, key, chosen)
         source = await self._sources.create(
@@ -431,6 +466,7 @@ class SourceService:
             source.etag = None
         elif filters is not None:
             # A company board keeps every posting until the owner opts in to filters (ADR-051).
+            filters = await self.with_areas(owner_id, filters)
             source.config_json = filters.model_dump(mode="json")
             # A 304 would keep the postings the old filters let in, so the next run must fetch.
             source.etag = None

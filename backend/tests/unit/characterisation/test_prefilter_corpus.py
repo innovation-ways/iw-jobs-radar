@@ -9,8 +9,14 @@ golden entries for other occupations are then edited consciously (with the trade
 
 import pytest
 from tests.golden import check_golden
+from tests.prefilter_rules import software_rules
 
-from jobs_radar.domain.job_board_rules import categorise
+rules = software_rules()
+
+
+def categorise(texts):  # type: ignore[no-untyped-def]
+    return rules.categorise(texts)
+
 
 TECHNOLOGY = (
     "Senior Backend Engineer",

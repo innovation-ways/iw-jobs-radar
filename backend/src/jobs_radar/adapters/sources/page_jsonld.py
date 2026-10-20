@@ -46,6 +46,7 @@ from jobs_radar.domain.careers_markers import page_address
 from jobs_radar.domain.domains import registered_domain
 from jobs_radar.domain.enums import SourceErrorClass, SourceType
 from jobs_radar.domain.job_board_rules import LocationScope
+from jobs_radar.domain.prefilter import PrefilterRules
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 MAX_PAGES_PER_RUN = 200
@@ -292,6 +293,7 @@ class PageJsonLdAdapter:
         credential: str | None = None,
         filters: JobBoardFilters | None = None,
         scope: LocationScope | None = None,
+        rules: PrefilterRules | None = None,
     ) -> BoardInfo:
         """Check that the site publishes structured postings, reading at most three pages."""
         pages = await self._posting_pages(identifier, identifier, 6)

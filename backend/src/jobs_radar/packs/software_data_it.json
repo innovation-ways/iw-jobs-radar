@@ -171,5 +171,127 @@
       "key": "defence_aerospace",
       "label": "Defence and aerospace"
     }
+  ],
+  "areas": [
+    {
+      "key": "software",
+      "label": "Software",
+      "keywords": [
+        "software",
+        "developer",
+        "programmer",
+        "backend",
+        "frontend",
+        "full stack",
+        "fullstack",
+        "mobile",
+        "android",
+        "ios",
+        "qa",
+        "sdet",
+        "react",
+        "python",
+        "java",
+        "javascript",
+        "typescript",
+        "golang",
+        "rust",
+        "node",
+        "php",
+        "ruby",
+        "kotlin",
+        "swift",
+        "integration",
+        "solution engineer",
+        "solutions engineer",
+        "solution architect",
+        "solutions architect",
+        "solution consultant",
+        "solutions consultant"
+      ]
+    },
+    {
+      "key": "data",
+      "label": "Data and AI",
+      "keywords": [
+        "data",
+        "analytics",
+        "machine learning",
+        "ml",
+        "ai",
+        "artificial intelligence",
+        "llm",
+        "mlops",
+        "etl",
+        "bi",
+        "business intelligence",
+        "database",
+        "sql"
+      ]
+    },
+    {
+      "key": "devops",
+      "label": "DevOps and cloud",
+      "keywords": [
+        "devops",
+        "sre",
+        "site reliability",
+        "infrastructure",
+        "cloud",
+        "kubernetes",
+        "platform engineer",
+        "sysadmin",
+        "system administrator",
+        "terraform",
+        "linux"
+      ]
+    },
+    {
+      "key": "security",
+      "label": "Security",
+      "keywords": [
+        "security",
+        "cybersecurity",
+        "infosec",
+        "appsec",
+        "pentest",
+        "pentester",
+        "pentesting"
+      ]
+    },
+    {
+      "key": "telecom",
+      "label": "Telecom and billing",
+      "keywords": [
+        "bss",
+        "oss",
+        "billing",
+        "telecom",
+        "telecoms",
+        "telecommunication",
+        "telecommunications",
+        "charging",
+        "mediation",
+        "revenue assurance",
+        "convergent",
+        "ocs",
+        "ocf"
+      ]
+    }
+  ],
+  "noise": [
+    "annotat*",
+    "transcri*",
+    "linguist*",
+    "rater*",
+    "translator*",
+    "labeling*",
+    "labelling*",
+    "audio collection*",
+    "sound design*",
+    "talent pool*",
+    "initiativbewerbung*",
+    "data entry*",
+    "online data analyst*"
   ]
 }

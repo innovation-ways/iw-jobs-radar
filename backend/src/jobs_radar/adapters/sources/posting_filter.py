@@ -22,11 +22,11 @@ from jobs_radar.domain.job_board_rules import (
     LocationScope,
     Reach,
     allows_location,
-    categorise,
     eligibility_from_regions,
     is_recent,
     matches_terms,
 )
+from jobs_radar.domain.prefilter import PrefilterRules
 from jobs_radar.schemas.source_filters import JobBoardFilters
 
 _REMOTE = re.compile(
@@ -85,11 +85,15 @@ def _location_ok(posting: SourcePosting, scope: LocationScope) -> bool:
 
 
 def keep_posting(
-    posting: SourcePosting, filters: JobBoardFilters, scope: LocationScope | None, now: datetime
+    posting: SourcePosting,
+    filters: JobBoardFilters,
+    scope: LocationScope | None,
+    now: datetime,
+    rules: PrefilterRules | None = None,
 ) -> bool:
     """Whether a company-board posting passes the owner's filters for that board."""
-    if filters.categories and not set(filters.categories) & categorise(
-        (posting.title, *posting.departments)
+    if rules is not None and not rules.allows(
+        filters.categories, (posting.title, *posting.departments)
     ):
         return False
     if not is_recent(posting.posted_at, now, filters.max_age_days):
@@ -105,12 +109,13 @@ def apply_filters(
     filters: JobBoardFilters,
     scope: LocationScope | None,
     now: datetime,
+    rules: PrefilterRules | None = None,
 ) -> FilterOutcome:
     """Filter a company board's postings, stopping at the per-run limit."""
     kept: list[SourcePosting] = []
     dropped = 0
     for posting in postings:
-        if not keep_posting(posting, filters, scope, now):
+        if not keep_posting(posting, filters, scope, now, rules):
             dropped += 1
             continue
         if len(kept) >= filters.max_postings_per_run:

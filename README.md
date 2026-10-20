@@ -50,6 +50,40 @@ A dark theme is included: [Inbox in dark mode](docs/images/03-inbox-dark.png).
 
 ## Quick start
 
+You need only [Docker](https://docs.docker.com/get-docker/) (Docker Engine on Linux, Docker Desktop
+on Windows or macOS). Nothing is built: the images are pulled from the GitHub Container Registry.
+
+### Try it with demo data
+
+The demo has its own database and volume; your real data is never touched. It runs the real pipeline
+on invented postings and a scripted "model", so it needs no network and no AI. The company and
+job-board names are invented, and the board names shown (for example Arbeitnow) only label the demo
+sources.
+
+```bash
+docker compose -f docker-compose.demo.yml up
+# open http://127.0.0.1:5181
+docker compose -f docker-compose.demo.yml down -v    # remove it
+```
+
+### Install it
+
+```bash
+docker compose -f docker-compose.release.yml up -d
+# open http://127.0.0.1:5180
+```
+
+The first start generates the key that encrypts stored credentials and the database password, and
+keeps them in a Docker volume. **Back the key up** (the command is in
+[docs/operations/install.md](docs/operations/install.md)): without it, stored credentials (AI
+provider and job-board keys) cannot be recovered. Only the web UI is published, on `127.0.0.1`.
+Versions, upgrades, backups and the optional local AI are in the same guide.
+
+AI extraction is off until you turn it on and choose a local model in the *AI & privacy* screen.
+Without it, jobs are still collected and shown as "not evaluated".
+
+## Development
+
 Prerequisites: Docker, [`uv`](https://docs.astral.sh/uv/), Node 22 with pnpm through corepack, and
 optionally [Ollama](https://ollama.com) for local AI.
 
@@ -60,29 +94,14 @@ optionally [Ollama](https://ollama.com) for local AI.
 make help                         # every command: tests, quality gates, backups, ...
 ```
 
-### Try it with demo data
+The demo without Docker images, from source: `make demo` (or `./jobs-radar.sh --demo`) starts
+PostgreSQL, builds the demo database `jobs_radar_demo`, an idle worker, the API (port 8101) and the
+UI (port 5181); `make demo-stop` stops it. Logs are in `logs/demo-*.log`. The step-by-step targets
+(`make demo-seed`, `demo-worker`, `demo-api`, `demo-frontend`) still exist. Never start the real
+worker against the demo database: it would try to collect the invented boards.
 
-The demo lives in its own database (`jobs_radar_demo`); your real data is never touched. It runs the
-real pipeline on invented postings and a scripted "model", so it needs no network and no AI. The
-company and job-board names are invented, and the board names shown (for example Arbeitnow) only
-label the demo sources.
-
-```bash
-make demo                         # or: ./jobs-radar.sh --demo
-# open http://localhost:5181
-make demo-stop                    # or: ./jobs-radar.sh --demo-stop
-```
-
-One command creates `.env` if needed, starts PostgreSQL (Docker), builds the demo database, and
-starts an idle worker, the API (port 8101) and the UI (port 5181). Logs are in `logs/demo-*.log`.
-The step-by-step targets (`make demo-seed`, `demo-worker`, `demo-api`, `demo-frontend`) still exist
-if you want to run the parts in separate terminals.
-
-Never start the real worker against the demo database: it would try to collect the invented boards.
-
-AI extraction is off until you turn it on in `.env` (`JOBS_RADAR_EXTRACTION_ENABLED`,
-`JOBS_RADAR_ALLOW_LOCAL_PROVIDERS`) and choose a local model in the *AI & privacy* screen. Without
-it, jobs are still collected and shown as "not evaluated".
+AI extraction is turned on in `.env` (`JOBS_RADAR_EXTRACTION_ENABLED`,
+`JOBS_RADAR_ALLOW_LOCAL_PROVIDERS`).
 
 ## How it was built
 
@@ -107,7 +126,7 @@ need a second switch. Read [docs/operations/mcp-server.md](docs/operations/mcp-s
 
 ## Documentation
 
-- Operations (configuration, backup and restore, sources and providers, the MCP server for AI
+- Operations (installing from images, configuration, backup and restore, sources and providers, the MCP server for AI
   agents, known limitations):
   [`docs/operations/`](docs/operations/)
 - Scoring rules and data shapes (taxonomies, profile, intent, gates, weights):

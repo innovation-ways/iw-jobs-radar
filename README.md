@@ -5,6 +5,10 @@
 
 Jobs Radar helps you separate the job offers that matter to you from everything else.
 
+[![Jobs Radar demo: jobs ranked by fit, with the reasons behind each score](docs/images/demo.gif)](docs/videos/jobs-radar-demo.mp4)
+
+[Watch the full video](docs/videos/jobs-radar-demo.mp4) (71 seconds, no sound, built-in demo data).
+
 Follow the companies you care about and Jobs Radar checks their careers pages, as well as public job boards, for new offers. Every new offer is read, scored against your own career profile and search intent, and ranked in a personal inbox, so you are told when a company you follow publishes something relevant and you can see at a glance why it fits or why it does not. Offers that break a rule you set (for example, on-site only, or the wrong role family) are set aside with the reason and you dont need to waste time with them.
 
 Every score can be explained. A local AI model reads each offer and quotes the passages that matter, such as the stack, the location or the pay. Fixed rules then turn those findings into a score, using the weights you chose. The AI never decides the final number, so the same offer always gets the same score, and you can see exactly why.
@@ -32,21 +36,9 @@ Everything runs on your machine, and your data stays with you.
 
 ## Screenshots
 
-All screenshots show the built-in demo: an invented persona, invented companies and invented
-postings. Nothing in them is real data (see [Try it with demo data](#try-it-with-demo-data)).
-
-**Inbox**: every job scored against your intent, with the reasons behind the score.
-
-![Inbox: jobs ranked by fit, with the score breakdown](docs/images/02-inbox.png)
-
-| | |
-|---|---|
-| ![Today: new matches, changed shortlisted jobs, sources needing attention](docs/images/01-today.png) **Today**: the daily digest. | ![Set aside: jobs ruled out by a hard constraint, with the reason](docs/images/04-set-aside.png) **Set aside**: jobs that break a rule you set, with the reason. |
-| ![Companies: hiring activity and open offers](docs/images/05-companies.png) **Companies**: dossiers and hiring activity. | ![Trends: weekly share of technologies and role families](docs/images/06-trends.png) **Trends**: what the market asks for, week by week. |
-| ![Sources: schedule and per-board status](docs/images/07-sources.png) **Sources**: schedule and the status of every board. | ![Scoring weights: what matters most to you](docs/images/09-scoring-weights.png) **Scoring weights**: you decide what counts. |
-| ![Profile and intent](docs/images/08-profile.png) **Profile and intent**: explicit and versioned. | ![AI and privacy: No AI by default](docs/images/10-ai-privacy.png) **AI and privacy**: off by default. |
-
-A dark theme is included: [Inbox in dark mode](docs/images/03-inbox-dark.png).
+A tour of the screens (Today, Inbox, Set aside, Companies, Trends, Sources, Scoring weights, Profile and
+AI & privacy, light and dark) is in [docs/images](docs/images/). All of them show the built-in demo, with
+invented data.
 
 ## Quick start
 

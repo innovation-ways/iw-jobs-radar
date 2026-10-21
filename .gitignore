@@ -155,3 +155,6 @@ backend/htmlcov/
 
 # Local MCP client configuration (may hold paths and tokens of other servers)
 .mcp.json
+
+# Local tooling (e.g. the demo video recorder); not published
+/tools/

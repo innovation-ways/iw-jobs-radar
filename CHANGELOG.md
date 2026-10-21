@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0](https://github.com/innovation-ways/iw-jobs-radar/compare/v1.2.0...v1.3.0) (2026-10-21)
+
+
+### Features
+
+* **api:** allow a local model server from AI & privacy; drag and drop for the CV (ADR-081) ([dde1108](https://github.com/innovation-ways/iw-jobs-radar/commit/dde1108a0c706a82127810d1317a0b3546cec38a))
+
 ## [1.2.0](https://github.com/innovation-ways/iw-jobs-radar/compare/v1.1.0...v1.2.0) (2026-10-20)
 
 

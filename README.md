@@ -137,6 +137,12 @@ need a second switch. Read [docs/operations/mcp-server.md](docs/operations/mcp-s
 - Database data dictionary: [`docs/database/schema.md`](docs/database/schema.md)
 - UI mock-ups: [`docs/design/`](docs/design/)
 
+## Project status
+
+Jobs Radar is a free personal project, built to help people who are looking for work. There is no paid
+version and no hosted service. It is maintained on a best-effort basis (see [SUPPORT.md](SUPPORT.md)),
+so replies to issues may be slow.
+
 ## Contributing
 
 Contributions are welcome: read [CONTRIBUTING.md](CONTRIBUTING.md) (tests first, DCO sign-off) and

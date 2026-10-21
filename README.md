@@ -42,8 +42,16 @@ invented data.
 
 ## Quick start
 
-You need only [Docker](https://docs.docker.com/get-docker/) (Docker Engine on Linux, Docker Desktop
-on Windows or macOS). Nothing is built: the images are pulled from the GitHub Container Registry.
+Nothing is built: the images are pulled from the GitHub Container Registry. The commands are the
+same on every system; what you install first depends on yours.
+
+| System | Install first | Local AI (optional) | Tested |
+|---|---|---|---|
+| Linux | [Docker Engine](https://docs.docker.com/engine/install/) with Compose v2 | [Ollama for Linux](https://ollama.com/download) | yes |
+| Windows | [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) (with WSL 2) | [Ollama for Windows](https://ollama.com/download) | yes |
+| macOS | [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/) (Intel or Apple Silicon) | [Ollama for macOS](https://ollama.com/download) | not yet |
+
+Details and tips for each system are in [docs/operations/install.md](docs/operations/install.md).
 
 ### Try it with demo data
 

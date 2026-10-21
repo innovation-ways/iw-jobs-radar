@@ -5,8 +5,30 @@ README. Decision record: ADR-079.
 
 ## Requirements
 
-Docker with Compose v2: Docker Engine on Linux, Docker Desktop on Windows or macOS. The images are
-published for `linux/amd64` and `linux/arm64` (including Apple Silicon). Nothing else to install.
+Docker with Compose v2. The images are published for `linux/amd64` and `linux/arm64` (including
+Apple Silicon). Nothing else is needed to run Jobs Radar; a local model server such as Ollama is
+optional (see *Local AI* below). Install Docker from its own pages, which stay up to date:
+
+### Linux
+
+Install [Docker Engine](https://docs.docker.com/engine/install/) with the Compose plugin. Tested.
+The compose file maps `host.docker.internal` to the host, so a model server running on the same
+computer is reachable without extra settings.
+
+### Windows
+
+Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/); it uses
+WSL 2 as its engine and its installer offers to enable it. Run the commands below in a WSL
+terminal, which is how it was tested: Windows with WSL 2, Docker Desktop and Ollama for Windows.
+Docker Desktop resolves `host.docker.internal` to Windows, which is how Jobs Radar reaches an
+Ollama installed there.
+
+### macOS
+
+Install [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/) (Intel or
+Apple Silicon) and use the same commands. **Not yet tested** by the maintainers; if something does
+not work, please open an issue with your macOS version and the output of
+`docker compose -f docker-compose.release.yml logs`.
 
 ## Start
 

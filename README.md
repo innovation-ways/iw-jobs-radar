@@ -100,8 +100,8 @@ UI (port 5181); `make demo-stop` stops it. Logs are in `logs/demo-*.log`. The st
 (`make demo-seed`, `demo-worker`, `demo-api`, `demo-frontend`) still exist. Never start the real
 worker against the demo database: it would try to collect the invented boards.
 
-AI extraction is turned on in `.env` (`JOBS_RADAR_EXTRACTION_ENABLED`,
-`JOBS_RADAR_ALLOW_LOCAL_PROVIDERS`).
+A local model is allowed from the *AI & privacy* screen ("Allow a model server on this computer");
+`JOBS_RADAR_ALLOW_LOCAL_PROVIDERS` in `.env` does the same and locks the switch on.
 
 ## How it was built
 

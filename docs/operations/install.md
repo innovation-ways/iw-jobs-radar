@@ -34,8 +34,8 @@ All optional; put them in your shell or in a file named `.env` next to the compo
 | `JOBS_RADAR_FRONTEND_PORT` | `5180` | Port of the web UI. |
 | `JOBS_RADAR_FRONTEND_BIND` | `127.0.0.1` | Address the UI is published on. |
 | `JOBS_RADAR_OLLAMA_URL` | `http://host.docker.internal:11434` | Where a local model server is (see below). |
-| `JOBS_RADAR_ALLOW_LOCAL_PROVIDERS` | `false` | Allow Jobs Radar to call a local model server. |
-| `JOBS_RADAR_EXTRACTION_ENABLED` | `false` | Let the worker analyse jobs with the model. |
+| `JOBS_RADAR_ALLOW_LOCAL_PROVIDERS` | `false` | Force-allow a local model server. Optional: the same switch is in *AI & privacy* (ADR-081). |
+| `JOBS_RADAR_EXTRACTION_ENABLED` | `false` | Only seeds the first local connection on a fresh database; you can add it in *AI & privacy* instead. |
 
 ## Secrets, and the backup you must make
 
@@ -66,11 +66,18 @@ runbook, which describes the development setup; with the images use
 
 ## Local AI (optional)
 
-The default is No AI: jobs are collected and shown as "not evaluated". If you want local analysis,
-running a model server and making it reachable from a container is your own environment choice and
-outside Jobs Radar. Jobs Radar only needs to be told where it is: set `JOBS_RADAR_OLLAMA_URL`, set
-`JOBS_RADAR_ALLOW_LOCAL_PROVIDERS=true` and `JOBS_RADAR_EXTRACTION_ENABLED=true`, and choose the model
-in the *AI & privacy* screen. A model server that listens beyond loopback is open to that network.
+The default is No AI: jobs are collected and shown as "not evaluated". To use a model server on the
+same computer (for example Ollama), no file editing is needed:
+
+1. Start the model server and pull a model (for example `ollama pull qwen3:8b`).
+2. Open *AI & privacy*, tick **Allow a model server on this computer**, add a *local* connection,
+   test it, choose it for job analysis (and for CV import if you like).
+
+Jobs Radar only calls the server it is configured for (`JOBS_RADAR_OLLAMA_URL`, default
+`http://host.docker.internal:11434`, which Docker Desktop on Windows and macOS resolves to the host).
+Running the model server and making it reachable from a container is your own environment choice;
+a model server that listens beyond this computer is open to that network. Setting
+`JOBS_RADAR_ALLOW_LOCAL_PROVIDERS=true` in `.env` does the same as the switch and locks it on.
 
 ## Demo
 

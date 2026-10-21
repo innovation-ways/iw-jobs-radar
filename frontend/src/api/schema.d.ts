@@ -3661,6 +3661,10 @@ export interface components {
          * @description The privacy policy for remote calls.
          */
         PrivacyRead: {
+            /** Allow Local Providers */
+            allow_local_providers: boolean;
+            /** Local Providers Forced By Environment */
+            local_providers_forced_by_environment: boolean;
             /** Redact Contact Details */
             redact_contact_details: boolean;
             /** Version */
@@ -3671,6 +3675,8 @@ export interface components {
          * @description Change the privacy policy.
          */
         PrivacyUpdate: {
+            /** Allow Local Providers */
+            allow_local_providers?: boolean | null;
             /** Expected Version */
             expected_version: number;
             /** Redact Contact Details */

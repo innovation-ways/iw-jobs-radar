@@ -79,6 +79,11 @@ class PrivacySetting(TimestampMixin, Base):
         "Whether e-mail addresses, phone numbers and links are removed before a remote call.",
         default=True,
     )
+    allow_local_providers: Mapped[bool] = bool_column(
+        "Whether the owner lets the app call the local model server the deployment is configured "
+        "for (ADR-081); the environment flag can also allow it.",
+        default=False,
+    )
     version: Mapped[int] = version_column()
 
 

@@ -1115,6 +1115,24 @@ Zon is now NOS (merged with Optimus in 2013) and Nowo belongs to Digi (2024), so
 
 **Owner answers (2026-10-20):** all ten packs, several active at once, extraction prompt limited to active packs, one agreed re-extraction in phase 6, sources for non-technical work out of scope, English only, only the owner creates terms and the seed is enough to start, packs are repository files loaded into the database (images on GHCR carry them), work on `main` with no push until everything is confirmed.
 
+### ADR-081 — Local model servers are allowed from the AI & privacy screen, not only from the environment
+
+**Status:** approved by the owner on 2026-10-21 (option 1 of three: a switch in the app). Amends ADR-035 (the local-provider part of the URL policy) and ADR-079 point 6; ADR-046 already says the database decides.
+
+**Context:** a first install from the published images (ADR-079) starts with No AI. To add the local Ollama connection the owner met "Local providers are turned off (JOBS_RADAR_ALLOW_LOCAL_PROVIDERS)": the only way to turn it on was to create a `.env` file next to the compose file and recreate the containers. That is a barrier for the main case (one person, one computer, Ollama on the same machine) and it contradicts ADR-046, where the screen decides and the environment only seeds the first connection. The flag exists for a reason (ADR-035): the URL guard blocks private and loopback addresses so that a configured URL cannot be used to reach the internal network (SSRF).
+
+**Decision:**
+1. **A switch in AI & privacy.** `privacy_setting.allow_local_providers` (boolean, default false, owner-scoped, versioned with the rest of the privacy row) is set from the screen with the label "Allow a model server on this computer (for example Ollama)" and a short warning that a model server listening beyond the computer is open to that network. The change is `PUT /api/v1/settings/privacy` with an optional `allow_local_providers` (omitted = unchanged) and the same `expected_version` rule.
+2. **The effective value is "the owner's switch OR the environment flag".** The environment can still force it on (deployments, tests, the demo); then the screen shows the switch on and locked, and says where it is set. The environment can no longer force it off for an owner who switched it on in the app.
+3. **What the switch does not change.** The only private host the guard accepts stays the one the deployment is configured for (`JOBS_RADAR_OLLAMA_URL`, default `host.docker.internal:11434`); a local connection cannot name another endpoint, and link-local and metadata addresses stay blocked. The URL itself is not editable from the app. Remote providers keep the full SSRF check, HTTPS and consent rules (ADR-046). Nothing is sent anywhere by switching it on: analysis still needs a connection chosen for job analysis and, for the worker, the extraction setup (ADR-044).
+4. **No restart.** The API reads the switch when it validates or builds a provider; the worker reads it on every iteration together with the connection, and rebuilds its setup when it changes (like any other change in the screen, ADR-046).
+5. **Switching it off** blocks new local calls at once; a stored local connection is kept and fails with the usual provider error until the switch is on again.
+6. **Import CV area (same change).** With no AI connection the file chooser was disabled without a visible button and a dropped file made the browser open it. The area now accepts a dropped file, has a visible "Browse…" button, says why it is off, and stops the browser from opening a file dropped elsewhere on the page.
+
+**Why:** the first-run path for a person who only wants to try the application should not need a text editor and a container restart. The risk the flag guards against is unchanged because the allowed host stays a single, deployment-configured address; and, with no authentication in V1 (ADR-009) and LAN-only exposure, anyone who can open the UI can already change the other privacy settings, so this adds no new class of caller.
+
+**Consequences:** migration 0034 (one column, existing owners keep today's behaviour); `AiSettingsService` gains `local_providers_allowed` and `effective_settings`; `JobsAiLoader` reads the switch; `PrivacyRead` gains `allow_local_providers` and `local_providers_forced_by_environment`; `make api-client` and the schema document are regenerated; the install guide and the configuration reference describe the switch, and `JOBS_RADAR_EXTRACTION_ENABLED` stays an environment setting for now (the first local connection created in the screen is enough for the worker to analyse jobs).
+
 ## Open decisions — do not assume
 
 | ID | Decision required | Options / trigger |

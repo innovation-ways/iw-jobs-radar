@@ -122,8 +122,9 @@ a stopped worker left unfinished. `./jobs-radar.sh --logs worker` shows what it 
 ## AI providers (AI & privacy screen)
 
 - Default is **No AI**: jobs are collected and shown as "not evaluated"; CV import is unavailable.
-- **Job analysis** uses a local model only (Ollama). Install a model, set
-  `JOBS_RADAR_ALLOW_LOCAL_PROVIDERS=true` and `JOBS_RADAR_OLLAMA_URL`, add a connection, test it
+- **Job analysis** uses a local model only (Ollama). Install a model, tick
+  "Allow a model server on this computer" in AI & privacy (or set
+  `JOBS_RADAR_ALLOW_LOCAL_PROVIDERS=true`; `JOBS_RADAR_OLLAMA_URL` names the server), add a connection, test it
   and choose it for job analysis. `qwen3:8b` takes about 10 seconds per job.
 - **CV import** can use the local model or a remote OpenAI-compatible provider. A remote provider
   needs its key (saved write-only) and your confirmation for each CV; contact details are removed

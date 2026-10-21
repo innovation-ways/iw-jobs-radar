@@ -558,6 +558,7 @@ Privacy policy for remote AI calls; one row per owner.
 | `privacy_setting_id` | BIGINT | no | Surrogate primary key of the setting. |
 | `owner_id` | BIGINT | no | Owner the policy belongs to. |
 | `redact_contact_details` | BOOLEAN | no | Whether e-mail addresses, phone numbers and links are removed before a remote call. |
+| `allow_local_providers` | BOOLEAN | no | Whether the owner lets the app call the local model server the deployment is configured for (ADR-081); the environment flag can also allow it. |
 | `version` | INTEGER | no | Optimistic-concurrency counter, incremented on every change of the row. |
 | `updated_at` | DATETIME | no | UTC timestamp of the last modification of the row. |
 | `created_at` | DATETIME | no | UTC timestamp at which the row was created. |

@@ -4909,6 +4909,14 @@
         "additionalProperties": false,
         "description": "The privacy policy for remote calls.",
         "properties": {
+          "allow_local_providers": {
+            "title": "Allow Local Providers",
+            "type": "boolean"
+          },
+          "local_providers_forced_by_environment": {
+            "title": "Local Providers Forced By Environment",
+            "type": "boolean"
+          },
           "redact_contact_details": {
             "title": "Redact Contact Details",
             "type": "boolean"
@@ -4920,6 +4928,8 @@
         },
         "required": [
           "redact_contact_details",
+          "allow_local_providers",
+          "local_providers_forced_by_environment",
           "version"
         ],
         "title": "PrivacyRead",
@@ -4929,6 +4939,17 @@
         "additionalProperties": false,
         "description": "Change the privacy policy.",
         "properties": {
+          "allow_local_providers": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allow Local Providers"
+          },
           "expected_version": {
             "minimum": 1.0,
             "title": "Expected Version",

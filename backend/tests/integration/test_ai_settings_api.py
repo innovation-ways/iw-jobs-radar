@@ -192,3 +192,25 @@ async def test_metadata_updates_need_the_version_and_privacy_is_editable(
         json={"redact_contact_details": False, "expected_version": privacy["version"]},
     )
     assert changed.status_code == 200 and changed.json()["redact_contact_details"] is False
+
+
+async def test_local_providers_can_be_allowed_from_the_privacy_settings(
+    client: httpx.AsyncClient, app: FastAPI, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # A developer's .env may allow it already; this test is about the owner's switch.
+    off = app.state.settings.model_copy(update={"allow_local_providers": False})
+    monkeypatch.setattr(app.state, "settings", off)
+    before = (await client.get(f"{BASE}/ai")).json()["privacy"]
+    assert before["allow_local_providers"] is False
+    assert before["local_providers_forced_by_environment"] is False
+    changed = await client.put(
+        f"{BASE}/privacy",
+        json={
+            "redact_contact_details": before["redact_contact_details"],
+            "allow_local_providers": True,
+            "expected_version": before["version"],
+        },
+    )
+    assert changed.status_code == 200 and changed.json()["allow_local_providers"] is True
+    created = await new_connection(client, provider_type="ollama")
+    assert created["processing_location"] == "local"

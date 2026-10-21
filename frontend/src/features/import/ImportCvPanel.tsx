@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { useAiSettings } from '@/features/ai/queries'
@@ -21,6 +21,8 @@ export function ImportCvPanel({ profile }: { profile: ProfileRead }) {
   const [proposal, setProposal] = useState<ProposalRead | null>(null)
   const [agreed, setAgreed] = useState(false)
   const [applied, setApplied] = useState<string | null>(null)
+  const [dragging, setDragging] = useState(false)
+  const chooser = useRef<HTMLInputElement>(null)
 
   const ai = settings.data
   const target = ai?.connections.find((c) => c.provider_connection_id === ai.import_connection_id)
@@ -28,6 +30,18 @@ export function ImportCvPanel({ profile }: { profile: ProfileRead }) {
   const redact = ai?.privacy.redact_contact_details ?? true
   const error = [actions.upload, actions.propose, actions.review].find((m) => m.isError)?.error
   const revision = profile.current_revision?.revision_number ?? null
+
+  // A file dropped outside the drop area would make the browser open it in the tab and leave the
+  // page; cancelling the default keeps the owner here.
+  useEffect(() => {
+    const cancel = (event: Event) => event.preventDefault()
+    window.addEventListener('dragover', cancel)
+    window.addEventListener('drop', cancel)
+    return () => {
+      window.removeEventListener('dragover', cancel)
+      window.removeEventListener('drop', cancel)
+    }
+  }, [])
 
   function reset() {
     setDocument(null)
@@ -37,6 +51,15 @@ export function ImportCvPanel({ profile }: { profile: ProfileRead }) {
     actions.upload.reset()
     actions.propose.reset()
     actions.review.reset()
+  }
+
+  const canUpload = Boolean(target) && !actions.upload.isPending
+
+  function start(file: File | undefined) {
+    if (!file || !canUpload) return
+    reset()
+    setFileName(file.name)
+    actions.upload.mutate(file, { onSuccess: setDocument })
   }
 
   if (settings.isPending) return <p className="text-ink-3">Loading…</p>
@@ -72,24 +95,53 @@ export function ImportCvPanel({ profile }: { profile: ProfileRead }) {
         </p>
       )}
 
-      <div className="rounded-lg border border-dashed border-line-strong bg-surface px-4 py-5">
-        <label className="flex flex-col gap-2 text-sm">
-          <span className="font-semibold">Choose a CV file</span>
+      <div
+        data-testid="cv-drop-area"
+        className={`rounded-lg border border-dashed bg-surface px-4 py-5 ${
+          dragging && canUpload ? 'border-brand bg-brand-soft' : 'border-line-strong'
+        }`}
+        onDragOver={(event) => {
+          event.preventDefault()
+          if (canUpload) setDragging(true)
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(event) => {
+          event.preventDefault()
+          setDragging(false)
+          start(event.dataTransfer?.files?.[0])
+        }}
+      >
+        <div className="flex flex-col items-start gap-2 text-sm">
+          <span className="font-semibold">Drop your CV here, or choose a file</span>
           <span className="text-ink-2">PDF (with text), DOCX, TXT or Markdown · up to 5 MB</span>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!canUpload}
+            onClick={() => chooser.current?.click()}
+          >
+            Browse…
+          </Button>
+          {!target && (
+            <span className="text-ink-2">
+              Importing a CV is off until an AI connection is chosen (see above).
+            </span>
+          )}
           <input
+            ref={chooser}
             type="file"
+            className="sr-only"
+            tabIndex={-1}
             aria-label="Choose a CV file"
             accept=".pdf,.docx,.txt,.md"
-            disabled={!target || actions.upload.isPending}
+            disabled={!canUpload}
             onChange={(event) => {
-              const file = event.target.files?.[0]
-              if (!file) return
-              reset()
-              setFileName(file.name)
-              actions.upload.mutate(file, { onSuccess: setDocument })
+              start(event.target.files?.[0])
+              // Choosing the same file again must still trigger a change.
+              event.target.value = ''
             }}
           />
-        </label>
+        </div>
       </div>
 
       {error && (

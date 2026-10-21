@@ -64,7 +64,12 @@ describe('AI & privacy screen', () => {
       jobs_connection_id: null,
       key_configured: true,
       connections: [],
-      privacy: { redact_contact_details: true, version: 1 },
+      privacy: {
+        redact_contact_details: true,
+        allow_local_providers: false,
+        local_providers_forced_by_environment: false,
+        version: 1,
+      },
       integrations: { github: 'none' },
     }
     get.mockImplementation(() => Promise.resolve({ data: settings }))
@@ -248,6 +253,39 @@ describe('AI & privacy screen', () => {
     expect(put).toHaveBeenCalledWith('/api/v1/settings/privacy', {
       body: { redact_contact_details: false, expected_version: 1 },
     })
+  })
+
+  it('lets the owner allow a model server on this computer, keeping the other setting', async () => {
+    const user = userEvent.setup()
+    put.mockResolvedValue({ data: {} })
+    renderPage()
+    const toggle = await screen.findByRole('checkbox', {
+      name: /allow a model server on this computer/i,
+    })
+    expect(toggle).not.toBeChecked()
+    await user.click(toggle)
+    expect(put).toHaveBeenCalledWith('/api/v1/settings/privacy', {
+      body: { redact_contact_details: true, allow_local_providers: true, expected_version: 1 },
+    })
+  })
+
+  it('shows the switch on and locked when the environment already allows it', async () => {
+    settings = {
+      ...settings,
+      privacy: {
+        redact_contact_details: true,
+        allow_local_providers: true,
+        local_providers_forced_by_environment: true,
+        version: 1,
+      },
+    }
+    renderPage()
+    const toggle = await screen.findByRole('checkbox', {
+      name: /allow a model server on this computer/i,
+    })
+    expect(toggle).toBeChecked()
+    expect(toggle).toBeDisabled()
+    expect(screen.getByText(/set in the environment/i)).toBeInTheDocument()
   })
 
   it('stores the optional GitHub token write-only', async () => {

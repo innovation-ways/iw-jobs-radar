@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -127,6 +127,48 @@ describe('Import CV', () => {
     expect(await screen.findByText(/choose an ai connection/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /ai & privacy/i })).toHaveAttribute('href', '/settings')
     expect(screen.getByLabelText('Choose a CV file')).toBeDisabled()
+  })
+
+  it('explains next to the drop area why it is off, and the browse button is off too', async () => {
+    get.mockResolvedValue({ data: settings('none') })
+    renderPanel()
+    expect(await screen.findByRole('button', { name: /browse/i })).toBeDisabled()
+    expect(screen.getByText(/importing a cv is off until/i)).toBeInTheDocument()
+  })
+
+  it('has a browse button that opens the file chooser', async () => {
+    const user = userEvent.setup()
+    renderPanel()
+    const input = (await screen.findByLabelText('Choose a CV file')) as HTMLInputElement
+    const click = vi.spyOn(input, 'click')
+    await user.click(screen.getByRole('button', { name: /browse/i }))
+    expect(click).toHaveBeenCalled()
+  })
+
+  it('uploads a CV dropped on the drop area', async () => {
+    renderPanel()
+    const zone = await screen.findByTestId('cv-drop-area')
+    const file = new File(['pdf'], 'dropped.pdf', { type: 'application/pdf' })
+    fireEvent.drop(zone, { dataTransfer: { files: [file] } })
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled())
+    expect(await screen.findByText(/dropped\.pdf/)).toBeInTheDocument()
+  })
+
+  it('does not upload a drop while no AI connection is chosen', async () => {
+    get.mockResolvedValue({ data: settings('none') })
+    renderPanel()
+    const zone = await screen.findByTestId('cv-drop-area')
+    const file = new File(['pdf'], 'dropped.pdf', { type: 'application/pdf' })
+    fireEvent.drop(zone, { dataTransfer: { files: [file] } })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('keeps the browser from opening a file that is dropped outside the drop area', async () => {
+    renderPanel()
+    await screen.findByTestId('cv-drop-area')
+    const event = new Event('drop', { cancelable: true })
+    window.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(true)
   })
 
   it('shows where processing happens and that the original is not stored', async () => {

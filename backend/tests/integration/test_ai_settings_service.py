@@ -188,6 +188,55 @@ async def test_a_local_connection_is_refused_unless_local_providers_are_allowed(
         )
 
 
+async def test_the_owner_can_allow_local_providers_in_the_app_without_the_environment(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    off = settings.model_copy(update={"allow_local_providers": False})
+    svc = service(db_session, off)
+    assert await svc.local_providers_allowed(LOCAL_OWNER_ID) is False
+    setting, _ = await svc._repository.privacy(LOCAL_OWNER_ID)
+    await svc.update_privacy(
+        LOCAL_OWNER_ID,
+        redact_contact_details=True,
+        expected_version=setting.version,
+        allow_local_providers=True,
+    )
+    assert await svc.local_providers_allowed(LOCAL_OWNER_ID) is True
+    created = await svc.create_connection(
+        LOCAL_OWNER_ID, provider_type="ollama", display_name="L", endpoint_url=None, model_id="m"
+    )
+    assert created.endpoint_url == off.ollama_url.rstrip("/")
+    effective = await svc.effective_settings(LOCAL_OWNER_ID)
+    assert effective.allow_local_providers is True and off.allow_local_providers is False
+
+
+async def test_the_environment_still_allows_local_providers_when_the_app_switch_is_off(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    on = settings.model_copy(update={"allow_local_providers": True})
+    svc = service(db_session, on)
+    setting, _ = await svc._repository.privacy(LOCAL_OWNER_ID)
+    assert setting.allow_local_providers is False
+    assert await svc.local_providers_allowed(LOCAL_OWNER_ID) is True
+
+
+async def test_a_privacy_update_without_the_switch_leaves_it_unchanged(
+    db_session: AsyncSession, settings: Settings
+) -> None:
+    svc = service(db_session, settings.model_copy(update={"allow_local_providers": False}))
+    setting, _ = await svc._repository.privacy(LOCAL_OWNER_ID)
+    await svc.update_privacy(
+        LOCAL_OWNER_ID,
+        redact_contact_details=True,
+        expected_version=setting.version,
+        allow_local_providers=True,
+    )
+    changed = await svc.update_privacy(
+        LOCAL_OWNER_ID, redact_contact_details=False, expected_version=setting.version
+    )
+    assert changed.allow_local_providers is True and changed.redact_contact_details is False
+
+
 async def test_updating_metadata_needs_the_current_version(
     db_session: AsyncSession, settings: Settings
 ) -> None:

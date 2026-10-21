@@ -140,3 +140,18 @@ async def test_summaries_use_the_direction_model_and_default_to_the_job_model(
     changed = await loader.load()
     assert changed is not None and changed.summaries.model == "big-model"
     assert changed.model == "qwen3:8b"  # extraction keeps the job model
+
+
+async def test_allowing_local_providers_in_the_app_rebuilds_the_setup_without_a_restart(
+    settings: Settings, session_factory: async_sessionmaker[AsyncSession]
+) -> None:
+    off = settings.model_copy(update={"allow_local_providers": False})
+    await add(session_factory, use_for_jobs=True)
+    loader = JobsAiLoader(off, session_factory)
+    first = await loader.load()
+    assert first is not None
+    async with session_factory() as session:
+        session.add(PrivacySetting(owner_id=LOCAL_OWNER_ID, allow_local_providers=True))
+        await session.commit()
+    again = await loader.load()
+    assert again is not None and again is not first

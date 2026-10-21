@@ -132,6 +132,28 @@ export function AiPrivacy() {
               Remove contact details (e-mail, phone, links) before any remote call
             </label>
           </li>
+          <li>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={data.privacy.allow_local_providers}
+                disabled={data.privacy.local_providers_forced_by_environment}
+                onChange={(e) =>
+                  actions.updatePrivacy.mutate({
+                    redact: data.privacy.redact_contact_details,
+                    allowLocal: e.target.checked,
+                    version: data.privacy.version,
+                  })
+                }
+              />
+              Allow a model server on this computer (for example Ollama)
+            </label>
+            <p className="mt-1 pl-6 text-ink-2">
+              {data.privacy.local_providers_forced_by_environment
+                ? 'Set in the environment (JOBS_RADAR_ALLOW_LOCAL_PROVIDERS); change it there.'
+                : 'Needed before a local connection can be added. Only the server this installation is configured for can be used, and a model server that listens beyond this computer is open to that network.'}
+            </p>
+          </li>
           <li className="text-ink-2">
             Every CV needs your confirmation before it goes to a remote provider.
           </li>

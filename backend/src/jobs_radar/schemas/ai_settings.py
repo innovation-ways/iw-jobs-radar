@@ -57,6 +57,10 @@ class PrivacyRead(StrictModel):
     """The privacy policy for remote calls."""
 
     redact_contact_details: bool
+    # Effective value: the owner's switch or the environment (ADR-081).
+    allow_local_providers: bool
+    # True when the environment allows it, so the switch in the app cannot turn it off.
+    local_providers_forced_by_environment: bool
     version: int
 
 
@@ -91,4 +95,6 @@ class PrivacyUpdate(StrictModel):
     """Change the privacy policy."""
 
     redact_contact_details: bool
+    # ``null`` leaves the switch as it is.
+    allow_local_providers: bool | None = None
     expected_version: int = Field(ge=1)

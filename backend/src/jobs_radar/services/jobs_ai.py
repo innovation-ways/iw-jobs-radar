@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from jobs_radar.adapters.providers.factory import ProviderSpec, build_provider
 from jobs_radar.adapters.providers.ollama import build_ollama_embedder
 from jobs_radar.core.settings import Settings
-from jobs_radar.db.models import ProviderConnection
+from jobs_radar.db.models import PrivacySetting, ProviderConnection
 from jobs_radar.domain.enums import LOCAL_OWNER_ID
 from jobs_radar.services.dedup import DedupRunner
 from jobs_radar.services.direction_service import DirectionRunner
@@ -48,7 +48,7 @@ class JobsAiLoader:
     ) -> None:
         self._settings = settings
         self._session_factory = session_factory
-        self._key: tuple[int, int, str, str, str, str] | None = None
+        self._key: tuple[int, int, str, str, str, str, bool] | None = None
         self._current: JobsAi | None = None
 
     async def load(self) -> JobsAi | None:
@@ -65,6 +65,8 @@ class JobsAiLoader:
         if connection is None or not connection.model_id or not connection.endpoint_url:
             self._key, self._current = None, None
             return None
+        # The owner's switch in AI & privacy applies without a restart (ADR-081).
+        allowed = self._settings.allow_local_providers or await self._owner_allows_local()
         embedding = str(
             (connection.config_json or {}).get("embedding_model") or self._settings.embedding_model
         )
@@ -78,6 +80,7 @@ class JobsAiLoader:
             connection.model_id,
             embedding,
             direction_model,
+            allowed,
         )
         if key != self._key or self._current is None:
             self._current = self._build(
@@ -86,9 +89,23 @@ class JobsAiLoader:
                 connection.endpoint_url,
                 connection.model_id,
                 direction_model,
+                self._settings.model_copy(update={"allow_local_providers": allowed}),
             )
             self._key = key
         return self._current
+
+    async def _owner_allows_local(self) -> bool:
+        """Whether the owner switched on local model servers in AI & privacy."""
+        async with self._session_factory() as session:
+            return bool(
+                (
+                    await session.execute(
+                        select(PrivacySetting.allow_local_providers).where(
+                            PrivacySetting.owner_id == LOCAL_OWNER_ID
+                        )
+                    )
+                ).scalar_one_or_none()
+            )
 
     def _build(
         self,
@@ -97,20 +114,21 @@ class JobsAiLoader:
         endpoint: str,
         model: str,
         direction_model: str,
+        settings: Settings,
     ) -> JobsAi:
         # A local connection may only use the host the deployment configured (ADR-035).
         host = urlsplit(self._settings.ollama_url).hostname
         spec = ProviderSpec("ollama", endpoint, model)
-        provider = build_provider(spec, self._settings)
+        provider = build_provider(spec, settings)
         if urlsplit(endpoint).hostname != host:
             msg = "The local connection does not match the configured local server."
             raise ValueError(msg)
         direction_provider = (
             provider
             if direction_model == model
-            else build_provider(ProviderSpec("ollama", endpoint, direction_model), self._settings)
+            else build_provider(ProviderSpec("ollama", endpoint, direction_model), settings)
         )
-        embedder = build_ollama_embedder(self._settings, model=embedding_model)
+        embedder = build_ollama_embedder(settings, model=embedding_model)
         return JobsAi(
             extraction=ExtractionQueue(
                 self._session_factory,

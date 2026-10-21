@@ -66,6 +66,8 @@ class AiSettingsView:
     jobs_connection_id: int | None
     privacy: PrivacySetting
     key_configured: bool
+    # True when the environment already allows local providers, so the switch cannot turn it off.
+    local_providers_forced: bool = False
 
 
 @dataclass(frozen=True)
@@ -126,10 +128,35 @@ class AiSettingsService:
         self._settings = settings
         self._box = box
         self._repository = ProviderRepository(session)
-        self._build: ProviderBuilder = provider_builder or (
-            lambda spec: build_provider(spec, settings)
-        )
+        # A test double replaces the adapter; otherwise it is built with the owner's effective
+        # URL policy (ADR-081), so the choice is made per call, not frozen at start-up.
+        self._provider_builder = provider_builder
         self._resolver = resolver
+
+    # --- local providers (ADR-081) ---------------------------------------------------------------
+
+    def local_providers_forced(self) -> bool:
+        """Whether the environment allows local providers, so the owner's switch cannot undo it."""
+        return self._settings.allow_local_providers
+
+    async def local_providers_allowed(self, owner_id: int) -> bool:
+        """Whether a local model server may be called: the owner's switch or the environment."""
+        if self._settings.allow_local_providers:
+            return True
+        setting, _ = await self._repository.privacy(owner_id)
+        return setting.allow_local_providers
+
+    async def effective_settings(self, owner_id: int) -> Settings:
+        """Return the settings with the local-provider policy the owner chose applied."""
+        if await self.local_providers_allowed(owner_id) == self._settings.allow_local_providers:
+            return self._settings
+        return self._settings.model_copy(update={"allow_local_providers": True})
+
+    async def _provider(self, owner_id: int, spec: ProviderSpec) -> ChatProvider:
+        """Build the adapter for ``spec`` under the owner's effective URL policy."""
+        if self._provider_builder is not None:
+            return self._provider_builder(spec)
+        return build_provider(spec, await self.effective_settings(owner_id))
 
     # --- reading -------------------------------------------------------------------------------
 
@@ -151,6 +178,7 @@ class AiSettingsService:
             ),
             privacy=privacy,
             key_configured=self._box is not None,
+            local_providers_forced=self.local_providers_forced(),
         )
 
     async def _seed_local(self, owner_id: int) -> None:
@@ -170,10 +198,12 @@ class AiSettingsService:
 
     # --- connections ---------------------------------------------------------------------------
 
-    async def _validated_endpoint(self, provider_type: str, endpoint: str | None) -> str:
+    async def _validated_endpoint(
+        self, owner_id: int, provider_type: str, endpoint: str | None
+    ) -> str:
         """Return a safe endpoint for the type, or raise a validation error."""
         if provider_type in _LOCAL_TYPES:
-            return self._validated_local(endpoint)
+            return await self._validated_local(owner_id, endpoint)
         url = endpoint or _DEFAULT_ENDPOINTS.get(provider_type)
         if not url:
             msg = f"A {provider_type} connection needs an endpoint URL."
@@ -184,10 +214,14 @@ class AiSettingsService:
             raise InputValidationError(str(exc)) from exc
         return url.rstrip("/")
 
-    def _validated_local(self, endpoint: str | None) -> str:
-        # A local model server may only be the one the deployment configured (ADR-035).
-        if not self._settings.allow_local_providers:
-            msg = "Local providers are turned off (JOBS_RADAR_ALLOW_LOCAL_PROVIDERS)."
+    async def _validated_local(self, owner_id: int, endpoint: str | None) -> str:
+        # A local model server may only be the one the deployment configured (ADR-035), and only
+        # once the owner allowed local providers in AI & privacy or the environment did (ADR-081).
+        if not await self.local_providers_allowed(owner_id):
+            msg = (
+                "Local model servers are turned off. Switch on "
+                '"Allow a model server on this computer" in AI & privacy first.'
+            )
             raise InputValidationError(msg)
         configured = self._settings.ollama_url.rstrip("/")
         if endpoint and endpoint.rstrip("/") != configured:
@@ -205,7 +239,7 @@ class AiSettingsService:
         model_id: str | None,
     ) -> ProviderConnection:
         """Create a connection (no credential yet, not in use)."""
-        endpoint = await self._validated_endpoint(provider_type, endpoint_url)
+        endpoint = await self._validated_endpoint(owner_id, provider_type, endpoint_url)
         await self._repository.privacy(owner_id)
         return await self._repository.add(
             ProviderConnection(
@@ -246,7 +280,7 @@ class AiSettingsService:
         self._check_version(connection.version, expected_version, "connection")
         if endpoint_url is not None:
             connection.endpoint_url = await self._validated_endpoint(
-                connection.provider_type, endpoint_url
+                owner_id, connection.provider_type, endpoint_url
             )
         if display_name is not None:
             connection.display_name = display_name.strip()
@@ -360,7 +394,7 @@ class AiSettingsService:
         connection = next((c for c in await self._repository.list(owner_id) if c.is_active), None)
         if connection is None:
             return None
-        return connection, self._build(self.spec_for(connection))
+        return connection, await self._provider(owner_id, self.spec_for(connection))
 
     async def jobs_target(self, owner_id: int) -> tuple[ProviderConnection, ChatProvider] | None:
         """Return the local connection chosen for job analysis and its adapter, or ``None``."""
@@ -369,7 +403,7 @@ class AiSettingsService:
         )
         if connection is None:
             return None
-        return connection, self._build(self.spec_for(connection))
+        return connection, await self._provider(owner_id, self.spec_for(connection))
 
     async def direction_target(
         self, owner_id: int
@@ -388,7 +422,7 @@ class AiSettingsService:
         chosen = _direction_model(connection)
         if chosen:
             spec = replace(spec, model=chosen)
-        return connection, self._build(spec)
+        return connection, await self._provider(owner_id, spec)
 
     async def redaction_enabled(self, owner_id: int) -> bool:
         """Whether contact details are removed before a remote call."""
@@ -421,7 +455,7 @@ class AiSettingsService:
         if connection.provider_type not in _LOCAL_TYPES and not connection.credential_ciphertext:
             msg = "Save the credential before testing a remote connection."
             raise InputValidationError(msg)
-        provider = self._build(self.spec_for(connection))
+        provider = await self._provider(owner_id, self.spec_for(connection))
         try:
             models = await provider.available_models()
         except ProviderError as error:
@@ -431,12 +465,19 @@ class AiSettingsService:
     # --- privacy -------------------------------------------------------------------------------
 
     async def update_privacy(
-        self, owner_id: int, *, redact_contact_details: bool, expected_version: int
+        self,
+        owner_id: int,
+        *,
+        redact_contact_details: bool,
+        expected_version: int,
+        allow_local_providers: bool | None = None,
     ) -> PrivacySetting:
-        """Change the remote-call privacy policy."""
+        """Change the privacy policy; ``allow_local_providers=None`` leaves that switch as it is."""
         setting, _ = await self._repository.privacy(owner_id)
         self._check_version(setting.version, expected_version, "privacy setting")
         setting.redact_contact_details = redact_contact_details
+        if allow_local_providers is not None:
+            setting.allow_local_providers = allow_local_providers
         setting.version += 1
         setting.updated_at = datetime.now(UTC)
         await self._session.flush()

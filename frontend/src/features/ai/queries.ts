@@ -82,10 +82,17 @@ export function useAiActions() {
     onSettled: refresh,
   })
   const updatePrivacy = useMutation({
-    mutationFn: (change: { redact: boolean; version: number }) =>
+    // `allowLocal` is left out to keep that switch as it is (ADR-081).
+    mutationFn: (change: { redact: boolean; allowLocal?: boolean; version: number }) =>
       unwrap(
         api.PUT('/api/v1/settings/privacy', {
-          body: { redact_contact_details: change.redact, expected_version: change.version },
+          body: {
+            redact_contact_details: change.redact,
+            ...(change.allowLocal === undefined
+              ? {}
+              : { allow_local_providers: change.allowLocal }),
+            expected_version: change.version,
+          },
         }),
       ),
     onSettled: refresh,

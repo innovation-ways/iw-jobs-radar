@@ -49,6 +49,8 @@ async def get_ai_settings(
         integrations=await integrations.status(LOCAL_OWNER_ID),
         privacy=PrivacyRead(
             redact_contact_details=view.privacy.redact_contact_details,
+            allow_local_providers=view.local_providers_forced or view.privacy.allow_local_providers,
+            local_providers_forced_by_environment=view.local_providers_forced,
             version=view.privacy.version,
         ),
     )
@@ -156,10 +158,15 @@ async def update_privacy(body: PrivacyUpdate, service: Service, session: Session
         LOCAL_OWNER_ID,
         redact_contact_details=body.redact_contact_details,
         expected_version=body.expected_version,
+        allow_local_providers=body.allow_local_providers,
     )
+    forced = service.local_providers_forced()
     await session.commit()
     return PrivacyRead(
-        redact_contact_details=setting.redact_contact_details, version=setting.version
+        redact_contact_details=setting.redact_contact_details,
+        allow_local_providers=forced or setting.allow_local_providers,
+        local_providers_forced_by_environment=forced,
+        version=setting.version,
     )
 
 

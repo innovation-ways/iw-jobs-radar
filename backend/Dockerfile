@@ -1,6 +1,6 @@
 # Backend image shared by the API and the worker (ADR-038).
 # Build arg INSTALL_DEV=true adds development dependencies (used by docker-compose.dev.yml).
-FROM python:3.13-slim
+FROM python:3.15-slim
 
 ARG INSTALL_DEV=false
 ENV PYTHONUNBUFFERED=1 \
